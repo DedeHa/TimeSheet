@@ -11,22 +11,6 @@ DESCRIPTION :   Automatic timelog organisation with extract of timelogdata, docu
 
 PUBLIC FUNCTIONS :
 
-NOTES :
-    Variable declaration naming convention
-    <mandatory: type>_<optional: unit><mandatory: varaible_name> - e.g. str_date_startpoint
-
-        type    |    description
-        ---------------------------
-        obj     |   complex datatype
-        str     |   string
-        int     |   integer
-        db      |   double       
-        bo       |   boolean
-
-CHANGES :
-    REF NO  VERSION DATE    WHO     DETAIL
-            A.00.01 220126  DH      Function CalcHuffman corrected
-
 """
 #Configuration--------------------------------------------------------#
 
@@ -86,23 +70,27 @@ def main(arguments):
             print(obj_newtimedata)
 
     # Open timelog csv and exclude header
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=True, keep_vba=True)
+    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=True, keep_vba=False)
+    
     sheet_obj = obj_wb_timesheet['Juni']
     
     # iterate worksheets in timesheet
     for sheet in obj_wb_timesheet.worksheets[0:12]:  
         print(sheet.title)
-        for row in sheet.iter_rows(min_row=5, min_col=1, max_row=35, max_col=1):
-            # Iterate rows in month 
-            for cell in row:
+        for iter_row in sheet.iter_rows(min_row=5, min_col=1, max_row=35, max_col=1):
+            #print(iter_row[0].row)
+            # iterate rows in month 
+            for iter_cell in iter_row:
+                if iter_cell.value == obj_date_startpoint:  
+                    sheet.cell(row=iter_row[0].row, column=5).value = dt.strptime('08:01:57','%H:%M:%S')
+                    sheet.cell(row=iter_row[0].row, column=6).value = dt.strptime('17:02:54','%H:%M:%S')
+                    
+                    print(iter_cell.value.date(),
+                        iter_cell.value.weekday(),
+                        iter_cell.value.strftime('%A'))
 
-                if cell.value == obj_date_startpoint:  
-                    print(cell.value.date(),
-                        cell.value.weekday(),
-                        cell.value.strftime('%A'))
-
-    sheet_obj['F1'].value = 'Test'
-    print(sheet_obj['F1'].value)
+    #sheet_obj['F1'].value = 'Test'
+    #print(sheet_obj['F1'].value)
     
     obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
 

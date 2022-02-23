@@ -20,12 +20,20 @@ CHANGES :
     REF NO  VERSION DATE    WHO     DETAIL
             A.00.01 220126  DH      Function CalcHuffman corrected
 
+# Branch Template
+Branch change template naming convention
+    <mandatory: Function/Infrastructure Change>|<mandatory: description>
+        - FCT: Function Change Types
+        - INF: Infrastructure Change Types
+
+        Example: INF|Documentation
+
 # Commit Template
 Commit change template naming convention
-    <mandatory: Branch Change Type><mandatory: file/feature/change_type>_<mandatory: item_name>|<mandatory: description>
+    <mandatory: Branch Change Type>_<mandatory: change_type>|<mandatory: file/feature/description>
         - FCT: Function Change Types
             - A: Architecture Change
-            - I:Interface Change
+            - I: Interface Change
             - F: Functional Change
             - V: Variable Change
         - INF: Infrastructure Change Types
@@ -33,9 +41,5 @@ Commit change template naming convention
             - R: Renaming Change
             - L: Location Change
 
-# Branch Template
-Branch change template naming convention
-    <mandatory: Function/Infrastructure Change>|<mandatory: description>
-        - FCT: Function Change Types
-        - INF: Infrastructure Change Types
+        Example: INF_F|README.md/Split Commit and Branch Template
 

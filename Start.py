@@ -38,7 +38,7 @@ def main(arguments):
     db_time_programstart = time.time()
     
     # Test variables
-    str_date_startpoint = '02.06.2020'
+    str_date_startpoint = '03.04.2020'
     str_date_todaypoint = '05.06.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
     obj_date_todaypoint = dt.strptime(str_date_todaypoint, '%d.%m.%Y')
@@ -46,9 +46,6 @@ def main(arguments):
     # Determine date of today
     print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
     
-    # Change date format
-    #print(str_date_startpoint.replace('.', '/'))
-
     # Open timelog csv and exclude header
     with open("timelog.csv") as file_csv_timelog:
         obj_list_timelog = list(csv.reader(file_csv_timelog))
@@ -78,18 +75,27 @@ def main(arguments):
 
     # Test variables (sheet)
     sheet_obj = obj_wb_timesheet['Juni']
-
+    
+    # Iterate through selected timelog data from timelog
     for i in obj_newtimedata:
+
         # Convert list raw date string into date
-        obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')   
-        
-        # Store timelog data in timesheet for "Kommen"
-        # row: startindex = 5 + day of the month col: 5
-        sheet_obj.cell(row=int_row_startindex + obj_sel_date.day, column=5).value = i[1]
-        
-        # Store timelog data in timesheet for "Gehen"
-        # row: startindex = 5 + day of the month col: 6
-        sheet_obj.cell(row=int_row_startindex + obj_sel_date.day, column=6).value = i[2]
+        obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
+       
+        # Iterate worksheet/months in timesheet
+        for sheet in obj_wb_timesheet.worksheets[0:12]:
+            
+            # Identify worksheet/month for selected timelog data
+            # month: worksheet_index - 1
+            if obj_sel_date.month-1 == obj_wb_timesheet.get_index(sheet):
+                
+                # Store timelog data in timesheet for "Kommen"
+                # row: startindex = 5 + day of the month col: 5
+                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=5).value = i[1]
+                
+                # Store timelog data in timesheet for "Gehen"
+                # row: startindex = 5 + day of the month col: 6
+                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=6).value = i[2]
   
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=5).value = dt.strptime(i[1],'%H:%M:%S')
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=6).value = dt.strptime(i[2],'%H:%M:%S')

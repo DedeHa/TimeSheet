@@ -38,7 +38,7 @@ def main(arguments):
     db_time_programstart = time.time()
     
     # Test variables
-    str_date_startpoint = '03.04.2020'
+    str_date_startpoint = '02.06.2020'
     str_date_todaypoint = '05.06.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
     obj_date_todaypoint = dt.strptime(str_date_todaypoint, '%d.%m.%Y')
@@ -61,41 +61,44 @@ def main(arguments):
         # Identify start date in list, check working day and define start index
         if obj_sel_date >= obj_date_startpoint and obj_sel_date.weekday() <= 4:        
             obj_newtimedata.extend([i])
-            print(obj_sel_date.date(),
-                obj_sel_date.weekday(),
-                obj_sel_date.strftime('%A'))
-
-            print(obj_newtimedata)
-
-    # Open timelog csv and exclude header
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
-    
+             
     # Store/Document timelog data in timesheet
     print('--- Log time data ---')
 
-    # Test variables (sheet)
-    sheet_obj = obj_wb_timesheet['Juni']
-    
+    # Open timelog csv and exclude header
+    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
+  
     # Iterate through selected timelog data from timelog
     for i in obj_newtimedata:
 
         # Convert list raw date string into date
-        obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
+        # row: startindex = 5 + day of the month
+        int_row_index = int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day
        
         # Iterate worksheet/months in timesheet
         for sheet in obj_wb_timesheet.worksheets[0:12]:
             
             # Identify worksheet/month for selected timelog data
             # month: worksheet_index - 1
-            if obj_sel_date.month-1 == obj_wb_timesheet.get_index(sheet):
+            if obj_sel_date.month-1 != obj_wb_timesheet.index(sheet):
+                continue
+            else:    
+                # Define required cells for check and documentation
+                # Remark[Bx]; Type[Cx]; Starttime [Ex]; Endtime [Fx]
+                obj_cell_remark = sheet.cell(row=int_row_index, column=2)      
+                obj_cell_type = sheet.cell(row=int_row_index, column=3)
+                obj_cell_starttime = sheet.cell(row=int_row_index, column=5)    
+                obj_cell_endtime = sheet.cell(row=int_row_index, column=6)
                 
-                # Store timelog data in timesheet for "Kommen"
-                # row: startindex = 5 + day of the month col: 5
-                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=5).value = i[1]
-                
-                # Store timelog data in timesheet for "Gehen"
-                # row: startindex = 5 + day of the month col: 6
-                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=6).value = i[2]
+                # Check for national holiday, sick - k and flextime - g
+                if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
+                    continue
+                else:                
+                    # Store timelog data in timesheet for "Kommen"
+                    obj_cell_starttime.value = i[1]
+                    
+                    # Store timelog data in timesheet for "Gehen"
+                    obj_cell_endtime.value = i[2]
   
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=5).value = dt.strptime(i[1],'%H:%M:%S')
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=6).value = dt.strptime(i[2],'%H:%M:%S')

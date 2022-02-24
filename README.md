@@ -21,7 +21,7 @@ CHANGES :
             A.00.01 220126  DH      Function CalcHuffman corrected
 
 # Branch Template
-Branch change template naming convention
+    Branch change template naming convention
     <mandatory: Function/Infrastructure Change>|<mandatory: description>
         - FCT: Function Change Types
         - INF: Infrastructure Change Types
@@ -29,13 +29,14 @@ Branch change template naming convention
         Example: INF|Documentation
 
 # Commit Template
-Commit change template naming convention
+    Commit change template naming convention
     <mandatory: Branch Change Type>_<mandatory: change_type>|<mandatory: file/feature/description>
         - FCT: Function Change Types
             - A: Architecture Change
             - I: Interface Change
             - F: Functional Change
             - V: Variable Change
+            - O: Optimazation Change
         - INF: Infrastructure Change Types
             - D: Documentation Change
             - R: Renaming Change

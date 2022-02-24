@@ -27,6 +27,7 @@ from datetime import timedelta as td
 int_position_date = 0
 int_position_starttime = 1
 int_position_endtime = 2
+int_row_startindex = 4
 
 obj_newtimedata = []
 
@@ -37,7 +38,7 @@ def main(arguments):
     db_time_programstart = time.time()
     
     # Test variables
-    str_date_startpoint = '02.06.2020'
+    str_date_startpoint = '03.04.2020'
     str_date_todaypoint = '05.06.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
     obj_date_todaypoint = dt.strptime(str_date_todaypoint, '%d.%m.%Y')
@@ -45,9 +46,6 @@ def main(arguments):
     # Determine date of today
     print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
     
-    # Change date format
-    #print(str_date_startpoint.replace('.', '/'))
-
     # Open timelog csv and exclude header
     with open("timelog.csv") as file_csv_timelog:
         obj_list_timelog = list(csv.reader(file_csv_timelog))
@@ -70,11 +68,46 @@ def main(arguments):
             print(obj_newtimedata)
 
     # Open timelog csv and exclude header
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=True, keep_vba=False)
+    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
     
+    # Store/Document timelog data in timesheet
+    print('--- Log time data ---')
+
+    # Test variables (sheet)
     sheet_obj = obj_wb_timesheet['Juni']
     
-    # iterate worksheets in timesheet
+    # Iterate through selected timelog data from timelog
+    for i in obj_newtimedata:
+
+        # Convert list raw date string into date
+        obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
+       
+        # Iterate worksheet/months in timesheet
+        for sheet in obj_wb_timesheet.worksheets[0:12]:
+            
+            # Identify worksheet/month for selected timelog data
+            # month: worksheet_index - 1
+            if obj_sel_date.month-1 == obj_wb_timesheet.get_index(sheet):
+                
+                # Store timelog data in timesheet for "Kommen"
+                # row: startindex = 5 + day of the month col: 5
+                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=5).value = i[1]
+                
+                # Store timelog data in timesheet for "Gehen"
+                # row: startindex = 5 + day of the month col: 6
+                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=6).value = i[2]
+  
+    #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=5).value = dt.strptime(i[1],'%H:%M:%S')
+    #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=6).value = dt.strptime(i[2],'%H:%M:%S')
+    
+    #sheet_obj['E6'].value = dt.strptime('08:01:57','%H:%M:%S')
+    #sheet_obj['F6'].value = dt.strptime('17:02:54','%H:%M:%S')
+
+    # Close workbook timesheet    
+    obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
+
+    '''
+    # iterate worksheet months in timesheet
     for sheet in obj_wb_timesheet.worksheets[0:12]:  
         print(sheet.title)
         for iter_row in sheet.iter_rows(min_row=5, min_col=1, max_row=35, max_col=1):
@@ -88,11 +121,7 @@ def main(arguments):
                     print(iter_cell.value.date(),
                         iter_cell.value.weekday(),
                         iter_cell.value.strftime('%A'))
-
-    #sheet_obj['F1'].value = 'Test'
-    #print(sheet_obj['F1'].value)
-    
-    obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
+    '''   
 
     #print(obj_wb_timesheet.sheetnames)
     #print(sheet_obj.cell(row = 6, column = 1).value)         

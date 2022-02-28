@@ -18,11 +18,8 @@ import sys, os, time
 import csv, argparse
 import openpyxl
 
-import pandas as pd
-
 from datetime import datetime as dt
 from datetime import timedelta as td
-
 
 int_position_date = 0
 int_position_starttime = 1
@@ -38,7 +35,7 @@ def main(arguments):
     db_time_programstart = time.time()
     
     # Test variables
-    str_date_startpoint = '03.04.2020'
+    str_date_startpoint = '02.06.2020'
     str_date_todaypoint = '05.06.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
     obj_date_todaypoint = dt.strptime(str_date_todaypoint, '%d.%m.%Y')
@@ -51,8 +48,8 @@ def main(arguments):
         obj_list_timelog = list(csv.reader(file_csv_timelog))
         obj_list_timelog.pop(0)
 
-    # Determine, evaluate and select timeframe from timelog
-    print('--- Selected Dates ---')
+    # Determine/evaluate and select timeframe from timelog
+    print('--- Selected dates ---')
     for i in obj_list_timelog:
 
         # Convert list raw date string into date
@@ -61,50 +58,70 @@ def main(arguments):
         # Identify start date in list, check working day and define start index
         if obj_sel_date >= obj_date_startpoint and obj_sel_date.weekday() <= 4:        
             obj_newtimedata.extend([i])
-            print(obj_sel_date.date(),
-                obj_sel_date.weekday(),
-                obj_sel_date.strftime('%A'))
-
-            print(obj_newtimedata)
+             
+    # Store/document timelog data in timesheet
+    print('--- Log time data ---')
 
     # Open timelog csv and exclude header
     obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
-    
-    # Store/Document timelog data in timesheet
-    print('--- Log time data ---')
-
-    # Test variables (sheet)
-    sheet_obj = obj_wb_timesheet['Juni']
-    
-    # Iterate through selected timelog data from timelog
+  
+    # Iterate through selected timelog data
     for i in obj_newtimedata:
 
         # Convert list raw date string into date
-        obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
+        # row: startindex = 5 + day of the month
+        int_row_index = int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day
        
         # Iterate worksheet/months in timesheet
         for sheet in obj_wb_timesheet.worksheets[0:12]:
             
             # Identify worksheet/month for selected timelog data
             # month: worksheet_index - 1
-            if obj_sel_date.month-1 == obj_wb_timesheet.get_index(sheet):
+            if obj_sel_date.month-1 != obj_wb_timesheet.index(sheet):
+                continue
+            else:    
+                # Define required cells for check and documentation
+                # Remark[Bx]; Type[Cx]; Starttime [Ex]; Endtime [Fx]
+                obj_cell_remark = sheet.cell(row=int_row_index, column=2)      
+                obj_cell_type = sheet.cell(row=int_row_index, column=3)
+                obj_cell_starttime = sheet.cell(row=int_row_index, column=5)    
+                obj_cell_endtime = sheet.cell(row=int_row_index, column=6)
                 
-                # Store timelog data in timesheet for "Kommen"
-                # row: startindex = 5 + day of the month col: 5
-                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=5).value = i[1]
-                
-                # Store timelog data in timesheet for "Gehen"
-                # row: startindex = 5 + day of the month col: 6
-                sheet.cell(row=int_row_startindex + obj_sel_date.day, column=6).value = i[2]
+                # Check for national holiday, sick - k and flextime - g
+                if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
+                    # Remove list items for not required times
+                    obj_newtimedata.remove(i)
+                    continue
+                else:                
+                    # Store timelog data in timesheet for "Kommen"
+                    obj_cell_starttime.value = i[1]
+                    
+                    # Store timelog data in timesheet for "Gehen"
+                    obj_cell_endtime.value = i[2]
   
+    # Close workbook timesheet    
+    obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
+    
+    # Store/document data SAP-Sheet
+    print('--- Store data ---')
+
+    # Open timelog csv and exclude header
+    #obj_wb_AZEsheet = openpyxl.load_workbook('AZE_template.xlsx')
+
+    # Iterate through final timelog data
+    #j = obj_newtimedata[0]
+    #obj_wb_AZEsheet['B9'].value = i[0]
+    #obj_wb_AZEsheet['C9'].value = i[0]
+    #obj_wb_AZEsheet['D9'].value = i[1]
+    #obj_wb_AZEsheet['E9'].value = i[2]
+
+    #obj_wb_AZEsheet.save('AZE_template.xlsx')
+    
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=5).value = dt.strptime(i[1],'%H:%M:%S')
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=6).value = dt.strptime(i[2],'%H:%M:%S')
     
     #sheet_obj['E6'].value = dt.strptime('08:01:57','%H:%M:%S')
     #sheet_obj['F6'].value = dt.strptime('17:02:54','%H:%M:%S')
-
-    # Close workbook timesheet    
-    obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
 
     '''
     # iterate worksheet months in timesheet
@@ -126,24 +143,6 @@ def main(arguments):
     #print(obj_wb_timesheet.sheetnames)
     #print(sheet_obj.cell(row = 6, column = 1).value)         
         
-    '''
-    if i[0] == str_date_startpoint: 
-        int_startdate_index = obj_list_timelog.index(i)
-        bo_selected = True
-
-    if bo_selected == True:
-        if dt.strptime(i[0],'%d.%m.%Y').weekday() <= 4:
-            print(dt.strptime(i[0],'%d.%m.%Y').strftime('%A'),
-                dt.strptime(i[0],'%d.%m.%Y').weekday(),
-                obj_list_timelog[obj_list_timelog.index(i)])
-    
-    if i[0] == str_date_todaypoint:
-        bo_selected == False
-        int_enddate_index = obj_list_timelog.index(i)
-        print('Startindex: ', int_startdate_index)  
-        print('Endindex: ', int_enddate_index) 
-        break
-    '''
     # Open timesheet excel as pd and select required colums
     '''
     obj_pd_timesheet = pd.read_excel(

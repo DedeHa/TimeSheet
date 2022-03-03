@@ -106,16 +106,16 @@ def main(arguments):
     print('--- Store data ---')
 
     # Open timelog csv and exclude header
-    #obj_wb_AZEsheet = openpyxl.load_workbook('AZE_template.xlsx')
+    obj_wb_AZEsheet = openpyxl.load_workbook('template_timesheet - Kopie.xlsx')
 
     # Iterate through final timelog data
     #j = obj_newtimedata[0]
-    #obj_wb_AZEsheet['B9'].value = i[0]
-    #obj_wb_AZEsheet['C9'].value = i[0]
-    #obj_wb_AZEsheet['D9'].value = i[1]
-    #obj_wb_AZEsheet['E9'].value = i[2]
+    obj_wb_AZEsheet['blanko']['B9'].value = i[0]
+    obj_wb_AZEsheet['blanko']['C9'].value = i[0]
+    obj_wb_AZEsheet['blanko']['D9'].value = i[1]
+    obj_wb_AZEsheet['blanko']['E9'].value = i[2]
 
-    #obj_wb_AZEsheet.save('AZE_template.xlsx')
+    obj_wb_AZEsheet.save('template_timesheet - Kopie.xlsx')
     
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=5).value = dt.strptime(i[1],'%H:%M:%S')
     #sheet.cell(row=int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day, column=6).value = dt.strptime(i[2],'%H:%M:%S')

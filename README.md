@@ -1,6 +1,17 @@
-# TimeSheet
-Definition
-- Requirement Diagram
+### TimeSheetAlgo
+
+# Description
+tbd
+
+## Algo Analysis
+
+# Context
+![Alt](Context_Analysis.drawio.png)
+
+# Use-Cases
+
+## Architecture
+tbd
 - Activity Diagram
 - Structural Diagram
 

@@ -1,6 +1,17 @@
-# TimeSheet
-Definition
-- Requirement Diagram
+### TimeSheetAlgo
+
+# Description
+tbd
+
+## Algo Analysis
+
+# Context
+![Alt](doc/Context_Analysis.drawio.png)
+
+# Use-Cases
+
+## Architecture
+tbd
 - Activity Diagram
 - Structural Diagram
 
@@ -43,4 +54,3 @@ CHANGES :
             - L: Location Change
 
         Example: INF_F|README.md/Split Commit and Branch Template
-

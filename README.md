@@ -1,19 +1,18 @@
 ### TimeSheetAlgo
 
 # Description
-tbd
+The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedata documentation and AZESheet creation.
 
 ## Algo Analysis
 
-# Context
-![Alt](doc/Context_Analysis-01_Analysis.drawio.png)
+# Stakeholder Analysis
+![Alt](doc/Architecture_Models-01_Analysis_bdd.drawio.png)
+
+# Stakeholder Analysis
+![Alt](doc/Architecture_Models-01_Analysis_ibd.drawio.png)
 
 # Use-Cases
-
-## Architecture
-tbd
-- Activity Diagram
-- Structural Diagram
+![Alt](doc/Architecture_Models-01_Analysis_uc.drawio.png)
 
 # Variable Definition
     Variable declaration naming convention
@@ -27,10 +26,6 @@ tbd
         db      |   double       
         bo      |   boolean
 
-CHANGES :
-    REF NO  VERSION DATE    WHO     DETAIL
-            A.00.01 220126  DH      Function CalcHuffman corrected
-
 # Branch Template
     Branch change template naming convention
     <mandatory: Function/Infrastructure Change>|<mandatory: description>
@@ -41,7 +36,7 @@ CHANGES :
 
 # Commit Template
     Commit change template naming convention
-    <mandatory: Branch Change Type>_<mandatory: change_type>|<mandatory: file/feature/description>
+    <mandatory: Branch Change Type>_<mandatory: change_type>|<optional: file></><mandatory: change/feature/description>
         - FCT: Function Change Types
             - A: Architecture Change
             - I: Interface Change

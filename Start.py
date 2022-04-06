@@ -106,7 +106,7 @@ def main(arguments):
     print('--- Store data ---')
 
     # Open timelog csv and exclude header
-    obj_wb_AZEsheet = openpyxl.load_workbook('template_timesheet - Kopie.xlsx')
+    obj_wb_AZEsheet = openpyxl.load_workbook('template_timesheet_test.xlsx')
 
     # Iterate through final timelog data
     #j = obj_newtimedata[0]

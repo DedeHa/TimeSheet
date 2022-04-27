@@ -143,33 +143,10 @@ def main(arguments):
     #print(obj_wb_timesheet.sheetnames)
     #print(sheet_obj.cell(row = 6, column = 1).value)         
         
-    # Open timesheet excel as pd and select required colums
-    '''
-    obj_pd_timesheet = pd.read_excel(
-        'Test.xlsx', 
-        header=3,
-        usecols=['Date', 'Bemerkungen', 'G', 'Kommen', 'Gehen'])
-    
-    data_test = obj_list_timelog[76]
-    obj_pd_timesheet['Date'][1] = dt.strptime(data_test[0],'%d.%m.%Y').date()
-    obj_pd_timesheet['Kommen'][1] = dt.strptime(data_test[1],'%H:%M:%S').time()
-    obj_pd_timesheet['Gehen'][1] = dt.strptime(data_test[2],'%H:%M:%S').time()
-        
-    print(obj_pd_timesheet)
-    '''
     # Print/Extract data for date
     #print('Startdate: '+obj_list_timelog[int_startdate_index][int_position_date])
     #print('Starttime: '+obj_list_timelog[int_startdate_index][int_position_starttime])
     #print('Endtime: '+obj_list_timelog[int_startdate_index][int_position_endtime])
-
-    # Load the xlsx file
-    #excel_data = pd.read_excel('Test.xlsx')
-
-    # Read the values of the file in the dataframe
-    #data = pd.DataFrame(excel_data, columns=['Sales Date', 'Sales Person', 'Amount'])
-    
-    # Print the content
-    #print("The content of the file is:\n", data)
 
     # Endtime for programmexecution measurement
     db_time_programend = time.time()

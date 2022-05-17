@@ -9,8 +9,6 @@ START DATE :    26.01.2022
 
 DESCRIPTION :   Automatic timelog organisation with extract of timelogdata, document in time balance sheet and creation of forwarding documents
 
-PUBLIC FUNCTIONS :
-
 """
 #Configuration--------------------------------------------------------#
 

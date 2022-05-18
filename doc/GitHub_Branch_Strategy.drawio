@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-04-26T17:09:44.935Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36 OPR/85.0.4341.75" etag="AxJ0sSGQP7UjM-DMkCw8" version="17.4.6" type="github">
+<mxfile host="app.diagrams.net" modified="2022-05-18T18:54:30.998Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 OPR/86.0.4363.59" etag="3va93ePV1MIUv6S-yPDA" version="18.0.6" type="github">
   <diagram id="yPxyJZ8AM_hMuL3Unpa9" name="ADC420HAXX Workflow">
     <mxGraphModel dx="1382" dy="764" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
@@ -158,7 +158,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="sqsqJWELRVgOCcyCMx1a-8" value="&lt;div&gt;&lt;span&gt;Feel free to add notes here&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;about the process of branching/freezing develop branch&lt;/span&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;overflow=hidden;fontSize=12;fontStyle=0;fontColor=#000000;" parent="1" vertex="1">
-          <mxGeometry x="280" y="761" width="160" height="80" as="geometry" />
+          <mxGeometry x="296.75" y="681" width="160" height="80" as="geometry" />
         </mxCell>
         <mxCell id="sqsqJWELRVgOCcyCMx1a-15" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;strokeWidth=4;shape=mxgraph.flowchart.on-page_reference;strokeColor=#d6b656;fillColor=#fff2cc;" parent="1" vertex="1">
           <mxGeometry x="546" y="465" width="30" height="30" as="geometry" />
@@ -270,7 +270,7 @@
             <mxPoint x="600" y="431" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="9hBKPDzoitwpIBdzFDQ7-14" value="" style="endArrow=classic;html=1;strokeWidth=1;fontFamily=Courier New;fontColor=#009900;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" parent="1" source="sqsqJWELRVgOCcyCMx1a-8" target="sqsqJWELRVgOCcyCMx1a-55" edge="1">
+        <mxCell id="9hBKPDzoitwpIBdzFDQ7-14" value="" style="endArrow=classic;html=1;strokeWidth=1;fontFamily=Courier New;fontColor=#009900;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="sqsqJWELRVgOCcyCMx1a-8" target="sqsqJWELRVgOCcyCMx1a-55" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="360" y="721" as="sourcePoint" />
             <mxPoint x="310" y="571" as="targetPoint" />
@@ -489,6 +489,15 @@
             <mxPoint x="720" y="240" as="targetPoint" />
             <mxPoint x="255" y="240" as="sourcePoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="nkYXMqLGiCjrcqBgJMtd-1" value="" style="endArrow=classic;html=1;strokeWidth=1;fontFamily=Courier New;fontColor=#009900;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="nkYXMqLGiCjrcqBgJMtd-2" target="sqsqJWELRVgOCcyCMx1a-70">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="200" y="562" as="sourcePoint" />
+            <mxPoint x="132.37" y="421" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nkYXMqLGiCjrcqBgJMtd-2" value="&lt;div&gt;&lt;span&gt;Feel free to add notes here&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span&gt;about the process of merging feature branches.&lt;/span&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;overflow=hidden;fontSize=12;fontStyle=0;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="681" width="160" height="80" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

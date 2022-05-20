@@ -60,14 +60,14 @@ def main(arguments):
     # Store/document timelog data in timesheet
     print('--- Log time data ---')
 
-    # Open timelog csv and exclude header
+    # Open timesheet xlsm with parameters (data_only = No formula, keep_vba = Keep VBA program)
     obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
   
     # Iterate through selected timelog data
     for i in obj_newtimedata:
 
-        # Convert list raw date string into date
-        # row: startindex = 5 + day of the month
+        # Define index for storing data
+        # row: startindex = 5 (Timesheet Header) + day of the month
         int_row_index = int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day
        
         # Iterate worksheet/months in timesheet
@@ -78,8 +78,9 @@ def main(arguments):
             if obj_sel_date.month-1 != obj_wb_timesheet.index(sheet):
                 continue
             else:    
-                # Define required cells for check and documentation
-                # Remark[Bx]; Type[Cx]; Starttime [Ex]; Endtime [Fx]
+                # Define required cells for data storage
+                # Cell definition = [Xy]; [X=column, y=row]
+                # Remark[Bx=2y]; Type[Cx=3y]; Starttime [Ey]; Endtime [Fy]
                 obj_cell_remark = sheet.cell(row=int_row_index, column=2)      
                 obj_cell_type = sheet.cell(row=int_row_index, column=3)
                 obj_cell_starttime = sheet.cell(row=int_row_index, column=5)    

@@ -33,13 +33,13 @@ def main(arguments):
     db_time_programstart = time.time()
     
     # Test variables
-    str_date_startpoint = '02.06.2020'
-    str_date_todaypoint = '05.06.2020'
+    str_date_startpoint = '25.05.2020'
+    str_date_endpoint = '05.06.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
-    obj_date_todaypoint = dt.strptime(str_date_todaypoint, '%d.%m.%Y')
+    obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
         
     # Determine date of today
-    print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
+    # print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
     
     # Open timelog csv and exclude header
     with open("timelog.csv") as file_csv_timelog:
@@ -54,7 +54,7 @@ def main(arguments):
         obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
                 
         # Identify start date in list, check working day and define start index
-        if obj_sel_date >= obj_date_startpoint and obj_sel_date.weekday() <= 4:        
+        if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint and obj_sel_date.weekday() <= 4:        
             obj_newtimedata.extend([i])
              
     # Store/document timelog data in timesheet
@@ -69,13 +69,17 @@ def main(arguments):
         # Define index for storing data
         # row: startindex = 5 (Timesheet Header) + day of the month
         int_row_index = int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day
-       
+        
+        # Shift variable index from 1 to 0
+        # month: selected_month(index_0) = selected_date.month(index_1) - 1
+        int_sel_month = dt.strptime(i[0],'%d.%m.%Y').month-1
+
         # Iterate worksheet/months in timesheet
         for sheet in obj_wb_timesheet.worksheets[0:12]:
             
             # Identify worksheet/month for selected timelog data
-            # month: worksheet_index - 1
-            if obj_sel_date.month-1 != obj_wb_timesheet.index(sheet):
+            # month: selected_month  - 1
+            if int_sel_month != obj_wb_timesheet.index(sheet):
                 continue
             else:    
                 # Define required cells for data storage

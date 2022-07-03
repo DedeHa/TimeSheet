@@ -32,18 +32,48 @@ def main(arguments):
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()
     
-    # Test variables
-    str_date_startpoint = '01.01.2020'
-    str_date_endpoint = '10.06.2020'
-    obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
-    obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+    # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
+    
+    # Define default Start-/End Date and identify/find last documented timedata
+    # Iterate through timesheet months 
+    for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
+        # Iterrate through timesheet month dates
+        for i in range(int_row_startindex + 30, int_row_startindex, -1):
+            # Check if cell value is empty and stop iteration
+            if sheet.cell(row=i, column=5).value != None:
+                break
         
+        # Check if cell value is empty and stop iteration
+        if sheet.cell(row=i, column=5).value != None:
+            
+            # Document previous date
+            # Define each previous date attributes (Year, Month, Day)
+            # Derive year from default value in Januar Sheet
+            int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
+            # Derive month from selected sheet
+            int_month_prevvalue = obj_wb_timesheet.index(sheet)
+            # Derive day from row in sheet
+            int_day_prevvalue = i - int_row_startindex
+            
+            # Assemble previous date attributes 
+            obj_date_prevvalue = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
+                
+            print(obj_date_prevvalue)
+            break
+    
+    str_date_startpoint = '01.01.2020'
+    obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
+        
+    str_date_endpoint = '03.06.2020'
+    obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+
     # Determine date of today
     # print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
     
     # Open timelog csv and exclude header
-    with open("timelog.csv") as file_csv_timelog:
-        obj_list_timelog = list(csv.reader(file_csv_timelog))
+    with open("timelog.csv") as fil_csv_timelog:
+        obj_list_timelog = list(csv.reader(fil_csv_timelog))
         obj_list_timelog.pop(0)
 
     # Determine/evaluate and select timeframe from timelog
@@ -60,8 +90,9 @@ def main(arguments):
     # Store/document timelog data in timesheet
     print('--- Log time data ---')
 
-    # Open timesheet xlsm with parameters (data_only = No formula, keep_vba = Keep VBA program)
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
+    # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+    # Opened already 
+    #obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
   
     # Iterate through selected timelog data
     for i in obj_newtimedata:
@@ -78,7 +109,7 @@ def main(arguments):
         for sheet in obj_wb_timesheet.worksheets[0:12]:
             
             # Identify worksheet/month for selected timelog data
-            # month: selected_month  - 1
+            # month: selected_month  
             if int_sel_month != obj_wb_timesheet.index(sheet):
                 continue
             else:    
@@ -101,10 +132,16 @@ def main(arguments):
                     
                     # Store timelog data in timesheet for "Gehen"
                     obj_cell_endtime.value = i[2]
-  
+
     # Close workbook timesheet    
     obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
     
+    '''
+    with open('lastdate.txt', 'w') as fil_txt_lastvalue:
+        fil_txt_lastvalue.write(i[0])
+        fil_txt_lastvalue.close()
+    '''
+
     # Store/document data SAP-Sheet
     print('--- Store data ---')
 

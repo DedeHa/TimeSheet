@@ -29,6 +29,33 @@ obj_newtimedata = []
 #EndConfiguration-----------------------------------------------------#
 
 def main(arguments):
+    
+    # fct_req_algo_para
+    # Request startdate algo parameter input
+    for i in range(3, 0, -1):
+        str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+
+        try:
+            obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
+            print("Startdate: ", obj_date_startpoint.date())
+            break
+        except:
+            print("That is not a date. Remaining Attemps: ", i)
+            print("Try again or default values will be used ")
+
+    # Request enddate algo parameter input
+    for i in range(3, 0, -1):
+        str_date_endpoint = input("Please enter the Enddate <dd.mm.yyyy>: ")
+
+        try:
+            obj_date_endpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
+            print("Startdate: ", obj_date_endpoint.date())
+            break
+        except:
+            print("That is not a date. Remaining Attemps: ", i)
+            print("Try again or default values will be used ")
+
+    
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()
     
@@ -52,7 +79,7 @@ def main(arguments):
             # Derive year from default value in Januar Sheet
             int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
             # Derive month from selected sheet
-            int_month_prevvalue = obj_wb_timesheet.index(sheet)
+            int_month_prevvalue = obj_wb_timesheet.index(sheet) + 1
             # Derive day from row in sheet
             int_day_prevvalue = i - int_row_startindex
             

@@ -25,11 +25,13 @@ int_position_endtime = 2
 int_row_startindex = 4
 
 obj_newtimedata = []
+str_wb_timesheet = '2020_ADCU_Dennis_Hartel.xlsm'
 
 #EndConfiguration-----------------------------------------------------#
 
 def main(arguments):
     
+    '''
     # fct_req_algo_para
     # Request startdate algo parameter input
     for i in range(3, 0, -1):
@@ -54,14 +56,12 @@ def main(arguments):
         except:
             print("That is not a date. Remaining Attemps: ", i)
             print("Try again or default values will be used ")
-
+    '''
     
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()
-    
-    # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
-    
+       
+    '''
     # Define default Start-/End Date and identify/find last documented timedata
     # Iterate through timesheet months 
     for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
@@ -88,11 +88,12 @@ def main(arguments):
                 
             print(obj_date_prevvalue)
             break
-    
-    str_date_startpoint = '01.01.2020'
+    '''
+
+    str_date_startpoint = '01.10.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
         
-    str_date_endpoint = '03.06.2020'
+    str_date_endpoint = '30.10.2020'
     obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
 
     # Determine date of today
@@ -118,8 +119,7 @@ def main(arguments):
     print('--- Log time data ---')
 
     # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-    # Opened already 
-    #obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
+    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
   
     # Iterate through selected timelog data
     for i in obj_newtimedata:
@@ -150,8 +150,6 @@ def main(arguments):
                 
                 # Check for national holiday, sick - k and flextime - g
                 if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
-                    # Remove list items for not required times
-                    obj_newtimedata.remove(i)
                     continue
                 else:                
                     # Store timelog data in timesheet for "Kommen"
@@ -161,14 +159,9 @@ def main(arguments):
                     obj_cell_endtime.value = i[2]
 
     # Close workbook timesheet    
-    obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
-    
-    '''
-    with open('lastdate.txt', 'w') as fil_txt_lastvalue:
-        fil_txt_lastvalue.write(i[0])
-        fil_txt_lastvalue.close()
-    '''
+    obj_wb_timesheet.save(str_wb_timesheet)
 
+    '''
     # Store/document data SAP-Sheet
     print('--- Store data ---')
 
@@ -183,7 +176,8 @@ def main(arguments):
     obj_wb_AZEsheet['blanko']['E9'].value = i[2]
 
     obj_wb_AZEsheet.save('template_timesheet - Kopie.xlsx')
-    
+    '''
+
     # Endtime for programmexecution measurement
     db_time_programend = time.time()
     print(db_time_programend - db_time_programstart)

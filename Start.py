@@ -90,10 +90,10 @@ def main(arguments):
             break
     '''
 
-    str_date_startpoint = '01.10.2020'
+    str_date_startpoint = '01.11.2020'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
         
-    str_date_endpoint = '30.10.2020'
+    str_date_endpoint = '30.11.2020'
     obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
 
     # Determine date of today
@@ -112,7 +112,7 @@ def main(arguments):
         obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
                 
         # Identify start date in list, check working day and define start index
-        if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint and obj_sel_date.weekday() <= 4:        
+        if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint: #and obj_sel_date.weekday() <= 4:        
             obj_newtimedata.extend([i])
              
     # Store/document timelog data in timesheet

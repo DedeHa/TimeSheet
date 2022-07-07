@@ -25,7 +25,7 @@ int_position_endtime = 2
 int_row_startindex = 4
 
 obj_newtimedata = []
-str_wb_timesheet = '2020_ADCU_Dennis_Hartel.xlsm'
+str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
 
 #EndConfiguration-----------------------------------------------------#
 
@@ -90,10 +90,10 @@ def main(arguments):
             break
     '''
 
-    str_date_startpoint = '01.11.2020'
+    str_date_startpoint = '01.01.2022'
     obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
         
-    str_date_endpoint = '30.11.2020'
+    str_date_endpoint = '30.01.2022'
     obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
 
     # Determine date of today
@@ -119,7 +119,7 @@ def main(arguments):
     print('--- Log time data ---')
 
     # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
+    obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
   
     # Iterate through selected timelog data
     for i in obj_newtimedata:

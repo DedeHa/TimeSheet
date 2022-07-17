@@ -25,82 +25,86 @@ int_position_endtime = 2
 int_row_startindex = 4
 
 obj_newtimedata = []
+str_csv_timelog = 'timelog.csv'
 str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
 
 #EndConfiguration-----------------------------------------------------#
 
 def main(arguments):
     
-    '''
-    # fct_req_algo_para
-    # Request startdate algo parameter input
-    for i in range(3, 0, -1):
-        str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+    # fct_check_pre_requisit
+    # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+    obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
 
+    # fct_req_algo_para - Request startdate algo parameter input
+    # Request startdate with three attemps or derive detfault data
+    for i in range(2, -1, -1):
+        str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+       
+        # Check       
         try:
             obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
             print("Startdate: ", obj_date_startpoint.date())
             break
         except:
-            print("That is not a date. Remaining Attemps: ", i)
-            print("Try again or default values will be used ")
-
-    # Request enddate algo parameter input
-    for i in range(3, 0, -1):
-        str_date_endpoint = input("Please enter the Enddate <dd.mm.yyyy>: ")
-
-        try:
-            obj_date_endpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
-            print("Startdate: ", obj_date_endpoint.date())
-            break
-        except:
-            print("That is not a date. Remaining Attemps: ", i)
-            print("Try again or default values will be used ")
-    '''
-    
-    # Starttime for programmexecution measurement
-    db_time_programstart = time.time()
-       
-    '''
-    # Define default Start-/End Date and identify/find last documented timedata
-    # Iterate through timesheet months 
-    for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
-        # Iterrate through timesheet month dates
-        for i in range(int_row_startindex + 30, int_row_startindex, -1):
+            print("That is not a date. Try again. Remaining Attemps: ", i)
+         
+    # Define default start date and identify/find last documented timedata
+    else:
+        # Iterate through timesheet months 
+        for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
+            # Iterrate through timesheet month dates
+            for i in range(int_row_startindex + 30, int_row_startindex, -1):
+                # Check if cell value is empty and stop iteration
+                if sheet.cell(row=i, column=5).value != None:
+                    break
+            
             # Check if cell value is empty and stop iteration
             if sheet.cell(row=i, column=5).value != None:
-                break
-        
-        # Check if cell value is empty and stop iteration
-        if sheet.cell(row=i, column=5).value != None:
-            
-            # Document previous date
-            # Define each previous date attributes (Year, Month, Day)
-            # Derive year from default value in Januar Sheet
-            int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
-            # Derive month from selected sheet
-            int_month_prevvalue = obj_wb_timesheet.index(sheet) + 1
-            # Derive day from row in sheet
-            int_day_prevvalue = i - int_row_startindex
-            
-            # Assemble previous date attributes 
-            obj_date_prevvalue = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
                 
-            print(obj_date_prevvalue)
-            break
-    '''
+                # Document previous date
+                # Define each previous date attributes (Year, Month, Day)
+                # Derive year from default value in Januar Sheet
+                int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
+                # Derive month from selected sheet
+                int_month_prevvalue = obj_wb_timesheet.index(sheet) + 1
+                # Derive day from row in sheet
+                int_day_prevvalue = i - int_row_startindex
+                
+                # Assemble previous date attributes 
+                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
+                    
+                print("Default date identified:", obj_date_startpoint.date())
+                break
 
-    str_date_startpoint = '01.01.2022'
-    obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
+    # Request enddate with three attemps or derive detfault data
+    for i in range(2, -1, -1):
+        str_date_endpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+       
+        # Check       
+        try:
+            obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
+            print("Enddate: ", obj_date_endpoint.date())
+            break
+        except:
+            print("That is not a date. Try again. Remaining Attemps: ", i)
+    
+    # Define default end date and identify/find last documented timedata
+    else:
+        obj_date_endpoint = dt.now() - td(1)
+        print("Default date identified:", obj_date_endpoint.date())
         
-    str_date_endpoint = '30.01.2022'
-    obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+        #str_date_endpoint = '01.06.2022'
+        #obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+
+    # Starttime for programmexecution measurement
+    db_time_programstart = time.time()  
 
     # Determine date of today
     # print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
     
     # Open timelog csv and exclude header
-    with open("timelog.csv") as fil_csv_timelog:
+    with open(str_csv_timelog) as fil_csv_timelog:
         obj_list_timelog = list(csv.reader(fil_csv_timelog))
         obj_list_timelog.pop(0)
 
@@ -117,10 +121,7 @@ def main(arguments):
              
     # Store/document timelog data in timesheet
     print('--- Log time data ---')
-
-    # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-    obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
-  
+ 
     # Iterate through selected timelog data
     for i in obj_newtimedata:
 

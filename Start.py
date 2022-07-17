@@ -31,10 +31,25 @@ str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
 #EndConfiguration-----------------------------------------------------#
 
 def main(arguments):
-    
+
+
     # fct_check_pre_requisit
-    # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-    obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
+    # Check Timelog, TimeSheet and AZE-Template
+    try:
+        # Open timelog csv and exclude header
+        with open(str_csv_timelog) as fil_csv_timelog:
+            obj_list_timelog = list(csv.reader(fil_csv_timelog))
+            obj_list_timelog.pop(0)
+    except:
+        print("No Timelog File found. TimeSheetAlgo will be cancaled")
+        exit()
+
+    try:  
+        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+        obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
+    except:
+        print("No TimeSheet File found. TimeSheetAlgo will be cancaled")
+        exit()
 
     # fct_req_algo_para - Request startdate algo parameter input
     # Request startdate with three attemps or derive detfault data
@@ -99,14 +114,6 @@ def main(arguments):
 
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()  
-
-    # Determine date of today
-    # print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
-    
-    # Open timelog csv and exclude header
-    with open(str_csv_timelog) as fil_csv_timelog:
-        obj_list_timelog = list(csv.reader(fil_csv_timelog))
-        obj_list_timelog.pop(0)
 
     # Determine/evaluate and select timeframe from timelog
     print('--- Selected dates ---')

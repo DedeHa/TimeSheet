@@ -25,7 +25,7 @@ int_position_endtime = 2
 int_row_startindex = 4
 
 obj_newtimedata = []
-str_csv_timelog = 'timelog.csv'
+str_csv_timelog = 'Timealarm/timelog.csv'
 str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
 
 #EndConfiguration-----------------------------------------------------#

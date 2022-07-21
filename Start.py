@@ -25,26 +25,95 @@ int_position_endtime = 2
 int_row_startindex = 4
 
 obj_newtimedata = []
+str_csv_timelog = 'Timealarm/timelog.csv'
+str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
 
 #EndConfiguration-----------------------------------------------------#
 
 def main(arguments):
-    # Starttime for programmexecution measurement
-    db_time_programstart = time.time()
+
+
+    # fct_check_pre_requisit
+    # Check Timelog, TimeSheet and AZE-Template
+    try:
+        # Open timelog csv and exclude header
+        with open(str_csv_timelog) as fil_csv_timelog:
+            obj_list_timelog = list(csv.reader(fil_csv_timelog))
+            obj_list_timelog.pop(0)
+    except:
+        print("No Timelog File found. TimeSheetAlgo will be cancaled")
+        exit()
+
+    try:  
+        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+        obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
+    except:
+        print("No TimeSheet File found. TimeSheetAlgo will be cancaled")
+        exit()
+
+    # fct_req_algo_para - Request startdate algo parameter input
+    # Request startdate with three attemps or derive detfault data
+    for i in range(2, -1, -1):
+        str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+       
+        # Check       
+        try:
+            obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
+            print("Startdate: ", obj_date_startpoint.date())
+            break
+        except:
+            print("That is not a date. Try again. Remaining Attemps: ", i)
+         
+    # Define default start date and identify/find last documented timedata
+    else:
+        # Iterate through timesheet months 
+        for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
+            # Iterrate through timesheet month dates
+            for i in range(int_row_startindex + 30, int_row_startindex, -1):
+                # Check if cell value is empty and stop iteration
+                if sheet.cell(row=i, column=5).value != None:
+                    break
+            
+            # Check if cell value is empty and stop iteration
+            if sheet.cell(row=i, column=5).value != None:
+                
+                # Document previous date
+                # Define each previous date attributes (Year, Month, Day)
+                # Derive year from default value in Januar Sheet
+                int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
+                # Derive month from selected sheet
+                int_month_prevvalue = obj_wb_timesheet.index(sheet) + 1
+                # Derive day from row in sheet
+                int_day_prevvalue = i - int_row_startindex
+                
+                # Assemble previous date attributes 
+                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
+                    
+                print("Default date identified:", obj_date_startpoint.date())
+                break
+
+    # Request enddate with three attemps or derive detfault data
+    for i in range(2, -1, -1):
+        str_date_endpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+       
+        # Check       
+        try:
+            obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
+            print("Enddate: ", obj_date_endpoint.date())
+            break
+        except:
+            print("That is not a date. Try again. Remaining Attemps: ", i)
     
-    # Test variables
-    str_date_startpoint = '01.01.2020'
-    str_date_endpoint = '10.06.2020'
-    obj_date_startpoint = dt.strptime(str_date_startpoint, '%d.%m.%Y')
-    obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+    # Define default end date and identify/find last documented timedata
+    else:
+        obj_date_endpoint = dt.now() - td(1)
+        print("Default date identified:", obj_date_endpoint.date())
         
-    # Determine date of today
-    # print(dt.strptime(str_date_startpoint, '%d.%m.%Y'))
-    
-    # Open timelog csv and exclude header
-    with open("timelog.csv") as file_csv_timelog:
-        obj_list_timelog = list(csv.reader(file_csv_timelog))
-        obj_list_timelog.pop(0)
+        #str_date_endpoint = '01.06.2022'
+        #obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+
+    # Starttime for programmexecution measurement
+    db_time_programstart = time.time()  
 
     # Determine/evaluate and select timeframe from timelog
     print('--- Selected dates ---')
@@ -54,15 +123,12 @@ def main(arguments):
         obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
                 
         # Identify start date in list, check working day and define start index
-        if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint and obj_sel_date.weekday() <= 4:        
+        if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint: #and obj_sel_date.weekday() <= 4:        
             obj_newtimedata.extend([i])
              
     # Store/document timelog data in timesheet
     print('--- Log time data ---')
-
-    # Open timesheet xlsm with parameters (data_only = No formula, keep_vba = Keep VBA program)
-    obj_wb_timesheet = openpyxl.load_workbook('2020_ADCU_Dennis_Hartel.xlsm', data_only=False, keep_vba=True)
-  
+ 
     # Iterate through selected timelog data
     for i in obj_newtimedata:
 
@@ -78,7 +144,7 @@ def main(arguments):
         for sheet in obj_wb_timesheet.worksheets[0:12]:
             
             # Identify worksheet/month for selected timelog data
-            # month: selected_month  - 1
+            # month: selected_month  
             if int_sel_month != obj_wb_timesheet.index(sheet):
                 continue
             else:    
@@ -92,8 +158,6 @@ def main(arguments):
                 
                 # Check for national holiday, sick - k and flextime - g
                 if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
-                    # Remove list items for not required times
-                    obj_newtimedata.remove(i)
                     continue
                 else:                
                     # Store timelog data in timesheet for "Kommen"
@@ -101,10 +165,11 @@ def main(arguments):
                     
                     # Store timelog data in timesheet for "Gehen"
                     obj_cell_endtime.value = i[2]
-  
+
     # Close workbook timesheet    
-    obj_wb_timesheet.save('2020_ADCU_Dennis_Hartel.xlsm')
-    
+    obj_wb_timesheet.save(str_wb_timesheet)
+
+    '''
     # Store/document data SAP-Sheet
     print('--- Store data ---')
 
@@ -119,7 +184,8 @@ def main(arguments):
     obj_wb_AZEsheet['blanko']['E9'].value = i[2]
 
     obj_wb_AZEsheet.save('template_timesheet - Kopie.xlsx')
-    
+    '''
+
     # Endtime for programmexecution measurement
     db_time_programend = time.time()
     print(db_time_programend - db_time_programstart)

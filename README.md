@@ -20,6 +20,7 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
 
         type    |    description
         ---------------------------
+        fil     |   file
         obj     |   complex datatype
         str     |   string
         int     |   integer

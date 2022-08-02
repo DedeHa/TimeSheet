@@ -36,19 +36,23 @@ def main(arguments):
     # fct_check_pre_requisit
     # Check Timelog, TimeSheet and AZE-Template
     try:
+        # TRUE
         # Open timelog csv and exclude header
         with open(str_csv_timelog) as fil_csv_timelog:
             obj_list_timelog = list(csv.reader(fil_csv_timelog))
             obj_list_timelog.pop(0)
     except:
-        print("No Timelog File found. TimeSheetAlgo will be cancaled")
+        # FALSE
+        print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
         exit()
 
     try:  
+        # TRUE
         # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
         obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
     except:
-        print("No TimeSheet File found. TimeSheetAlgo will be cancaled")
+        # FALSE
+        print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
         exit()
 
     # fct_req_algo_para - Request startdate algo parameter input
@@ -58,10 +62,12 @@ def main(arguments):
        
         # Check       
         try:
+            # TRUE
             obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
             print("Startdate: ", obj_date_startpoint.date())
             break
         except:
+            # FALSE
             print("That is not a date. Try again. Remaining Attemps: ", i)
          
     # Define default start date and identify/find last documented timedata
@@ -89,28 +95,27 @@ def main(arguments):
                 # Assemble previous date attributes 
                 obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
                     
-                print("Default date identified:", obj_date_startpoint.date())
+                print("Default startdate identified:", obj_date_startpoint.date())
                 break
 
     # Request enddate with three attemps or derive detfault data
     for i in range(2, -1, -1):
-        str_date_endpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+        str_date_endpoint = input("Please enter the Enddate <dd.mm.yyyy>: ")
        
         # Check       
         try:
+            # TRUE
             obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
             print("Enddate: ", obj_date_endpoint.date())
             break
         except:
+            # FALSE
             print("That is not a date. Try again. Remaining Attemps: ", i)
     
     # Define default end date and identify/find last documented timedata
     else:
         obj_date_endpoint = dt.now() - td(1)
-        print("Default date identified:", obj_date_endpoint.date())
-        
-        #str_date_endpoint = '01.06.2022'
-        #obj_date_endpoint = dt.strptime(str_date_endpoint, '%d.%m.%Y')
+        print("Default enddate identified:", obj_date_endpoint.date())
 
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()  

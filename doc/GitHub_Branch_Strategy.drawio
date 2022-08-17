@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2022-05-18T18:54:30.998Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36 OPR/86.0.4363.59" etag="3va93ePV1MIUv6S-yPDA" version="18.0.6" type="github">
+<mxfile host="app.diagrams.net" modified="2022-08-17T07:46:06.357Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36 OPR/89.0.4447.83" etag="eishYK_V2VIUPDKAnbXV" version="20.1.1" type="github">
   <diagram id="yPxyJZ8AM_hMuL3Unpa9" name="ADC420HAXX Workflow">
-    <mxGraphModel dx="1382" dy="764" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="1382" dy="843" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -118,7 +118,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="qi9a73jQlima7Lt8ciYL-26" value="develop/M72.00" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="qi9a73jQlima7Lt8ciYL-26" value="develop/R72.00" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="880" y="230" width="200" height="20" as="geometry" />
         </mxCell>
         <mxCell id="qi9a73jQlima7Lt8ciYL-27" value="develop/M51.00a_V1 (frozen)" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" parent="1" vertex="1">
@@ -196,7 +196,7 @@
             <mxPoint x="896" y="270" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <UserObject label="Use-cases:&lt;br&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;1.New plattform baseline&lt;/span&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;&lt;br&gt;2.Feature Development&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;3.Freeze/New arch./interface baseline&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;&lt;br&gt;4.Bug-Fixes&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;5.Release&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;&lt;br&gt;&lt;/span&gt;" link="https://nvie.com/posts/a-successful-git-branching-model/" id="sqsqJWELRVgOCcyCMx1a-32">
+        <UserObject label="Use-cases:&lt;br&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;1.New plattform baseline&lt;/span&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;&lt;br&gt;2.Feature Development&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;3.Bug-Fixes&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;4.Release&lt;/span&gt;&lt;span style=&quot;font-weight: 400&quot;&gt;&lt;br&gt;&lt;/span&gt;" link="https://nvie.com/posts/a-successful-git-branching-model/" id="sqsqJWELRVgOCcyCMx1a-32">
           <mxCell style="text;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;" parent="1" vertex="1">
             <mxGeometry x="50" y="40" width="427.75" height="120" as="geometry" />
           </mxCell>
@@ -490,13 +490,13 @@
             <mxPoint x="255" y="240" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nkYXMqLGiCjrcqBgJMtd-1" value="" style="endArrow=classic;html=1;strokeWidth=1;fontFamily=Courier New;fontColor=#009900;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="nkYXMqLGiCjrcqBgJMtd-2" target="sqsqJWELRVgOCcyCMx1a-70">
+        <mxCell id="nkYXMqLGiCjrcqBgJMtd-1" value="" style="endArrow=classic;html=1;strokeWidth=1;fontFamily=Courier New;fontColor=#009900;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="nkYXMqLGiCjrcqBgJMtd-2" target="sqsqJWELRVgOCcyCMx1a-70" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="200" y="562" as="sourcePoint" />
             <mxPoint x="132.37" y="421" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nkYXMqLGiCjrcqBgJMtd-2" value="&lt;div&gt;&lt;span&gt;Feel free to add notes here&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span&gt;about the process of merging feature branches.&lt;/span&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;overflow=hidden;fontSize=12;fontStyle=0;fontColor=#000000;" vertex="1" parent="1">
+        <mxCell id="nkYXMqLGiCjrcqBgJMtd-2" value="&lt;div&gt;&lt;span&gt;Feel free to add notes here&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span&gt;about the process of merging feature branches.&lt;/span&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;overflow=hidden;fontSize=12;fontStyle=0;fontColor=#000000;" parent="1" vertex="1">
           <mxGeometry x="40" y="681" width="160" height="80" as="geometry" />
         </mxCell>
       </root>

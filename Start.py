@@ -24,10 +24,9 @@ int_position_starttime = 1
 int_position_endtime = 2
 int_row_startindex = 4
 
-obj_newtimedata = []
-str_csv_timelog = '01_Timealarm/timelog.csv'
 str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
-str_wb_azetemplate = 'template_timesheet_test.xlsx'
+str_csv_timelog = '01_Timealarm/timelog.csv'
+str_wb_azetemplate = '02_AZE_TimeSheetstemplate_timesheet_test.xlsx'
 
 #EndConfiguration-----------------------------------------------------#
 
@@ -55,6 +54,16 @@ def main(arguments):
         # FALSE
         print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
         exit()
+
+    try:  
+        # TRUE
+        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+        obj_wb_timesheet = openpyxl.load_workbook(str_wb_azetemplate, data_only=False, keep_vba=True)
+    except:
+        # FALSE
+        print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
+        exit()
+
 
     # fct_req_algo_para - Request startdate algo parameter input
     # Request startdate with three attemps or derive detfault data

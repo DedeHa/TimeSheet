@@ -18,6 +18,7 @@ import openpyxl
 
 from datetime import datetime as dt
 from datetime import timedelta as td
+from distutils.util import strtobool
 
 int_position_date = 0
 int_position_starttime = 1
@@ -104,9 +105,17 @@ def main(arguments):
                 int_day_prevvalue = i - int_row_startindex
                 
                 # Assemble previous date attributes 
-                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
-                    
+                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue) 
                 print("Default startdate identified:", obj_date_startpoint.date())
+
+                try:  
+                    # TRUE
+                    # Request confirmation of default value            
+                    str_bo_startpointconfirm = strtobool(input("Please confirm: <y/n>: "))
+                except:
+                    # FALSE
+                    print("Failure detected! No confirmation received!")
+                    exit()
                 break
 
     # Request enddate with three attemps or derive detfault data
@@ -127,6 +136,15 @@ def main(arguments):
     else:
         obj_date_endpoint = dt.now() - td(1)
         print("Default enddate identified:", obj_date_endpoint.date())
+
+        try:  
+            # TRUE
+            # Request confirmation of default value            
+            str_bo_enddpointconfirm = strtobool(input("Please confirm: <y/n>: "))
+        except:
+            # FALSE
+            print("Failure detected! No confirmation received!")
+            exit()
 
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()  

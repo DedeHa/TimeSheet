@@ -18,11 +18,12 @@ import openpyxl
 
 from datetime import datetime as dt
 from datetime import timedelta as td
+from distutils.util import strtobool
 
 int_position_date = 0
 int_position_starttime = 1
 int_position_endtime = 2
-int_row_startindex = 4
+int_row_indexoffset = 4
 
 obj_newtimedata = []
 str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
@@ -86,7 +87,7 @@ def main(arguments):
         # Iterate through timesheet months 
         for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
             # Iterrate through timesheet month dates
-            for i in range(int_row_startindex + 30, int_row_startindex, -1):
+            for i in range(int_row_indexoffset + 30, int_row_indexoffset, -1):
                 # Check if cell value is empty and stop iteration
                 if sheet.cell(row=i, column=5).value != None:
                     break
@@ -98,15 +99,23 @@ def main(arguments):
                 # Define each previous date attributes (Year, Month, Day)
                 # Derive year from default value in Januar Sheet
                 int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
-                # Derive month from selected sheet
+                # Derive month from selected sheet, sheet(index 0based + 1
                 int_month_prevvalue = obj_wb_timesheet.index(sheet) + 1
-                # Derive day from row in sheet
-                int_day_prevvalue = i - int_row_startindex
+                # Derive day from row in sheet - row-offset
+                int_day_prevvalue = i - int_row_indexoffset
                 
                 # Assemble previous date attributes 
-                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue)
-                    
+                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue) 
                 print("Default startdate identified:", obj_date_startpoint.date())
+
+                try:  
+                    # TRUE
+                    # Request confirmation of default value            
+                    str_bo_startpointconfirm = strtobool(input("Please confirm: <y/n>: "))
+                except:
+                    # FALSE
+                    print("Failure detected! No confirmation received!")
+                    exit()
                 break
 
     # Request enddate with three attemps or derive detfault data
@@ -128,6 +137,15 @@ def main(arguments):
         obj_date_endpoint = dt.now() - td(1)
         print("Default enddate identified:", obj_date_endpoint.date())
 
+        try:  
+            # TRUE
+            # Request confirmation of default value            
+            str_bo_enddpointconfirm = strtobool(input("Please confirm: <y/n>: "))
+        except:
+            # FALSE
+            print("Failure detected! No confirmation received!")
+            exit()
+
     # Starttime for programmexecution measurement
     db_time_programstart = time.time()  
 
@@ -141,6 +159,11 @@ def main(arguments):
         # Identify start date in list, check working day and define start index
         if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint: #and obj_sel_date.weekday() <= 4:        
             obj_newtimedata.extend([i])
+
+    # Check if any failure/no data received
+    if not obj_newtimedata:
+        print("Failure detected! No data identified!")
+        exit()
              
     # Store/document timelog data in timesheet
     print('--- Log time data ---')
@@ -150,7 +173,7 @@ def main(arguments):
 
         # Define index for storing data
         # row: startindex = Timesheet Header + Day of the Month
-        int_row_index = int_row_startindex + dt.strptime(i[0],'%d.%m.%Y').day
+        int_row_index = int_row_indexoffset + dt.strptime(i[0],'%d.%m.%Y').day
         
         # Shift variable index from 1 to 0
         # month: selected_month(index_0) = selected_date.month(index_1) - 1

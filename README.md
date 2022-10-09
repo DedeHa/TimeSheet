@@ -6,13 +6,13 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
 ## Algo Analysis
 
 ### Stakeholder Analysis
-![Alt](doc/Architecture_Models-01_Analysis_bdd.drawio.png)
+![Alt](00_doc/Architecture_Models-01_Analysis_bdd.drawio.png)
 
 ### Stakeholder Analysis
-![Alt](doc/Architecture_Models-01_Analysis_ibd.drawio.png)
+![Alt](00_doc/Architecture_Models-01_Analysis_ibd.drawio.png)
 
 ### Use-Cases
-![Alt](doc/Architecture_Models-01_Analysis_uc.drawio.png)
+![Alt](00_doc/Architecture_Models-01_Analysis_uc.drawio.png)
 
 ## Variable Definition
     Variable declaration naming convention

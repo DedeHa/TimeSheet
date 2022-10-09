@@ -1,13 +1,13 @@
 """
 TYPE:   !/usr/bin/env python3 
 
-FILENAME :        Start.py             
+FILENAME :        TimeSheetAlgo.py             
 
 AUTHOR :    Dennis Hartel        
 
 START DATE :    26.01.2022
 
-DESCRIPTION :   Automatic timelog organisation with extract of timelogdata, document in time balance sheet and creation of forwarding documents
+DESCRIPTION :   Automatic timelog organisation with extract of timelogdata and document in time balance sheet
 
 """
 #Configuration--------------------------------------------------------#
@@ -32,8 +32,7 @@ str_wb_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
 
 #EndConfiguration-----------------------------------------------------#
 
-def main(arguments):
-
+def main():
 
     # fct_check_pre_requisit
     # Check Timelog, TimeSheet and AZE-Template
@@ -229,5 +228,5 @@ def main(arguments):
     db_time_programend = time.time()
     print(db_time_programend - db_time_programstart)
     
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+if __name__ == "__main__":
+    main()

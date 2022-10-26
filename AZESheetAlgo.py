@@ -20,43 +20,66 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from distutils.util import strtobool
 
-int_position_date = 0
-int_position_starttime = 1
-int_position_endtime = 2
-int_row_indexoffset = 4
 
 obj_newtimedata = []
-str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
-str_csv_timelog = '01_Timealarm/timelog.csv'
-str_wb_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
+
 
 #EndConfiguration-----------------------------------------------------#
 
-def main():
+class algocheck:
+    # Class methods
+    def __init__(self):
+        # Starttime for programmexecution measurement
+        self.programstart = time.time() 
+        self.programend = 0
+    
+    def end(self):
+        self.programend = time.time()
+        return self.programend - self.programstart
 
+class AZESheetAlgo:  
+    # Class attribute
+    int_position_date = 0
+    int_position_starttime = 1
+    int_position_endtime = 2
+    int_row_indexoffset = 4
 
-    # fct_check_pre_requisit
-    # Check Timelog, TimeSheet and AZE-Template
-    try:
+    str_path_timelog = '01_Timealarm/timelog.csv'
+    str_path_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
+    str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
+
+    # Class methods
+    def __init__(self):
+        # Initiate/Check Timelog, TimeSheet and AZE-Template
+        self.timelog = init_timesheet(str_path_timelog)
+        self.timesheet = 0
+        self.azetemplate = 0
+
+    def init_timesheet(self, str_path_timelog):
+        try:
         # TRUE
         # Open timelog csv and exclude header
-        with open(str_csv_timelog) as fil_csv_timelog:
-            obj_list_timelog = list(csv.reader(fil_csv_timelog))
-            obj_list_timelog.pop(0)
-    except:
-        # FALSE
-        print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
-        exit()
+            with open(str_path_timelog) as fil_csv_timelog:
+                obj_list_timelog = list(csv.reader(fil_csv_timelog))
+                obj_list_timelog.pop(0)
+                return obj_list_timelog
+        except:
+            # FALSE
+            print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
+            exit()
 
-    try:  
-        # TRUE
-        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
-    except:
-        # FALSE
-        print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
-        exit()
-
+def main():
+    # Starttime for programmexecution measurement
+    Test = algocheck()
+    
+    # Debugging variable
+    time.sleep(3)
+    
+    # Endtime for programmexecution measurement
+    print(Test.end())
+    
+    
+    '''
     try:  
         # TRUE
         # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
@@ -146,9 +169,6 @@ def main():
             print("Failure detected! No confirmation received!")
             exit()
 
-    # Starttime for programmexecution measurement
-    db_time_programstart = time.time()  
-
     # Determine/evaluate and select timeframe from timelog
     print('--- Selected dates ---')
     for i in obj_list_timelog:
@@ -208,7 +228,7 @@ def main():
     # Close workbook timesheet    
     obj_wb_timesheet.save(str_wb_timesheet)
 
-    '''
+    
     # Store/document data SAP-Sheet
     print('--- Store data ---')
 
@@ -223,11 +243,12 @@ def main():
     obj_wb_AZEsheet['blanko']['E9'].value = i[2]
 
     obj_wb_AZEsheet.save('template_timesheet - Kopie.xlsx')
-    '''
+    
 
     # Endtime for programmexecution measurement
     db_time_programend = time.time()
     print(db_time_programend - db_time_programstart)
+    '''
     
 if __name__ == '__main__':
     main()

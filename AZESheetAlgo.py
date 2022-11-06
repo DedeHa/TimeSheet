@@ -26,19 +26,19 @@ obj_newtimedata = []
 
 #EndConfiguration-----------------------------------------------------#
 
-class algocheck:
+class algo_check:
     # Class methods
     def __init__(self):
         # Starttime for programmexecution measurement
-        self.programstart = time.time() 
-        self.programend = 0
+        self.db_time_programstart = time.time() 
+        self.db_time_programend = 0
     
     def end(self):
-        self.programend = time.time()
-        return self.programend - self.programstart
+        self.db_time_programend = time.time()
+        return self.db_time_programend - self.db_time_programstart
 
-class AZESheetAlgo:  
-    # Class attribute
+class aze_algo:  
+    # class attribute
     int_position_date = 0
     int_position_starttime = 1
     int_position_endtime = 2
@@ -48,48 +48,110 @@ class AZESheetAlgo:
     str_path_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
     str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
 
-    # Class methods
+    # class methods
+    # constructor
     def __init__(self):
-        # Initiate/Check Timelog, TimeSheet and AZE-Template
-        self.timelog = init_timesheet(str_path_timelog)
-        self.timesheet = 0
-        self.azetemplate = 0
+        timelog = 0
+        timesheet = 0
+        azetemplate = 0
+        obj_date_startpoint = 0
+        obj_date_endpoint = 0
 
-    def init_timesheet(self, str_path_timelog):
+    # fct_req_algo_para - Request startdate algo parameter input
+    def fct_req_algo_para(self):
+        # Request startdate with three attemps or derive detfault data
+        for i in range(2, -1, -1):
+            str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+        
+            # Check       
+            try:
+                # TRUE
+                self.obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
+                print("Startdate: ", self.obj_date_startpoint.date())
+                break
+            except:
+                # FALSE
+                print("That is not a date. Try again. Remaining Attemps: ", i)
+
+        # Request enddate with three attemps or derive detfault data
+        for i in range(2, -1, -1):
+            str_date_endpoint = input("Please enter the Enddate <dd.mm.yyyy>: ")
+        
+            # Check       
+            try:
+                # TRUE
+                self.obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
+                print("Enddate: ", self.obj_date_endpoint.date())
+                break
+            except:
+                # FALSE
+                print("That is not a date. Try again. Remaining Attemps: ", i)
+        
+    # fct_che_pre_req - Check pre-requisits and setup files/documents
+    def fct_che_pre_req(self):
+        # Initiate/Check Timelog
         try:
         # TRUE
         # Open timelog csv and exclude header
-            with open(str_path_timelog) as fil_csv_timelog:
-                obj_list_timelog = list(csv.reader(fil_csv_timelog))
+            with open(self.str_path_timelog) as obj_csv_timelog:
+                obj_list_timelog = list(csv.reader(obj_csv_timelog))
                 obj_list_timelog.pop(0)
-                return obj_list_timelog
+                self.timelog = obj_list_timelog
         except:
             # FALSE
             print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
             exit()
 
+        # Initiate/Check TimeSheet
+        try:  
+            # TRUE
+            # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+            self.timesheet = openpyxl.load_workbook(self.str_path_timesheet, data_only=False, keep_vba=True)
+        except:
+            # FALSE
+            print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
+            exit()
+
+         # Initiate/Check AZE-Template
+        try:  
+            # TRUE
+            # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+            self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate, data_only=False, keep_vba=True) 
+        except:
+            # FALSE
+            print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
+            exit()
+        
+    # destructor
+    #def __del__(self):
+    #   self.timesheet.save(self.str_path_timesheet)
+
+    # fct_sel_timelog - Determine/evaluate and select timeframe from timelog
+    
+    # fct_store_data - Store/document timelog data in timesheet
+
+
 def main():
+    
+    algo1 = aze_algo()
+    algo1.fct_req_algo_para()
+
     # Starttime for programmexecution measurement
-    Test = algocheck()
+    Test = algo_check()
     
     # Debugging variable
     time.sleep(3)
     
+    algo1.fct_che_pre_req()
+    #del aze_algo1
+    #aze_algo1.init_timesheet()
+
     # Endtime for programmexecution measurement
     print(Test.end())
     
     
     '''
-    try:  
-        # TRUE
-        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        obj_wb_azetemplate = openpyxl.load_workbook(str_wb_azetemplate, data_only=False, keep_vba=True)
-    except:
-        # FALSE
-        print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
-        exit()
-
-
+   
     # fct_req_algo_para - Request startdate algo parameter input
     # Request startdate with three attemps or derive detfault data
     for i in range(2, -1, -1):
@@ -169,7 +231,7 @@ def main():
             print("Failure detected! No confirmation received!")
             exit()
 
-    # Determine/evaluate and select timeframe from timelog
+    # fct_sel_timelog - Determine/evaluate and select timeframe from timelog
     print('--- Selected dates ---')
     for i in obj_list_timelog:
 
@@ -185,7 +247,7 @@ def main():
         print("Failure detected! No data identified!")
         exit()
              
-    # Store/document timelog data in timesheet
+    # fct_store_data - Store/document timelog data in timesheet
     print('--- Log time data ---')
  
     # Iterate through selected timelog data
@@ -246,8 +308,8 @@ def main():
     
 
     # Endtime for programmexecution measurement
-    db_time_programend = time.time()
-    print(db_time_programend - db_time_programstart)
+    db_time_db_time_programend = time.time()
+    print(db_time_db_time_programend - db_time_db_time_programstart)
     '''
     
 if __name__ == '__main__':

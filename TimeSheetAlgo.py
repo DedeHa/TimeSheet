@@ -15,6 +15,7 @@ DESCRIPTION :   Automatic timelog organisation with extract of timelogdata and d
 import sys, os, time
 import csv, argparse
 import openpyxl
+import AZESheetAlgo
 
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -146,6 +147,7 @@ def main():
             exit()
 
     # Starttime for programmexecution measurement
+    algo_check = AZESheetAlgo.algo_check()
     db_time_programstart = time.time()  
 
     # Determine/evaluate and select timeframe from timelog
@@ -227,6 +229,7 @@ def main():
     # Endtime for programmexecution measurement
     db_time_programend = time.time()
     print(db_time_programend - db_time_programstart)
+    print(algo_check.end())
     
 if __name__ == "__main__":
     main()

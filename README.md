@@ -3,17 +3,6 @@
 ## Description
 The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedata documentation and AZESheet creation.
 
-## Algo Analysis
-
-### Stakeholder Analysis
-![Alt](00_doc/Architecture_Models-01_Analysis_bdd.drawio.png)
-
-### Stakeholder Analysis
-![Alt](00_doc/Architecture_Models-01_Analysis_ibd.drawio.png)
-
-### Use-Cases
-![Alt](00_doc/Architecture_Models-01_Analysis_uc.drawio.png)
-
 ## Variable Definition
     Variable declaration naming convention
     <mandatory: type>_<optional: unit><mandatory: variable_name> - e.g. str_date_startpoint
@@ -50,3 +39,19 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
             - L: Location Change
 
         Example: INF_F|README.md/Split Commit and Branch Template
+
+## Algo Analysis
+
+### Stakeholder Analysis
+![Alt](00_doc/Architecture_Models-01_Analysis_bdd.drawio.png)
+
+### Stakeholder Analysis
+![Alt](00_doc/Architecture_Models-01_Analysis_ibd.drawio.png)
+
+### Use-Cases
+![Alt](00_doc/Architecture_Models-01_Analysis_uc.drawio.png)
+
+### Activity Diagram
+![Alt](00_doc/Architecture_Models-03_Architecture_act_detailed.drawio.png)
+
+

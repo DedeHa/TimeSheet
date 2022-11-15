@@ -56,9 +56,14 @@ class aze_algo:
         azetemplate = 0
         obj_date_startpoint = 0
         obj_date_endpoint = 0
+        
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # fct_req_algo_para - Request date algo parameter input
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    # fct_req_algo_para - Request startdate algo parameter input
     def fct_req_algo_para(self):
+        print('--- Request Date Input ---')
+
         # Request startdate with three attemps or derive detfault data
         for i in range(2, -1, -1):
             str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
@@ -87,8 +92,13 @@ class aze_algo:
                 # FALSE
                 print("That is not a date. Try again. Remaining Attemps: ", i)
         
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_che_pre_req - Check pre-requisits and setup files/documents
+    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
     def fct_che_pre_req(self):
+        print('--- Check Pre-Requisits ---')
+        
         # Initiate/Check Timelog
         try:
         # TRUE
@@ -121,6 +131,32 @@ class aze_algo:
             # FALSE
             print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
             exit()
+            
+    # +++++++++++++++++++++++++++++++++++++++++
+    # fct_sel_timelog - Select date information
+    #++++++++++++++++++++++++++++++++++++++++++
+
+    def fct_sel_timelog(self):     
+        print('--- Selected dates ---')
+        
+        obj_sel_data = []
+
+        # Determine/evaluate and select timeframe from timelog
+        for i in self.timelog:
+
+            # Convert list raw date string into date
+            obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
+                    
+            # Identify start date in list, check working day and define start index
+            if obj_sel_date >= self.obj_date_startpoint and obj_sel_date <= self.obj_date_endpoint: #and obj_sel_date.weekday() <= 4:        
+                obj_sel_data.extend([i])
+        
+        self.timelog_sel = obj_sel_data
+
+        # Check if any failure/no data received
+        if not self.timelog_sel:
+            print("Failure detected! No data identified!")
+            exit()
         
     # destructor
     #def __del__(self):
@@ -129,7 +165,6 @@ class aze_algo:
     # fct_sel_timelog - Determine/evaluate and select timeframe from timelog
     
     # fct_store_data - Store/document timelog data in timesheet
-
 
 def main():
     
@@ -140,9 +175,9 @@ def main():
     Test = algo_check()
     
     # Debugging variable
-    time.sleep(3)
     
     algo1.fct_che_pre_req()
+    algo1.fct_sel_timelog()
     #del aze_algo1
     #aze_algo1.init_timesheet()
 

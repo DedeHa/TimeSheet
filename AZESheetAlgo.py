@@ -47,7 +47,7 @@ class aze_algo:
     str_path_timelog = '01_Timealarm/timelog.csv'
     str_path_timesheet = '01_Timealarm/2022_ADCU_Dennis_Hartel.xlsm'
     str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
-    str_path_azesheet = '02_AZE_TimeSheets/timesheet.xlsx'
+    str_path_azesheet = '02_AZE_TimeSheets/'
 
     # class methods
     # constructor
@@ -175,13 +175,9 @@ class aze_algo:
     def fct_create_aze_sheet(self):     
         print('--- Store selected data ---')
         
-        # Open timelog csv and exclude header
-        obj_wb_AZEsheet = self.azetemplate
-        obj_newtimedata = self.timelog_sel
-
-        #sheet = obj_wb_AZEsheet.active
-        row = 0    
-
+        # Open timelog csv 
+        obj_newtimedata = self.timelog_sel  
+        
         # Define required cells for data storage
         # Cell definition = [Xy]; [X=column, y=row]
         # Cols = Date1[By]; Date2[Cy]; Starttime[Dy]; Endtime [Ey]
@@ -189,41 +185,59 @@ class aze_algo:
         obj_list_datacells = [
             ['B9', 'C9', 'D9', 'E9'],
             ['B13', 'C13', 'D13', 'E13'],
-            ['B17', 'C17', 'D17', 'E17'],
-            ['B21', 'C21', 'D21', 'E21'],
-            ['B24', 'C24', 'D24', 'E24']        
+            ['B17', 'C17', 'D17', 'E17']
+            #,['B21', 'C21', 'D21', 'E21'],
+            #['B24', 'C24', 'D24', 'E24']        
         ]
+        
+        # Define initial storage index 
+        j = 0
 
-        print(obj_list_datacells, obj_list_datacells[0], obj_list_datacells[1], obj_list_datacells[2], obj_list_datacells[3])
-    
         # Iterate through selected timelog data
         for i in obj_newtimedata:
 
-         
-            # Iterate through final timelog data
-            obj_wb_AZEsheet['blanko']['B9'].value = i[0]
-            obj_wb_AZEsheet['blanko']['C9'].value = i[0]
-            obj_wb_AZEsheet['blanko']['D9'].value = i[1]
-            obj_wb_AZEsheet['blanko']['E9'].value = i[2]
+            # Check 
+            if j == 0:
+                
+                # Data storage initialized/resetted
+                # Re/-open azesheet xlsx
+                obj_wb_AZEsheet = self.azetemplate
+                
+                # Check if data fields are empty/none
+                if obj_wb_AZEsheet['blanko'][obj_list_datacells[0][0]].value != None:
+                    
+                    # Reset values in AZEsheet 
+                    for k in range(len(obj_list_datacells)):
+                        
+                        obj_wb_AZEsheet['blanko'][obj_list_datacells[k][0]].value = None
+                        obj_wb_AZEsheet['blanko'][obj_list_datacells[k][1]].value = None
+                        obj_wb_AZEsheet['blanko'][obj_list_datacells[k][2]].value = None
+                        obj_wb_AZEsheet['blanko'][obj_list_datacells[k][3]].value = None
+                
+                
+            # Document timelog data set
+            obj_wb_AZEsheet['blanko'][obj_list_datacells[j][0]].value = i[0]
+            obj_wb_AZEsheet['blanko'][obj_list_datacells[j][1]].value = i[0]
+            obj_wb_AZEsheet['blanko'][obj_list_datacells[j][2]].value = i[1]
+            obj_wb_AZEsheet['blanko'][obj_list_datacells[j][3]].value = i[2]
+        
+            # Increment data storage index
+            j+=1
 
-        
-        # Define required cells for data storage
-        # Cell definition = [Xy]; [X=column, y=row]
-        # Remark[Bx=2y]; Type[Cx=3y]; Starttime [Ey]; Endtime [Fy]
-        '''
-        obj_cell_date1 = sheet.cell(row=9, column=2)      
-        obj_cell_date2 = sheet.cell(row=9, column=3)
-        obj_cell_starttime = sheet.cell(row=9, column=4)    
-        obj_cell_endtime = sheet.cell(row=9, column=5)
-        
-        obj_cell_date1.value = i[0]    
-        obj_cell_date2.value = i[0] 
-        obj_cell_starttime.value = i[1]   
-        obj_cell_endtime.value = i[2]
-        '''
-            
-        obj_wb_AZEsheet.save(self.str_path_azesheet)
-  
+            # Check if 
+            if j >= len(obj_list_datacells): 
+                # Save full AZEsheet
+                obj_wb_AZEsheet.save(self.str_path_azesheet + '00_full_timesheet.xlsx')
+                
+                # Reset row data storage index and azesheet xlsx
+                del obj_wb_AZEsheet
+                j = 0
+
+        # Check if remaing data set is stored
+        if j != 0:
+            # Save remaining AZEsheet
+            obj_wb_AZEsheet.save(self.str_path_azesheet + '00_remain_timesheet.xlsx')
+    
 def main():
     
     algo1 = aze_algo()

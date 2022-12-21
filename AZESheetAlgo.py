@@ -207,7 +207,7 @@ class aze_algo:
                 int_sel_week = dt.strptime(i[0],'%d.%m.%Y').isocalendar()[1]
 
                 # Define startdate of first timeslot of data set
-                str_date_firstdate = dt.strptime(i[0],'%d.%m.%Y').strftime("%d%m%Y")
+                str_date_firstdate = dt.strptime(i[0],'%d.%m.%Y').strftime("%d%m")
                 
                 # Check if data fields are empty/none
                 if obj_wb_AZEsheet['blanko'][obj_list_datacells[0][0]].value != None:
@@ -233,13 +233,15 @@ class aze_algo:
             # Check if 
             if j >= len(obj_list_datacells): 
                 
+                # Define startdate of first timeslot of data set
+                str_date_enddate = dt.strptime(i[0],'%d.%m.%Y').strftime("%d%m")
+
                 # Define naming convention
                 # <creation_date>_<calenderweek>_GL_<startenddate>_Dennis_Hartel
-                str_name_AZEsheet = dt.today().date().strftime("%Y%m%d") + '_CW' + str(int_sel_week) + '_GL_' + str_date_firstdate
-                print(str_name_AZEsheet)
-
+                str_name_AZEsheet = dt.today().date().strftime("%Y%m%d") + '_CW' + str(int_sel_week) + '_MW_' + str_date_firstdate + str_date_enddate
+               
                 # Save full AZEsheet acc. naming convention
-                obj_wb_AZEsheet.save(self.str_path_azesheet + '00_full_timesheet.xlsx')
+                obj_wb_AZEsheet.save(self.str_path_azesheet + str_name_AZEsheet + '_Dennis_Hartel.xlsx')
                 
                 # Reset row data storage index and azesheet xlsx
                 del obj_wb_AZEsheet
@@ -247,8 +249,16 @@ class aze_algo:
 
         # Check if remaing data set is stored
         if j != 0:
+            
+            # Define startdate of first timeslot of data set
+            str_date_enddate = dt.strptime(i[0],'%d.%m.%Y').strftime("%d%m")
+
+            # Define naming convention
+            # <creation_date>_<calenderweek>_GL_<startenddate>_Dennis_Hartel
+            str_name_AZEsheet = dt.today().date().strftime("%Y%m%d") + '_CW' + str(int_sel_week) + '_MW_' + str_date_firstdate + str_date_enddate
+        
             # Save remaining AZEsheet
-            obj_wb_AZEsheet.save(self.str_path_azesheet + '00_remain_timesheet.xlsx')
+            obj_wb_AZEsheet.save(self.str_path_azesheet + str_name_AZEsheet + '_Dennis_Hartel.xlsx')
     
 def main():
     

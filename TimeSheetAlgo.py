@@ -28,7 +28,7 @@ int_row_indexoffset = 4
 
 obj_newtimedata = []
 str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
-str_csv_timelog = '01_Timealarm/timelog.csv'
+str_csv_timelog = '01_Timealarm/FDTech_timelog.csv'
 str_wb_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
 
 #EndConfiguration-----------------------------------------------------#

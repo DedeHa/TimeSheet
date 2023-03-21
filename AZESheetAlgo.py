@@ -44,7 +44,7 @@ class aze_algo:
     int_position_endtime = 2
     int_row_indexoffset = 2
 
-    str_path_timelog = '01_Timealarm/timelog.csv'
+    str_path_timelog = '01_Timealarm/FDTech_timelog.csv'
     str_path_timesheet = '01_Timealarm/2022_ADCU_Dennis_Hartel.xlsm'
     str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
     str_path_azesheet = '02_AZE_TimeSheets/'

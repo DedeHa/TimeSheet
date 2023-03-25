@@ -27,9 +27,9 @@ int_position_endtime = 2
 int_row_indexoffset = 4
 
 obj_newtimedata = []
-str_wb_timesheet = '2022_ADCU_Dennis_Hartel.xlsm'
 str_csv_timelog = '01_Timealarm/FDTech_timelog.csv'
-str_wb_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
+str_path_timesheet = '01_Timealarm/2023_FDTech_Dennis_Hartel.xlsm'
+str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
 
 #EndConfiguration-----------------------------------------------------#
 
@@ -51,7 +51,7 @@ def main():
     try:  
         # TRUE
         # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        obj_wb_timesheet = openpyxl.load_workbook(str_wb_timesheet, data_only=False, keep_vba=True)
+        obj_wb_timesheet = openpyxl.load_workbook(str_path_timesheet, data_only=False, keep_vba=True)
     except:
         # FALSE
         print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
@@ -60,7 +60,7 @@ def main():
     try:  
         # TRUE
         # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        obj_wb_azetemplate = openpyxl.load_workbook(str_wb_azetemplate, data_only=False, keep_vba=True)
+        obj_wb_azetemplate = openpyxl.load_workbook(str_path_azetemplate, data_only=False, keep_vba=True)
     except:
         # FALSE
         print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
@@ -207,7 +207,7 @@ def main():
                     obj_cell_endtime.value = i[2]
 
     # Close workbook timesheet    
-    obj_wb_timesheet.save(str_wb_timesheet)
+    obj_wb_timesheet.save(str_path_timesheet)
 
     '''
     # Store/document data SAP-Sheet

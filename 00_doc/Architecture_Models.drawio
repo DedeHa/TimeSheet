@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-12-28T20:33:46.095Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0" etag="y72i10CwqPu_MHk87hCA" version="20.7.4" type="github" pages="9">
+<mxfile host="app.diagrams.net" modified="2023-04-05T19:29:44.664Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 OPR/96.0.0.0" etag="Vk2jOFTChOek4JlYiEMS" version="21.0.8" type="github" pages="9">
   <diagram name="00_ProjectManagement" id="929967ad-93f9-6ef4-fab6-5d389245f69c">
     <mxGraphModel dx="1394" dy="766" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1.5" pageWidth="1169" pageHeight="826" background="none" math="0" shadow="0">
       <root>
@@ -1108,10 +1108,10 @@
         <mxCell id="kJ7N1f2bAjmEm_8Qvy0t-9" value="&lt;span style=&quot;font-weight: 700&quot;&gt;Request&lt;/span&gt;&lt;br style=&quot;font-weight: 700&quot;&gt;&lt;span style=&quot;font-weight: 700&quot;&gt;Algo Start&lt;/span&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
           <mxGeometry x="-70" y="220" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="kJ7N1f2bAjmEm_8Qvy0t-10" value="&lt;span style=&quot;font-weight: 700&quot;&gt;Initialize program/variables&lt;br&gt;Start Execution Time&lt;br&gt;&lt;/span&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
+        <mxCell id="kJ7N1f2bAjmEm_8Qvy0t-10" value="&lt;span style=&quot;font-weight: 700&quot;&gt;Initialize program/variables&lt;br&gt;Start Execution Time&lt;br&gt;algo_check&lt;br&gt;&lt;/span&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
           <mxGeometry x="60" y="220" width="200" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="kJ7N1f2bAjmEm_8Qvy0t-11" value="&lt;span style=&quot;font-weight: 700&quot;&gt;Check Pre-Requisits&lt;/span&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
+        <mxCell id="kJ7N1f2bAjmEm_8Qvy0t-11" value="&lt;span style=&quot;font-weight: 700&quot;&gt;Check Pre-Requisits&lt;br&gt;fct_pre_che_req&lt;br&gt;&lt;/span&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
           <mxGeometry x="60" y="280" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="kJ7N1f2bAjmEm_8Qvy0t-12" value="Request/Define &lt;br&gt;Algo Parameter" style="html=1;shape=mxgraph.sysml.callBehAct;whiteSpace=wrap;align=center;fontStyle=1" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
@@ -1459,16 +1459,16 @@
             <mxPoint x="2240" y="641.5" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="B9agPt8CuFjdAAP80eEc-0" value="&lt;b&gt;Open &quot;template_aze.xlsm&quot;&lt;/b&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" vertex="1" parent="61B2VA7KsqQx3ilNqzQC-1">
+        <mxCell id="B9agPt8CuFjdAAP80eEc-0" value="&lt;b&gt;Open &quot;template_aze.xlsm&quot;&lt;/b&gt;" style="shape=rect;html=1;rounded=1;whiteSpace=wrap;align=center;" parent="61B2VA7KsqQx3ilNqzQC-1" vertex="1">
           <mxGeometry x="1850" y="490" width="200" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="B9agPt8CuFjdAAP80eEc-1" value="" style="edgeStyle=none;html=1;endArrow=open;endSize=12;dashed=1;verticalAlign=bottom;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="61B2VA7KsqQx3ilNqzQC-1" source="B9agPt8CuFjdAAP80eEc-0" target="LDYQ0IzwXboCEx7CWEzp-0">
+        <mxCell id="B9agPt8CuFjdAAP80eEc-1" value="" style="edgeStyle=none;html=1;endArrow=open;endSize=12;dashed=1;verticalAlign=bottom;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="61B2VA7KsqQx3ilNqzQC-1" source="B9agPt8CuFjdAAP80eEc-0" target="LDYQ0IzwXboCEx7CWEzp-0" edge="1">
           <mxGeometry width="160" relative="1" as="geometry">
             <mxPoint x="1960" y="470" as="sourcePoint" />
             <mxPoint x="1960" y="500" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="B9agPt8CuFjdAAP80eEc-4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endSize=12;dashed=1;verticalAlign=bottom;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="61B2VA7KsqQx3ilNqzQC-1" source="LDYQ0IzwXboCEx7CWEzp-20" target="LDYQ0IzwXboCEx7CWEzp-1">
+        <mxCell id="B9agPt8CuFjdAAP80eEc-4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endSize=12;dashed=1;verticalAlign=bottom;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="61B2VA7KsqQx3ilNqzQC-1" source="LDYQ0IzwXboCEx7CWEzp-20" target="LDYQ0IzwXboCEx7CWEzp-1" edge="1">
           <mxGeometry width="160" relative="1" as="geometry">
             <mxPoint x="1940" y="828.5" as="sourcePoint" />
             <mxPoint x="2230" y="600" as="targetPoint" />
@@ -1479,7 +1479,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="B9agPt8CuFjdAAP80eEc-5" value="[Weekdata = empty OR &lt;br&gt;weekend == True]" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="B9agPt8CuFjdAAP80eEc-4">
+        <mxCell id="B9agPt8CuFjdAAP80eEc-5" value="[Weekdata = empty OR &lt;br&gt;weekend == True]" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="B9agPt8CuFjdAAP80eEc-4" vertex="1" connectable="0">
           <mxGeometry x="-0.4769" y="4" relative="1" as="geometry">
             <mxPoint x="-46" y="57" as="offset" />
           </mxGeometry>

@@ -33,8 +33,91 @@ str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
 
 #EndConfiguration-----------------------------------------------------#
 
-def main():
+class ALGO_CHECK:
+    # Class methods
+    def __init__(self):
+        # Starttime for programmexecution measurement
+        self.db_time_programstart = time.time() 
+        self.db_time_programend = 0
+    
+    def end(self):
+        self.db_time_programend = time.time()
+        return self.db_time_programend - self.db_time_programstart
 
+class TIMESHEET_ALGO:  
+    # class attribute
+    int_position_date = 0
+    int_position_starttime = 1
+    int_position_endtime = 2
+    int_row_indexoffset = 2
+
+    str_path_timelog = '01_Timealarm/FDTech_timelog.csv'
+    str_path_timesheet = '01_Timealarm/2023_FDTech_Dennis_Hartel.xlsm'
+    str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
+    str_path_azesheet = '02_AZE_TimeSheets/'
+
+    # class methods
+    # constructor
+    def __init__(self):
+        timelog = 0
+        timesheet = 0
+        azetemplate = 0
+        obj_date_startpoint = 0
+        obj_date_endpoint = 0
+
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # fct_che_pre_req - Check pre-requisits and setup files/documents
+    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    def fct_che_pre_req(self):
+        print('--- Check Pre-Requisits ---')
+        
+        # Initiate/Check Timelog
+        try:
+        # TRUE
+        # Open timelog csv and exclude header
+            with open(self.str_path_timelog) as obj_csv_timelog:
+                obj_list_timelog = list(csv.reader(obj_csv_timelog))
+                obj_list_timelog.pop(0)
+                self.timelog = obj_list_timelog
+        except:
+            # FALSE
+            print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
+            exit()
+
+        # Initiate/Check TimeSheet
+        try:  
+            # TRUE
+            # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+            self.timesheet = openpyxl.load_workbook(self.str_path_timesheet, data_only=False, keep_vba=True)
+        except:
+            # FALSE
+            print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
+            exit()
+
+         # Initiate/Check AZE-Template
+        try:  
+            # TRUE
+            # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+            #self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate, data_only=False, keep_vba=True) 
+            self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate) 
+        except:
+            # FALSE
+            print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
+            exit()
+
+def main():
+  
+    # Initialize class
+    algo1 = TIMESHEET_ALGO()
+
+    # Check pre-requisits 
+    algo1.fct_che_pre_req()
+
+    # Starttime for programmexecution measurement
+    timesheet_check = ALGO_CHECK()
+
+    '''
     # fct_check_pre_requisit
     # Check Timelog, TimeSheet and AZE-Template
     try:
@@ -51,7 +134,7 @@ def main():
     try:  
         # TRUE
         # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        obj_wb_timesheet = openpyxl.load_workbook(str_path_timesheet, data_only=False, keep_vba=True)
+        timesheet_algo.timesheet = openpyxl.load_workbook(str_path_timesheet, data_only=False, keep_vba=True)
     except:
         # FALSE
         print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
@@ -65,7 +148,7 @@ def main():
         # FALSE
         print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
         exit()
-
+    '''
 
     # fct_req_algo_para - Request startdate algo parameter input
     # Request startdate with three attemps or derive detfault data
@@ -85,7 +168,7 @@ def main():
     # Define default start date and identify/find last documented timedata
     else:
         # Iterate through timesheet months 
-        for sheet in reversed(obj_wb_timesheet.worksheets[0:12]): 
+        for sheet in reversed(algo1.timesheet.worksheets[0:12]): 
             # Iterrate through timesheet month dates
             for i in range(int_row_indexoffset + 30, int_row_indexoffset, -1):
                 # Check if cell value is empty and stop iteration
@@ -98,9 +181,9 @@ def main():
                 # Document previous date
                 # Define each previous date attributes (Year, Month, Day)
                 # Derive year from default value in Januar Sheet
-                int_year_prevvalue = obj_wb_timesheet.worksheets[0].cell(row=3, column=2).value.year
+                int_year_prevvalue = algo1.timesheet.worksheets[0].cell(row=3, column=2).value.year
                 # Derive month from selected sheet, sheet(index 0based + 1
-                int_month_prevvalue = obj_wb_timesheet.index(sheet) + 1
+                int_month_prevvalue = algo1.timesheet.index(sheet) + 1
                 # Derive day from row in sheet - row-offset
                 int_day_prevvalue = i - int_row_indexoffset
                 
@@ -147,12 +230,11 @@ def main():
             exit()
 
     # Starttime for programmexecution measurement
-    algo_check = AZESheetAlgo.algo_check()
     db_time_programstart = time.time()  
 
     # Determine/evaluate and select timeframe from timelog
     print('--- Selected dates ---')
-    for i in obj_list_timelog:
+    for i in algo1.timelog:
 
         # Convert list raw date string into date
         obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
@@ -181,11 +263,11 @@ def main():
         int_sel_month = dt.strptime(i[0],'%d.%m.%Y').month-1
 
         # Iterate worksheet/months in timesheet
-        for sheet in obj_wb_timesheet.worksheets[0:12]:
+        for sheet in algo1.timesheet.worksheets[0:12]:
             
             # Identify worksheet/month for selected timelog data
             # month: selected_month  
-            if int_sel_month != obj_wb_timesheet.index(sheet):
+            if int_sel_month != algo1.timesheet.index(sheet):
                 continue
             else:    
                 # Define required cells for data storage
@@ -207,29 +289,12 @@ def main():
                     obj_cell_endtime.value = i[2]
 
     # Close workbook timesheet    
-    obj_wb_timesheet.save(str_path_timesheet)
-
-    '''
-    # Store/document data SAP-Sheet
-    print('--- Store data ---')
-
-    # Open timelog csv and exclude header
-    obj_wb_AZEsheet = openpyxl.load_workbook('template_timesheet_test.xlsx')
-
-    # Iterate through final timelog data
-    #j = obj_newtimedata[0]
-    obj_wb_AZEsheet['blanko']['B9'].value = i[0]
-    obj_wb_AZEsheet['blanko']['C9'].value = i[0]
-    obj_wb_AZEsheet['blanko']['D9'].value = i[1]
-    obj_wb_AZEsheet['blanko']['E9'].value = i[2]
-
-    obj_wb_AZEsheet.save('template_timesheet - Kopie.xlsx')
-    '''
+    algo1.timesheet.save(str_path_timesheet)
+    
+    time.sleep(1)
 
     # Endtime for programmexecution measurement
-    db_time_programend = time.time()
-    print(db_time_programend - db_time_programstart)
-    print(algo_check.end())
+    print(timesheet_check.end())
     
 if __name__ == "__main__":
     main()

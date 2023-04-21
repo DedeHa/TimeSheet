@@ -35,6 +35,7 @@ str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
 
 class ALGO_CHECK:
     # Class methods
+    # constructor
     def __init__(self):
         # Starttime for programmexecution measurement
         self.db_time_programstart = time.time() 
@@ -44,7 +45,7 @@ class ALGO_CHECK:
         self.db_time_programend = time.time()
         return self.db_time_programend - self.db_time_programstart
 
-class TIMESHEET_ALGO:  
+class ALGO_TIMESHEET:  
     # class attribute
     int_position_date = 0
     int_position_starttime = 1
@@ -56,14 +57,13 @@ class TIMESHEET_ALGO:
     str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
     str_path_azesheet = '02_AZE_TimeSheets/'
 
+    timelog = 0
+    timesheet = 0
+    azetemplate = 0
+    obj_date_startpoint = 0
+    obj_date_endpoint = 0
+
     # class methods
-    # constructor
-    def __init__(self):
-        timelog = 0
-        timesheet = 0
-        azetemplate = 0
-        obj_date_startpoint = 0
-        obj_date_endpoint = 0
 
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_che_pre_req - Check pre-requisits and setup files/documents
@@ -106,69 +106,50 @@ class TIMESHEET_ALGO:
             print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
             exit()
 
-def main():
-  
-    # Initialize class
-    algo1 = TIMESHEET_ALGO()
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # fct_req_algo_para - Request date algo parameter input
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    # Check pre-requisits 
-    algo1.fct_che_pre_req()
+    def fct_req_algo_para(self):
+        print('--- Request Date Input ---')
 
-    # Starttime for programmexecution measurement
-    timesheet_check = ALGO_CHECK()
+        # Request startdate with three attemps or derive detfault data
+        for i in range(2, -1, -1):
+            str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
+        
+            # Check       
+            try:
+                # TRUE
+                self.obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
+                print("Startdate: ", self.obj_date_startpoint.date())
+                break
+            except:
+                # FALSE
+                print("That is not a date. Try again. Remaining Attemps: ", i)
 
-    '''
-    # fct_check_pre_requisit
-    # Check Timelog, TimeSheet and AZE-Template
-    try:
-        # TRUE
-        # Open timelog csv and exclude header
-        with open(str_csv_timelog) as fil_csv_timelog:
-            obj_list_timelog = list(csv.reader(fil_csv_timelog))
-            obj_list_timelog.pop(0)
-    except:
-        # FALSE
-        print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
-        exit()
+        # Request enddate with three attemps or derive detfault data
+        for i in range(2, -1, -1):
+            str_date_endpoint = input("Please enter the Enddate <dd.mm.yyyy>: ")
+        
+            # Check       
+            try:
+                # TRUE
+                self.obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
+                print("Enddate: ", self.obj_date_endpoint.date())
+                break
+            except:
+                # FALSE
+                print("That is not a date. Try again. Remaining Attemps: ", i)
 
-    try:  
-        # TRUE
-        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        timesheet_algo.timesheet = openpyxl.load_workbook(str_path_timesheet, data_only=False, keep_vba=True)
-    except:
-        # FALSE
-        print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
-        exit()
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # fct_algo_para_def_start - Define default startdate
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    try:  
-        # TRUE
-        # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-        obj_wb_azetemplate = openpyxl.load_workbook(str_path_azetemplate, data_only=False, keep_vba=True)
-    except:
-        # FALSE
-        print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
-        exit()
-    '''
+    def fct_algo_para_def_start(self):
 
-    # fct_req_algo_para - Request startdate algo parameter input
-    # Request startdate with three attemps or derive detfault data
-    for i in range(2, -1, -1):
-        str_date_startpoint = input("Please enter the Startdate <dd.mm.yyyy>: ")
-       
-        # Check       
-        try:
-            # TRUE
-            obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
-            print("Startdate: ", obj_date_startpoint.date())
-            break
-        except:
-            # FALSE
-            print("That is not a date. Try again. Remaining Attemps: ", i)
-         
-    # Define default start date and identify/find last documented timedata
-    else:
+        # Define default start date and identify/find last documented timedata
         # Iterate through timesheet months 
-        for sheet in reversed(algo1.timesheet.worksheets[0:12]): 
+        for sheet in reversed(self.timesheet.worksheets[0:12]): 
             # Iterrate through timesheet month dates
             for i in range(int_row_indexoffset + 30, int_row_indexoffset, -1):
                 # Check if cell value is empty and stop iteration
@@ -181,9 +162,9 @@ def main():
                 # Document previous date
                 # Define each previous date attributes (Year, Month, Day)
                 # Derive year from default value in Januar Sheet
-                int_year_prevvalue = algo1.timesheet.worksheets[0].cell(row=3, column=2).value.year
+                int_year_prevvalue = self.timesheet.worksheets[0].cell(row=3, column=2).value.year
                 # Derive month from selected sheet, sheet(index 0based + 1
-                int_month_prevvalue = algo1.timesheet.index(sheet) + 1
+                int_month_prevvalue = self.timesheet.index(sheet) + 1
                 # Derive day from row in sheet - row-offset
                 int_day_prevvalue = i - int_row_indexoffset
                 
@@ -194,44 +175,55 @@ def main():
                 try:  
                     # TRUE
                     # Request confirmation of default value            
-                    str_bo_startpointconfirm = strtobool(input("Please confirm: <y/n>: "))
+                    if strtobool(input("Please confirm: <y/n>: ")) == False:
+                        exit()
                 except:
                     # FALSE
                     print("Failure detected! No confirmation received!")
                     exit()
                 break
 
-    # Request enddate with three attemps or derive detfault data
-    for i in range(2, -1, -1):
-        str_date_endpoint = input("Please enter the Enddate <dd.mm.yyyy>: ")
-       
-        # Check       
-        try:
-            # TRUE
-            obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
-            print("Enddate: ", obj_date_endpoint.date())
-            break
-        except:
-            # FALSE
-            print("That is not a date. Try again. Remaining Attemps: ", i)
-    
-    # Define default end date and identify/find last documented timedata
-    else:
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # fct_algo_para_def_end - Define default enddate
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    def fct_algo_para_def_end(self):
+        # Define default end date and identify/find last documented timedata
         obj_date_endpoint = dt.now() - td(1)
         print("Default enddate identified:", obj_date_endpoint.date())
 
         try:  
             # TRUE
             # Request confirmation of default value            
-            str_bo_enddpointconfirm = strtobool(input("Please confirm: <y/n>: "))
+            if strtobool(input("Please confirm: <y/n>: ")) == False:
+                exit()
         except:
             # FALSE
             print("Failure detected! No confirmation received!")
             exit()
 
-    # Starttime for programmexecution measurement
-    db_time_programstart = time.time()  
+def main():
+  
+    # Initialize class
+    algo1 = ALGO_TIMESHEET()
 
+    # Request date algo parameter input
+    algo1.fct_req_algo_para()
+
+    # Starttime for programmexecution measurement
+    timesheet_check = ALGO_CHECK()
+
+    # Check pre-requisits 
+    algo1.fct_che_pre_req() 
+
+    # Check correct parameter
+    if algo1.obj_date_startpoint == 0:
+        algo1.fct_algo_para_def_start()
+
+    if algo1.obj_date_endpoint == 0:
+        algo1.fct_algo_para_def_end()
+
+    '''
     # Determine/evaluate and select timeframe from timelog
     print('--- Selected dates ---')
     for i in algo1.timelog:
@@ -290,7 +282,7 @@ def main():
 
     # Close workbook timesheet    
     algo1.timesheet.save(str_path_timesheet)
-    
+    '''
     time.sleep(1)
 
     # Endtime for programmexecution measurement

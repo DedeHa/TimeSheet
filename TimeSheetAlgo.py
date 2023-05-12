@@ -26,7 +26,6 @@ int_position_starttime = 1
 int_position_endtime = 2
 int_row_indexoffset = 4
 
-obj_newtimedata = []
 str_csv_timelog = '01_Timealarm/FDTech_timelog.csv'
 str_path_timesheet = '01_Timealarm/2023_FDTech_Dennis_Hartel.xlsm'
 str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
@@ -62,6 +61,8 @@ class ALGO_TIMESHEET:
     azetemplate = 0
     obj_date_startpoint = 0
     obj_date_endpoint = 0
+
+    obj_newtimedata = []
 
     # class methods
 
@@ -169,8 +170,8 @@ class ALGO_TIMESHEET:
                 int_day_prevvalue = i - int_row_indexoffset
                 
                 # Assemble previous date attributes 
-                obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue) 
-                print("Default startdate identified:", obj_date_startpoint.date())
+                self.obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue) 
+                print("Default startdate identified:", self.obj_date_startpoint.date())
 
                 try:  
                     # TRUE
@@ -189,8 +190,8 @@ class ALGO_TIMESHEET:
 
     def fct_algo_para_def_end(self):
         # Define default end date and identify/find last documented timedata
-        obj_date_endpoint = dt.now() - td(1)
-        print("Default enddate identified:", obj_date_endpoint.date())
+        self.obj_date_endpoint = dt.now() - td(1)
+        print("Default enddate identified:", self.obj_date_endpoint.date())
 
         try:  
             # TRUE
@@ -200,6 +201,27 @@ class ALGO_TIMESHEET:
         except:
             # FALSE
             print("Failure detected! No confirmation received!")
+            exit()
+
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # Determine/evaluate and select timeframe from timelog
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    def fct_sel_timelog(self):
+        print('--- Selected dates ---')
+        
+        for i in self.timelog:
+
+            # Convert list raw date string into date
+            obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
+                
+            # Identify start date in list, check working day and define start index
+            if obj_sel_date >= self.obj_date_startpoint and obj_sel_date <= self.obj_date_endpoint: #and obj_sel_date.weekday() <= 4:        
+                self.obj_newtimedata.extend([i])
+
+        # Check if any failure/no data received
+        if not self.obj_newtimedata:
+            print("Failure detected! No data identified!")
             exit()
 
 def main():
@@ -223,23 +245,9 @@ def main():
     if algo1.obj_date_endpoint == 0:
         algo1.fct_algo_para_def_end()
 
-    '''
-    # Determine/evaluate and select timeframe from timelog
-    print('--- Selected dates ---')
-    for i in algo1.timelog:
+    algo1.fct_sel_timelog()
 
-        # Convert list raw date string into date
-        obj_sel_date = dt.strptime(i[0],'%d.%m.%Y')
-                
-        # Identify start date in list, check working day and define start index
-        if obj_sel_date >= obj_date_startpoint and obj_sel_date <= obj_date_endpoint: #and obj_sel_date.weekday() <= 4:        
-            obj_newtimedata.extend([i])
-
-    # Check if any failure/no data received
-    if not obj_newtimedata:
-        print("Failure detected! No data identified!")
-        exit()
-             
+    '''            
     # Store/document timelog data in timesheet
     print('--- Log time data ---')
  

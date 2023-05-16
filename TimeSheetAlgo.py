@@ -49,7 +49,7 @@ class ALGO_TIMESHEET:
     int_position_date = 0
     int_position_starttime = 1
     int_position_endtime = 2
-    int_row_indexoffset = 2
+    int_row_indexoffset = 4
 
     str_path_timelog = '01_Timealarm/FDTech_timelog.csv'
     str_path_timesheet = '01_Timealarm/2023_FDTech_Dennis_Hartel.xlsm'
@@ -224,6 +224,50 @@ class ALGO_TIMESHEET:
             print("Failure detected! No data identified!")
             exit()
 
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # Store/document timelog data in timesheet
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    def fct_store_data(self):
+        print('--- Log time data ---')
+ 
+        # Iterate through selected timelog data
+        for i in self.obj_newtimedata:
+
+            # Define index for storing data
+            # row: startindex = Timesheet Header + Day of the Month
+            int_row_index = int_row_indexoffset + dt.strptime(i[0],'%d.%m.%Y').day
+            
+            # Shift variable index from 1 to 0
+            # month: selected_month(index_0) = selected_date.month(index_1) - 1
+            int_sel_month = dt.strptime(i[0],'%d.%m.%Y').month-1
+
+            # Iterate worksheet/months in timesheet
+            for sheet in self.timesheet.worksheets[0:12]:
+                
+                # Identify worksheet/month for selected timelog data
+                # month: selected_month  
+                if int_sel_month != self.timesheet.index(sheet):
+                    continue
+                else:    
+                    # Define required cells for data storage
+                    # Cell definition = [Xy]; [X=column, y=row]
+                    # Remark[Bx=2y]; Type[Cx=3y]; Starttime [Ey]; Endtime [Fy]
+                    obj_cell_remark = sheet.cell(row=int_row_index, column=2)      
+                    obj_cell_type = sheet.cell(row=int_row_index, column=3)
+                    obj_cell_starttime = sheet.cell(row=int_row_index, column=5)    
+                    obj_cell_endtime = sheet.cell(row=int_row_index, column=6)
+                    
+                    # Check for national holiday, sick - k and flextime - g
+                    if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
+                        continue
+                    else:                
+                        # Store timelog data in timesheet for "Kommen"
+                        obj_cell_starttime.value = i[1]
+                        
+                        # Store timelog data in timesheet for "Gehen"
+                        obj_cell_endtime.value = i[2]
+
 def main():
   
     # Initialize class
@@ -245,53 +289,12 @@ def main():
     if algo1.obj_date_endpoint == 0:
         algo1.fct_algo_para_def_end()
 
+    # Select and store data
     algo1.fct_sel_timelog()
-
-    '''            
-    # Store/document timelog data in timesheet
-    print('--- Log time data ---')
- 
-    # Iterate through selected timelog data
-    for i in obj_newtimedata:
-
-        # Define index for storing data
-        # row: startindex = Timesheet Header + Day of the Month
-        int_row_index = int_row_indexoffset + dt.strptime(i[0],'%d.%m.%Y').day
-        
-        # Shift variable index from 1 to 0
-        # month: selected_month(index_0) = selected_date.month(index_1) - 1
-        int_sel_month = dt.strptime(i[0],'%d.%m.%Y').month-1
-
-        # Iterate worksheet/months in timesheet
-        for sheet in algo1.timesheet.worksheets[0:12]:
-            
-            # Identify worksheet/month for selected timelog data
-            # month: selected_month  
-            if int_sel_month != algo1.timesheet.index(sheet):
-                continue
-            else:    
-                # Define required cells for data storage
-                # Cell definition = [Xy]; [X=column, y=row]
-                # Remark[Bx=2y]; Type[Cx=3y]; Starttime [Ey]; Endtime [Fy]
-                obj_cell_remark = sheet.cell(row=int_row_index, column=2)      
-                obj_cell_type = sheet.cell(row=int_row_index, column=3)
-                obj_cell_starttime = sheet.cell(row=int_row_index, column=5)    
-                obj_cell_endtime = sheet.cell(row=int_row_index, column=6)
-                
-                # Check for national holiday, sick - k and flextime - g
-                if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
-                    continue
-                else:                
-                    # Store timelog data in timesheet for "Kommen"
-                    obj_cell_starttime.value = i[1]
-                    
-                    # Store timelog data in timesheet for "Gehen"
-                    obj_cell_endtime.value = i[2]
+    algo1.fct_store_data()
 
     # Close workbook timesheet    
     algo1.timesheet.save(str_path_timesheet)
-    '''
-    time.sleep(1)
 
     # Endtime for programmexecution measurement
     print(timesheet_check.end())

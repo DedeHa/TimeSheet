@@ -37,9 +37,6 @@ class ALGO_CHECK:
 
 class ALGO_TIMESHEET:  
     # class attribute
-    int_position_date = 0
-    int_position_starttime = 1
-    int_position_endtime = 2
     int_row_indexoffset = 4
 
     str_path_timelog = '01_Timealarm/FDTech_timelog.csv'
@@ -56,7 +53,6 @@ class ALGO_TIMESHEET:
     obj_newtimedata = []
 
     # class methods
-
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_che_pre_req - Check pre-requisits and setup files/documents
     #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

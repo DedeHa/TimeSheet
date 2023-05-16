@@ -21,15 +21,6 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from distutils.util import strtobool
 
-int_position_date = 0
-int_position_starttime = 1
-int_position_endtime = 2
-int_row_indexoffset = 4
-
-str_csv_timelog = '01_Timealarm/FDTech_timelog.csv'
-str_path_timesheet = '01_Timealarm/2023_FDTech_Dennis_Hartel.xlsm'
-str_path_azetemplate = '02_AZE_TimeSheets/template_timesheet_test.xlsx'
-
 #EndConfiguration-----------------------------------------------------#
 
 class ALGO_CHECK:
@@ -96,7 +87,8 @@ class ALGO_TIMESHEET:
             print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
             exit()
 
-         # Initiate/Check AZE-Template
+        # Initiate/Check AZE-Template
+        '''
         try:  
             # TRUE
             # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
@@ -106,6 +98,7 @@ class ALGO_TIMESHEET:
             # FALSE
             print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
             exit()
+        '''
 
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_req_algo_para - Request date algo parameter input
@@ -152,7 +145,7 @@ class ALGO_TIMESHEET:
         # Iterate through timesheet months 
         for sheet in reversed(self.timesheet.worksheets[0:12]): 
             # Iterrate through timesheet month dates
-            for i in range(int_row_indexoffset + 30, int_row_indexoffset, -1):
+            for i in range(self.int_row_indexoffset + 30, self.int_row_indexoffset, -1):
                 # Check if cell value is empty and stop iteration
                 if sheet.cell(row=i, column=5).value != None:
                     break
@@ -167,7 +160,7 @@ class ALGO_TIMESHEET:
                 # Derive month from selected sheet, sheet(index 0based + 1
                 int_month_prevvalue = self.timesheet.index(sheet) + 1
                 # Derive day from row in sheet - row-offset
-                int_day_prevvalue = i - int_row_indexoffset
+                int_day_prevvalue = i - self.int_row_indexoffset
                 
                 # Assemble previous date attributes 
                 self.obj_date_startpoint = dt(int_year_prevvalue, int_month_prevvalue, int_day_prevvalue) 
@@ -236,7 +229,7 @@ class ALGO_TIMESHEET:
 
             # Define index for storing data
             # row: startindex = Timesheet Header + Day of the Month
-            int_row_index = int_row_indexoffset + dt.strptime(i[0],'%d.%m.%Y').day
+            int_row_index = self.int_row_indexoffset + dt.strptime(i[0],'%d.%m.%Y').day
             
             # Shift variable index from 1 to 0
             # month: selected_month(index_0) = selected_date.month(index_1) - 1
@@ -294,7 +287,7 @@ def main():
     algo1.fct_store_data()
 
     # Close workbook timesheet    
-    algo1.timesheet.save(str_path_timesheet)
+    algo1.timesheet.save(algo1.str_path_timesheet)
 
     # Endtime for programmexecution measurement
     print(timesheet_check.end())

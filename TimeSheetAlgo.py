@@ -37,6 +37,7 @@ class ALGO_CHECK:
 
 class ALGO_TIMESHEET:  
     # class attribute
+    bo_status_overwrite = 2
     int_row_indexoffset = 4
 
     str_path_timelog = '01_Timealarm/FDTech_timelog.csv'
@@ -238,7 +239,7 @@ class ALGO_TIMESHEET:
                 # month: selected_month  
                 if int_sel_month != self.timesheet.index(sheet):
                     continue
-                else:    
+                else:                              
                     # Define required cells for data storage
                     # Cell definition = [Xy]; [X=column, y=row]
                     # Remark[Bx=2y]; Type[Cx=3y]; Starttime [Ey]; Endtime [Fy]
@@ -247,6 +248,16 @@ class ALGO_TIMESHEET:
                     obj_cell_starttime = sheet.cell(row=int_row_index, column=5)    
                     obj_cell_endtime = sheet.cell(row=int_row_index, column=6)
                     
+                    # Check for already availalbe data
+                    if (obj_cell_starttime.value != None) and (self.bo_status_overwrite == 2):
+                        # TRUE
+                        print("Data already discovered!")
+                        self.bo_status_overwrite = strtobool(input("Please confirm to overwrite: <y/n>: "))
+                    
+                    # Check overwrite status
+                    if self.bo_status_overwrite == False:
+                        exit()
+
                     # Check for national holiday, sick - k and flextime - g
                     if (obj_cell_remark.value != None) or (obj_cell_type.value != None):
                         continue

@@ -12,10 +12,10 @@ DESCRIPTION :   Automatic timelog organisation with extract of timelogdata and d
 """
 #Configuration--------------------------------------------------------#
 
-import sys, os, time
-import csv, argparse
+import time
+import csv
 import openpyxl
-import AZESheetAlgo
+#import AZESheetAlgo
 
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -24,6 +24,8 @@ from distutils.util import strtobool
 #EndConfiguration-----------------------------------------------------#
 
 class ALGO_CHECK:
+    """Class representing algo check functions"""
+
     # Class methods
     # constructor
     def __init__(self):
@@ -65,11 +67,11 @@ class ALGO_TIMESHEET:
         try:
         # TRUE
         # Open timelog csv and exclude header
-            with open(self.str_path_timelog) as obj_csv_timelog:
+            with open(self.str_path_timelog, encoding="utf-8") as obj_csv_timelog:
                 obj_list_timelog = list(csv.reader(obj_csv_timelog))
                 obj_list_timelog.pop(0)
                 self.timelog = obj_list_timelog
-        except:
+        except FileNotFoundError:
             # FALSE
             print("Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled")
             exit()
@@ -79,23 +81,10 @@ class ALGO_TIMESHEET:
             # TRUE
             # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
             self.timesheet = openpyxl.load_workbook(self.str_path_timesheet, data_only=False, keep_vba=True)
-        except:
+        except FileNotFoundError:
             # FALSE
             print("Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled")
             exit()
-
-        # Initiate/Check AZE-Template
-        '''
-        try:  
-            # TRUE
-            # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
-            #self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate, data_only=False, keep_vba=True) 
-            self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate) 
-        except:
-            # FALSE
-            print("Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled")
-            exit()
-        '''
 
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_req_algo_para - Request date algo parameter input
@@ -114,7 +103,7 @@ class ALGO_TIMESHEET:
                 self.obj_date_startpoint = dt.strptime(str_date_startpoint,'%d.%m.%Y')
                 print("Startdate: ", self.obj_date_startpoint.date())
                 break
-            except:
+            except ProcessLookupError:
                 # FALSE
                 print("That is not a date. Try again. Remaining Attemps: ", i)
 
@@ -128,7 +117,7 @@ class ALGO_TIMESHEET:
                 self.obj_date_endpoint = dt.strptime(str_date_endpoint,'%d.%m.%Y')
                 print("Enddate: ", self.obj_date_endpoint.date())
                 break
-            except:
+            except ProcessLookupError:
                 # FALSE
                 print("That is not a date. Try again. Remaining Attemps: ", i)
 
@@ -168,7 +157,7 @@ class ALGO_TIMESHEET:
                     # Request confirmation of default value            
                     if strtobool(input("Please confirm: <y/n>: ")) == False:
                         exit()
-                except:
+                except ProcessLookupError:
                     # FALSE
                     print("Failure detected! No confirmation received!")
                     exit()
@@ -188,7 +177,7 @@ class ALGO_TIMESHEET:
             # Request confirmation of default value            
             if strtobool(input("Please confirm: <y/n>: ")) == False:
                 exit()
-        except:
+        except ProcessLookupError:
             # FALSE
             print("Failure detected! No confirmation received!")
             exit()

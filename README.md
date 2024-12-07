@@ -3,19 +3,6 @@
 ## Description
 The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedata documentation and AZESheet creation.
 
-## Variable Definition
-    Variable declaration naming convention
-    <mandatory: type>_<optional: unit><mandatory: variable_name> - e.g. str_date_startpoint
-
-        type    |    description
-        ---------------------------
-        fil     |   file
-        obj     |   complex datatype
-        str     |   string
-        int     |   integer
-        db      |   double       
-        bo      |   boolean
-
 ## Branch Template
     Branch change template naming convention
     <mandatory: Function/Infrastructure Change>|<mandatory: description>
@@ -39,6 +26,19 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
             - L: Location Change
 
         Example: INF_F|README.md/Split Commit and Branch Template
+
+## Variable Definition
+    Variable declaration naming convention
+    <mandatory: type>_<optional: unit><mandatory: variable_name> - e.g. str_date_startpoint
+
+        type    |    description
+        ---------------------------
+        fil     |   file
+        obj     |   complex datatype
+        str     |   string
+        int     |   integer
+        db      |   double       
+        bo      |   boolean
 
 ## Algo Analysis
 

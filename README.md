@@ -12,7 +12,7 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
     Example: R02.01.02
 
 ## Branch naming convention
-   Release Branch 
+    Release Branch
     <mandatory: RCxx.yy.zz>
         - RC: Release Candidate
         - xx.yy.zz: Release Naming convention

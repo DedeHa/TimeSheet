@@ -3,16 +3,30 @@
 ## Description
 The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedata documentation and AZESheet creation.
 
-## Branch Template
-    Branch change template naming convention
+## Release naming convention
+    <mandatory: Rxx.yy.zz> increment the:
+    - xx: MAJOR version when you make incompatible API changes
+    - yy: MINOR version when you add functionality in a backward compatible manner
+    - zz: PATCH version when you make backward compatible bug fixes
+
+    Example: R02.01.02
+
+## Branch naming convention
+   Release Branch 
+    <mandatory: RCxx.yy.zz>
+        - RC: Release Candidate
+        - xx.yy.zz: Release Naming convention
+
+        Example: RC02.01.02
+    
+    Feature Branch 
     <mandatory: Function/Infrastructure Change>|<mandatory: description>
         - FCT: Function Change Types
         - INF: Infrastructure Change Types
 
         Example: INF|Documentation
 
-## Commit Template
-    Commit change template naming convention
+## Commit naming convention
     <mandatory: Branch Change Type>_<mandatory: change_type>|<optional: file></><mandatory: change/feature/description>
         - FCT: Function Change Types
             - A: Architecture Change
@@ -27,8 +41,7 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
 
         Example: INF_F|README.md/Split Commit and Branch Template
 
-## Variable Definition
-    Variable declaration naming convention
+## Variable naming convention
     <mandatory: type>_<optional: unit><mandatory: variable_name> - e.g. str_date_startpoint
 
         type    |    description

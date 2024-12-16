@@ -64,10 +64,10 @@ class TimeSheetProcessor:
         self.timelog_path = config['timelog_path']
         self.timesheet_path = config['timesheet_path']
         self.timelog = []
+        self.timedata = []
         self.timesheet = None
         self.obj_date_startpoint = None
         self.obj_date_endpoint = None
-        self.obj_newtimedata = []
 
     def load_files(self):
         """Load timelog and timesheet files."""
@@ -122,17 +122,17 @@ class TimeSheetProcessor:
         """Filter timelog data based on selected dates."""
         logging.info("Selecting timelog data...")
         start, end = self.obj_date_startpoint, self.obj_date_endpoint
-        self.obj_newtimedata = [
+        self.timedata = [
             entry for entry in self.timelog
             if start <= dt.strptime(entry[0], DATE_FORMAT) <= end
         ]
-        if not self.obj_newtimedata:
+        if not self.timedata:
             raise ValueError("No data found for the selected dates.")
 
     def store_data(self):
         """Store selected timelog data into the timesheet."""
         logging.info("Storing timelog data into timesheet...")
-        for entry in self.obj_newtimedata:
+        for entry in self.timedata:
             
             # Define index for storing data
             date, start_time, end_time = dt.strptime(entry[0], DATE_FORMAT), entry[1], entry[2]

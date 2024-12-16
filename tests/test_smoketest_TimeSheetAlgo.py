@@ -73,18 +73,18 @@ def test_load_files(mock_processor):
 def test_select_timelog_data(mock_processor):
     """Test the select_timelog_data method."""
     mock_processor.select_timelog_data()
-    assert len(mock_processor.obj_newtimedata) == 3
-    assert mock_processor.obj_newtimedata[0] == ["01.01.2023", "08:00", "16:00"]
+    assert len(mock_processor.timedata) == 3
+    assert mock_processor.timedata[0] == ["01.01.2023", "08:00", "16:00"]
 
 
 def test_store_data(mock_processor):
     """Test the store_data method."""
     mock_processor.select_timelog_data()
-    with patch("src_timesheetalgo.TimeSheetAlgo.input", return_value="y"):
-        mock_processor.store_data()
-        sheet = mock_processor.timesheet["January"]
-        assert sheet.cell(row=ROW_OFFSET + 1, column=5).value == "08:00"
-        assert sheet.cell(row=ROW_OFFSET + 1, column=6).value == "16:00"
+    #with patch("src_timesheetalgo.TimeSheetAlgo.input", return_value="y"):
+    mock_processor.store_data()
+    sheet = mock_processor.timesheet["January"]
+    assert sheet.cell(row=ROW_OFFSET + 1, column=5).value == "08:00"
+    assert sheet.cell(row=ROW_OFFSET + 1, column=6).value == "16:00"
 
 
 def test_confirm_overwrite():

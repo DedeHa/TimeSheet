@@ -169,7 +169,7 @@ class TimeSheetProcessor:
         self.timesheet.save(self.timesheet_path)
 
 # Main execution
-if __name__ == "__main__":
+if __name__ == "__main__":      # pragma: no cover
     processor = TimeSheetProcessor(CONFIG)
     try:
         processor.load_files()

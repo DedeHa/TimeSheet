@@ -26,6 +26,7 @@ DATE_FORMAT = '%d.%m.%Y'
 MAX_RETRIES = 3
 ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
+YEAR = 2023
 
 # File Paths
 CONFIG = {
@@ -104,12 +105,19 @@ class TimeSheetProcessor:
                     # Derive month from selected sheet, sheet(index 0based + 1
                     month = self.timesheet.index(sheet) + 1
                     
-                    # Derive day from row in sheet - row-offset
-                    day = i - ROW_OFFSET
+                    # Derive day from the date cell value
+                    day = date_cell.day
                     # Assemble previous date attributes
                     default_start_date = dt(year, month, day)
                     logging.info(f"Default start date identified: {default_start_date.date()}")
                     return default_start_date
+        else:
+            # If no date is found, set a default start date
+            default_start_date = dt(YEAR, 1, 1)
+            logging.info(f"No valid date found. Default start date set to: {default_start_date.date()}")
+            return default_start_date
+        
+        # If no date is found, raise an exception
         raise ValueError("Unable to determine default start date.")
 
     def set_default_end_date(self):
@@ -161,7 +169,7 @@ class TimeSheetProcessor:
         self.timesheet.save(self.timesheet_path)
 
 # Main execution
-if __name__ == "__main__":
+if __name__ == "__main__":      # pragma: no cover
     processor = TimeSheetProcessor(CONFIG)
     try:
         processor.load_files()

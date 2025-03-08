@@ -48,6 +48,7 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
 - Erstelle einen Pull Request auf den Release Branch
 
 ### JIRA Story
+- Erstelle einen Feature Branch
 - Erstelle Commits auf dem Feature Branch
 
 ## Variable naming convention

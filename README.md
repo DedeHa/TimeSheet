@@ -41,6 +41,15 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
 
         Example: INF_F|README.md/Split Commit and Branch Template
 
+## Branch, Pull-Request und Commit Erstellung
+
+### JIRA Epic
+- Erstelle einen Feature Branch
+- Erstelle einen Pull Request auf den Release Branch
+
+### JIRA Story
+- Erstelle Commits auf dem Feature Branch
+
 ## Variable naming convention
     <mandatory: type>_<optional: unit><mandatory: variable_name> - e.g. str_date_startpoint
 
@@ -66,5 +75,3 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
 
 ### Activity Diagram
 ![Alt](00_doc/Architecture_Models-03_Architecture_act_detailed.drawio.png)
-
-

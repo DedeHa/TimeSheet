@@ -8,10 +8,12 @@ on:
     branches:
       - 'FCT|*'
       - 'INF|*'
+      - 'PRO-*FCT|*'
+      - 'PRO-*INF|*'
   pull_request:
     branches:
-      - main
-      - 'release/*'
+      - 'main'
+      - 'RC*'
   workflow_dispatch:
 
 jobs:

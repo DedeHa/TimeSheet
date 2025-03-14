@@ -38,6 +38,7 @@ The TimeSheetAlgo is inteded to automate the manual timedata extraction, timedat
             - D: Documentation Change
             - R: Renaming Change
             - L: Location Change
+            - O: Optimazation Change
 
         Example: INF_F|README.md/Split Commit and Branch Template
 

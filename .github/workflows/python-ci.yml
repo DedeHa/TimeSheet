@@ -58,6 +58,14 @@ jobs:
           path: black_diff.txt
           if-no-files-found: ignore
           
+      - name: Create and Upload Generic File
+        run: echo "This is a generic file for workflow triggering." > temp.txt
+      - name: Upload Generic File
+        uses: actions/upload-artifact@v4
+        with:
+          name: generic-file
+          path: temp.txt
+          
       # - name: Run Linter with Flake8
       #   run: |
       #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -83,4 +91,3 @@ jobs:
       #   uses: codecov/codecov-action@v3
       #   with:
       #     files: ./coverage.xml
-      #     fail_ci_if_error: true

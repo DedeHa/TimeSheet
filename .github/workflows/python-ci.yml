@@ -46,11 +46,10 @@ jobs:
 
       - name: Check Code Formatting with Black, Store Diff, and Prevent Push
         run: |
-          rm -f black_diff.txt
           black --check . || (black --diff . > black_diff.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
 
       - name: Upload Code Formatting Diff
-        if: always() && failure()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: black-diff

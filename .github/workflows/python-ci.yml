@@ -51,15 +51,17 @@ jobs:
         continue-on-error: true
 
       - name: Upload Code Formatting Diff
-        if: always() && failure()
+        #if: always() && failure()
         uses: actions/upload-artifact@v4
         with:
           name: black-diff
           path: black_diff.txt
-          if-no-files-found: ignore
+          #if-no-files-found: ignore
           
       - name: Create and Upload Generic File
-        run: echo "This is a generic file for workflow triggering." > temp.txt
+        run: |
+          rm -f black_diff.txt
+          echo "This is a generic file for workflow triggering." > temp.txt
       - name: Upload Generic File
         uses: actions/upload-artifact@v4
         with:

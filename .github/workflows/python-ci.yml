@@ -46,28 +46,19 @@ jobs:
 
       - name: Check Code Formatting with Black and Upload Diff if Needed
         run: |
-          rm -f black_diff.txt
-          black --check . || (black --diff . > black_diff.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
+          rm -f black_diff_${{ matrix.python-version }}.txt
+          echo "Python Version: ${{ matrix.python-version }}" > black_diff_${{ matrix.python-version }}.txt
+          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
         continue-on-error: true
 
       - name: Upload Code Formatting Diff
-        #if: always() && failure()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: black-diff
-          path: black_diff.txt
-          #if-no-files-found: ignore
-          
-      - name: Create and Upload Generic File
-        run: |
-          rm -f black_diff.txt
-          echo "This is a generic file for workflow triggering." > temp.txt
-      - name: Upload Generic File
-        uses: actions/upload-artifact@v4
-        with:
-          name: generic-file
-          path: temp.txt
-          
+          name: black-diff-${{ matrix.python-version }}
+          path: black_diff_${{ matrix.python-version }}.txt
+          if-no-files-found: ignore
+                   
       # - name: Run Linter with Flake8
       #   run: |
       #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics

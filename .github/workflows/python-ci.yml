@@ -42,9 +42,16 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install black flake8 pytest pytest-cov openpyxl
 
-      #- name: Check Code Formatting with Black
-      #  run: |
-      #    black --check .
+      - name: Check Code Formatting with Black and Store Diff
+        run: |
+          black --check . || (black --diff . > black_diff.txt && exit 1)
+
+      - name: Upload Code Formatting Diff
+        if: always() && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-diff
+          path: black_diff.txt
           
       # - name: Run Linter with Flake8
       #   run: |

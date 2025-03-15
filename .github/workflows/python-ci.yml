@@ -52,7 +52,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload Code Formatting Diff
-        if: always() && failure()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: black-diff-${{ matrix.python-version }}

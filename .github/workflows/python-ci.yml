@@ -52,7 +52,7 @@ jobs:
           black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
 
       - name: Upload Code Formatting Diff
-        if: exists('black_diff_${{ matrix.python-version }}.txt')
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: black-diff-${{ matrix.python-version }}

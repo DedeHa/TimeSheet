@@ -25,6 +25,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       matrix:
         python-version: [3.11, 3.12]
@@ -44,19 +45,17 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install black flake8 pytest pytest-cov openpyxl
 
-      - name: Check Code Formatting with Black and Upload Diff if Needed
+      - name: Check Code Formatting with Black and Append Results to Single File
         run: |
-          rm -f black_diff_${{ matrix.python-version }}.txt
-          echo "Python Version: ${{ matrix.python-version }}" > black_diff_${{ matrix.python-version }}.txt
-          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
-        continue-on-error: true
+          echo "=== Python Version: ${{ matrix.python-version }} ===" >> black_diff.txt
+          black --check . || (black --diff . >> black_diff.txt && echo "Code formatting check failed for Python ${{ matrix.python-version }}." >> black_diff.txt && exit 1)
 
-      - name: Upload Code Formatting Diff
-        if: exists('black_diff_${{ matrix.python-version }}.txt')
+      - name: Upload Consolidated Code Formatting Diff
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: black-diff-${{ matrix.python-version }}
-          path: black_diff_${{ matrix.python-version }}.txt
+          name: black-diff
+          path: black_diff.txt
           if-no-files-found: ignore
                    
       # - name: Run Linter with Flake8

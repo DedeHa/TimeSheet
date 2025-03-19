@@ -1,9 +1,9 @@
 """
-TYPE:   !/usr/bin/env python3 
+TYPE:   !/usr/bin/env python3
 
-FILENAME :        AZESheetAlgo.py             
+FILENAME :        AZESheetAlgo.py
 
-AUTHOR :    Dennis Hartel        
+AUTHOR :    Dennis Hartel
 
 START DATE :    08.10.2022
 

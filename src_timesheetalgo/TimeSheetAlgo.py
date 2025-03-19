@@ -1,15 +1,15 @@
 """
-TYPE:   !/usr/bin/env python3 
+TYPE:   !/usr/bin/env python3
 
-FILENAME :        TimeSheetAlgo.py             
+FILENAME :        TimeSheetAlgo.py
 
-AUTHOR :    Dennis Hartel        
+AUTHOR :    Dennis Hartel
 
 START DATE :    26.01.2022
 
 DESCRIPTION :   Automatic timelog organisation with extract of timelogdata and document in time balance sheet
 
-REMARK: Refactored and optimized with ChatGPT and review/updated 
+REMARK: Refactored and optimized with ChatGPT and review/updated
 
 """
 

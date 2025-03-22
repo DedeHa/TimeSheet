@@ -10,11 +10,11 @@ on:
       - 'INF|*'
       - 'PRO-*FCT|*'
       - 'PRO-*INF|*'
-      - '!main' # Prevent direct pushes to main
+      - '!master' # Prevent direct pushes to main
       - '!RC*'  # Prevent direct pushes to release branches
   pull_request:
     branches:
-      - 'main'
+      - 'master'
       - 'RC*'
       - 'FCT|*'
       - 'INF|*'

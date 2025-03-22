@@ -30,7 +30,7 @@ jobs:
             echo "Environment=production" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == refs/heads/RC* ]]; then
             echo "Environment=staging" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == refs/heads/FCT|* || "${{ github.ref }}" == refs/heads/INF|* ]]; then
+          elif [[ "${{ github.ref }}" == refs/heads/FCT\|* || "${{ github.ref }}" == refs/heads/INF\|* ]]; then
             echo "Environment=testing" >> $GITHUB_ENV
           else
             echo "Environment=development" >> $GITHUB_ENV

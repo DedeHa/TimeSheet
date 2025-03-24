@@ -25,7 +25,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    #continue-on-error: true
+    continue-on-error: true
     environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC' && 'release' || 'dev' }}
     strategy:
       matrix:

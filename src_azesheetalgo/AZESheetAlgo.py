@@ -13,13 +13,11 @@ DESCRIPTION :   Automatic extract from time balance sheet and creation of AZE do
 
 # Configuration--------------------------------------------------------#
 
-import sys, os, time
-import csv, argparse
+import time
+import csv
 import openpyxl
 
 from datetime import datetime as dt
-from datetime import timedelta as td
-from distutils.util import strtobool
 
 
 obj_newtimedata = []

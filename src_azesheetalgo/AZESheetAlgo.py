@@ -53,11 +53,12 @@ class aze_algo:
     # class methods
     # constructor
     def __init__(self):
-        timelog = 0
-        timesheet = 0
-        azetemplate = 0
-        obj_date_startpoint = 0
-        obj_date_endpoint = 0
+        self.timelog = 0
+        self.timesheet = 0
+        self.azetemplate = 0
+        self.obj_date_startpoint = 0
+        self.obj_date_endpoint = 0
+        self.timelog_sel = 0    
 
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_req_algo_para - Request date algo parameter input
@@ -76,7 +77,7 @@ class aze_algo:
                 self.obj_date_startpoint = dt.strptime(str_date_startpoint, "%d.%m.%Y")
                 print("Startdate: ", self.obj_date_startpoint.date())
                 break
-            except:
+            except ValueError:
                 # FALSE
                 print("That is not a date. Try again. Remaining Attemps: ", i)
 
@@ -90,7 +91,7 @@ class aze_algo:
                 self.obj_date_endpoint = dt.strptime(str_date_endpoint, "%d.%m.%Y")
                 print("Enddate: ", self.obj_date_endpoint.date())
                 break
-            except:
+            except ValueError:
                 # FALSE
                 print("That is not a date. Try again. Remaining Attemps: ", i)
 
@@ -109,7 +110,7 @@ class aze_algo:
                 obj_list_timelog = list(csv.reader(obj_csv_timelog))
                 obj_list_timelog.pop(0)
                 self.timelog = obj_list_timelog
-        except:
+        except FileNotFoundError:
             # FALSE
             print(
                 "Failure detected! No Timelog File found. TimeSheetAlgo will be cancaled"
@@ -123,7 +124,7 @@ class aze_algo:
             self.timesheet = openpyxl.load_workbook(
                 self.str_path_timesheet, data_only=False, keep_vba=True
             )
-        except:
+        except FileNotFoundError:
             # FALSE
             print(
                 "Failure detected! No TimeSheet File found. TimeSheetAlgo will be cancaled"
@@ -136,7 +137,7 @@ class aze_algo:
             # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
             # self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate, data_only=False, keep_vba=True)
             self.azetemplate = openpyxl.load_workbook(self.str_path_azetemplate)
-        except:
+        except FileNotFoundError:
             # FALSE
             print(
                 "Failure detected! No AZE-Timesheet File found. TimeSheetAlgo will be cancaled"
@@ -222,7 +223,7 @@ class aze_algo:
                 str_date_firstdate = dt.strptime(i[0], "%d.%m.%Y").strftime("%d%m")
 
                 # Check if data fields are empty/none
-                if obj_wb_AZEsheet["blanko"][obj_list_datacells[0][0]].value != None:
+                if obj_wb_AZEsheet["blanko"][obj_list_datacells[0][0]].value:
 
                     # Reset values in AZEsheet
                     for k in range(len(obj_list_datacells)):

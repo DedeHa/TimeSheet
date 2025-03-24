@@ -62,7 +62,7 @@ jobs:
                    
       - name: Run Linter with Ruff
         run: |
-          ruff check . --exit-zero
+          ruff check . 
 
       # - name: Run Tests with Coverage
       #   run: |

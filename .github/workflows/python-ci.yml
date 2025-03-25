@@ -26,7 +26,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
-    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC' && 'release' || 'dev' }}
+    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
     strategy:
       matrix:
         python-version: [3.11, 3.12]
@@ -50,7 +50,7 @@ jobs:
         run: |
           rm -f black_diff_${{ matrix.python-version }}.txt
           echo "Python Version: ${{ matrix.python-version }}" > black_diff_${{ matrix.python-version }}.txt
-          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
+          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && exit 1)
 
       - name: Upload Code Formatting Diff
         if: failure()
@@ -64,7 +64,7 @@ jobs:
         run: |
           rm -f ruff_lint_${{ matrix.python-version }}.txt
           echo "Python Version: ${{ matrix.python-version }}" > ruff_lint_${{ matrix.python-version }}.txt
-          ruff check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && echo "Linting failed. Push to main or RC branches is not allowed." && exit 1)
+          ruff check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
 
       - name: Upload Linter Results
         if: failure()
@@ -73,6 +73,12 @@ jobs:
           name: ruff-lint-${{ matrix.python-version }}
           path: ruff_lint_${{ matrix.python-version }}.txt
           if-no-files-found: ignore
+
+      - name: Fail Workflow on Check Failure
+        if: failure()
+        run: |
+          echo "Checks failed. Push or pull request is not allowed."
+          exit 1
 
       # - name: Run Tests with Coverage
       #   run: |

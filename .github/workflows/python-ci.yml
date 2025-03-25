@@ -26,7 +26,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
-    environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
+    #environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
+    environment: 
+      ${{ 
+      startsWith(github.ref, 'refs/heads/*FCT|') && 'development' || 
+      startsWith(github.ref, 'refs/heads/*INF|') && 'development' || 
+      github.ref == 'refs/heads/master' && 'production' || 
+      startsWith(github.ref, 'refs/heads/*RC*') && 'staging' || 
+      'develope'  
+      }} 
+    
     strategy:
       matrix:
         python-version: [3.11, 3.12]

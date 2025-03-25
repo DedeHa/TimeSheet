@@ -13,7 +13,6 @@ REMARK: Refactored and optimized with ChatGPT and review/updated
 
 """
 
-import time
 import csv
 import openpyxl
 from datetime import datetime as dt, timedelta as td

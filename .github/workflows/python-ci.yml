@@ -10,11 +10,11 @@ on:
       - 'INF|*'
       - 'PRO-*FCT|*'
       - 'PRO-*INF|*'
-      - '!main' # Prevent direct pushes to main
+      - '!master' # Prevent direct pushes to main
       - '!RC*'  # Prevent direct pushes to release branches
   pull_request:
     branches:
-      - 'main'
+      - 'master'
       - 'RC*'
       - 'FCT|*'
       - 'INF|*'
@@ -26,11 +26,31 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
+    #environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
+    environment: 
+      ${{ 
+        github.event_name == 'pull_request' && (
+          contains(github.base_ref, '*FCT|*') && 'development' || 
+          contains(github.base_ref, 'INF|') && 'development' || 
+          contains(github.base_ref, 'RC') && 'staging' || 
+          github.base_ref == 'master' && 'production'
+        ) || (
+          contains(github.ref, 'FCT|') && 'development' || 
+          contains(github.ref, 'INF|') && 'development' || 
+          contains(github.ref, 'RC') && 'staging' 
+        )
+      }}
+    
     strategy:
       matrix:
         python-version: [3.11, 3.12]
 
     steps:
+      - name: Print GitHub Context Information
+        run: |
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "GitHub Base Ref: ${{ github.base_ref }}"
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -43,13 +63,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl
+          pip install black flake8 pytest pytest-cov openpyxl ruff
 
       - name: Check Code Formatting with Black and Upload Diff if Needed
         run: |
           rm -f black_diff_${{ matrix.python-version }}.txt
           echo "Python Version: ${{ matrix.python-version }}" > black_diff_${{ matrix.python-version }}.txt
-          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && echo "Code formatting check failed. Push to main or RC branches is not allowed." && exit 1)
+          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && exit 1)
 
       - name: Upload Code Formatting Diff
         if: failure()
@@ -59,10 +79,25 @@ jobs:
           path: black_diff_${{ matrix.python-version }}.txt
           if-no-files-found: ignore
                    
-      # - name: Run Linter with Flake8
-      #   run: |
-      #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-      #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Run Linter with Ruff
+        run: |
+          rm -f ruff_lint_${{ matrix.python-version }}.txt
+          echo "Python Version: ${{ matrix.python-version }}" > ruff_lint_${{ matrix.python-version }}.txt
+          ruff check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
+
+      - name: Upload Linter Results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruff-lint-${{ matrix.python-version }}
+          path: ruff_lint_${{ matrix.python-version }}.txt
+          if-no-files-found: ignore
+
+      - name: Fail Workflow on Check Failure
+        if: failure()
+        run: |
+          echo "Checks failed. Push or pull request is not allowed."
+          exit 1
 
       # - name: Run Tests with Coverage
       #   run: |

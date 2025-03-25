@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import patch, mock_open
 from datetime import datetime as dt, timedelta as td
 import openpyxl
 from src_timesheetalgo.TimeSheetAlgo import (

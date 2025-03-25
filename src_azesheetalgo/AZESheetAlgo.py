@@ -58,7 +58,7 @@ class aze_algo:
         self.azetemplate = 0
         self.obj_date_startpoint = 0
         self.obj_date_endpoint = 0
-        timelog_sel = 0
+        self.timelog_sel = 0
 
     # +++++++++++++++++++++++++++++++++++++++++++++++++++++
     # fct_req_algo_para - Request date algo parameter input

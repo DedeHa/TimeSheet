@@ -29,18 +29,28 @@ jobs:
     #environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
     environment: 
       ${{ 
-      startsWith(github.ref, 'refs/heads/*FCT|') && 'development' || 
-      startsWith(github.ref, 'refs/heads/*INF|') && 'development' || 
-      github.ref == 'refs/heads/master' && 'production' || 
-      startsWith(github.ref, 'refs/heads/*RC*') && 'staging' || 
-      'develope'  
-      }} 
+        github.event_name == 'pull_request' && (
+          contains(github.base_ref, '*FCT|*') && 'development' || 
+          contains(github.base_ref, 'INF|') && 'development' || 
+          contains(github.base_ref, 'RC') && 'staging' || 
+          github.base_ref == 'master' && 'production'
+        ) || (
+          contains(github.ref, 'FCT|') && 'development' || 
+          contains(github.ref, 'INF|') && 'development' || 
+          contains(github.ref, 'RC') && 'staging' 
+        )
+      }}
     
     strategy:
       matrix:
         python-version: [3.11, 3.12]
 
     steps:
+      - name: Print GitHub Context Information
+        run: |
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "GitHub Base Ref: ${{ github.base_ref }}"
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 

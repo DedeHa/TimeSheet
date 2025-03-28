@@ -26,7 +26,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
-    #environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
     environment: 
       ${{ 
         github.event_name == 'pull_request' && (
@@ -64,6 +63,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install black flake8 pytest pytest-cov openpyxl ruff
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       - name: Check Code Formatting with Black and Upload Diff if Needed
         run: |
@@ -83,7 +83,7 @@ jobs:
         run: |
           rm -f ruff_lint_${{ matrix.python-version }}.txt
           echo "Python Version: ${{ matrix.python-version }}" > ruff_lint_${{ matrix.python-version }}.txt
-          ruff check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
+          ruff --format=github --target-version=py310 check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
 
       - name: Upload Linter Results
         if: failure()
@@ -99,9 +99,13 @@ jobs:
           echo "Checks failed. Push or pull request is not allowed."
           exit 1
 
-      # - name: Run Tests with Coverage
-      #   run: |
-      #     pytest --junitxml=reports/test-results.xml --cov=src_timesheetalgo --cov-report=xml --cov-report=html
+      - name: Run Tests with Coverage
+        run: |
+          mkdir -p reports
+          coverage run -m pytest -v -s --junitxml=reports/test-results.xml
+          coverage report > reports/coverage.txt
+          coverage xml -o reports/coverage.xml
+          coverage html -d reports/htmlcov
 
       # - name: Upload Test Results
       #   uses: actions/upload-artifact@v4

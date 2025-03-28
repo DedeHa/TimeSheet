@@ -83,7 +83,7 @@ jobs:
         run: |
           rm -f ruff_lint_${{ matrix.python-version }}.txt
           echo "Python Version: ${{ matrix.python-version }}" > ruff_lint_${{ matrix.python-version }}.txt
-          ruff --format=github --target-version=py310 check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
+          ruff check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
 
       - name: Upload Linter Results
         if: failure()

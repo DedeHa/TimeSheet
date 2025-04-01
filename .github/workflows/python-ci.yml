@@ -26,7 +26,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
-    #environment: ${{ github.ref == 'refs/heads/master' && 'prod' || github.ref == 'refs/heads/RC*' && 'stage' || github.ref == 'refs/heads/PRO-*INF|*' && 'testing' ||'dev' }}
     environment: 
       ${{ 
         github.event_name == 'pull_request' && (
@@ -64,6 +63,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install black flake8 pytest pytest-cov openpyxl ruff
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       - name: Check Code Formatting with Black and Upload Diff if Needed
         run: |
@@ -99,23 +99,10 @@ jobs:
           echo "Checks failed. Push or pull request is not allowed."
           exit 1
 
-      # - name: Run Tests with Coverage
-      #   run: |
-      #     pytest --junitxml=reports/test-results.xml --cov=src_timesheetalgo --cov-report=xml --cov-report=html
-
-      # - name: Upload Test Results
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: test-results
-      #     path: reports/test-results.xml
-
-      # - name: Upload Coverage Report
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: coverage-report
-      #     path: htmlcov/
-
-      # - name: Upload Coverage to Codecov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./coverage.xml
+      - name: Run Tests with Coverage
+        run: |
+          mkdir -p reports
+          coverage run -m pytest -v -s --junitxml=reports/test-results.xml
+          coverage report > reports/coverage.txt
+          coverage xml -o reports/coverage.xml
+          coverage html -d reports/htmlcov

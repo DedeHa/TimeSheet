@@ -86,7 +86,9 @@ jobs:
         run: |
           echo "Python Version: ${{ matrix.python-version }}" > lint_results_${{ matrix.python-version }}.txt
           black --check . || black --diff . >> lint_results_${{ matrix.python-version }}.txt
-          ruff check . || ruff check . >> lint_results_${{ matrix.python-version }}.txt
+          ruff_output=$(ruff check . || true)
+          echo "$ruff_output" >> lint_results_${{ matrix.python-version }}.txt
+          echo "$ruff_output"
 
       - name: Upload Linting Artifacts
         if: failure()

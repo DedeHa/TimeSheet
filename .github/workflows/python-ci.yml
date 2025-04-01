@@ -87,9 +87,10 @@ jobs:
           echo "Python Version: ${{ matrix.python-version }}" > lint_results_${{ matrix.python-version }}.txt
           black --check . || (black --diff . >> lint_results_${{ matrix.python-version }}.txt && exit 1)
           ruff_output=$(ruff check .)
+          ruff_exit_code=$?
           echo "$ruff_output" >> lint_results_${{ matrix.python-version }}.txt
           echo "$ruff_output"
-          if [ $? -ne 0 ]; then
+          if [ $ruff_exit_code -ne 0 ]; then
             echo "Ruff linting failed. See lint_results_${{ matrix.python-version }}.txt for details."
             exit 1
           fi

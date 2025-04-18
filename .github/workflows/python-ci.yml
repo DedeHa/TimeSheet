@@ -23,82 +23,51 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-    continue-on-error: true
-    environment: 
-      ${{ 
-        github.event_name == 'pull_request' && (
-          contains(github.base_ref, 'FCT|') && 'development' || 
-          contains(github.base_ref, 'INF|') && 'development' || 
-          contains(github.base_ref, 'RC') && 'staging' || 
-          github.base_ref == 'master' && 'production'
-        ) || (
-          contains(github.ref, 'FCT|') && 'development' || 
-          contains(github.ref, 'INF|') && 'development' || 
-          contains(github.ref, 'RC') && 'staging' 
-        )
-      }}
-    
     strategy:
       matrix:
         python-version: [3.11, 3.12]
-
     steps:
-      - name: Print GitHub Context Information
-        run: |
-          echo "GitHub Ref: ${{ github.ref }}"
-          echo "GitHub Base Ref: ${{ github.base_ref }}"
-
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff
-          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
-
-      - name: Check Code Formatting with Black and Upload Diff if Needed
-        run: |
-          rm -f black_diff_${{ matrix.python-version }}.txt
-          echo "Python Version: ${{ matrix.python-version }}" > black_diff_${{ matrix.python-version }}.txt
-          black --check . || (black --diff . >> black_diff_${{ matrix.python-version }}.txt && exit 1)
-
-      - name: Upload Code Formatting Diff
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: black-diff-${{ matrix.python-version }}
-          path: black_diff_${{ matrix.python-version }}.txt
-          if-no-files-found: ignore
-                   
+          pip install black ruff
       - name: Run Linter with Ruff
-        run: |
-          rm -f ruff_lint_${{ matrix.python-version }}.txt
-          echo "Python Version: ${{ matrix.python-version }}" > ruff_lint_${{ matrix.python-version }}.txt
-          ruff check . || (ruff check . >> ruff_lint_${{ matrix.python-version }}.txt && exit 1)
+        run: ruff check .
+      - name: Check Code Formatting with Black
+        run: black --check .
 
-      - name: Upload Linter Results
-        if: failure()
-        uses: actions/upload-artifact@v4
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          name: ruff-lint-${{ matrix.python-version }}
-          path: ruff_lint_${{ matrix.python-version }}.txt
-          if-no-files-found: ignore
-
-      - name: Fail Workflow on Check Failure
-        if: failure()
+          python-version: ${{ matrix.python-version }}
+      - name: Install Dependencies
         run: |
-          echo "Checks failed. Push or pull request is not allowed."
-          exit 1
-
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
       - name: Run Tests with Coverage
         run: |
           mkdir -p reports
@@ -106,3 +75,8 @@ jobs:
           coverage report > reports/coverage.txt
           coverage xml -o reports/coverage.xml
           coverage html -d reports/htmlcov
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/

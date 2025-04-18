@@ -29,7 +29,7 @@ jobs:
     environment: 
       ${{ 
         github.event_name == 'pull_request' && (
-          contains(github.base_ref, '*FCT|*') && 'development' || 
+          contains(github.base_ref, 'FCT|') && 'development' || 
           contains(github.base_ref, 'INF|') && 'development' || 
           contains(github.base_ref, 'RC') && 'staging' || 
           github.base_ref == 'master' && 'production'

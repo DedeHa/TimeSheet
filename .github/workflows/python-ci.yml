@@ -45,6 +45,8 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
+          REQUIREMENTS_FILE=${{ env.REQUIREMENTS_FILE:-requirements.txt }}
+          if [ -f "$REQUIREMENTS_FILE" ]; then pip install -r "$REQUIREMENTS_FILE"; fi
           pip install black ruff
       - name: Run Linter with Ruff
         run: ruff check .
@@ -66,8 +68,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest pytest-cov
+          # Install testing dependencies. 'openpyxl' is required for handling Excel files in tests.
+          pip install pytest pytest-cov openpyxl
       - name: Run Tests with Coverage
         run: |
           mkdir -p reports

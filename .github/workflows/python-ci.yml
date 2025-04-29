@@ -67,7 +67,7 @@ jobs:
   test:
     name: Run unit tests and publish results
     runs-on: ubuntu-latest
-    needs: [lint, security]
+    needs: [lint]
     if: github.event_name == 'pull_request' && contains(github.base_ref, 'RC')
     environment: staging
 

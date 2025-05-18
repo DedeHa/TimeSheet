@@ -1,5 +1,5 @@
 """
-TYPE:   !/usr/bin/env python3
+TYPE:   !/usr/bin/env python3.
 
 FILENAME :        TimeSheetAlgo.py
 
@@ -65,7 +65,14 @@ def check_file_existence(filepath, filetype):
 
 
 class TimeSheetProcessor:
+    """Process and manage timelog and timesheet data."""
+
     def __init__(self, config):
+        """Initialize the TimeSheetProcessor with configuration.
+
+        Args:
+            config (dict): Dictionary containing file paths for timelog and timesheet.
+        """
         self.timelog_path = config["timelog_path"]
         self.timesheet_path = config["timesheet_path"]
         self.timelog = []

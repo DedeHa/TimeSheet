@@ -1,7 +1,7 @@
 import pytest
 import openpyxl
 from datetime import datetime, timedelta
-from src_timesheetalgo.TimeSheetAlgo import (
+from TimeSheetAlgo import (
     parse_date,
     check_file_existence,
     TimeSheetProcessor,

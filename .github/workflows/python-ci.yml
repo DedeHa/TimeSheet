@@ -68,7 +68,7 @@ jobs:
         run: pydocstyle src_timesheetalgo
 
       - name: Run radon
-        run: radon cc . -a
+        run: radon cc src_timesheetalgo -a
 
   test:
     name: Run unit tests and publish results
@@ -91,17 +91,17 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests --cov=src_timesheetalgo --cov-branch --cov-report=xml --cov-report=term-missing --junitxml=results.xml
-          #coverage run -m pytest -v -s --junitxml=reports/test-results.xml
-          #coverage report > reports/coverage.txt
-          #coverage xml -o reports/coverage.xml
-          #coverage html -d reports/htmlcov
+          mkdir -p tests/reports
+          pytest tests --cov=src_timesheetalgo --cov-branch --cov-report=html:tests/reports/htmlcov --cov-report=term-missing --junitxml=tests/reports/test-results.xml
+          #coverage run -m pytest -v -s
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: results.xml
+          path: |
+            tests/reports/test-results.xml
+            tests/reports/htmlcov
 
   deploy:
     name: Build & Deploy

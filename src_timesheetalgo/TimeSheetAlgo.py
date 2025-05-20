@@ -1,5 +1,5 @@
 """
-TYPE:   !/usr/bin/env python3
+TYPE:   !/usr/bin/env python3.
 
 FILENAME :        TimeSheetAlgo.py
 
@@ -65,7 +65,10 @@ def check_file_existence(filepath, filetype):
 
 
 class TimeSheetProcessor:
+    """Verarbeitet Zeiterfassungsdaten und überträgt sie in das Timesheet."""
+
     def __init__(self, config):
+        """Initialisiert den TimeSheetProcessor mit Konfigurationsdaten."""
         self.timelog_path = config["timelog_path"]
         self.timesheet_path = config["timesheet_path"]
         self.timelog = []

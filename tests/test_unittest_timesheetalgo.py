@@ -1,3 +1,10 @@
+import sys
+import os
+
+# Adding the parent directory to sys.path to allow importing modules from src_timesheetalgo.
+# Consider configuring PYTHONPATH in your test runner for better maintainability.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import pytest
 import openpyxl
 from datetime import datetime, timedelta

@@ -1,14 +1,7 @@
-import sys
-import os
-
-# Adding the parent directory to sys.path to allow importing modules from src_timesheetalgo.
-# Consider configuring PYTHONPATH in your test runner for better maintainability.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import pytest
 import openpyxl
 from datetime import datetime, timedelta
-from src_timesheetalgo.TimeSheetAlgo import (
+from TimeSheetAlgo import (
     parse_date,
     check_file_existence,
     TimeSheetProcessor,
@@ -206,7 +199,8 @@ def test_request_date_input_valid(mock_processor, monkeypatch):
     """
     Test Case 3.2:
     - Setup: Use valid user inputs for start and end dates.
-    - Expected: obj_date_startpoint and obj_date_endpoint are set to parsed datetime values.
+    - Expected: obj_date_startpoint and obj_date_endpoint are set to parsed
+      datetime values.
     """
     inputs = iter(["15.03.2023", "20.03.2023"])
     monkeypatch.setattr("builtins.input", lambda prompt: next(inputs))
@@ -218,12 +212,15 @@ def test_request_date_input_valid(mock_processor, monkeypatch):
     assert mock_processor.obj_date_endpoint == expected_end
 
 
-# 3.3. Test request_date_input() with invalid inputs triggering fallback and default date extraction
+# 3.3. Test request_date_input() with invalid inputs triggering fallback and
+# default date extraction
 def test_request_date_input_invalid_default(mock_processor, monkeypatch):
     """
     Test Case 3.3:
-    - Setup: Simulate invalid user input so that fallback functions are used without specific date.
-    - Expected: Default start date from workbook and default end date (yesterday) are set.
+    - Setup: Simulate invalid user input so that fallback functions are used.
+      without specific date.
+    - Expected: Default start date from workbook and default end date
+      (yesterday) are set.
     """
     monkeypatch.setattr("builtins.input", lambda prompt: "invalid")
 
@@ -234,11 +231,13 @@ def test_request_date_input_invalid_default(mock_processor, monkeypatch):
     assert mock_processor.obj_date_endpoint.date() == expected_end.date()
 
 
-# 3.4. Test request_date_input() with invalid inputs triggering fallback with specific date
+# 3.4. Test request_date_input() with invalid inputs triggering fallback
+# with specific date
 def test_request_date_input_invalid_specific(mock_processor, monkeypatch):
     """
     Test Case 3.3:
-    - Setup: Simulate invalid user input so that fallback functions are used with specific date
+    - Setup: Simulate invalid user input so that fallback functions are used
+      with a specific date.
     - Expected: Default start date from workbook are set with specific start date
     """
     mock_processor.timesheet.worksheets[6].cell(
@@ -254,11 +253,13 @@ def test_request_date_input_invalid_specific(mock_processor, monkeypatch):
     # ws.cell(row=ROW_OFFSET + 1, column=5, value=datetime(2023, idx + 1, 1))
 
 
-# 3.5. Test select_timelog_data(): Check that only entries within the date range are selected.
+# 3.5. Test select_timelog_data(): Check that only entries within the date range
+# are selected.
 def test_select_timelog_data(mock_processor):
     """
     Test Case 3.4:
-    - Setup: Provide timelog entries with dates before, within, and after a specified range.
+    - Setup: Provide timelog entries with dates before, within, and after a
+      specified range.
     - Expected: Only entries within the boundaries (inclusive) are selected.
     """
     mock_processor.timelog = [
@@ -292,7 +293,8 @@ def test_select_timelog_data_no_entries(mock_processor):
         mock_processor.select_timelog_data()
 
 
-# 3.7. Test store_data() without overwrite: When the target cell already has data and user declines.
+# 3.7. Test store_data() without overwrite: When the target cell already has data and
+# user declines.
 def test_store_data_no_overwrite(monkeypatch, mock_processor):
     """
     Test Case 3.6:
@@ -312,7 +314,7 @@ def test_store_data_no_overwrite(monkeypatch, mock_processor):
     assert sheet.cell(row=row, column=5).value == "08:00"
 
 
-# 3.8. Test store_data() with overwrite: When the target cell has data and user confirms.
+# 3.8. Test store_data() with overwrite: When target cell has data and user confirms.
 def test_store_data_with_overwrite(monkeypatch, mock_processor):
     """
     Test Case 3.7:

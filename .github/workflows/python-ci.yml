@@ -59,13 +59,13 @@ jobs:
           pip install black flake8 pytest pytest-cov openpyxl ruff radon pydocstyle
           
       - name: Run ruff
-        run: ruff check .
+        run: ruff check src_timesheetalgo tests
 
       - name: Run black formatter
-        run: black --check .
+        run: black --check src_timesheetalgo tests
 
       - name: Run pydocstyle
-        run: pydocstyle src_timesheetalgo
+        run: pydocstyle src_timesheetalgo tests
 
       - name: Run radon
         run: radon cc src_timesheetalgo -a

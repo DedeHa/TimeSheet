@@ -7,7 +7,8 @@ AUTHOR :    Dennis Hartel
 
 START DATE :    26.01.2022
 
-DESCRIPTION :   Automatic timelog organisation with extract of timelogdata and document in time balance sheet
+DESCRIPTION :   Automatic timelog organisation with extract of timelogdata and
+                document in time balance sheet
 
 REMARK: Refactored and optimized with ChatGPT and review/updated
 
@@ -57,7 +58,8 @@ def check_file_existence(filepath, filetype):
             with open(filepath, encoding="utf-8") as file:
                 return list(csv.reader(file))[1:]  # Skip header
         elif filetype == "excel":
-            # Open timesheet xlsm with parameters (data_only = Keep formula, keep_vba = Keep VBA program)
+            # Open timesheet xlsm with parameters:
+            # data_only = Keep formula, keep_vba = Keep VBA program
             return openpyxl.load_workbook(filepath, data_only=False, keep_vba=True)
     except FileNotFoundError:
         logging.error(f"File not found: {filepath}")
@@ -132,7 +134,10 @@ class TimeSheetProcessor:
             # If no date is found, set a default start date
             default_start_date = dt(YEAR, 1, 1)
             logging.info(
-                f"No valid date found. Default start date set to: {default_start_date.date()}"
+                (
+                    f"No valid date found. Default start date set to: "
+                    f"{default_start_date.date()}"
+                )
             )
             return default_start_date
 

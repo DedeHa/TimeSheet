@@ -166,7 +166,6 @@ class TimeSheetProcessor:
         """Store selected timelog data into the timesheet."""
         logging.info("Storing timelog data into timesheet...")
         for entry in self.timedata:
-
             # Define index for storing data
             date, start_time, end_time = (
                 dt.strptime(entry[0], DATE_FORMAT),

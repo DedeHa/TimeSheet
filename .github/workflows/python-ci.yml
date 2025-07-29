@@ -93,6 +93,7 @@ jobs:
         run: |
           mkdir -p tests/reports
           pytest tests --cov=src_timesheetalgo --cov-branch --cov-report=html:tests/reports/htmlcov --cov-report=term-missing --junitxml=tests/reports/test-results.xml
+          #pytest --junitxml=reports/test-results.xml --cov=my_project --cov-report=xml --cov-report=html
           #coverage run -m pytest -v -s
 
       - name: Upload test results
@@ -125,4 +126,3 @@ jobs:
       - name: Install packaging tools
         run: |
           pip install build
-

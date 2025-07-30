@@ -1,8 +1,15 @@
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import patch, mock_open
 from datetime import datetime as dt, timedelta as td
 import openpyxl
-from src_timesheetalgo.TimeSheetAlgo import TimeSheetProcessor, parse_date, check_file_existence, ROW_OFFSET, CONFIG, DATE_FORMAT
+from src_timesheetalgo.TimeSheetAlgo import (
+    TimeSheetProcessor,
+    parse_date,
+    check_file_existence,
+    ROW_OFFSET,
+    CONFIG,
+    DATE_FORMAT,
+)
 
 # Mock data
 MOCK_TIMELOG = [
@@ -14,7 +21,10 @@ MOCK_TIMELOG = [
 MOCK_TIMESHEET = openpyxl.Workbook()
 MOCK_TIMESHEET.create_sheet("January")
 for i in range(1, 32):
-    MOCK_TIMESHEET["January"].append(["", "", "", "", dt(2023, 1, i), ""])  # Fill column 5 with date values
+    MOCK_TIMESHEET["January"].append(
+        ["", "", "", "", dt(2023, 1, i), ""]
+    )  # Fill column 5 with date values
+
 
 # Fixtures
 @pytest.fixture
@@ -23,7 +33,7 @@ def mock_processor():
     processor = TimeSheetProcessor(CONFIG)
     processor.timesheet = MOCK_TIMESHEET
     return processor
-   
+
 
 def test_parse_date_valid():
     """Test parse_date with valid input."""
@@ -63,7 +73,10 @@ def test_load_files(mock_processor):
     """Test the load_files method."""
     mock_processor.timelog = MOCK_TIMELOG
     mock_processor.timesheet = MOCK_TIMESHEET
-    with patch("src_timesheetalgo.TimeSheetAlgo.check_file_existence", side_effect=[MOCK_TIMELOG, MOCK_TIMESHEET]):
+    with patch(
+        "src_timesheetalgo.TimeSheetAlgo.check_file_existence",
+        side_effect=[MOCK_TIMELOG, MOCK_TIMESHEET],
+    ):
         mock_processor.load_files()
         assert mock_processor.timelog == MOCK_TIMELOG
         assert mock_processor.timesheet == MOCK_TIMESHEET
@@ -91,7 +104,9 @@ def test_store_data(mock_processor):
         sheet.append(row)
     mock_processor.timedata = mock_processor.timelog
 
-    with patch("builtins.input", return_value="y"):  # Mock user input for overwrite confirmation
+    with patch(
+        "builtins.input", return_value="y"
+    ):  # Mock user input for overwrite confirmation
         mock_processor.store_data()
 
     assert sheet.cell(row=ROW_OFFSET + 1, column=5).value == "08:00"
@@ -133,9 +148,13 @@ def test_save_timesheet(mock_processor):
 def test_main_execution():
     """Test the main execution flow."""
     processor = TimeSheetProcessor(CONFIG)
-    with patch.object(processor, "load_files"), patch.object(processor, "request_date_input"), \
-            patch.object(processor, "select_timelog_data"), patch.object(processor, "store_data"), \
-            patch.object(processor, "save_timesheet"):
+    with patch.object(processor, "load_files"), patch.object(
+        processor, "request_date_input"
+    ), patch.object(processor, "select_timelog_data"), patch.object(
+        processor, "store_data"
+    ), patch.object(
+        processor, "save_timesheet"
+    ):
         processor.load_files()
         processor.request_date_input()
         processor.select_timelog_data()

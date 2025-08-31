@@ -1,0 +1,22 @@
+Auf "Codespaces: orange eureka" installierte Erweiterungen:
+codezombiech.gitignore
+github.codespaces
+github.copilot
+github.copilot-chat
+github.github-vscode-theme
+github.vscode-github-actions
+github.vscode-pull-request-github
+mechatroner.rainbow-csv
+ms-ceintl.vscode-language-pack-de
+ms-python.debugpy
+ms-python.python
+ms-python.vscode-pylance
+ms-python.vscode-python-envs
+njpwerner.autodocstring
+omartawfik.github-actions-vscode
+phplasma.csv-to-table
+redhat.vscode-yaml
+rooveterinaryinc.roo-cline
+vscode-icons-team.vscode-icons
+
+#Innstallation: cat extensions.txt | xargs -L 1 code --install-extension

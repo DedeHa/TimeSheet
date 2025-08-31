@@ -1,4 +1,6 @@
-Auf "Codespaces: orange eureka" installierte Erweiterungen:
+# Installed extensions on "Codespaces: orange eureka":
+# Installation: cat extensions.txt | xargs -L 1 code --install-extension
+
 codezombiech.gitignore
 github.codespaces
 github.copilot
@@ -18,4 +20,3 @@ phplasma.csv-to-table
 redhat.vscode-yaml
 rooveterinaryinc.roo-cline
 vscode-icons-team.vscode-icons
-#Installation: cat extensions.txt | xargs -L 1 code --install-extension

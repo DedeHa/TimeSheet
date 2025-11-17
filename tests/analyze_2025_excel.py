@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""
+"""Analyze 2025 Excel timesheet structure and compare with TimeSheetAlgo.py expectations.
+
 FILENAME: analyze_2025_excel.py
 AUTHOR: Dennis Hartel
-DESCRIPTION: Analyze 2025 Excel timesheet structure and compare with TimeSheetAlgo.py expectations
+DESCRIPTION: This module analyzes the 2025 Excel timesheet structure and compares it
+with the expectations defined in TimeSheetAlgo.py.
 """
 
 import openpyxl
@@ -260,7 +262,7 @@ def analyze_monthly_worksheet(worksheet, month_number, expected_name):
 
 
 def main():
-    """Main function to run the analysis."""
+    """Run the Excel timesheet analysis."""
     excel_file_path = "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm"
 
     # Check if file exists

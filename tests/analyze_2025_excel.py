@@ -32,7 +32,7 @@ def analyze_excel_structure(filepath):
     try:
         # Load workbook in READ-ONLY mode to prevent any modifications
         workbook = openpyxl.load_workbook(filepath, read_only=True, data_only=False)
-        print(f"[OK] Successfully loaded workbook in READ-ONLY mode")
+        print("[OK] Successfully loaded workbook in READ-ONLY mode")
         
         analysis_results = {
             'file_path': filepath,
@@ -74,9 +74,9 @@ def analyze_excel_structure(filepath):
             if worksheet.title != monthly_sheet_names[month_idx]:
                 issue = f"Month {month_idx + 1}: Expected '{monthly_sheet_names[month_idx]}', found '{worksheet.title}'"
                 analysis_results['compatibility_issues'].append(issue)
-                print(f"  [WARNING] Name mismatch!")
+                print("  [WARNING] Name mismatch!")
             else:
-                print(f"  [OK] Name matches expectation")
+                print("  [OK] Name matches expectation")
             
             # Check year in header (row 3, column 2 as per TimeSheetAlgo.py)
             try:
@@ -87,11 +87,11 @@ def analyze_excel_structure(filepath):
                     if found_year != EXPECTED_YEAR:
                         issue = f"Month {month_idx + 1}: Expected year {EXPECTED_YEAR}, found {found_year}"
                         analysis_results['compatibility_issues'].append(issue)
-                        print(f"  [WARNING] Year mismatch!")
+                        print("  [WARNING] Year mismatch!")
                     else:
-                        print(f"  [OK] Year matches expectation")
+                        print("  [OK] Year matches expectation")
                 else:
-                    print(f"  [WARNING] No valid year found in header (row 3, column 2)")
+                    print("  [WARNING] No valid year found in header (row 3, column 2)")
                     analysis_results['compatibility_issues'].append(
                         f"Month {month_idx + 1}: No valid year found in expected header position"
                     )
@@ -99,7 +99,7 @@ def analyze_excel_structure(filepath):
                 print(f"  [WARNING] Error reading year from header: {e}")
             
             # Analyze date entries and time columns
-            print(f"  Date entries analysis:")
+            print("  Date entries analysis:")
             date_entries = 0
             time_entries = 0
             
@@ -117,7 +117,7 @@ def analyze_excel_structure(filepath):
                     if start_time_cell or end_time_cell:
                         time_entries += 1
                         
-                except Exception as e:
+                except Exception:
                     # Skip if row doesn't exist
                     continue
             
@@ -139,7 +139,7 @@ def analyze_excel_structure(filepath):
                 print(f"  {i}. {issue}")
         
         # Generate recommendations
-        print(f"\nRECOMMENDATIONS:")
+        print("\nRECOMMENDATIONS:")
         print("-" * 40)
         
         if analysis_results['total_worksheets'] != EXPECTED_TIMESHEET_SHEETS:
@@ -205,11 +205,9 @@ def analyze_monthly_worksheet(worksheet, month_number, expected_name):
         row = ROW_OFFSET + day
         try:
             # Check if row has any data
-            has_data = False
             for col in range(1, 10):  # Check first 9 columns
                 cell_value = worksheet.cell(row=row, column=col).value
                 if cell_value:
-                    has_data = True
                     analysis['max_row_with_data'] = max(analysis['max_row_with_data'], row)
                     break
             
@@ -244,7 +242,7 @@ def main():
     print("=" * 80)
     print(f"Target file: {excel_file_path}")
     print(f"Analysis date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Mode: READ-ONLY (no modifications will be made)")
+    print("Mode: READ-ONLY (no modifications will be made)")
     print()
     
     # Perform analysis
@@ -260,9 +258,9 @@ def main():
         print(f"Recommendations generated: {len(results['recommendations'])}")
         
         if results['compatibility_issues']:
-            print(f"\n[WARNING] TimeSheetAlgo.py may need updates to work with the 2025 file.")
+            print("\n[WARNING] TimeSheetAlgo.py may need updates to work with the 2025 file.")
         else:
-            print(f"\n[OK] TimeSheetAlgo.py should work with the 2025 file without modifications.")
+            print("\n[OK] TimeSheetAlgo.py should work with the 2025 file without modifications.")
     else:
         print("\n[ERROR] Analysis failed. Please check the file path and try again.")
         sys.exit(1)

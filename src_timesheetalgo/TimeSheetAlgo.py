@@ -29,12 +29,12 @@ DATE_FORMAT = "%d.%m.%Y"
 MAX_RETRIES = 3
 ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
-YEAR = 2023
+YEAR = 2025
 
 # File Paths
 CONFIG = {
     "timelog_path": "src_timesheetalgo/FDTech_timelog.csv",
-    "timesheet_path": "src_timesheetalgo/2023_FDTech_Dennis_Hartel.xlsm",
+    "timesheet_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm",
 }
 
 
@@ -58,11 +58,33 @@ def check_file_existence(filepath, filetype):
             with open(filepath, encoding="utf-8") as file:
                 return list(csv.reader(file))[1:]  # Skip header
         elif filetype == "excel":
+            # Check if file is locked/opened by another process
+            try:
+                # Try to open file in write mode to check if it's locked
+                with open(filepath, "r+b"):
+                    pass
+                logging.info(f"Excel file is not locked: {filepath}")
+            except (PermissionError, IOError) as e:
+                logging.warning(
+                    f"Excel file may be locked/opened by another process: {filepath}"
+                )
+                logging.warning(f"Lock error: {e}")
+                logging.warning(
+                    "Please close the Excel file if it's open in Excel application"
+                )
+
             # Open timesheet xlsm with parameters:
             # data_only = Keep formula, keep_vba = Keep VBA program
             return openpyxl.load_workbook(filepath, data_only=False, keep_vba=True)
     except FileNotFoundError:
         logging.error(f"File not found: {filepath}")
+        raise
+    except PermissionError as e:
+        logging.error(f"Permission denied accessing file: {filepath}")
+        logging.error(
+            "This usually means the file is open in Excel. Please close it and try again."
+        )
+        logging.error(f"Error details: {e}")
         raise
 
 
@@ -90,14 +112,39 @@ class TimeSheetProcessor:
         self.timesheet = check_file_existence(self.timesheet_path, "excel")
 
     def request_date_input(self):
-        """Request start and end date from user."""
-        logging.info("Requesting date input...")
-        self.obj_date_startpoint = self._get_date(
-            "Enter Start Date (dd.mm.yyyy): ", fallback=self.set_default_start_date
-        )
-        self.obj_date_endpoint = self._get_date(
-            "Enter End Date (dd.mm.yyyy): ", fallback=self.set_default_end_date
-        )
+        """Request start and end date from user or use defaults."""
+        logging.info("Setting date range...")
+
+        # Try to get user input, but use defaults if no input provided
+        try:
+            start_input = input(
+                "Enter Start Date (dd.mm.yyyy) or press Enter for default: "
+            ).strip()
+            if start_input:
+                self.obj_date_startpoint = dt.strptime(start_input, DATE_FORMAT)
+                logging.info(
+                    f"Using provided start date: {self.obj_date_startpoint.date()}"
+                )
+            else:
+                self.obj_date_startpoint = self.set_default_start_date()
+        except (ValueError, EOFError):
+            logging.info("Using default start date...")
+            self.obj_date_startpoint = self.set_default_start_date()
+
+        try:
+            end_input = input(
+                "Enter End Date (dd.mm.yyyy) or press Enter for default: "
+            ).strip()
+            if end_input:
+                self.obj_date_endpoint = dt.strptime(end_input, DATE_FORMAT)
+                logging.info(
+                    f"Using provided end date: {self.obj_date_endpoint.date()}"
+                )
+            else:
+                self.obj_date_endpoint = self.set_default_end_date()
+        except (ValueError, EOFError):
+            logging.info("Using default end date...")
+            self.obj_date_endpoint = self.set_default_end_date()
 
     def _get_date(self, prompt, fallback):
         """Get a date from user input or fallback to default."""
@@ -109,40 +156,40 @@ class TimeSheetProcessor:
 
     def set_default_start_date(self):
         """Set default start date based on timesheet contents."""
-        # Iterate through timesheet months
-        for sheet in reversed(self.timesheet.worksheets[:TIMESHEET_SHEETS]):
+        # Iterate through timesheet months in reverse order
+        for sheet in reversed(self.timesheet.worksheets[:12]):
+            # Look for the last entry with time data (indicating a worked day)
             for i in range(ROW_OFFSET + 30, ROW_OFFSET, -1):
-                date_cell = sheet.cell(row=i, column=5).value
-                if date_cell:
-                    # Document previous date
-                    # Define each previous date attributes (Year, Month, Day)
-                    # Derive year from default value in Januar Sheet
-                    year = self.timesheet.worksheets[0].cell(row=3, column=2).value.year
+                # Check if there's time data in column E (start time)
+                time_cell = sheet.cell(row=i, column=5).value
 
-                    # Derive month from selected sheet, sheet(index 0based + 1
-                    month = self.timesheet.index(sheet) + 1
+                if time_cell:  # If there's a start time, this day was worked
+                    # Get the year from the base date in row 3, column 2
+                    year_cell = self.timesheet.worksheets[0].cell(row=3, column=2).value
+                    if isinstance(year_cell, dt):
+                        year = year_cell.year
+                    else:
+                        year = YEAR  # fallback to constant
 
-                    # Derive day from the date cell value
-                    day = date_cell.day
-                    # Assemble previous date attributes
+                    # Get month from sheet index (0-based + 1)
+                    month = self.timesheet.worksheets.index(sheet) + 1
+
+                    # The day is the row number minus the offset
+                    day = i - ROW_OFFSET
+
+                    # Create the date
                     default_start_date = dt(year, month, day)
                     logging.info(
                         f"Default start date identified: {default_start_date.date()}"
                     )
                     return default_start_date
-        else:
-            # If no date is found, set a default start date
-            default_start_date = dt(YEAR, 1, 1)
-            logging.info(
-                (
-                    f"No valid date found. Default start date set to: "
-                    f"{default_start_date.date()}"
-                )
-            )
-            return default_start_date
 
-        # If no date is found, raise an exception
-        raise ValueError("Unable to determine default start date.")
+        # If no date is found, set a default start date
+        default_start_date = dt(YEAR, 1, 1)
+        logging.info(
+            f"No valid date found. Default start date set to: {default_start_date.date()}"
+        )
+        return default_start_date
 
     def set_default_end_date(self):
         """Set default end date to yesterday."""
@@ -190,13 +237,40 @@ class TimeSheetProcessor:
 
     def confirm_overwrite(self):
         """Prompt user to confirm overwriting data."""
-        response = input("Data exists. Overwrite? (y/n): ").strip().lower()
-        return response == "y"
+        try:
+            response = (
+                input("Data exists. Overwrite? (y/n) or press Enter for yes: ")
+                .strip()
+                .lower()
+            )
+            return response in ["y", "yes", ""]  # Default to yes if empty input
+        except EOFError:
+            logging.info("No input provided, defaulting to overwrite (yes)")
+            return True
 
     def save_timesheet(self):
         """Save the modified timesheet."""
         logging.info("Saving timesheet...")
-        self.timesheet.save(self.timesheet_path)
+        try:
+            # Check if file is still locked before saving
+            try:
+                with open(self.timesheet_path, "r+b"):
+                    pass
+                logging.info("File is available for writing")
+            except (PermissionError, IOError) as e:
+                logging.error(f"Cannot save - file is locked: {self.timesheet_path}")
+                logging.error("Please close the Excel file if it's open and try again")
+                logging.error(f"Error: {e}")
+                raise
+
+            self.timesheet.save(self.timesheet_path)
+            logging.info("Timesheet saved successfully")
+        except PermissionError as e:
+            logging.error(f"Failed to save timesheet - permission denied: {e}")
+            logging.error(
+                "The Excel file may be open in Excel application. Please close it and try again."
+            )
+            raise
 
 
 # Main execution

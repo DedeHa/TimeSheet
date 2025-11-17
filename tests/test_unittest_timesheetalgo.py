@@ -261,7 +261,7 @@ def test_request_date_input_empty_inputs(mock_processor, monkeypatch):
     - Expected: Default dates are used for both start and end.
     """
     monkeypatch.setattr("builtins.input", lambda prompt: "")
-    
+
     mock_processor.request_date_input()
     expected_start = datetime(2025, 1, 1)
     expected_end = datetime.now() - timedelta(days=1)
@@ -278,16 +278,16 @@ def test_set_default_start_date_fallback_year(mock_processor):
     """
     # Set year cell to non-datetime value
     mock_processor.timesheet.worksheets[0].cell(row=3, column=2, value="2025")
-    
+
     # Add some time data to trigger the date finding logic
     mock_processor.timesheet.worksheets[6].cell(
         row=ROW_OFFSET + 15, column=5, value="09:00"
     )
-    
+
     result = mock_processor.set_default_start_date()
     assert result.year == 2025  # Should use YEAR constant
-    assert result.month == 7    # July (worksheet index 6 + 1)
-    assert result.day == 15     # Row offset calculation
+    assert result.month == 7  # July (worksheet index 6 + 1)
+    assert result.day == 15  # Row offset calculation
 
 
 # 3.7. Test confirm_overwrite() with EOFError
@@ -297,9 +297,10 @@ def test_confirm_overwrite_eoferror(monkeypatch):
     - Setup: Simulate EOFError in input (e.g., Ctrl+D).
     - Expected: Returns True (default to overwrite).
     """
+
     def mock_input_eoferror(prompt):
         raise EOFError()
-    
+
     processor = TimeSheetProcessor(
         {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx"}
     )
@@ -319,7 +320,7 @@ def test_get_date_method(mock_processor, monkeypatch):
     monkeypatch.setattr("builtins.input", lambda prompt: "15.03.2025")
     result = mock_processor._get_date("Enter date: ", lambda: datetime(2025, 1, 1))
     assert result == datetime(2025, 3, 15)
-    
+
     # Test fallback on exception
     monkeypatch.setattr("builtins.input", lambda prompt: "invalid")
     fallback_date = datetime(2025, 12, 31)

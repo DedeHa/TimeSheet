@@ -6,35 +6,40 @@ name: Python CI
 on:
   push:
     branches:
-      - 'FCT|*'
-      - 'INF|*'
-      - 'PRO-*FCT|*'
-      - 'PRO-*INF|*'
-      - '!master' # Prevent direct pushes to main
-      - '!RC*'  # Prevent direct pushes to release branches
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'refactor/**'
+      - 'test/**'
+      - 'develop'
+      - '!master' # Prevent direct pushes to master
   pull_request:
     branches:
       - 'master'
-      - 'RC*'
-      - 'FCT|*'
-      - 'INF|*'
-      - 'PRO-*FCT|*'
-      - 'PRO-*INF|*'
+      - 'release/**'
+      - 'develop'
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'refactor/**'
   workflow_dispatch:
-    
+
 jobs:
-  
-  lint: 
+
+  lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
-    environment: 
-      ${{ 
+    environment:
+      ${{
         (
-          contains(github.ref, 'FCT|') && 'development' || 
-          contains(github.ref, 'INF|') && 'development' 
-        )
+          contains(github.ref, 'feature/') ||
+          contains(github.ref, 'bugfix/') ||
+          contains(github.ref, 'refactor/') ||
+          contains(github.ref, 'test/') ||
+          github.ref == 'refs/heads/develop'
+        ) && 'development' || 'production'
       }}
-    
+
     strategy:
       matrix:
         python-version: [3.11, 3.12]
@@ -51,13 +56,13 @@ jobs:
           echo "GitHub Base Ref: ${{ github.base_ref }}"
           echo "GitHub Event Name: ${{ github.event_name }}"
           #echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
-                
-      - name: Install dependencies 
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install black flake8 pytest pytest-cov openpyxl ruff radon pydocstyle
-          
+
       - name: Run ruff
         run: ruff check src_timesheetalgo tests
 
@@ -74,7 +79,7 @@ jobs:
     name: Run unit tests and publish results
     runs-on: ubuntu-latest
     needs: [lint]
-    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'RC') || github.base_ref == 'master')
+    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'release/') || github.base_ref == 'master' || github.base_ref == 'develop')
     environment: staging
 
     steps:

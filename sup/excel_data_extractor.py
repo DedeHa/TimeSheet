@@ -14,7 +14,7 @@ from datetime import datetime, time, timedelta
 import os
 import re
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 
 class TimeSheetError(Exception):
     """Basisklasse für alle TimeSheet-spezifischen Fehler"""

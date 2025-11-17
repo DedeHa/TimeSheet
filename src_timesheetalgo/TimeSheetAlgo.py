@@ -18,7 +18,6 @@ import csv
 import openpyxl
 from datetime import datetime as dt, timedelta as td
 import logging
-import os
 
 # Configure logging
 logging.basicConfig(
@@ -62,7 +61,7 @@ def check_file_existence(filepath, filetype):
             # Check if file is locked/opened by another process
             try:
                 # Try to open file in write mode to check if it's locked
-                with open(filepath, 'r+b') as test_file:
+                with open(filepath, 'r+b'):
                     pass
                 logging.info(f"Excel file is not locked: {filepath}")
             except (PermissionError, IOError) as e:
@@ -78,7 +77,7 @@ def check_file_existence(filepath, filetype):
         raise
     except PermissionError as e:
         logging.error(f"Permission denied accessing file: {filepath}")
-        logging.error(f"This usually means the file is open in Excel. Please close it and try again.")
+        logging.error("This usually means the file is open in Excel. Please close it and try again.")
         logging.error(f"Error details: {e}")
         raise
 
@@ -249,12 +248,12 @@ class TimeSheetProcessor:
         try:
             # Check if file is still locked before saving
             try:
-                with open(self.timesheet_path, 'r+b') as test_file:
+                with open(self.timesheet_path, 'r+b'):
                     pass
                 logging.info("File is available for writing")
             except (PermissionError, IOError) as e:
                 logging.error(f"Cannot save - file is locked: {self.timesheet_path}")
-                logging.error(f"Please close the Excel file if it's open and try again")
+                logging.error("Please close the Excel file if it's open and try again")
                 logging.error(f"Error: {e}")
                 raise
             

@@ -92,24 +92,32 @@ class TimeSheetProcessor:
     def request_date_input(self):
         """Request start and end date from user or use defaults."""
         logging.info("Setting date range...")
-        
+
         # Try to get user input, but use defaults if no input provided
         try:
-            start_input = input("Enter Start Date (dd.mm.yyyy) or press Enter for default: ").strip()
+            start_input = input(
+                "Enter Start Date (dd.mm.yyyy) or press Enter for default: "
+            ).strip()
             if start_input:
                 self.obj_date_startpoint = dt.strptime(start_input, DATE_FORMAT)
-                logging.info(f"Using provided start date: {self.obj_date_startpoint.date()}")
+                logging.info(
+                    f"Using provided start date: {self.obj_date_startpoint.date()}"
+                )
             else:
                 self.obj_date_startpoint = self.set_default_start_date()
         except (ValueError, EOFError):
             logging.info("Using default start date...")
             self.obj_date_startpoint = self.set_default_start_date()
-        
+
         try:
-            end_input = input("Enter End Date (dd.mm.yyyy) or press Enter for default: ").strip()
+            end_input = input(
+                "Enter End Date (dd.mm.yyyy) or press Enter for default: "
+            ).strip()
             if end_input:
                 self.obj_date_endpoint = dt.strptime(end_input, DATE_FORMAT)
-                logging.info(f"Using provided end date: {self.obj_date_endpoint.date()}")
+                logging.info(
+                    f"Using provided end date: {self.obj_date_endpoint.date()}"
+                )
             else:
                 self.obj_date_endpoint = self.set_default_end_date()
         except (ValueError, EOFError):
@@ -132,7 +140,7 @@ class TimeSheetProcessor:
             for i in range(ROW_OFFSET + 30, ROW_OFFSET, -1):
                 # Check if there's time data in column E (start time)
                 time_cell = sheet.cell(row=i, column=5).value
-                
+
                 if time_cell:  # If there's a start time, this day was worked
                     # Get the year from the base date in row 3, column 2
                     year_cell = self.timesheet.worksheets[0].cell(row=3, column=2).value
@@ -140,20 +148,20 @@ class TimeSheetProcessor:
                         year = year_cell.year
                     else:
                         year = YEAR  # fallback to constant
-                    
+
                     # Get month from sheet index (0-based + 1)
                     month = self.timesheet.worksheets.index(sheet) + 1
-                    
+
                     # The day is the row number minus the offset
                     day = i - ROW_OFFSET
-                    
+
                     # Create the date
                     default_start_date = dt(year, month, day)
                     logging.info(
                         f"Default start date identified: {default_start_date.date()}"
                     )
                     return default_start_date
-        
+
         # If no date is found, set a default start date
         default_start_date = dt(YEAR, 1, 1)
         logging.info(
@@ -208,7 +216,11 @@ class TimeSheetProcessor:
     def confirm_overwrite(self):
         """Prompt user to confirm overwriting data."""
         try:
-            response = input("Data exists. Overwrite? (y/n) or press Enter for yes: ").strip().lower()
+            response = (
+                input("Data exists. Overwrite? (y/n) or press Enter for yes: ")
+                .strip()
+                .lower()
+            )
             return response in ["y", "yes", ""]  # Default to yes if empty input
         except EOFError:
             logging.info("No input provided, defaulting to overwrite (yes)")

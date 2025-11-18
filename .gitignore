@@ -108,3 +108,16 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+# Poetry
+poetry.lock
+dist/
+build/
+
+# PDM
+pdm.lock
+.pdm-python
+
+# Virtual Env (Poetry)
+.venv/
+venv/

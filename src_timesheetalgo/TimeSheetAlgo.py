@@ -15,12 +15,13 @@ REMARK: Refactored and optimized with ChatGPT and review/updated
 """
 
 import csv
-import openpyxl
-from datetime import datetime as dt, timedelta as td
 import logging
-import yaml
-import os
+from datetime import datetime as dt
+from datetime import timedelta as td
 from pathlib import Path
+
+import openpyxl
+import yaml
 
 # Constants
 DATE_FORMAT = "%d.%m.%Y"
@@ -37,24 +38,24 @@ def load_config():
         "timelog_path": "FDTech_timelog.csv",
         "timesheet_path": "2025_FDTech_Dennis_Hartel.xlsm",
     }
-    
+
     default_logging = {
         "level": "INFO",
-        "format": "%(asctime)s - %(levelname)s - %(message)s"
+        "format": "%(asctime)s - %(levelname)s - %(message)s",
     }
-    
+
     # Configure basic logging first to ensure logging works
     logging.basicConfig(
         level=logging.INFO,
-        format=default_logging['format'],
-        force=True  # Force reconfiguration
+        format=default_logging["format"],
+        force=True,  # Force reconfiguration
     )
-    
+
     def determine_environment():
         """Determine environment based on current working directory name only."""
         current_dir = Path.cwd()
         current_dir_name = current_dir.name
-        
+
         # Check only the current directory name (not full path)
         if current_dir_name == "01_Zeiten":
             return "production"
@@ -67,37 +68,37 @@ def load_config():
                 return "development"
             else:
                 return "development"  # Default fallback
-    
+
     try:
         # Get the directory of the current script
         script_dir = Path(__file__).parent
         config_path = script_dir / "config.yaml"
-        
+
         # Load YAML configuration
-        with open(config_path, 'r', encoding='utf-8') as file:
+        with open(config_path, "r", encoding="utf-8") as file:
             yaml_config = yaml.safe_load(file)
-        
+
         # Determine environment based on folder structure
         env = determine_environment()
         logging.info(f"Detected environment: {env} (based on directory structure)")
-        
-        if env in yaml_config.get('environments', {}):
-            env_config = yaml_config['environments'][env]
-            
+
+        if env in yaml_config.get("environments", {}):
+            env_config = yaml_config["environments"][env]
+
             # Reconfigure logging with YAML settings
-            logging_config = env_config.get('logging', default_logging)
+            logging_config = env_config.get("logging", default_logging)
             logging.basicConfig(
-                level=getattr(logging, logging_config.get('level', 'INFO')),
-                format=logging_config.get('format', default_logging['format']),
-                force=True  # Force reconfiguration
+                level=getattr(logging, logging_config.get("level", "INFO")),
+                format=logging_config.get("format", default_logging["format"]),
+                force=True,  # Force reconfiguration
             )
-            
+
             # Return file paths configuration
-            return env_config.get('file_paths', default_config)
+            return env_config.get("file_paths", default_config)
         else:
             logging.warning(f"Environment '{env}' not found in config. Using defaults.")
             raise KeyError(f"Environment '{env}' not found")
-            
+
     except (FileNotFoundError, yaml.YAMLError, KeyError) as e:
         logging.warning(f"Failed to load config.yaml: {e}. Using defaults.")
         return default_config
@@ -161,29 +162,37 @@ class TimeSheetProcessor:
     def request_date_input(self):
         """Request start and end date from user or use defaults."""
         logging.info("Setting date range...")
-        
+
         # Calculate default dates first (this will log them)
         default_start = self.set_default_start_date()
-        
+
         # Try to get user input, but use defaults if no input provided
         try:
-            start_input = input("Enter Start Date (dd.mm.yyyy) or press Enter for default: ").strip()
+            start_input = input(
+                "Enter Start Date (dd.mm.yyyy) or press Enter for default: "
+            ).strip()
             if start_input:
                 self.obj_date_startpoint = dt.strptime(start_input, DATE_FORMAT)
-                logging.info(f"Using provided start date: {self.obj_date_startpoint.date()}")
+                logging.info(
+                    f"Using provided start date: {self.obj_date_startpoint.date()}"
+                )
             else:
                 self.obj_date_startpoint = default_start
         except (ValueError, EOFError):
             self.obj_date_startpoint = default_start
-        
+
         # Calculate default end date (this will log it)
         default_end = self.set_default_end_date()
-        
+
         try:
-            end_input = input("Enter End Date (dd.mm.yyyy) or press Enter for default: ").strip()
+            end_input = input(
+                "Enter End Date (dd.mm.yyyy) or press Enter for default: "
+            ).strip()
             if end_input:
                 self.obj_date_endpoint = dt.strptime(end_input, DATE_FORMAT)
-                logging.info(f"Using provided end date: {self.obj_date_endpoint.date()}")
+                logging.info(
+                    f"Using provided end date: {self.obj_date_endpoint.date()}"
+                )
             else:
                 self.obj_date_endpoint = default_end
         except (ValueError, EOFError):
@@ -205,7 +214,7 @@ class TimeSheetProcessor:
             for i in range(ROW_OFFSET + 30, ROW_OFFSET, -1):
                 # Check if there's time data in column E (start time)
                 time_cell = sheet.cell(row=i, column=5).value
-                
+
                 if time_cell:  # If there's a start time, this day was worked
                     # Get the year from the base date in row 3, column 2
                     year_cell = self.timesheet.worksheets[0].cell(row=3, column=2).value
@@ -213,20 +222,20 @@ class TimeSheetProcessor:
                         year = year_cell.year
                     else:
                         year = YEAR  # fallback to constant
-                    
+
                     # Get month from sheet index (0-based + 1)
                     month = self.timesheet.worksheets.index(sheet) + 1
-                    
+
                     # The day is the row number minus the offset
                     day = i - ROW_OFFSET
-                    
+
                     # Create the date
                     default_start_date = dt(year, month, day)
                     logging.info(
                         f"Default start date identified: {default_start_date.date()}"
                     )
                     return default_start_date
-        
+
         # If no date is found, set a default start date
         default_start_date = dt(YEAR, 1, 1)
         logging.info(
@@ -281,7 +290,11 @@ class TimeSheetProcessor:
     def confirm_overwrite(self):
         """Prompt user to confirm overwriting data."""
         try:
-            response = input("Data exists. Overwrite? (y/n) or press Enter for yes: ").strip().lower()
+            response = (
+                input("Data exists. Overwrite? (y/n) or press Enter for yes: ")
+                .strip()
+                .lower()
+            )
             return response in ["y", "yes", ""]  # Default to yes if empty input
         except EOFError:
             logging.info("No input provided, defaulting to overwrite (yes)")
@@ -294,12 +307,17 @@ class TimeSheetProcessor:
             # Try to save directly first
             self.timesheet.save(self.timesheet_path)
             logging.info(f"Timesheet saved successfully to {self.timesheet_path}")
-        except PermissionError as e:
+        except PermissionError:
             # If permission denied, try saving with a timestamp suffix
             from datetime import datetime
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = self.timesheet_path.replace('.xlsm', f'_backup_{timestamp}.xlsm')
-            logging.warning(f"Permission denied for original file. Saving backup to {backup_path}")
+            backup_path = self.timesheet_path.replace(
+                ".xlsm", f"_backup_{timestamp}.xlsm"
+            )
+            logging.warning(
+                f"Permission denied for original file. Saving backup to {backup_path}"
+            )
             self.timesheet.save(backup_path)
             logging.info(f"Backup timesheet saved successfully to {backup_path}")
         except Exception as e:

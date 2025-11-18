@@ -57,6 +57,31 @@ Beispiel:
   - **Z**: PATCH version – abwärtskompatible Bugfixes
 - **Beispiel:** `v1.2.3`, `v2.0.0`, `v1.4.7`
 
+### Release-Branches:
+- **Format:** `release/vX.Y.Z`
+- **Zweck:** Stabilisierung und Vorbereitung vor dem Release
+- **Nachbenennung:** Nach Release werden RC-Branches in `release/vX.Y.Z` Format umbenannt
+- **Beispiel:** `release/v4.1.0`, `release/v4.1.1`, `release/v2.0.0`
+
+### Release-Tags:
+- **Format:** `vX.Y.Z` (Semantic Versioning)
+- **Zweck:** Markierung von offiziellen, stabilen Releases
+- **Zuordnung:** Jeder `release/vX.Y.Z` Branch erhält einen entsprechenden `vX.Y.Z` Tag
+- **Erstellung:** Tag wird auf dem finalen Commit des Release-Branches erstellt
+- **Beispiel:** `v4.1.0`, `v4.1.1`, `v2.0.0`
+
+### Historische Versioning (Legacy):
+- Tags im Format `RX.Y.Z` (z.B. `R04.01.00`, `R03.00.00`) werden beibehalten für Rückverfolgbarkeit
+- Neue Releases verwenden ausschließlich `vX.Y.Z` Format mit entsprechenden `release/vX.Y.Z` Branches
+
+### Release-Workflow:
+1. Erstelle Release-Branch: `git checkout -b release/vX.Y.Z develop` (oder main/master)
+2. Bump Version in relevanten Dateien (z.B. README.md, Versionsnummern)
+3. Erstelle finalen Commit mit Release-Notes
+4. Erstelle Tag: `git tag vX.Y.Z`
+5. Push beides zu Origin: `git push origin release/vX.Y.Z` und `git push origin vX.Y.Z`
+6. Merge Release-Branch zurück zu master und develop (falls vorhanden)
+
 ## Git Compatibility Rules
 
 ### Verbotene Zeichen in Branch-Namen:

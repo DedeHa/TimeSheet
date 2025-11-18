@@ -6,24 +6,20 @@ name: Python CI
 on:
   push:
     branches:
-      - 'feature/*'
-      - 'refactor/*'
-      - 'docs/*'
-      - 'test/*'
-      - 'bugfix/*'
-      - 'hotfix/*'
+      - 'FCT|*'
+      - 'INF|*'
+      - 'PRO-*FCT|*'
+      - 'PRO-*INF|*'
       - '!master' # Prevent direct pushes to main
-      - '!release/*'  # Prevent direct pushes to release branches
+      - '!RC*'  # Prevent direct pushes to release branches
   pull_request:
     branches:
       - 'master'
-      - 'release/*'
-      - 'feature/*'
-      - 'refactor/*'
-      - 'docs/*'
-      - 'test/*'
-      - 'bugfix/*'
-      - 'hotfix/*'
+      - 'RC*'
+      - 'FCT|*'
+      - 'INF|*'
+      - 'PRO-*FCT|*'
+      - 'PRO-*INF|*'
   workflow_dispatch:
     
 jobs:
@@ -34,11 +30,9 @@ jobs:
     environment: 
       ${{ 
         (
-          contains(github.ref, 'feature/') && 'development' || 
-          contains(github.ref, 'refactor/') && 'development' ||
-          contains(github.ref, 'docs/') && 'development' ||
-          contains(github.ref, 'test/') && 'development'
-        ) && 'development' || ''
+          contains(github.ref, 'FCT|') && 'development' || 
+          contains(github.ref, 'INF|') && 'development' 
+        )
       }}
     
     strategy:
@@ -51,33 +45,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache Poetry installation
-        uses: actions/cache@v3
-        with:
-          path: ~/.local
-          key: poetry-${{ matrix.python-version }}
-
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: ${{ runner.os }}-poetry-
-
       - name: Print GitHub Context Information and setup environment
         run: |
           echo "GitHub Ref: ${{ github.ref }}"
           echo "GitHub Base Ref: ${{ github.base_ref }}"
           echo "GitHub Event Name: ${{ github.event_name }}"
-          poetry --version
-
-      - name: Install dependencies
-        run: poetry install --no-interaction
+          #echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+                
+      - name: Install dependencies 
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install black flake8 pytest pytest-cov openpyxl ruff radon pydocstyle
           
       - name: Run ruff
         run: ruff check src_timesheetalgo tests
@@ -95,7 +74,7 @@ jobs:
     name: Run unit tests and publish results
     runs-on: ubuntu-latest
     needs: [lint]
-    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'release/') || github.base_ref == 'master')
+    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'RC') || github.base_ref == 'master')
     environment: staging
 
     steps:
@@ -104,26 +83,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Cache Poetry installation
-        uses: actions/cache@v3
-        with:
-          path: ~/.local
-          key: poetry-3.12
-
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: ${{ runner.os }}-poetry-
-
       - name: Install dependencies and setup environment
-        run: poetry install --no-interaction
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install black flake8 pytest pytest-cov openpyxl ruff
 
       - name: Run tests with coverage
         run: |
@@ -153,26 +117,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Cache Poetry installation
-        uses: actions/cache@v3
-        with:
-          path: ~/.local
-          key: poetry-3.12
-
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: ${{ runner.os }}-poetry-
-
       - name: Install dependencies and setup environment
-        run: poetry install --no-interaction
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install black flake8 pytest pytest-cov openpyxl ruff
 
-      - name: Build package
-        run: poetry build
+      - name: Install packaging tools
+        run: |
+          pip install build

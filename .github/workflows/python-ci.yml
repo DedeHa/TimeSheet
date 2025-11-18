@@ -6,20 +6,24 @@ name: Python CI
 on:
   push:
     branches:
-      - 'FCT|*'
-      - 'INF|*'
-      - 'PRO-*FCT|*'
-      - 'PRO-*INF|*'
+      - 'feature/*'
+      - 'refactor/*'
+      - 'docs/*'
+      - 'test/*'
+      - 'bugfix/*'
+      - 'hotfix/*'
       - '!master' # Prevent direct pushes to main
-      - '!RC*'  # Prevent direct pushes to release branches
+      - '!release/*'  # Prevent direct pushes to release branches
   pull_request:
     branches:
       - 'master'
-      - 'RC*'
-      - 'FCT|*'
-      - 'INF|*'
-      - 'PRO-*FCT|*'
-      - 'PRO-*INF|*'
+      - 'release/*'
+      - 'feature/*'
+      - 'refactor/*'
+      - 'docs/*'
+      - 'test/*'
+      - 'bugfix/*'
+      - 'hotfix/*'
   workflow_dispatch:
     
 jobs:
@@ -30,9 +34,11 @@ jobs:
     environment: 
       ${{ 
         (
-          contains(github.ref, 'FCT|') && 'development' || 
-          contains(github.ref, 'INF|') && 'development' 
-        )
+          contains(github.ref, 'feature/') && 'development' || 
+          contains(github.ref, 'refactor/') && 'development' ||
+          contains(github.ref, 'docs/') && 'development' ||
+          contains(github.ref, 'test/') && 'development'
+        ) && 'development' || ''
       }}
     
     strategy:
@@ -74,7 +80,7 @@ jobs:
     name: Run unit tests and publish results
     runs-on: ubuntu-latest
     needs: [lint]
-    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'RC') || github.base_ref == 'master')
+    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'release/') || github.base_ref == 'master')
     environment: staging
 
     steps:

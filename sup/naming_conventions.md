@@ -1,6 +1,41 @@
-# Naming Conventions für SecurityAdvisor
+# Contributing Guidelines & Naming Conventions
 
-## Branch Naming
+## 1. Branch Protection Policy
+
+### Protected Branches (Direct Pushes Blocked)
+
+Die folgenden Branches sind **geschützt** und erlauben keine direkten Pushes:
+
+- **`master`** - Produktions-Hauptbranch
+  - Status: ✅ Geschützt
+  - Direkte Pushes: ❌ Blockiert
+  - PRs erforderlich: ✅ Ja
+  - Reviewer erforderlich: ✅ Ja
+  - Status Checks erforderlich: ✅ Ja (Lint, Tests)
+
+- **`release/*`** - Release-Branches (z.B. `release/v4.1.0`, `release/v4.1.1`)
+  - Status: ✅ Geschützt
+  - Direkte Pushes: ❌ Blockiert
+  - PRs erforderlich: ✅ Ja
+  - Reviewer erforderlich: ✅ Ja
+  - Status Checks erforderlich: ✅ Ja (Lint, Tests)
+
+### Development Branches (Direkte Pushes Erlaubt)
+
+Die folgenden Branch-Typen erlauben direkte Pushes für aktive Entwicklung:
+
+- **`feature/*`** - Neue Features (z.B. `feature/PRO-123-login-api`)
+- **`bugfix/*`** - Fehlerbehebungen (z.B. `bugfix/PRO-123-scan-timeout`)
+- **`hotfix/*`** - Kritische Fehlerbehebungen (z.B. `hotfix/PRO-123-security-patch`)
+- **`refactor/*`** - Code-Refactoring (z.B. `refactor/PRO-296-remaining`)
+- **`docs/*`** - Dokumentationsänderungen (z.B. `docs/PRO-123-api-docs`)
+- **`test/*`** - Test-Verbesserungen (z.B. `test/PRO-297-setup-verification`)
+
+---
+
+## 2. Branch Naming Conventions
+
+### Standard Branch Naming
 - **feature/PRO-123-description**: Neue Features
 - **bugfix/PRO-123-description**: Fehlerbehebungen
 - **hotfix/PRO-123-description**: Kritische Fehlerbehebungen
@@ -17,7 +52,9 @@
 
 Beispiel: `feature/PRO-123-login-api`, `bugfix/PRO-123-scan-timeout`, `release/v1.2.0`
 
-## Commit Naming (Conventional Commits Standard)
+---
+
+## 3. Commit Naming (Conventional Commits Standard)
 - **Format:** `type(scope): description`
 - **Typen:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
 - **Beschreibung:** Klar, prägnant, im Imperativ (max. 50 Zeichen)
@@ -37,7 +74,7 @@ Beispiel:
 - `fix(vpn):resolve connection timeout issue`
 - `docs(api):update authentication guide`
 
-## Pull-Request Naming
+## 4. Pull-Request Naming
 - **Format:** `[Type][PRO-123] Clear description of changes`
 - **Typen:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
 - **Beschreibung:** Was wird geändert? (max. 72 Zeichen)
@@ -48,7 +85,7 @@ Beispiel:
 - `[fix][PRO-123] Prevent MAC address spoofing vulnerability`
 - `[docs][PRO-123] Update API documentation for v2.0`
 
-## Release Naming (Semantic Versioning)
+## 5. Release Naming (Semantic Versioning)
 
 ### Release Naming Convention
 - **Format:** `vX.Y.Z` (ohne führende Nullen)
@@ -82,7 +119,7 @@ Beispiel:
 5. Push beides zu Origin: `git push origin release/vX.Y.Z` und `git push origin vX.Y.Z`
 6. Merge Release-Branch zurück zu master und develop (falls vorhanden)
 
-## Git Compatibility Rules
+## 6. Git Compatibility Rules
 
 ### Verbotene Zeichen in Branch-Namen:
 - Pipe (`|`), Doppelpunkt (`:`), Fragezeichen (`?`)
@@ -123,3 +160,143 @@ Falls kein JIRA Ticket verfügbar ist, sollten Branches, Commits und Pull-Reques
 - **PR:** `[Type] Description` ohne Ticketnummer (z.B. `[feat] Add user login functionality`)
 
 **Wichtig:** Sobald ein JIRA Ticket verfügbar ist, sollte die Referenz nachträglich hinzugefügt werden.
+
+---
+
+## 7. Git Workflow & Development Process
+
+### Schritt-für-Schritt Anleitung für Feature-Entwicklung:
+
+1. **Feature-Branch erstellen** (normalerweise von `master`):
+   ```bash
+   git checkout -b feature/PRO-123-description master
+   ```
+
+2. **Änderungen vornehmen** und mit Conventional Commits committen:
+   ```bash
+   git commit -m "feat(scope): description
+   
+   Refs: PRO-123"
+   ```
+
+3. **Zu Branch pushen**:
+   ```bash
+   git push origin feature/PRO-123-description
+   ```
+
+4. **Pull Request öffnen** mit entsprechendem Ziel-Branch:
+   - **`master`** für Releases oder kritische Fixes
+   - **`develop`** (falls vorhanden) für Feature-Entwicklung
+   - Development Branches für Feature-Arbeit
+
+5. **Auf Review und CI-Checks warten**:
+   - ✅ Lint-Checks (Ruff, Black, Pydocstyle)
+   - ✅ Unit-Tests bestanden
+   - ✅ Code-Coverage erfüllt Standards
+   - ✅ Mindestens eine Genehmigung
+
+6. **PR mergen** nach erfolgreichen Checks und Genehmigung
+
+### Release-Prozess:
+
+1. **Release-Branch erstellen** von `master`:
+   ```bash
+   git checkout -b release/vX.Y.Z master
+   ```
+
+2. **Versionsnummern aktualisieren** und finale Commits erstellen
+
+3. **Pull Request** öffnen mit Ziel `master`
+
+4. **Nach Genehmigung und Merge** Git-Tag erstellen:
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+### Versuch, direkt zu geschütztem Branch zu pushen:
+
+Wenn Sie versuchen, direkt zu einem geschützten Branch zu pushen:
+
+```bash
+$ git push origin master
+remote: error: GH006: Protected branch update failed for refs/heads/master.
+remote: error: You have insufficient permissions to push to this branch on this repository.
+```
+
+**Lösung:** Feature-Branch erstellen, Änderungen vornehmen und PR öffnen statt dessen.
+
+---
+
+## 8. GitHub Actions Workflow-Durchsetzung
+
+Der CI/CD-Pipeline (`.github/workflows/python-ci.yml`) setzt diese Schutzmaßnahmen durch:
+
+- ✅ Läuft nur auf Entwicklungs-Branches für `push` Events
+- ✅ Läuft auf PRs zu allen Branches (einschließlich geschützter Branches)
+- ✅ Test-Jobs laufen **nur** für PRs mit Ziel `master` oder `release/*`
+- ✅ Deploy-Jobs laufen **nur** für PRs mit Ziel `master`
+
+### Push Events triggern auf:
+- `feature/*`, `refactor/*`, `docs/*`, `test/*`, `bugfix/*`, `hotfix/*`
+
+### PR Events triggern auf:
+- Alle Ziel-Branches (`master`, `release/*`, Entwicklungs-Branches)
+
+### Workflow-Modell für geschützte Branches:
+
+```
+Geschützter Branch (master/release/*)
+    ↑
+    │ PR erforderlich
+    │ (Lint-Checks + Tests)
+    │
+Development Branch
+    ↓ direkter Push erlaubt
+    ↓ (nur Lint-Checks)
+```
+
+---
+
+## 9. Code Quality Requirements
+
+Alle PRs müssen diese Anforderungen erfüllen:
+
+### 1. Lint-Checks:
+- ✅ **Ruff** - Python Linter
+- ✅ **Black** - Code Formatter
+- ✅ **Pydocstyle** - Docstring Validator
+- ✅ **Radon** - Complexity Analyzer
+
+### 2. Testing:
+- ✅ Alle Unit-Tests bestanden
+- ✅ Code-Coverage beibehalten
+
+### 3. Review:
+- ✅ Mindestens eine Genehmigung
+- ✅ Keine ausstehenden Review-Anfragen
+
+---
+
+## 10. Schnelle Referenz
+
+| Typ | Branch | PR-Titel | Commit | Geschützt |
+|-----|--------|---------|--------|-----------|
+| Feature | `feature/PRO-123-desc` | `[feat][PRO-123] Description` | `feat(scope): desc` | ❌ |
+| Bugfix | `bugfix/PRO-123-desc` | `[fix][PRO-123] Description` | `fix(scope): desc` | ❌ |
+| Hotfix | `hotfix/PRO-123-desc` | `[hotfix][PRO-123] Description` | `fix(scope): desc` | ❌ |
+| Refactor | `refactor/PRO-123-desc` | `[refactor][PRO-123] Description` | `refactor(scope): desc` | ❌ |
+| Docs | `docs/PRO-123-desc` | `[docs][PRO-123] Description` | `docs(scope): desc` | ❌ |
+| Test | `test/PRO-123-desc` | `[test][PRO-123] Description` | `test(scope): desc` | ❌ |
+| Release | `release/vX.Y.Z` | `[release][PRO-123] vX.Y.Z` | `chore(release): vX.Y.Z` | ✅ |
+| Main | `master` | N/A | N/A | ✅ |
+
+---
+
+## 11. Weitere Ressourcen
+
+- **Branch Protection Settings**: GitHub Repository Settings → Branches → Branch Protection Rules
+- **GitHub Actions Workflow**: `.github/workflows/python-ci.yml`
+- **Conventional Commits**: https://www.conventionalcommits.org/
+- **Semantic Versioning**: https://semver.org/
+

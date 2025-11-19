@@ -237,7 +237,8 @@ class TimeSheetProcessor:
         # If no date is found, set a default start date
         default_start_date = dt(YEAR, 1, 1)
         logging.info(
-            f"No valid date found. Default start date set to: {default_start_date.date()}"
+            f"No valid date found. Default start date set to: "
+            f"{default_start_date.date()}"
         )
         return default_start_date
 

@@ -26,7 +26,7 @@ DATE_FORMAT = "%d.%m.%Y"
 MAX_RETRIES = 3
 ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
-YEAR = 2025
+YEAR = dt.now().year
 
 
 def load_config():

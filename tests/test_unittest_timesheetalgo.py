@@ -12,16 +12,16 @@ from TimeSheetAlgo import (
 
 # Mock data
 MOCK_TIMELOG = [
-    ["01.01.2023", "08:00", "16:00"],
-    ["15.01.2023", "09:00", "17:00"],
-    ["31.01.2023", "10:00", "18:00"],
+    ["01.01.2025", "08:00", "16:00"],
+    ["15.01.2025", "09:00", "17:00"],
+    ["31.01.2025", "10:00", "18:00"],
 ]
 
 MOCK_TIMESHEET = openpyxl.Workbook()
 MOCK_TIMESHEET.create_sheet("January")
 for i in range(1, 32):
     MOCK_TIMESHEET["January"].append(
-        ["", "", "", "", datetime(2023, 1, i), ""]
+        ["", "", "", "", datetime(2025, 1, i), ""]
     )  # Fill column 5 with date values
 
 
@@ -42,7 +42,7 @@ def mock_processor(mock_csv_file, mock_excel_file):
 def mock_csv_file(tmp_path):
     """Fixture to create a temporary CSV file."""
     csv_file = tmp_path / "timelog.csv"
-    csv_file.write_text("Date,Start,End\n15.03.2023,09:00,17:00\n")
+    csv_file.write_text("Date,Start,End\n15.03.2025,09:00,17:00\n")
     return csv_file
 
 
@@ -81,7 +81,7 @@ def create_dummy_workbook():
             ws.title = "Month1"
         else:
             wb.create_sheet(title=f"Month{i+1}")
-    wb.worksheets[0].cell(row=3, column=2, value=datetime(2023, 1, 1))
+    wb.worksheets[0].cell(row=3, column=2, value=datetime(2025, 1, 1))
     return wb
 
 
@@ -94,7 +94,7 @@ def create_dummy_workbook():
 @pytest.mark.parametrize(
     "input_date, expected",
     [
-        ("15.03.2023", datetime.strptime("15.03.2023", DATE_FORMAT)),
+        ("15.03.2025", datetime.strptime("15.03.2025", DATE_FORMAT)),
     ],
 )
 def test_parse_date_valid(monkeypatch, input_date, expected):
@@ -140,7 +140,7 @@ def test_check_file_existence_csv(mock_csv_file):
     """
     data = check_file_existence(str(mock_csv_file), "csv")
     assert len(data) == 1
-    assert data[0] == ["15.03.2023", "09:00", "17:00"]
+    assert data[0] == ["15.03.2025", "09:00", "17:00"]
 
 
 # 2.2. Non-existent CSV file: Ensure a missing CSV file raises FileNotFoundError.
@@ -202,12 +202,12 @@ def test_request_date_input_valid(mock_processor, monkeypatch):
     - Expected: obj_date_startpoint and obj_date_endpoint are set to parsed
       datetime values.
     """
-    inputs = iter(["15.03.2023", "20.03.2023"])
+    inputs = iter(["15.03.2025", "20.03.2025"])
     monkeypatch.setattr("builtins.input", lambda prompt: next(inputs))
 
     mock_processor.request_date_input()
-    expected_start = datetime.strptime("15.03.2023", DATE_FORMAT)
-    expected_end = datetime.strptime("20.03.2023", DATE_FORMAT)
+    expected_start = datetime.strptime("15.03.2025", DATE_FORMAT)
+    expected_end = datetime.strptime("20.03.2025", DATE_FORMAT)
     assert mock_processor.obj_date_startpoint == expected_start
     assert mock_processor.obj_date_endpoint == expected_end
 
@@ -225,9 +225,7 @@ def test_request_date_input_invalid_default(mock_processor, monkeypatch):
     monkeypatch.setattr("builtins.input", lambda prompt: "invalid")
 
     mock_processor.request_date_input()
-    # Use current year since YEAR = dt.now().year in TimeSheetAlgo
-    current_year = datetime.now().year
-    expected_start = datetime(current_year, 1, 1)
+    expected_start = datetime(2023, 1, 1)
     expected_end = datetime.now() - timedelta(days=1)
     assert mock_processor.obj_date_startpoint == expected_start
     assert mock_processor.obj_date_endpoint.date() == expected_end.date()
@@ -243,19 +241,94 @@ def test_request_date_input_invalid_specific(mock_processor, monkeypatch):
     - Expected: Default start date from workbook are set with specific start date
     """
     mock_processor.timesheet.worksheets[6].cell(
-        row=ROW_OFFSET + 1, column=5, value=datetime(2023, 7, 1)
+        row=ROW_OFFSET + 1, column=5, value=datetime(2025, 7, 1)
     )
     monkeypatch.setattr("builtins.input", lambda prompt: "invalid")
 
     mock_processor.request_date_input()
-    expected_start = datetime(2023, 7, 1)
+    expected_start = datetime(2025, 7, 1)
     assert mock_processor.obj_date_startpoint == expected_start
 
     # for idx, ws in enumerate(wb.worksheets):
     # ws.cell(row=ROW_OFFSET + 1, column=5, value=datetime(2023, idx + 1, 1))
 
 
-# 3.5. Test select_timelog_data(): Check that only entries within the date range
+# 3.5. Test request_date_input() with empty inputs (default paths)
+def test_request_date_input_empty_inputs(mock_processor, monkeypatch):
+    """
+    Test Case 3.5:
+    - Setup: Simulate empty user input (just pressing Enter).
+    - Expected: Default dates are used for both start and end.
+    """
+    monkeypatch.setattr("builtins.input", lambda prompt: "")
+
+    mock_processor.request_date_input()
+    expected_start = datetime(2025, 1, 1)
+    expected_end = datetime.now() - timedelta(days=1)
+    assert mock_processor.obj_date_startpoint == expected_start
+    assert mock_processor.obj_date_endpoint.date() == expected_end.date()
+
+
+# 3.6. Test set_default_start_date() with non-datetime year cell
+def test_set_default_start_date_fallback_year(mock_processor):
+    """
+    Test Case 3.6:
+    - Setup: Set year cell to non-datetime value to trigger YEAR fallback.
+    - Expected: Uses YEAR constant when year_cell is not datetime.
+    """
+    # Set year cell to non-datetime value
+    mock_processor.timesheet.worksheets[0].cell(row=3, column=2, value="2025")
+
+    # Add some time data to trigger the date finding logic
+    mock_processor.timesheet.worksheets[6].cell(
+        row=ROW_OFFSET + 15, column=5, value="09:00"
+    )
+
+    result = mock_processor.set_default_start_date()
+    assert result.year == 2025  # Should use YEAR constant
+    assert result.month == 7  # July (worksheet index 6 + 1)
+    assert result.day == 15  # Row offset calculation
+
+
+# 3.7. Test confirm_overwrite() with EOFError
+def test_confirm_overwrite_eoferror(monkeypatch):
+    """
+    Test Case 3.7:
+    - Setup: Simulate EOFError in input (e.g., Ctrl+D).
+    - Expected: Returns True (default to overwrite).
+    """
+
+    def mock_input_eoferror(prompt):
+        raise EOFError()
+
+    processor = TimeSheetProcessor(
+        {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx"}
+    )
+    monkeypatch.setattr("builtins.input", mock_input_eoferror)
+    result = processor.confirm_overwrite()
+    assert result is True
+
+
+# 3.8. Test _get_date method (currently unused but should be covered)
+def test_get_date_method(mock_processor, monkeypatch):
+    """
+    Test Case 3.8:
+    - Setup: Test the _get_date method with both success and fallback scenarios.
+    - Expected: Returns parsed date on success, fallback result on failure.
+    """
+    # Test successful parsing
+    monkeypatch.setattr("builtins.input", lambda prompt: "15.03.2025")
+    result = mock_processor._get_date("Enter date: ", lambda: datetime(2025, 1, 1))
+    assert result == datetime(2025, 3, 15)
+
+    # Test fallback on exception
+    monkeypatch.setattr("builtins.input", lambda prompt: "invalid")
+    fallback_date = datetime(2025, 12, 31)
+    result = mock_processor._get_date("Enter date: ", lambda: fallback_date)
+    assert result == fallback_date
+
+
+# 3.9. Test select_timelog_data(): Check that only entries within the date range
 # are selected.
 def test_select_timelog_data(mock_processor):
     """
@@ -265,16 +338,16 @@ def test_select_timelog_data(mock_processor):
     - Expected: Only entries within the boundaries (inclusive) are selected.
     """
     mock_processor.timelog = [
-        ["10.03.2023", "08:00", "16:00"],
-        ["15.03.2023", "09:00", "17:00"],
-        ["20.03.2023", "10:00", "18:00"],
+        ["10.03.2025", "08:00", "16:00"],
+        ["15.03.2025", "09:00", "17:00"],
+        ["20.03.2025", "10:00", "18:00"],
     ]
-    mock_processor.obj_date_startpoint = datetime.strptime("12.03.2023", DATE_FORMAT)
-    mock_processor.obj_date_endpoint = datetime.strptime("18.03.2023", DATE_FORMAT)
+    mock_processor.obj_date_startpoint = datetime.strptime("12.03.2025", DATE_FORMAT)
+    mock_processor.obj_date_endpoint = datetime.strptime("18.03.2025", DATE_FORMAT)
 
     mock_processor.select_timelog_data()
     assert len(mock_processor.timedata) == 1
-    assert mock_processor.timedata[0][0] == "15.03.2023"
+    assert mock_processor.timedata[0][0] == "15.03.2025"
 
 
 # 3.6. Test select_timelog_data() when no entries fall within the range.
@@ -285,12 +358,12 @@ def test_select_timelog_data_no_entries(mock_processor):
     - Expected: Raises ValueError indicating no data found.
     """
     mock_processor.timelog = [
-        ["10.03.2023", "08:00", "16:00"],
-        ["15.03.2023", "09:00", "17:00"],
-        ["20.03.2023", "10:00", "18:00"],
+        ["10.03.2025", "08:00", "16:00"],
+        ["15.03.2025", "09:00", "17:00"],
+        ["20.03.2025", "10:00", "18:00"],
     ]
-    mock_processor.obj_date_startpoint = datetime.strptime("21.03.2023", DATE_FORMAT)
-    mock_processor.obj_date_endpoint = datetime.strptime("25.03.2023", DATE_FORMAT)
+    mock_processor.obj_date_startpoint = datetime.strptime("21.03.2025", DATE_FORMAT)
+    mock_processor.obj_date_endpoint = datetime.strptime("25.03.2025", DATE_FORMAT)
     with pytest.raises(ValueError):
         mock_processor.select_timelog_data()
 
@@ -304,7 +377,7 @@ def test_store_data_no_overwrite(monkeypatch, mock_processor):
     - Input: Simulate user entering "n" (decline overwrite).
     - Expected: Existing data remains unchanged.
     """
-    mock_processor.timedata = [["05.01.2023", "09:00", "17:00"]]
+    mock_processor.timedata = [["05.01.2025", "09:00", "17:00"]]
 
     sheet = mock_processor.timesheet.worksheets[0]
     row = ROW_OFFSET + 5
@@ -324,7 +397,7 @@ def test_store_data_with_overwrite(monkeypatch, mock_processor):
     - Input: Simulate user entering "y" (confirm overwrite).
     - Expected: Target cell is overwritten with new start and end times.
     """
-    mock_processor.timedata = [["05.01.2023", "09:00", "17:00"]]
+    mock_processor.timedata = [["05.01.2025", "09:00", "17:00"]]
 
     sheet = mock_processor.timesheet.worksheets[0]
     row = ROW_OFFSET + 5

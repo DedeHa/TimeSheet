@@ -225,7 +225,7 @@ def test_request_date_input_invalid_default(mock_processor, monkeypatch):
     monkeypatch.setattr("builtins.input", lambda prompt: "invalid")
 
     mock_processor.request_date_input()
-    expected_start = datetime(2023, 1, 1)
+    expected_start = datetime(2025, 1, 1)
     expected_end = datetime.now() - timedelta(days=1)
     assert mock_processor.obj_date_startpoint == expected_start
     assert mock_processor.obj_date_endpoint.date() == expected_end.date()

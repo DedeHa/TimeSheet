@@ -18,8 +18,6 @@ import csv
 import openpyxl
 from datetime import datetime as dt, timedelta as td
 import logging
-import yaml
-from pathlib import Path
 
 # Constants
 DATE_FORMAT = "%d.%m.%Y"
@@ -123,7 +121,7 @@ class TimeSheetProcessor:
                     f"Using provided start date: {self.obj_date_startpoint.date()}"
                 )
             else:
-                self.obj_date_startpoint = default_start
+                self.obj_date_startpoint = self.set_default_start_date()
         except (ValueError, EOFError):
             logging.info("Using default start date...")
             self.obj_date_startpoint = self.set_default_start_date()
@@ -138,9 +136,9 @@ class TimeSheetProcessor:
                     f"Using provided end date: {self.obj_date_endpoint.date()}"
                 )
             else:
-                self.obj_date_endpoint = default_end
+                self.obj_date_endpoint = self.set_default_end_date()
         except (ValueError, EOFError):
-            self.obj_date_endpoint = default_end
+            self.obj_date_endpoint = self.set_default_end_date()
 
     def _get_date(self, prompt, fallback):
         """Get a date from user input or fallback to default."""

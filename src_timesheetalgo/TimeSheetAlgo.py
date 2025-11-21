@@ -109,7 +109,7 @@ class TimeSheetProcessor:
     def request_date_input(self):
         """Request start and end date from user or use defaults."""
         logging.info("Setting date range...")
-        
+
         # Try to get user input, but use defaults if no input provided
         try:
             start_input = input(
@@ -125,7 +125,7 @@ class TimeSheetProcessor:
         except (ValueError, EOFError):
             logging.info("Using default start date...")
             self.obj_date_startpoint = self.set_default_start_date()
-        
+
         try:
             end_input = input(
                 "Enter End Date (dd.mm.yyyy) or press Enter for default: "

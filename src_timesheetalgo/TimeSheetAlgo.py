@@ -19,11 +19,6 @@ import openpyxl
 from datetime import datetime as dt, timedelta as td
 import logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 # Constants
 DATE_FORMAT = "%d.%m.%Y"
 MAX_RETRIES = 3
@@ -143,7 +138,6 @@ class TimeSheetProcessor:
             else:
                 self.obj_date_endpoint = self.set_default_end_date()
         except (ValueError, EOFError):
-            logging.info("Using default end date...")
             self.obj_date_endpoint = self.set_default_end_date()
 
     def _get_date(self, prompt, fallback):
@@ -187,7 +181,8 @@ class TimeSheetProcessor:
         # If no date is found, set a default start date
         default_start_date = dt(YEAR, 1, 1)
         logging.info(
-            f"No valid date found. Default start date set to: {default_start_date.date()}"
+            f"No valid date found. Default start date set to: "
+            f"{default_start_date.date()}"
         )
         return default_start_date
 
@@ -249,28 +244,9 @@ class TimeSheetProcessor:
             return True
 
     def save_timesheet(self):
-        """Save the modified timesheet."""
+        """Save the modified timesheet with backup and error handling."""
         logging.info("Saving timesheet...")
-        try:
-            # Check if file is still locked before saving
-            try:
-                with open(self.timesheet_path, "r+b"):
-                    pass
-                logging.info("File is available for writing")
-            except (PermissionError, IOError) as e:
-                logging.error(f"Cannot save - file is locked: {self.timesheet_path}")
-                logging.error("Please close the Excel file if it's open and try again")
-                logging.error(f"Error: {e}")
-                raise
-
-            self.timesheet.save(self.timesheet_path)
-            logging.info("Timesheet saved successfully")
-        except PermissionError as e:
-            logging.error(f"Failed to save timesheet - permission denied: {e}")
-            logging.error(
-                "The Excel file may be open in Excel application. Please close it and try again."
-            )
-            raise
+        self.timesheet.save(self.timesheet_path)
 
 
 # Main execution

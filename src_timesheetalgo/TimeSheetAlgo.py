@@ -26,84 +26,13 @@ DATE_FORMAT = "%d.%m.%Y"
 MAX_RETRIES = 3
 ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
-YEAR = dt.now().year
+YEAR = 2025
 
-
-def load_config():
-    """Load configuration from YAML file with fallback to defaults."""
-    # Default configuration
-    default_config = {
-        "timelog_path": "FDTech_timelog.csv",
-        "timesheet_path": "2025_FDTech_Dennis_Hartel.xlsm",
-    }
-
-    default_logging = {
-        "level": "INFO",
-        "format": "%(asctime)s - %(levelname)s - %(message)s",
-    }
-
-    # Configure basic logging first to ensure logging works
-    logging.basicConfig(
-        level=logging.INFO,
-        format=default_logging["format"],
-        force=True,  # Force reconfiguration
-    )
-
-    def determine_environment():
-        """Determine environment based on current working directory name only."""
-        current_dir = Path.cwd()
-        current_dir_name = current_dir.name
-
-        # Check only the current directory name (not full path)
-        if current_dir_name == "01_Zeiten":
-            return "production"
-        elif current_dir_name == "src_timesheetalgo":
-            return "development"
-        else:
-            # Fallback: check if we're running from src_timesheetalgo directory
-            script_dir = Path(__file__).parent
-            if script_dir.name == "src_timesheetalgo":
-                return "development"
-            else:
-                return "development"  # Default fallback
-
-    try:
-        # Get the directory of the current script
-        script_dir = Path(__file__).parent
-        config_path = script_dir / "config.yaml"
-
-        # Load YAML configuration
-        with open(config_path, "r", encoding="utf-8") as file:
-            yaml_config = yaml.safe_load(file)
-
-        # Determine environment based on folder structure
-        env = determine_environment()
-        logging.info(f"Detected environment: {env} (based on directory structure)")
-
-        if env in yaml_config.get("environments", {}):
-            env_config = yaml_config["environments"][env]
-
-            # Reconfigure logging with YAML settings
-            logging_config = env_config.get("logging", default_logging)
-            logging.basicConfig(
-                level=getattr(logging, logging_config.get("level", "INFO")),
-                format=logging_config.get("format", default_logging["format"]),
-                force=True,  # Force reconfiguration
-            )
-
-            # Return file paths configuration
-            return env_config.get("file_paths", default_config)
-        else:
-            logging.warning(f"Environment '{env}' not found in config. Using defaults.")
-            raise KeyError(f"Environment '{env}' not found")
-
-    except (FileNotFoundError, yaml.YAMLError, KeyError) as e:
-        logging.warning(f"Failed to load config.yaml: {e}. Using defaults.")
-        return default_config
-
-
-# Load configuration
-CONFIG = load_config()
+# File Paths
+CONFIG = {
+    "timelog_path": "src_timesheetalgo/FDTech_timelog.csv",
+    "timesheet_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm",
+}
 
 
 def parse_date(input_prompt, retries=MAX_RETRIES):
@@ -126,11 +55,33 @@ def check_file_existence(filepath, filetype):
             with open(filepath, encoding="utf-8") as file:
                 return list(csv.reader(file))[1:]  # Skip header
         elif filetype == "excel":
+            # Check if file is locked/opened by another process
+            try:
+                # Try to open file in write mode to check if it's locked
+                with open(filepath, "r+b"):
+                    pass
+                logging.info(f"Excel file is not locked: {filepath}")
+            except (PermissionError, IOError) as e:
+                logging.warning(
+                    f"Excel file may be locked/opened by another process: {filepath}"
+                )
+                logging.warning(f"Lock error: {e}")
+                logging.warning(
+                    "Please close the Excel file if it's open in Excel application"
+                )
+
             # Open timesheet xlsm with parameters:
             # data_only = Keep formula, keep_vba = Keep VBA program
             return openpyxl.load_workbook(filepath, data_only=False, keep_vba=True)
     except FileNotFoundError:
         logging.error(f"File not found: {filepath}")
+        raise
+    except PermissionError as e:
+        logging.error(f"Permission denied accessing file: {filepath}")
+        logging.error(
+            "This usually means the file is open in Excel. Please close it and try again."
+        )
+        logging.error(f"Error details: {e}")
         raise
 
 
@@ -160,10 +111,7 @@ class TimeSheetProcessor:
     def request_date_input(self):
         """Request start and end date from user or use defaults."""
         logging.info("Setting date range...")
-
-        # Calculate default dates first (this will log them)
-        default_start = self.set_default_start_date()
-
+        
         # Try to get user input, but use defaults if no input provided
         try:
             start_input = input(
@@ -177,11 +125,9 @@ class TimeSheetProcessor:
             else:
                 self.obj_date_startpoint = default_start
         except (ValueError, EOFError):
-            self.obj_date_startpoint = default_start
-
-        # Calculate default end date (this will log it)
-        default_end = self.set_default_end_date()
-
+            logging.info("Using default start date...")
+            self.obj_date_startpoint = self.set_default_start_date()
+        
         try:
             end_input = input(
                 "Enter End Date (dd.mm.yyyy) or press Enter for default: "
@@ -302,26 +248,7 @@ class TimeSheetProcessor:
     def save_timesheet(self):
         """Save the modified timesheet with backup and error handling."""
         logging.info("Saving timesheet...")
-        try:
-            # Try to save directly first
-            self.timesheet.save(self.timesheet_path)
-            logging.info(f"Timesheet saved successfully to {self.timesheet_path}")
-        except PermissionError:
-            # If permission denied, try saving with a timestamp suffix
-            from datetime import datetime
-
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = self.timesheet_path.replace(
-                ".xlsm", f"_backup_{timestamp}.xlsm"
-            )
-            logging.warning(
-                f"Permission denied for original file. Saving backup to {backup_path}"
-            )
-            self.timesheet.save(backup_path)
-            logging.info(f"Backup timesheet saved successfully to {backup_path}")
-        except Exception as e:
-            logging.error(f"Failed to save timesheet: {e}")
-            raise
+        self.timesheet.save(self.timesheet_path)
 
 
 # Main execution

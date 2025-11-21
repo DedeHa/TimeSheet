@@ -95,9 +95,7 @@ def load_config(config_path: str = None, environment: str = None) -> dict:
 
     file_paths = env_config["file_paths"]
     if "timelog_path" not in file_paths or "timesheet_path" not in file_paths:
-        raise ConfigError(
-            "file_paths must contain 'timelog_path' and 'timesheet_path'"
-        )
+        raise ConfigError("file_paths must contain 'timelog_path' and 'timesheet_path'")
 
     # Convert relative paths to absolute paths if needed
     config_dir = os.path.dirname(config_path)
@@ -113,7 +111,9 @@ def load_config(config_path: str = None, environment: str = None) -> dict:
     if "logging" in env_config:
         logging_config = env_config["logging"]
         log_level = logging_config.get("level", "INFO")
-        log_format = logging_config.get("format", "%(asctime)s - %(levelname)s - %(message)s")
+        log_format = logging_config.get(
+            "format", "%(asctime)s - %(levelname)s - %(message)s"
+        )
         logging.basicConfig(level=log_level, format=log_format)
 
     return {

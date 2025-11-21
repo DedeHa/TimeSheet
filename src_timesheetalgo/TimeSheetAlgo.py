@@ -18,6 +18,8 @@ import csv
 import openpyxl
 from datetime import datetime as dt, timedelta as td
 import logging
+import yaml
+import os
 
 # Constants
 DATE_FORMAT = "%d.%m.%Y"
@@ -26,11 +28,110 @@ ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
 YEAR = 2025
 
-# File Paths
-CONFIG = {
-    "timelog_path": "src_timesheetalgo/FDTech_timelog.csv",
-    "timesheet_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm",
-}
+
+class ConfigError(Exception):
+    """Custom exception for configuration errors."""
+
+    pass
+
+
+def load_config(config_path: str = None, environment: str = None) -> dict:
+    """Load configuration from external YAML file.
+
+    Args:
+        config_path: Path to config.yaml file. If None, uses default location.
+        environment: Environment name (development/production). If None, uses default.
+
+    Returns:
+        Dictionary with configuration for the selected environment.
+
+    Raises:
+        ConfigError: If config file not found or invalid.
+    """
+    # Determine config file path
+    if config_path is None:
+        # Try relative to this script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(script_dir, "config.yaml")
+
+    # Check if config file exists
+    if not os.path.exists(config_path):
+        raise ConfigError(
+            f"Configuration file not found: {config_path}. "
+            "Please ensure config.yaml exists in the src_timesheetalgo directory."
+        )
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config_data = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise ConfigError(f"Invalid YAML format in {config_path}: {e}")
+    except Exception as e:
+        raise ConfigError(f"Error reading configuration file: {e}")
+
+    # Validate config structure
+    if not isinstance(config_data, dict):
+        raise ConfigError("Configuration file must contain a YAML dictionary")
+
+    if "environments" not in config_data:
+        raise ConfigError("Configuration file must contain 'environments' key")
+
+    # Determine which environment to use
+    if environment is None:
+        environment = config_data.get("default_environment", "development")
+
+    # Get environment-specific config
+    if environment not in config_data["environments"]:
+        raise ConfigError(
+            f"Environment '{environment}' not found in configuration. "
+            f"Available environments: {list(config_data['environments'].keys())}"
+        )
+
+    env_config = config_data["environments"][environment]
+
+    # Extract file paths
+    if "file_paths" not in env_config:
+        raise ConfigError(f"No 'file_paths' defined for environment '{environment}'")
+
+    file_paths = env_config["file_paths"]
+    if "timelog_path" not in file_paths or "timesheet_path" not in file_paths:
+        raise ConfigError("file_paths must contain 'timelog_path' and 'timesheet_path'")
+
+    # Convert relative paths to absolute paths if needed
+    config_dir = os.path.dirname(config_path)
+    timelog_path = file_paths["timelog_path"]
+    timesheet_path = file_paths["timesheet_path"]
+
+    if not os.path.isabs(timelog_path):
+        timelog_path = os.path.join(config_dir, timelog_path)
+    if not os.path.isabs(timesheet_path):
+        timesheet_path = os.path.join(config_dir, timesheet_path)
+
+    # Setup logging if specified in config
+    if "logging" in env_config:
+        logging_config = env_config["logging"]
+        log_level = logging_config.get("level", "INFO")
+        log_format = logging_config.get(
+            "format", "%(asctime)s - %(levelname)s - %(message)s"
+        )
+        logging.basicConfig(level=log_level, format=log_format)
+
+    return {
+        "timelog_path": timelog_path,
+        "timesheet_path": timesheet_path,
+    }
+
+
+# Load default configuration
+try:
+    CONFIG = load_config()
+except ConfigError as e:
+    logging.error(f"Configuration error: {e}")
+    # Fallback to hardcoded paths if config loading fails
+    CONFIG = {
+        "timelog_path": "src_timesheetalgo/FDTech_timelog.csv",
+        "timesheet_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm",
+    }
 
 
 def parse_date(input_prompt, retries=MAX_RETRIES):

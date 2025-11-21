@@ -1,7 +1,6 @@
 import pytest
 import openpyxl
 import yaml
-import os
 from datetime import datetime, timedelta
 from TimeSheetAlgo import (
     parse_date,

@@ -37,7 +37,7 @@ jobs:
           contains(github.ref, 'refactor/') ||
           contains(github.ref, 'test/') ||
           github.ref == 'refs/heads/develop'
-        ) && 'development' || 'production'
+        ) && 'development'
       }}
 
     strategy:

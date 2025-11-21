@@ -178,6 +178,43 @@ def test_check_file_existence_excel_not_found(tmp_path):
         check_file_existence(str(non_existent), "excel")
 
 
+# 2.5. Permission denied on CSV file: Ensure PermissionError is raised for inaccessible CSV.
+def test_check_file_existence_csv_permission_denied(tmp_path, monkeypatch):
+    """
+    Test Case 2.5:
+    - Setup: Create a CSV file and mock the open function to raise PermissionError.
+    - Expected: Raises PermissionError.
+    """
+    csv_file = tmp_path / "timelog.csv"
+    csv_file.write_text("Date,Start,End\n15.03.2025,09:00,17:00\n")
+
+    def mock_open_permission_error(*args, **kwargs):
+        raise PermissionError("Permission denied")
+
+    monkeypatch.setattr("builtins.open", mock_open_permission_error)
+    with pytest.raises(PermissionError):
+        check_file_existence(str(csv_file), "csv")
+
+
+# 2.6. Permission denied on Excel file: Ensure PermissionError is raised for inaccessible Excel.
+def test_check_file_existence_excel_permission_denied(tmp_path, monkeypatch):
+    """
+    Test Case 2.6:
+    - Setup: Create an Excel file and mock openpyxl.load_workbook to raise PermissionError.
+    - Expected: Raises PermissionError.
+    """
+    excel_file = tmp_path / "timesheet.xlsx"
+    wb = create_dummy_workbook()
+    wb.save(str(excel_file))
+
+    def mock_load_workbook_permission_error(*args, **kwargs):
+        raise PermissionError("Permission denied")
+
+    monkeypatch.setattr("openpyxl.load_workbook", mock_load_workbook_permission_error)
+    with pytest.raises(PermissionError):
+        check_file_existence(str(excel_file), "excel")
+
+
 ###########################################################################
 # 3. Tests for TimeSheetProcessor class methods
 ###########################################################################

@@ -227,7 +227,9 @@ def test_load_config_incomplete_file_paths(tmp_path):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    with pytest.raises(ConfigError, match="must contain 'timelog_path' and 'timesheet_path'"):
+    with pytest.raises(
+        ConfigError, match="must contain 'timelog_path' and 'timesheet_path'"
+    ):
         load_config(str(config_file))
 
 

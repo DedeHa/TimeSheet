@@ -37,7 +37,7 @@ jobs:
           contains(github.ref, 'refactor/') ||
           contains(github.ref, 'test/') ||
           github.ref == 'refs/heads/develop'
-        ) && 'development' || 'production'
+        ) && 'development'
       }}
 
     strategy:
@@ -61,7 +61,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff radon pydocstyle
+          pip install black flake8 pytest pytest-cov openpyxl ruff radon pydocstyle PyYAML
 
       - name: Run ruff
         run: ruff check src_timesheetalgo tests
@@ -92,7 +92,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff
+          pip install black flake8 pytest pytest-cov openpyxl ruff PyYAML
 
       - name: Run tests with coverage
         run: |
@@ -126,7 +126,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff
+          pip install black flake8 pytest pytest-cov openpyxl ruff PyYAML
 
       - name: Install packaging tools
         run: |

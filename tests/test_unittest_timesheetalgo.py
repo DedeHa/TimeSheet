@@ -1,10 +1,13 @@
 import pytest
 import openpyxl
+import yaml
 from datetime import datetime, timedelta
 from TimeSheetAlgo import (
     parse_date,
     check_file_existence,
     TimeSheetProcessor,
+    load_config,
+    ConfigError,
     DATE_FORMAT,
     ROW_OFFSET,
     TIMESHEET_SHEETS,
@@ -86,7 +89,233 @@ def create_dummy_workbook():
 
 
 ###########################################################################
-# 1. Tests for parse_date function
+# 1. Tests for load_config function
+###########################################################################
+
+
+# 1.1. Valid configuration loading: Test loading a valid config file.
+def test_load_config_valid(tmp_path):
+    """
+    Test Case 1.1:
+    - Setup: Create a valid config.yaml file.
+    - Expected: Returns configuration dictionary with correct paths.
+    """
+    # Create config file
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {
+            "development": {
+                "file_paths": {
+                    "timelog_path": "timelog.csv",
+                    "timesheet_path": "timesheet.xlsx",
+                },
+                "logging": {"level": "INFO", "format": "%(message)s"},
+            }
+        },
+        "default_environment": "development",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    config = load_config(str(config_file), "development")
+    assert config["timelog_path"].endswith("timelog.csv")
+    assert config["timesheet_path"].endswith("timesheet.xlsx")
+
+
+# 1.2. Missing config file: Test error handling for missing config file.
+def test_load_config_file_not_found():
+    """
+    Test Case 1.2:
+    - Setup: Provide non-existent config file path.
+    - Expected: Raises ConfigError.
+    """
+    with pytest.raises(ConfigError, match="Configuration file not found"):
+        load_config("/nonexistent/path/config.yaml")
+
+
+# 1.3. Invalid YAML format: Test error handling for invalid YAML.
+def test_load_config_invalid_yaml(tmp_path):
+    """
+    Test Case 1.3:
+    - Setup: Create a config file with invalid YAML syntax.
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text("invalid: yaml: content: [")  # Invalid YAML
+
+    with pytest.raises(ConfigError, match="Invalid YAML format"):
+        load_config(str(config_file))
+
+
+# 1.4. Missing environments key: Test error handling for missing environments.
+def test_load_config_missing_environments(tmp_path):
+    """
+    Test Case 1.4:
+    - Setup: Config file without 'environments' key.
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {"default_environment": "development"}
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    with pytest.raises(ConfigError, match="must contain 'environments' key"):
+        load_config(str(config_file))
+
+
+# 1.5. Invalid environment name: Test error handling for non-existent environment.
+def test_load_config_invalid_environment(tmp_path):
+    """
+    Test Case 1.5:
+    - Setup: Request an environment that doesn't exist in config.
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {
+            "development": {
+                "file_paths": {
+                    "timelog_path": "timelog.csv",
+                    "timesheet_path": "timesheet.xlsx",
+                }
+            }
+        },
+        "default_environment": "development",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    with pytest.raises(ConfigError, match="Environment 'invalid' not found"):
+        load_config(str(config_file), "invalid")
+
+
+# 1.6. Missing file_paths in environment: Test error handling for missing file paths.
+def test_load_config_missing_file_paths(tmp_path):
+    """
+    Test Case 1.6:
+    - Setup: Environment config without 'file_paths' key.
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {"development": {"logging": {"level": "INFO"}}},
+        "default_environment": "development",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    with pytest.raises(ConfigError, match="No 'file_paths' defined"):
+        load_config(str(config_file))
+
+
+# 1.7. Missing required file path keys: Test error handling for incomplete file paths.
+def test_load_config_incomplete_file_paths(tmp_path):
+    """
+    Test Case 1.7:
+    - Setup: Environment with only one file path (missing timesheet_path).
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {
+            "development": {
+                "file_paths": {"timelog_path": "timelog.csv"}  # Missing timesheet_path
+            }
+        },
+        "default_environment": "development",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    with pytest.raises(
+        ConfigError, match="must contain 'timelog_path' and 'timesheet_path'"
+    ):
+        load_config(str(config_file))
+
+
+# 1.8. Multiple environments: Test loading specific environment from config.
+def test_load_config_multiple_environments(tmp_path):
+    """
+    Test Case 1.8:
+    - Setup: Config with multiple environments.
+    - Expected: Loads correct environment based on parameter.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {
+            "development": {
+                "file_paths": {
+                    "timelog_path": "dev_timelog.csv",
+                    "timesheet_path": "dev_timesheet.xlsx",
+                }
+            },
+            "production": {
+                "file_paths": {
+                    "timelog_path": "prod_timelog.csv",
+                    "timesheet_path": "prod_timesheet.xlsx",
+                }
+            },
+        },
+        "default_environment": "development",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    # Test loading production environment
+    config = load_config(str(config_file), "production")
+    assert config["timelog_path"].endswith("prod_timelog.csv")
+    assert config["timesheet_path"].endswith("prod_timesheet.xlsx")
+
+
+# 1.9. Default environment selection: Test loading default environment when not specified.
+def test_load_config_default_environment(tmp_path):
+    """
+    Test Case 1.9:
+    - Setup: Config with default_environment specified.
+    - Expected: Loads default environment when no environment parameter provided.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {
+            "development": {
+                "file_paths": {
+                    "timelog_path": "dev_timelog.csv",
+                    "timesheet_path": "dev_timesheet.xlsx",
+                }
+            },
+            "production": {
+                "file_paths": {
+                    "timelog_path": "prod_timelog.csv",
+                    "timesheet_path": "prod_timesheet.xlsx",
+                }
+            },
+        },
+        "default_environment": "production",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    # Test loading without specifying environment (should use default)
+    config = load_config(str(config_file))
+    assert config["timelog_path"].endswith("prod_timelog.csv")
+
+
+# 1.10. Invalid config structure: Test error handling for non-dict config.
+def test_load_config_invalid_structure(tmp_path):
+    """
+    Test Case 1.10:
+    - Setup: Config file with non-dictionary content.
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text("- item1\n- item2\n")  # YAML list instead of dict
+
+    with pytest.raises(ConfigError, match="must contain a YAML dictionary"):
+        load_config(str(config_file))
+
+
+###########################################################################
+# 2. Tests for parse_date function
 ###########################################################################
 
 
@@ -176,6 +405,43 @@ def test_check_file_existence_excel_not_found(tmp_path):
     non_existent = tmp_path / "nonexistent.xlsx"
     with pytest.raises(FileNotFoundError):
         check_file_existence(str(non_existent), "excel")
+
+
+# 2.5. Permission denied on CSV file: Ensure PermissionError is raised for inaccessible CSV.
+def test_check_file_existence_csv_permission_denied(tmp_path, monkeypatch):
+    """
+    Test Case 2.5:
+    - Setup: Create a CSV file and mock the open function to raise PermissionError.
+    - Expected: Raises PermissionError.
+    """
+    csv_file = tmp_path / "timelog.csv"
+    csv_file.write_text("Date,Start,End\n15.03.2025,09:00,17:00\n")
+
+    def mock_open_permission_error(*args, **kwargs):
+        raise PermissionError("Permission denied")
+
+    monkeypatch.setattr("builtins.open", mock_open_permission_error)
+    with pytest.raises(PermissionError):
+        check_file_existence(str(csv_file), "csv")
+
+
+# 2.6. Permission denied on Excel file: Ensure PermissionError is raised for inaccessible Excel.
+def test_check_file_existence_excel_permission_denied(tmp_path, monkeypatch):
+    """
+    Test Case 2.6:
+    - Setup: Create an Excel file and mock openpyxl.load_workbook to raise PermissionError.
+    - Expected: Raises PermissionError.
+    """
+    excel_file = tmp_path / "timesheet.xlsx"
+    wb = create_dummy_workbook()
+    wb.save(str(excel_file))
+
+    def mock_load_workbook_permission_error(*args, **kwargs):
+        raise PermissionError("Permission denied")
+
+    monkeypatch.setattr("openpyxl.load_workbook", mock_load_workbook_permission_error)
+    with pytest.raises(PermissionError):
+        check_file_existence(str(excel_file), "excel")
 
 
 ###########################################################################

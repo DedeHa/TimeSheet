@@ -12,16 +12,12 @@ import logging
 import sys
 import os
 import shutil
+import pytest
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("test_system_timesheetalgo_verification.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+pytestmark = pytest.mark.system
+
+# Note: logging is configured in `main()` when running as a script to avoid
+# side-effects (file creation) during pytest collection and test runs.
 
 # Constants from TimeSheetAlgo.py
 DATE_FORMAT = "%d.%m.%Y"
@@ -471,7 +467,30 @@ class VerificationTester:
                 "⚠️  SOME TESTS FAILED - Review issues before production use"
             )
 
-        logging.info("=" * 80)
+        logging.info("=" * 80) 
+
+
+# Pytest wrapper to run the full verification as a system test
+def test_run_verification(tmp_path):
+    # Skip system test if resources are not available in the repository
+    if not os.path.exists(TEST_CONFIG["timelog_path"]) or not os.path.exists(
+        TEST_CONFIG["timesheet_path"]
+    ):
+        pytest.skip("System resources not available for system test")
+
+    # Copy real resources into an isolated temporary folder to avoid modifying originals
+    tmp_timesheet = tmp_path / "timesheet_copy.xlsm"
+    shutil.copy2(TEST_CONFIG["timesheet_path"], tmp_timesheet)
+    tmp_timelog = tmp_path / "timelog_copy.csv"
+    shutil.copy2(TEST_CONFIG["timelog_path"], tmp_timelog)
+
+    config = TEST_CONFIG.copy()
+    config["timesheet_path"] = str(tmp_timesheet)
+    config["timelog_path"] = str(tmp_timelog)
+    config["backup_path"] = str(tmp_path / "backup.xlsm")
+
+    tester = VerificationTester(config)
+    assert tester.run_comprehensive_test() is True
 
 
 def main():

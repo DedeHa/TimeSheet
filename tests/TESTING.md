@@ -1,7 +1,7 @@
 # TimeSheetAlgo.py Testing Documentation
 
 ## Overview
-
+**Before running tests:** install the test dependencies: `pip install -r requirements.txt` (this provides `freezegun`, `pytest`, `openpyxl` etc.).
 This document provides comprehensive testing information for the TimeSheetAlgo.py application, including unit tests, system verification tests, and configuration testing.
 
 > **Note:** For detailed test execution results and verification reports, see [`verification_report_2025-11-21.md`](verification_report_2025-11-21.md).
@@ -111,17 +111,22 @@ testpaths = tests
 
 ### Unit Tests Only
 ```bash
-python -m pytest tests/test_unittest_timesheetalgo.py -v
+python -m pytest -m unit -q
+```
+
+### Integration Tests Only
+```bash
+python -m pytest -m integration -q
 ```
 
 ### Unit Tests with Coverage
 ```bash
-python -m pytest tests/test_unittest_timesheetalgo.py --cov=src_timesheetalgo --cov-report=term-missing
+python -m pytest -m unit --cov=src_timesheetalgo --cov-report=term-missing
 ```
 
 ### System Verification Tests
 ```bash
-python tests/test_systemverification_timesheetalgo.py
+python -m pytest -m system -q
 ```
 
 ### All Tests

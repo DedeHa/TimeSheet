@@ -89,7 +89,7 @@ environments:
       level: "INFO"
 ```
 
-See [`doc/Architecture_Diagrams.md`](doc/Architecture_Diagrams.md) for detailed configuration flow diagrams.
+See [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) for detailed configuration flow diagrams.
 
 ## Usage
 
@@ -114,8 +114,9 @@ The application will:
 
 | Document | Description |
 |----------|-------------|
-| [`doc/Architecture_Diagrams.md`](doc/Architecture_Diagrams.md) | System architecture, configuration flow, and class diagrams |
+| [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
 | [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation, test structure, and verification reports |
+| [`sup/naming_conventions.md`](sup/naming_conventions.md) | Contributing guidelines and naming conventions |
 
 ### Architecture Diagrams
 
@@ -167,61 +168,4 @@ TimeSheet/
 
 ## Naming Conventions
 
-### Release Versioning (Semantic Versioning)
-
-```
-Rxx.yy.zz
-```
-
-| Component | Description | Example |
-|-----------|-------------|---------|
-| `xx` | MAJOR - Incompatible API changes | R02.00.00 |
-| `yy` | MINOR - Backward compatible features | R02.01.00 |
-| `zz` | PATCH - Backward compatible bug fixes | R02.01.02 |
-
-### Branch Naming
-
-| Type | Format | Example |
-|------|--------|---------|
-| Release | `RCxx.yy.zz` | `RC02.01.02` |
-| Feature | `feature/<type>-<description>` | `feature/FCT-add-export` |
-| Bugfix | `bugfix/<ticket>-<description>` | `bugfix/PRO-262-fix-paths` |
-
-### Commit Messages
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-<type>: <description>
-
-[optional body]
-```
-
-| Type | Description |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `docs` | Documentation changes |
-| `refactor` | Code refactoring |
-| `test` | Test additions/changes |
-
-### Variable Naming
-
-```
-<type>_<variable_name>
-```
-
-| Prefix | Type | Example |
-|--------|------|---------|
-| `fil` | File | `fil_timelog` |
-| `obj` | Object/Complex | `obj_date_startpoint` |
-| `str` | String | `str_date_format` |
-| `int` | Integer | `int_row_offset` |
-| `db` | Double/Float | `db_hours_worked` |
-| `bo` | Boolean | `bo_overwrite` |
-
----
-
-**License:** Proprietary  
-**Author:** Dennis Hartel  
-**Last Updated:** 2025-12-23
+See [`sup/naming_conventions.md`](sup/naming_conventions.md) for the full contributing guidelines and naming conventions (branch, commit, release, and PR naming rules).

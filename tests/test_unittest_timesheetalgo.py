@@ -267,7 +267,8 @@ def test_load_config_multiple_environments(tmp_path):
     assert config["timesheet_path"].endswith("prod_timesheet.xlsx")
 
 
-# 1.9. Default environment selection: Test loading default environment when not specified.
+# 1.9. Default environment selection: Test loading default environment
+# when not specified.
 def test_load_config_default_environment(tmp_path):
     """
     Test Case 1.9:
@@ -407,7 +408,8 @@ def test_check_file_existence_excel_not_found(tmp_path):
         check_file_existence(str(non_existent), "excel")
 
 
-# 2.5. Permission denied on CSV file: Ensure PermissionError is raised for inaccessible CSV.
+# 2.5. Permission denied on CSV file: Ensure PermissionError is raised
+# for inaccessible CSV.
 def test_check_file_existence_csv_permission_denied(tmp_path, monkeypatch):
     """
     Test Case 2.5:
@@ -425,11 +427,13 @@ def test_check_file_existence_csv_permission_denied(tmp_path, monkeypatch):
         check_file_existence(str(csv_file), "csv")
 
 
-# 2.6. Permission denied on Excel file: Ensure PermissionError is raised for inaccessible Excel.
+# 2.6. Permission denied on Excel file: Ensure PermissionError is raised
+# for inaccessible Excel.
 def test_check_file_existence_excel_permission_denied(tmp_path, monkeypatch):
     """
     Test Case 2.6:
-    - Setup: Create an Excel file and mock openpyxl.load_workbook to raise PermissionError.
+    - Setup: Create an Excel file and mock openpyxl.load_workbook
+      to raise PermissionError.
     - Expected: Raises PermissionError.
     """
     excel_file = tmp_path / "timesheet.xlsx"

@@ -13,6 +13,8 @@ from TimeSheetAlgo import (
     TIMESHEET_SHEETS,
 )
 
+pytestmark = pytest.mark.unit
+
 # Mock data
 MOCK_TIMELOG = [
     ["01.01.2025", "08:00", "16:00"],
@@ -29,39 +31,8 @@ for i in range(1, 32):
 
 
 # Fixtures
-@pytest.fixture
-def mock_processor(mock_csv_file, mock_excel_file):
-    """Fixture to provide a mocked TimeSheetProcessor instance with loaded files."""
-    config = {
-        "timelog_path": str(mock_csv_file),
-        "timesheet_path": str(mock_excel_file),
-    }
-    processor = TimeSheetProcessor(config)
-    processor.load_files()
-    return processor
+# Shared fixtures (mock CSV/excel, processor, frozen time) are provided by `tests/conftest.py` to centralize test setup.
 
-
-@pytest.fixture
-def mock_csv_file(tmp_path):
-    """Fixture to create a temporary CSV file."""
-    csv_file = tmp_path / "timelog.csv"
-    csv_file.write_text("Date,Start,End\n15.03.2025,09:00,17:00\n")
-    return csv_file
-
-
-@pytest.fixture
-def mock_excel_file(tmp_path):
-    """Fixture to create a temporary Excel file."""
-    excel_file = tmp_path / "timesheet.xlsx"
-    wb = create_dummy_workbook()
-    wb.save(str(excel_file))
-    return excel_file
-
-
-@pytest.fixture
-def mock_workbook():
-    """Fixture to create a dummy workbook."""
-    return create_dummy_workbook()
 
 
 ###########################################################################

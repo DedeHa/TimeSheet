@@ -7,47 +7,38 @@ graph TB
     subgraph "TimeSheetAlgo Application"
         TSA[TimeSheetAlgo.py]
         LCF[load_config function]
+        CE[ConfigError Exception]
         CF[src_timesheetalgo/config.yaml]
-    end
-    
-    subgraph "Environment Detection"
-        ED[determine_environment function]
-        FD[Folder Detection]
-        CWD[Current Working Directory]
     end
     
     subgraph "Configuration Sources"
         DEV[Development Config]
         PROD[Production Config]
-        DEFAULT[Hardcoded Defaults]
+        DEFAULT[Hardcoded Fallback]
     end
     
     subgraph "External Dependencies"
         YAML[PyYAML Library]
         LOG[Python Logging]
-        PATH[pathlib.Path]
         OS[os module]
     end
     
     TSA --> LCF
     LCF --> CF
-    LCF --> ED
     LCF --> YAML
     LCF --> LOG
-    
-    ED --> FD
-    FD --> CWD
+    LCF --> OS
+    LCF -.-> CE
     
     CF --> DEV
     CF --> PROD
     
     LCF -.-> DEFAULT
-    LCF --> PATH
-    LCF --> OS
     
     style TSA fill:#e1f5fe
     style LCF fill:#f3e5f5
     style CF fill:#fff3e0
+    style CE fill:#ffcdd2
     style DEFAULT fill:#ffebee
 ```
 
@@ -59,72 +50,79 @@ sequenceDiagram
     participant LCF as load_config
     participant CF as config.yaml
     participant LOG as Logging System
-    participant ED as determine_environment
+    participant CE as ConfigError
     
-    TSA->>LCF: Call load_config
-    LCF->>LCF: Set default configuration
-    LCF->>LOG: Configure basic logging (force=True)
-    LCF->>LCF: Get script directory path
+    TSA->>LCF: Call load_config(config_path, environment)
+    LCF->>LCF: Determine config file path
     
-    alt Config file exists
-        LCF->>CF: Load YAML content
-        CF-->>LCF: Return config data
-        LCF->>ED: Call determine_environment
-        ED->>ED: Check current directory name
-        ED-->>LCF: Return environment (development/production)
-        LCF->>LOG: Log detected environment
-        LCF->>LOG: Reconfigure logging from YAML (force=True)
-        LCF-->>TSA: Return file paths dict
-    else Config file missing or error
-        LCF->>LOG: Log warning about fallback
-        LCF-->>TSA: Return default config
+    alt Config file not found
+        LCF->>CE: Raise ConfigError
+        CE-->>TSA: Configuration file not found
+    else Config file exists
+        LCF->>CF: Load YAML content with safe_load
+        alt Invalid YAML
+            LCF->>CE: Raise ConfigError
+            CE-->>TSA: Invalid YAML format
+        else Valid YAML
+            LCF->>LCF: Validate config structure
+            LCF->>LCF: Get environment from default_environment or parameter
+            alt Environment not found
+                LCF->>CE: Raise ConfigError
+                CE-->>TSA: Environment not found
+            else Valid environment
+                LCF->>LCF: Extract file_paths
+                LCF->>LCF: Convert relative paths to absolute
+                LCF->>LOG: Configure logging from YAML
+                LCF->>LOG: Log configuration diagnostics (WARNING level)
+                LCF-->>TSA: Return file paths dict
+            end
+        end
     end
+    
+    Note over TSA: On ConfigError, fallback to hardcoded defaults
 ```
 
-## Environment Detection Logic
+## Environment Selection Logic
 
 ```mermaid
 flowchart TD
-    START([Start Environment Detection])
+    START([Start Configuration Loading])
     
-    GET_CWD[Get current working directory]
-    GET_NAME[Extract directory name]
+    CHECK_PARAM{Environment parameter provided?}
+    USE_PARAM[Use provided environment]
     
-    CHECK_SRC{Directory name == 'src_timesheetalgo'?}
-    SET_DEV[Set environment: development]
+    CHECK_DEFAULT{default_environment in config?}
+    USE_DEFAULT[Use default_environment from config]
+    USE_DEV[Use 'development' as fallback]
     
-    CHECK_ZEITEN{Directory name == '01_Zeiten'?}
-    SET_PROD[Set environment: production]
+    VALIDATE{Environment exists in config?}
+    LOAD_ENV[Load environment configuration]
+    RAISE_ERROR[Raise ConfigError]
     
-    CHECK_SCRIPT[Check script directory]
-    SCRIPT_SRC{Script in 'src_timesheetalgo'?}
-    FALLBACK_DEV[Fallback: development]
+    END([Configuration Loaded])
     
-    END([Environment Determined])
+    START --> CHECK_PARAM
     
-    START --> GET_CWD
-    GET_CWD --> GET_NAME
-    GET_NAME --> CHECK_SRC
+    CHECK_PARAM -->|Yes| USE_PARAM
+    CHECK_PARAM -->|No| CHECK_DEFAULT
     
-    CHECK_SRC -->|Yes| SET_DEV
-    CHECK_SRC -->|No| CHECK_ZEITEN
+    CHECK_DEFAULT -->|Yes| USE_DEFAULT
+    CHECK_DEFAULT -->|No| USE_DEV
     
-    CHECK_ZEITEN -->|Yes| SET_PROD
-    CHECK_ZEITEN -->|No| CHECK_SCRIPT
+    USE_PARAM --> VALIDATE
+    USE_DEFAULT --> VALIDATE
+    USE_DEV --> VALIDATE
     
-    CHECK_SCRIPT --> SCRIPT_SRC
-    SCRIPT_SRC -->|Yes| SET_DEV
-    SCRIPT_SRC -->|No| FALLBACK_DEV
+    VALIDATE -->|Yes| LOAD_ENV
+    VALIDATE -->|No| RAISE_ERROR
     
-    SET_DEV --> END
-    SET_PROD --> END
-    FALLBACK_DEV --> END
+    LOAD_ENV --> END
     
     style START fill:#e8f5e8
     style END fill:#e8f5e8
-    style SET_PROD fill:#ffebee
-    style SET_DEV fill:#e3f2fd
-    style FALLBACK_DEV fill:#fff3e0
+    style RAISE_ERROR fill:#ffcdd2
+    style LOAD_ENV fill:#e3f2fd
+    style USE_DEFAULT fill:#fff3e0
 ```
 
 ## Configuration Structure
@@ -134,10 +132,6 @@ graph LR
     subgraph "config.yaml Structure"
         ROOT[config.yaml]
         
-        subgraph "Default Environment"
-            DEFAULT[default_environment: development]
-        end
-        
         subgraph "Environments Section"
             ENVS[environments]
             
@@ -145,26 +139,30 @@ graph LR
                 DEV_ENV[development]
                 DEV_PATHS[file_paths]
                 DEV_LOG[logging]
-                DEV_TL[timelog_path: FDTech_timelog.csv]
-                DEV_TS[timesheet_path: 2025_FDTech_Dennis_Hartel.xlsm]
-                DEV_LVL[level: INFO]
-                DEV_FMT[format: %(asctime)s - %(levelname)s - %(message)s]
+                DEV_TL["timelog_path: fdtech_timelog.csv"]
+                DEV_TS["timesheet_path: 2025_FDTech_Dennis_Hartel.xlsm"]
+                DEV_LVL["level: INFO"]
+                DEV_FMT["format: asctime - levelname - message"]
             end
             
             subgraph "Production"
                 PROD_ENV[production]
                 PROD_PATHS[file_paths]
                 PROD_LOG[logging]
-                PROD_TL[timelog_path: /data/timelog/FDTech_timelog.csv]
-                PROD_TS[timesheet_path: /data/timesheet/2025_FDTech_Dennis_Hartel.xlsm]
-                PROD_LVL[level: WARNING]
-                PROD_FMT[format: %(asctime)s - %(levelname)s - %(message)s]
+                PROD_TL["timelog_path: Timealarm/fdtech_timelog.csv"]
+                PROD_TS["timesheet_path: 2025_FDTech_Dennis_Hartel.xlsm"]
+                PROD_LVL["level: WARNING"]
+                PROD_FMT["format: asctime - levelname - message"]
             end
+        end
+        
+        subgraph "Default Environment"
+            DEFAULT[default_environment: development]
         end
     end
     
-    ROOT --> DEFAULT
     ROOT --> ENVS
+    ROOT --> DEFAULT
     
     ENVS --> DEV_ENV
     ENVS --> PROD_ENV
@@ -196,55 +194,78 @@ flowchart TD
     
     FILE_EXISTS{Config file exists?}
     YAML_VALID{Valid YAML?}
+    STRUCT_VALID{Valid structure?}
     ENV_VALID{Valid environment?}
+    PATHS_VALID{Valid file_paths?}
     
     SUCCESS[Configuration Loaded Successfully]
     
-    WARN_MISSING[Log warning: Config file missing]
-    WARN_YAML[Log warning: YAML parsing failed]
-    WARN_ENV[Log warning: Environment not found]
+    ERR_MISSING[Raise ConfigError: File not found]
+    ERR_YAML[Raise ConfigError: Invalid YAML]
+    ERR_STRUCT[Raise ConfigError: Missing 'environments' key]
+    ERR_ENV[Raise ConfigError: Environment not found]
+    ERR_PATHS[Raise ConfigError: Missing file_paths]
     
-    FALLBACK[Use hardcoded defaults]
-    SETUP_BASIC_LOG[Setup basic logging]
+    CATCH[Catch ConfigError at module level]
+    FALLBACK[Use hardcoded fallback defaults]
+    LOG_ERROR[Log error message]
     
     LOAD --> FILE_EXISTS
     
-    FILE_EXISTS -->|No| WARN_MISSING
+    FILE_EXISTS -->|No| ERR_MISSING
     FILE_EXISTS -->|Yes| YAML_VALID
     
-    YAML_VALID -->|No| WARN_YAML
-    YAML_VALID -->|Yes| ENV_VALID
+    YAML_VALID -->|No| ERR_YAML
+    YAML_VALID -->|Yes| STRUCT_VALID
     
-    ENV_VALID -->|No| WARN_ENV
-    ENV_VALID -->|Yes| SUCCESS
+    STRUCT_VALID -->|No| ERR_STRUCT
+    STRUCT_VALID -->|Yes| ENV_VALID
     
-    WARN_MISSING --> FALLBACK
-    WARN_YAML --> FALLBACK
-    WARN_ENV --> FALLBACK
-    FALLBACK --> SETUP_BASIC_LOG
-    SETUP_BASIC_LOG --> SUCCESS
+    ENV_VALID -->|No| ERR_ENV
+    ENV_VALID -->|Yes| PATHS_VALID
+    
+    PATHS_VALID -->|No| ERR_PATHS
+    PATHS_VALID -->|Yes| SUCCESS
+    
+    ERR_MISSING --> CATCH
+    ERR_YAML --> CATCH
+    ERR_STRUCT --> CATCH
+    ERR_ENV --> CATCH
+    ERR_PATHS --> CATCH
+    
+    CATCH --> LOG_ERROR
+    LOG_ERROR --> FALLBACK
+    FALLBACK --> SUCCESS
     
     style SUCCESS fill:#e8f5e8
     style FALLBACK fill:#fff3e0
-    style WARN_MISSING fill:#fff9c4
-    style WARN_YAML fill:#fff9c4
-    style WARN_ENV fill:#fff9c4
+    style ERR_MISSING fill:#ffcdd2
+    style ERR_YAML fill:#ffcdd2
+    style ERR_STRUCT fill:#ffcdd2
+    style ERR_ENV fill:#ffcdd2
+    style ERR_PATHS fill:#ffcdd2
+    style CATCH fill:#fff9c4
 ```
 
 ## Class Relationship Diagram
 
 ```mermaid
 classDiagram
-    class TimeSheetAlgo {
+    class ConfigError {
+        <<Exception>>
+        Custom exception for configuration errors
+    }
+    
+    class TimeSheetAlgoModule {
         +CONFIG: Dict[str, str]
         +DATE_FORMAT: str
         +MAX_RETRIES: int
         +ROW_OFFSET: int
         +TIMESHEET_SHEETS: int
         +YEAR: int
-        +load_config(): Dict[str, str]
-        +determine_environment(): str
-        +main()
+        +load_config(config_path, environment): Dict[str, str]
+        +parse_date(input_prompt, retries): datetime
+        +check_file_existence(filepath, filetype): Any
     }
     
     class TimeSheetProcessor {
@@ -265,6 +286,7 @@ classDiagram
         +confirm_overwrite(): bool
         +set_default_start_date(): datetime
         +set_default_end_date(): datetime
+        -_get_date(prompt, fallback): datetime
     }
     
     class PyYAML {
@@ -275,27 +297,27 @@ classDiagram
     class PythonLogging {
         <<Standard Library>>
         +basicConfig()
-        +getLogger()
-    }
-    
-    class PathLib {
-        <<Standard Library>>
-        +Path.cwd()
-        +Path(__file__).parent
+        +warning()
+        +info()
+        +error()
     }
     
     class OSModule {
         <<Standard Library>>
-        +getenv()
+        +path.dirname()
+        +path.abspath()
+        +path.join()
+        +path.exists()
+        +path.isabs()
     }
     
-    TimeSheetAlgo --> TimeSheetProcessor : creates
-    TimeSheetAlgo --> PyYAML : uses
-    TimeSheetAlgo --> PythonLogging : configures
-    TimeSheetAlgo --> PathLib : uses
-    TimeSheetAlgo --> OSModule : uses
+    TimeSheetAlgoModule --> ConfigError : raises
+    TimeSheetAlgoModule --> TimeSheetProcessor : creates
+    TimeSheetAlgoModule --> PyYAML : uses
+    TimeSheetAlgoModule --> PythonLogging : configures
+    TimeSheetAlgoModule --> OSModule : uses
     
-    note for TimeSheetAlgo "Minimal YAML configuration\nFolder-based environment detection\nConstants remain in script"
+    note for TimeSheetAlgoModule "YAML configuration with ConfigError\nEnvironment from config file\nConstants remain in script"
     note for TimeSheetProcessor "Handles timesheet processing\nUnchanged from original"
 ```
 
@@ -303,17 +325,17 @@ classDiagram
 
 ```mermaid
 graph TB
-    subgraph "Development Environment (src_timesheetalgo folder)"
+    subgraph "Development Environment (default_environment: development)"
         DEV_SCRIPT[TimeSheetAlgo.py]
         DEV_CONFIG[config.yaml]
-        DEV_DATA[FDTech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
+        DEV_DATA[fdtech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
         DEV_LOGS[Console Output - INFO level]
     end
     
-    subgraph "Production Environment (01_Zeiten folder)"
+    subgraph "Production Environment (set via parameter or config)"
         PROD_SCRIPT[TimeSheetAlgo.py]
         PROD_CONFIG[config.yaml]
-        PROD_DATA[/data/timelog/FDTech_timelog.csv<br/>/data/timesheet/2025_FDTech_Dennis_Hartel.xlsm]
+        PROD_DATA[Timealarm/fdtech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
         PROD_LOGS[Console Output - WARNING level]
     end
     
@@ -327,9 +349,6 @@ graph TB
     
     style DEV_SCRIPT fill:#e3f2fd
     style PROD_SCRIPT fill:#ffebee
-    
-    note for DEV_SCRIPT "Folder-based detection:<br/>src_timesheetalgo → development"
-    note for PROD_SCRIPT "Folder-based detection:<br/>01_Zeiten → production"
 ```
 
 ## Configuration Validation Process
@@ -340,25 +359,33 @@ stateDiagram-v2
     
     LoadingConfig --> FileCheck
     FileCheck --> FileExists : file found
-    FileCheck --> MissingFile : file not found
+    FileCheck --> RaiseConfigError : file not found
     
     FileExists --> YAMLParsing
     YAMLParsing --> ValidYAML : parsing successful
-    YAMLParsing --> InvalidYAML : parsing failed
+    YAMLParsing --> RaiseConfigError : parsing failed
     
-    ValidYAML --> EnvironmentDetection
-    EnvironmentDetection --> ValidEnvironment : environment found
-    EnvironmentDetection --> InvalidEnvironment : environment not found
+    ValidYAML --> StructureValidation
+    StructureValidation --> ValidStructure : has 'environments' key
+    StructureValidation --> RaiseConfigError : missing required keys
     
-    ValidEnvironment --> ConfigurationReady
+    ValidStructure --> EnvironmentSelection
+    EnvironmentSelection --> ValidEnvironment : environment found
+    EnvironmentSelection --> RaiseConfigError : environment not found
     
-    MissingFile --> FallbackDefaults
-    InvalidYAML --> FallbackDefaults
-    InvalidEnvironment --> FallbackDefaults
+    ValidEnvironment --> PathValidation
+    PathValidation --> ValidPaths : has required paths
+    PathValidation --> RaiseConfigError : missing paths
     
+    ValidPaths --> PathConversion
+    PathConversion --> ConfigurationReady
+    
+    RaiseConfigError --> CatchException
+    CatchException --> FallbackDefaults
     FallbackDefaults --> ConfigurationReady
+    
     ConfigurationReady --> [*]
     
-    note right of ConfigurationReady : Configuration loaded successfully\nLogging configured\nFile paths available\nEnvironment detected from folder
+    note right of ConfigurationReady : Configuration loaded successfully\nLogging configured from YAML\nFile paths converted to absolute\nDiagnostics logged at WARNING level
     
-    note right of FallbackDefaults : Using hardcoded defaults\nBasic logging setup\nWarning logged\nGraceful degradation
+    note right of FallbackDefaults : Using hardcoded defaults\nError logged\nGraceful degradation

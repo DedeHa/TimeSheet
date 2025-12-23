@@ -116,6 +116,17 @@ def load_config(config_path: str = None, environment: str = None) -> dict:
         )
         logging.basicConfig(level=log_level, format=log_format)
 
+    # Diagnostic logging for environment configuration
+    logging.info(f"=== Configuration Diagnostics ===")
+    logging.info(f"Environment: {environment}")
+    logging.info(f"Config file: {config_path}")
+    logging.info(f"Config directory: {config_dir}")
+    logging.info(f"Timelog path (resolved): {timelog_path}")
+    logging.info(f"Timesheet path (resolved): {timesheet_path}")
+    logging.info(f"Timelog exists: {os.path.exists(timelog_path)}")
+    logging.info(f"Timesheet exists: {os.path.exists(timesheet_path)}")
+    logging.info(f"=================================")
+
     return {
         "timelog_path": timelog_path,
         "timesheet_path": timesheet_path,

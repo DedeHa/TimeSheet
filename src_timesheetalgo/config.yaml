@@ -1,7 +1,7 @@
 environments:
   development:
     file_paths:
-      timelog_path: "FDTech_timelog.csv"
+      timelog_path: "fdtech_timelog.csv"
       timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
     logging:
       level: "INFO"
@@ -9,7 +9,7 @@ environments:
       
   production:
     file_paths:
-      timelog_path: "Timealarm/FDTech_timelog.csv"
+      timelog_path: "Timealarm/fdtech_timelog.csv"
       timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
     logging:
       level: "WARNING"

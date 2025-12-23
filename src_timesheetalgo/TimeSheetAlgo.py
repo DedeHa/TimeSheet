@@ -116,16 +116,15 @@ def load_config(config_path: str = None, environment: str = None) -> dict:
         )
         logging.basicConfig(level=log_level, format=log_format)
 
-    # Diagnostic logging for environment configuration
-    logging.info(f"=== Configuration Diagnostics ===")
-    logging.info(f"Environment: {environment}")
-    logging.info(f"Config file: {config_path}")
-    logging.info(f"Config directory: {config_dir}")
-    logging.info(f"Timelog path (resolved): {timelog_path}")
-    logging.info(f"Timesheet path (resolved): {timesheet_path}")
-    logging.info(f"Timelog exists: {os.path.exists(timelog_path)}")
-    logging.info(f"Timesheet exists: {os.path.exists(timesheet_path)}")
-    logging.info(f"=================================")
+    # Critical operational logging (uses WARNING to ensure visibility in production)
+    logging.warning(f"=== Configuration Diagnostics ===")
+    logging.warning(f"Environment: {environment}")
+    logging.warning(f"Config file: {config_path}")
+    logging.warning(f"Timelog path: {timelog_path}")
+    logging.warning(f"Timesheet path: {timesheet_path}")
+    logging.warning(f"Timelog exists: {os.path.exists(timelog_path)}")
+    logging.warning(f"Timesheet exists: {os.path.exists(timesheet_path)}")
+    logging.warning(f"=================================")
 
     return {
         "timelog_path": timelog_path,
@@ -229,13 +228,13 @@ class TimeSheetProcessor:
             ).strip()
             if start_input:
                 self.obj_date_startpoint = dt.strptime(start_input, DATE_FORMAT)
-                logging.info(
-                    f"Using provided start date: {self.obj_date_startpoint.date()}"
+                logging.warning(
+                    f"Start date: {self.obj_date_startpoint.date()}"
                 )
             else:
                 self.obj_date_startpoint = self.set_default_start_date()
         except (ValueError, EOFError):
-            logging.info("Using default start date...")
+            logging.warning("Using default start date...")
             self.obj_date_startpoint = self.set_default_start_date()
 
         try:
@@ -244,8 +243,8 @@ class TimeSheetProcessor:
             ).strip()
             if end_input:
                 self.obj_date_endpoint = dt.strptime(end_input, DATE_FORMAT)
-                logging.info(
-                    f"Using provided end date: {self.obj_date_endpoint.date()}"
+                logging.warning(
+                    f"End date: {self.obj_date_endpoint.date()}"
                 )
             else:
                 self.obj_date_endpoint = self.set_default_end_date()
@@ -285,14 +284,14 @@ class TimeSheetProcessor:
 
                     # Create the date
                     default_start_date = dt(year, month, day)
-                    logging.info(
-                        f"Default start date identified: {default_start_date.date()}"
+                    logging.warning(
+                        f"Default start date: {default_start_date.date()}"
                     )
                     return default_start_date
 
         # If no date is found, set a default start date
         default_start_date = dt(YEAR, 1, 1)
-        logging.info(
+        logging.warning(
             f"No valid date found. Default start date set to: "
             f"{default_start_date.date()}"
         )
@@ -301,7 +300,7 @@ class TimeSheetProcessor:
     def set_default_end_date(self):
         """Set default end date to yesterday."""
         default_end_date = dt.now() - td(days=1)
-        logging.info(f"Default end date identified: {default_end_date.date()}")
+        logging.warning(f"Default end date: {default_end_date.date()}")
         return default_end_date
 
     def select_timelog_data(self):
@@ -370,6 +369,6 @@ if __name__ == "__main__":  # pragma: no cover
         processor.select_timelog_data()
         processor.store_data()
         processor.save_timesheet()
-        logging.info("Processing complete.")
+        logging.warning("Processing complete.")
     except Exception as e:
         logging.error(f"An error occurred: {e}")

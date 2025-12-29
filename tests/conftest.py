@@ -1,11 +1,21 @@
-import pytest
-import openpyxl
+import os
+import sys
 from datetime import datetime
-from src_timesheetalgo.TimeSheetAlgo import TimeSheetProcessor, ROW_OFFSET, TIMESHEET_SHEETS
+
+import openpyxl
+import pytest
+
+# Ensure repository root is on sys.path so tests can import local package src_timesheetalgo
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from src_timesheetalgo.TimeSheetAlgo import (
+    TIMESHEET_SHEETS,
+    TimeSheetProcessor,
+)
 
 # Make freezegun optional so tests don't hard-fail when it isn't installed.
 try:
     from freezegun import freeze_time  # type: ignore
+
     _HAS_FREEZEGUN = True
 except Exception:  # pragma: no cover - fallback path in user envs without freezegun
     _HAS_FREEZEGUN = False
@@ -64,7 +74,10 @@ def mock_csv_file(tmp_path):
 
 @pytest.fixture
 def mock_processor(mock_csv_file, mock_excel_file):
-    config = {"timelog_path": str(mock_csv_file), "timesheet_path": str(mock_excel_file)}
+    config = {
+        "timelog_path": str(mock_csv_file),
+        "timesheet_path": str(mock_excel_file),
+    }
     processor = TimeSheetProcessor(config)
     processor.load_files()
     return processor
@@ -75,8 +88,8 @@ def real_resource_copy(tmp_path):
     """Helper to copy real resource files into tmp_path when available.
     Returns a dict with paths if available, else None.
     """
-    from pathlib import Path
     import shutil
+    from pathlib import Path
 
     result = {}
     timelog_src = Path("sup/2025_extract.csv")

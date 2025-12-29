@@ -1,14 +1,14 @@
 # TimeSheetAlgo.py Testing Documentation
 
 ## Overview
-**Before running tests:** install the test dependencies: `pip install -r requirements.txt` (this provides `freezegun`, `pytest`, `openpyxl` etc.).
+**Before running tests:** install the test dependencies: `python -m pip install -e .[dev]` (this provides `freezegun`, `pytest`, `openpyxl` etc.).
 This document provides comprehensive testing information for the TimeSheetAlgo.py application, including unit tests, system verification tests, and configuration testing.
 
 > **Note:** For detailed test execution results and verification reports, see [`verification_report_2025-11-21.md`](verification_report_2025-11-21.md).
 
 ## Test Structure and Organization
 
-### 1. Unit Tests (`test_unittest_timesheetalgo.py`)
+### 1. Unit Tests (`test_unit.py`)
 
 **Purpose:** Test individual functions and methods in isolation with comprehensive error handling
 
@@ -43,7 +43,7 @@ This document provides comprehensive testing information for the TimeSheetAlgo.p
 - Comprehensive exception testing
 - 100% coverage of all exception handlers
 
-### 2. System Verification Tests (`test_systemverification_timesheetalgo.py`)
+### 2. System Verification Tests (`test_system.py`)
 
 **Purpose:** End-to-end verification of the complete system functionality with real data
 
@@ -101,10 +101,11 @@ pythonpath = src_timesheetalgo
 testpaths = tests
 ```
 
-### Dependencies (requirements.txt)
-- `pytest==7.4.2` - Testing framework
-- `pytest-cov==4.1.0` - Coverage reporting
-- `openpyxl==3.1.2` - Excel file handling
+### Dependencies (pyproject.toml)
+Project dependencies and dev/extras are defined in `pyproject.toml` (PEP 621). Example key test/dev dependencies include:
+- `pytest==8.3.4` - Testing framework
+- `pytest-cov==5.0.0` - Coverage reporting
+- `openpyxl==3.1.5` - Excel file handling
 - Additional development tools (black, flake8, ruff, etc.)
 
 ## Running Tests

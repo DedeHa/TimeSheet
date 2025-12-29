@@ -29,7 +29,7 @@ git clone <repository-url>
 cd TimeSheet
 
 # Install dependencies
-pip install -r requirements.txt
+python -m pip install -e .[dev]
 
 # Run the application
 python src_timesheetalgo/TimeSheetAlgo.py
@@ -59,7 +59,10 @@ python src_timesheetalgo/TimeSheetAlgo.py
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   # Development install with dev dependencies
+   python -m pip install -e .[dev]
+   # For a production install without dev extras:
+   # python -m pip install .
    ```
 
 4. **Configure the application:**
@@ -162,7 +165,7 @@ TimeSheet/
 │   └── verification_report_*.md  # Test verification reports
 ├── doc/                     # Documentation and diagrams
 ├── sup/                     # Support files and test data
-├── requirements.txt         # Python dependencies
+├── pyproject.toml          # Project metadata & dependencies (PEP 621) - replaces requirements.txt
 └── pytest.ini               # Pytest configuration
 ```
 

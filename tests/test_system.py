@@ -6,12 +6,13 @@ DESCRIPTION: Final verification test for TimeSheetAlgo.py CSV to Excel data mapp
 """
 
 import csv
-import openpyxl
-from datetime import datetime as dt
 import logging
-import sys
 import os
 import shutil
+import sys
+from datetime import datetime as dt
+
+import openpyxl
 import pytest
 
 pytestmark = pytest.mark.system
@@ -467,7 +468,7 @@ class VerificationTester:
                 "⚠️  SOME TESTS FAILED - Review issues before production use"
             )
 
-        logging.info("=" * 80) 
+        logging.info("=" * 80)
 
 
 # Pytest wrapper to run the full verification as a system test

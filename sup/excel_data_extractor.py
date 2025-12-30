@@ -5,16 +5,17 @@ DESCRIPTION:    Extrahiert Zeiterfassungsdaten aus Excel-Arbeitszeittabellen
 VERSION:        2.0
 """
 
-from typing import Dict, List, Optional, Union
-import openpyxl
-import xlrd
-import pandas as pd
 import logging
-from datetime import datetime, time, timedelta
 import os
 import re
 from dataclasses import dataclass
+from datetime import datetime, time, timedelta
 from enum import Enum
+from typing import Dict, List, Optional, Union
+
+import openpyxl
+import pandas as pd
+import xlrd
 
 
 class TimeSheetError(Exception):

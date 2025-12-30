@@ -35,6 +35,10 @@ include = ["src_timesheetalgo"]
 line-length = 88
 
 [tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+per-file-ignores = { "tests/**" = ["E501"] }
 select = ["E", "F", "W", "C", "B", "I"]
 
 [tool.pytest.ini_options]

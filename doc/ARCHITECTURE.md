@@ -14,7 +14,7 @@ graph TB
     subgraph "Configuration Sources"
         DEV[Development Config]
         PROD[Production Config]
-        ROOT[Root Level Config (year)]
+        ROOT["Root Level Config: year"]
     end
 
     subgraph "External Dependencies"

@@ -83,6 +83,8 @@ The application uses YAML-based configuration located at [`src_timesheetalgo/con
 ### Configuration Options
 
 ```yaml
+year: 2025
+
 environments:
   development:
     file_paths:
@@ -90,9 +92,27 @@ environments:
       timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
     logging:
       level: "INFO"
+      format: "%(asctime)s - %(levelname)s - %(message)s"
+
+  production:
+    file_paths:
+      timelog_path: "Timealarm/FDTech_timelog.csv"
+      timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
+    logging:
+      level: "WARNING"
+      format: "%(asctime)s - %(levelname)s - %(message)s"
+
+default_environment: "development"
 ```
 
-See [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) for detailed configuration flow diagrams.
+**Configuration Key Points:**
+- `year`: (Required, root level) - Work year for timesheet (e.g., `2025`)
+- `environments`: Contains development and production configurations
+- `file_paths`: Paths to timelog CSV and timesheet Excel files
+- `logging`: Log level and format for each environment
+- `default_environment`: Default environment to use when not specified
+
+See [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) for detailed configuration flow diagrams and validation logic.
 
 ## Usage
 

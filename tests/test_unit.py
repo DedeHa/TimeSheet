@@ -291,8 +291,6 @@ def test_load_config_invalid_structure(tmp_path):
 
 # 1.11. Trigger ConfigError during module import to exercise fallback CONFIG assignment
 def test_module_reload_triggers_configerror_and_sets_fallback(monkeypatch, caplog):
-    import importlib
-    import os
 
     import src_timesheetalgo.TimeSheetAlgo as tsa
 
@@ -818,11 +816,6 @@ def test_confirm_overwrite(monkeypatch, user_input, expected):
     assert result == expected
 
 
-###########################################################################
-# 6. Test for save_timesheet method
-###########################################################################
-
-
 # 6.1. Test save_timesheet(): Verify that the workbook's save() method is called.
 def test_save_timesheet(monkeypatch, mock_workbook, tmp_path):
     """
@@ -877,60 +870,3 @@ def test_check_file_existence_excel_lock_logs(tmp_path, monkeypatch, caplog):
         assert "Excel file may be locked" in caplog.text
         assert "Lock error" in caplog.text
         assert "Please close the Excel file" in caplog.text
-
-
-# 5.4. Test _get_date with exception fallback: Ensure fallback is used on error.
-def test__get_date_exception_fallback(monkeypatch, mock_processor, caplog):
-    """
-    Test Case 5.4:
-    - Setup: Force parse_date to raise an exception.
-    - Expected: Logs warning and returns fallback value.
-    """
-
-    def raise_parse(prompt):
-        raise Exception("parse error")
-
-    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.parse_date", raise_parse)
-
-    with caplog.at_level(logging.WARNING):
-        fallback_date = datetime(2025, 1, 2)
-        result = mock_processor._get_date("Enter date: ", lambda: fallback_date)
-        assert result == fallback_date
-        assert "Error parsing date" in caplog.text
-
-
-# 5.5. Trigger ConfigError during module import to exercise fallback CONFIG assignment
-def test_module_reload_triggers_configerror_and_sets_fallback(monkeypatch, caplog):
-    """
-    Test Case 5.5:
-    - Setup: Mock os.path.exists to return False for config.yaml.
-    - Expected: Module handles ConfigError gracefully and assigns fallback CONFIG.
-    """
-    import src_timesheetalgo.TimeSheetAlgo as tsa
-
-    # Make os.path.exists return False for config.yaml to force ConfigError in load_config
-    orig_exists = os.path.exists
-
-    def fake_exists(path):
-        if path.endswith("config.yaml"):
-            return False
-        return orig_exists(path)
-
-    monkeypatch.setattr("os.path.exists", fake_exists)
-
-    with caplog.at_level(logging.ERROR):
-        reloaded = importlib.reload(tsa)
-        # The except block should log a configuration error
-        assert "Configuration error" in caplog.text
-        # Fallback CONFIG should be assigned with default paths
-        assert reloaded.CONFIG["timelog_path"].endswith("FDTech_timelog.csv")
-        assert reloaded.CONFIG["timesheet_path"].endswith(
-            "2025_FDTech_Dennis_Hartel.xlsm"
-        )
-
-
-# (Duplicate/ad-hoc tests were consolidated into the main sections above.)
-# The required test cases are now placed under the appropriate sections:
-# - parse_date retries test       -> Section 2 (parse_date) as 2.3
-# - excel lock warnings test      -> Section 3 (check_file_existence) as 3.7
-# - _get_date exception fallback  -> Section 5 (TimeSheetProcessor) as 5.4

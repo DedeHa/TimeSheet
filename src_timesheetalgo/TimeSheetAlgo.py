@@ -58,7 +58,8 @@ def detect_environment(base_path: str) -> str:
 
 def load_config(config_path: Optional[str] = None) -> dict:
     """
-    Load config.yaml and return paths + logging settings + year.
+    Load config.yaml and return paths, logging settings, and year.
+
     Environment is auto-detected based on folder structure.
     Year is a required configuration item at the root level.
     """
@@ -113,6 +114,11 @@ def _read_yaml(path: str) -> dict:
 
 
 def configure_logging(logging_cfg: dict) -> None:
+    """Configure logging based on configuration dictionary.
+
+    Args:
+        logging_cfg: Dictionary with 'level' and 'format' keys.
+    """
     level_name = logging_cfg.get("level", "INFO").upper()
     log_format = logging_cfg.get("format", "%(asctime)s - %(levelname)s - %(message)s")
 

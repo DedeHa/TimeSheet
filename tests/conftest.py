@@ -1,3 +1,5 @@
+"""Configuration and fixtures for pytest tests."""
+
 import os
 import sys
 from datetime import datetime
@@ -24,9 +26,11 @@ except Exception:  # pragma: no cover - fallback path in user envs without freez
 
     @contextlib.contextmanager
     def freeze_time(_):
+        """Contextmanager for freezing time when freezegun is unavailable."""
         warnings.warn(
-            "freezegun not installed; time freezing disabled. Install it with 'pip install freezegun' for deterministic test runs.",
-            UserWarning,
+            "freezegun not installed; time freezing disabled. "
+            "Install it with 'pip install freezegun' for deterministic test runs.",
+            stacklevel=2,
         )
         yield
 
@@ -55,11 +59,13 @@ def create_dummy_workbook():
 
 @pytest.fixture
 def mock_workbook():
+    """Create a mock workbook with timesheet structure."""
     return create_dummy_workbook()
 
 
 @pytest.fixture
 def mock_excel_file(tmp_path, mock_workbook):
+    """Create a temporary Excel file for testing."""
     path = tmp_path / "timesheet.xlsx"
     mock_workbook.save(path)
     return path
@@ -67,6 +73,7 @@ def mock_excel_file(tmp_path, mock_workbook):
 
 @pytest.fixture
 def mock_csv_file(tmp_path):
+    """Create a temporary CSV timelog file for testing."""
     csv_file = tmp_path / "timelog.csv"
     csv_file.write_text("Date,Start,End\n15.03.2025,09:00,17:00\n")
     return csv_file
@@ -74,9 +81,11 @@ def mock_csv_file(tmp_path):
 
 @pytest.fixture
 def mock_processor(mock_csv_file, mock_excel_file):
+    """Create a TimeSheetProcessor with mock files for testing."""
     config = {
         "timelog_path": str(mock_csv_file),
         "timesheet_path": str(mock_excel_file),
+        "year": 2025,
     }
     processor = TimeSheetProcessor(config)
     processor.load_files()
@@ -85,7 +94,8 @@ def mock_processor(mock_csv_file, mock_excel_file):
 
 @pytest.fixture
 def real_resource_copy(tmp_path):
-    """Helper to copy real resource files into tmp_path when available.
+    """Copy real resource files into temporary directory.
+
     Returns a dict with paths if available, else None.
     """
     import shutil

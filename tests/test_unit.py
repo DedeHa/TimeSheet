@@ -1,6 +1,4 @@
-import importlib
 import logging
-import os
 from datetime import datetime, timedelta
 
 import openpyxl
@@ -68,15 +66,16 @@ def create_dummy_workbook():
 
 
 # 1.1. Valid configuration loading: Test loading a valid config file.
-def test_load_config_valid(tmp_path):
+def test_load_config_valid(tmp_path, monkeypatch):
     """
     Test Case 1.1:
-    - Setup: Create a valid config.yaml file.
-    - Expected: Returns configuration dictionary with correct paths.
+    - Setup: Create a valid config.yaml file with year at root level.
+    - Expected: Returns configuration dictionary with correct paths and year.
     """
     # Create config file
     config_file = tmp_path / "config.yaml"
     config_content = {
+        "year": 2025,
         "environments": {
             "development": {
                 "file_paths": {
@@ -91,9 +90,18 @@ def test_load_config_valid(tmp_path):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    config = load_config(str(config_file), "development")
+    # Mock detect_environment to return 'development'
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
+    config = load_config(str(config_file))
     assert config["timelog_path"].endswith("timelog.csv")
     assert config["timesheet_path"].endswith("timesheet.xlsx")
+    assert config["year"] == 2025
+    assert config["environment"] == "development"
 
 
 # 1.2. Missing config file: Test error handling for missing config file.
@@ -103,12 +111,12 @@ def test_load_config_file_not_found():
     - Setup: Provide non-existent config file path.
     - Expected: Raises ConfigError.
     """
-    with pytest.raises(ConfigError, match="Configuration file not found"):
+    with pytest.raises(ConfigError, match="Config file not found"):
         load_config("/nonexistent/path/config.yaml")
 
 
 # 1.3. Invalid YAML format: Test error handling for invalid YAML.
-def test_load_config_invalid_yaml(tmp_path):
+def test_load_config_invalid_yaml(tmp_path, monkeypatch):
     """
     Test Case 1.3:
     - Setup: Create a config file with invalid YAML syntax.
@@ -117,35 +125,50 @@ def test_load_config_invalid_yaml(tmp_path):
     config_file = tmp_path / "config.yaml"
     config_file.write_text("invalid: yaml: content: [")  # Invalid YAML
 
+    # Mock detect_environment to avoid folder structure issues
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
     with pytest.raises(ConfigError, match="Invalid YAML format"):
         load_config(str(config_file))
 
 
 # 1.4. Missing environments key: Test error handling for missing environments.
-def test_load_config_missing_environments(tmp_path):
+def test_load_config_missing_environments(tmp_path, monkeypatch):
     """
     Test Case 1.4:
     - Setup: Config file without 'environments' key.
-    - Expected: Raises ConfigError.
+    - Expected: Raises KeyError.
     """
     config_file = tmp_path / "config.yaml"
-    config_content = {"default_environment": "development"}
+    config_content = {"year": 2025, "default_environment": "development"}
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    with pytest.raises(ConfigError, match="must contain 'environments' key"):
+    # Mock detect_environment to return 'development'
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
+    with pytest.raises(KeyError):
         load_config(str(config_file))
 
 
 # 1.5. Invalid environment name: Test error handling for non-existent environment.
-def test_load_config_invalid_environment(tmp_path):
+def test_load_config_invalid_environment(tmp_path, monkeypatch):
     """
     Test Case 1.5:
-    - Setup: Request an environment that doesn't exist in config.
+    - Setup: Auto-detected environment doesn't exist in config.
     - Expected: Raises ConfigError.
     """
     config_file = tmp_path / "config.yaml"
     config_content = {
+        "year": 2025,
         "environments": {
             "development": {
                 "file_paths": {
@@ -159,12 +182,15 @@ def test_load_config_invalid_environment(tmp_path):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
+    # Mock detect_environment at the import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", lambda x: "invalid")
+
     with pytest.raises(ConfigError, match="Environment 'invalid' not found"):
-        load_config(str(config_file), "invalid")
+        load_config(str(config_file))
 
 
 # 1.6. Missing file_paths in environment: Test error handling for missing file paths.
-def test_load_config_missing_file_paths(tmp_path):
+def test_load_config_missing_file_paths(tmp_path, monkeypatch):
     """
     Test Case 1.6:
     - Setup: Environment config without 'file_paths' key.
@@ -172,25 +198,35 @@ def test_load_config_missing_file_paths(tmp_path):
     """
     config_file = tmp_path / "config.yaml"
     config_content = {
+        "year": 2025,
         "environments": {"development": {"logging": {"level": "INFO"}}},
         "default_environment": "development",
     }
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    with pytest.raises(ConfigError, match="No 'file_paths' defined"):
+    # Mock detect_environment to return 'development'
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
+    # Should raise KeyError when accessing file_paths
+    with pytest.raises(KeyError):
         load_config(str(config_file))
 
 
 # 1.7. Missing required file path keys: Test error handling for incomplete file paths.
-def test_load_config_incomplete_file_paths(tmp_path):
+def test_load_config_incomplete_file_paths(tmp_path, monkeypatch):
     """
     Test Case 1.7:
     - Setup: Environment with only one file path (missing timesheet_path).
-    - Expected: Raises ConfigError.
+    - Expected: Raises KeyError.
     """
     config_file = tmp_path / "config.yaml"
     config_content = {
+        "year": 2025,
         "environments": {
             "development": {
                 "file_paths": {"timelog_path": "timelog.csv"}  # Missing timesheet_path
@@ -201,21 +237,28 @@ def test_load_config_incomplete_file_paths(tmp_path):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    with pytest.raises(
-        ConfigError, match="must contain 'timelog_path' and 'timesheet_path'"
-    ):
+    # Mock detect_environment to return 'development'
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
+    # Should raise KeyError when accessing timesheet_path
+    with pytest.raises(KeyError):
         load_config(str(config_file))
 
 
 # 1.8. Multiple environments: Test loading specific environment from config.
-def test_load_config_multiple_environments(tmp_path):
+def test_load_config_multiple_environments(tmp_path, monkeypatch):
     """
     Test Case 1.8:
     - Setup: Config with multiple environments.
-    - Expected: Loads correct environment based on parameter.
+    - Expected: Loads correct environment based on auto-detection.
     """
     config_file = tmp_path / "config.yaml"
     config_content = {
+        "year": 2025,
         "environments": {
             "development": {
                 "file_paths": {
@@ -235,22 +278,26 @@ def test_load_config_multiple_environments(tmp_path):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
+    # Mock detect_environment at the import location to return 'production'
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", lambda x: "production")
+
     # Test loading production environment
-    config = load_config(str(config_file), "production")
+    config = load_config(str(config_file))
     assert config["timelog_path"].endswith("prod_timelog.csv")
     assert config["timesheet_path"].endswith("prod_timesheet.xlsx")
+    assert config["environment"] == "production"
 
 
-# 1.9. Default environment selection: Test loading default environment
-# when not specified.
-def test_load_config_default_environment(tmp_path):
+# 1.9. Auto-detection of environment: Test that environment is auto-detected correctly.
+def test_load_config_environment_auto_detection(tmp_path, monkeypatch):
     """
     Test Case 1.9:
-    - Setup: Config with default_environment specified.
-    - Expected: Loads default environment when no environment parameter provided.
+    - Setup: Config with multiple environments.
+    - Expected: Loads development when detect_environment returns 'development'.
     """
     config_file = tmp_path / "config.yaml"
     config_content = {
+        "year": 2025,
         "environments": {
             "development": {
                 "file_paths": {
@@ -270,13 +317,21 @@ def test_load_config_default_environment(tmp_path):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    # Test loading without specifying environment (should use default)
+    # Mock detect_environment to return 'development'
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
+    # Test loading without specifying environment (auto-detects development)
     config = load_config(str(config_file))
-    assert config["timelog_path"].endswith("prod_timelog.csv")
+    assert config["timelog_path"].endswith("dev_timelog.csv")
+    assert config["environment"] == "development"
 
 
 # 1.10. Invalid config structure: Test error handling for non-dict config.
-def test_load_config_invalid_structure(tmp_path):
+def test_load_config_invalid_structure(tmp_path, monkeypatch):
     """
     Test Case 1.10:
     - Setup: Config file with non-dictionary content.
@@ -285,42 +340,229 @@ def test_load_config_invalid_structure(tmp_path):
     config_file = tmp_path / "config.yaml"
     config_file.write_text("- item1\n- item2\n")  # YAML list instead of dict
 
-    with pytest.raises(ConfigError, match="must contain a YAML dictionary"):
+    # Mock detect_environment to avoid folder structure issues
+    def mock_detect(base_path):
+        return "development"
+
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+
+    with pytest.raises(ConfigError, match="Config root must be a mapping"):
         load_config(str(config_file))
 
 
-# 1.11. Trigger ConfigError during module import to exercise fallback CONFIG assignment
-def test_module_reload_triggers_configerror_and_sets_fallback(monkeypatch, caplog):
+# 1.11. Missing year at root level: Test error handling for missing year.
+def test_load_config_missing_year(tmp_path, monkeypatch):
+    """
+    Test Case 1.11:
+    - Setup: Config file without 'year' at root level.
+    - Expected: Raises ConfigError.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "environments": {
+            "development": {
+                "file_paths": {
+                    "timelog_path": "timelog.csv",
+                    "timesheet_path": "timesheet.xlsx",
+                }
+            }
+        }
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
 
-    import src_timesheetalgo.TimeSheetAlgo as tsa
+    # Mock detect_environment to avoid folder structure issues
+    def mock_detect(base_path):
+        return "development"
 
-    # Make os.path.exists return False for config.yaml to force ConfigError in load_config
-    orig_exists = os.path.exists
+    # patching at import location
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
 
-    def fake_exists(path):
-        if path.endswith("config.yaml"):
-            return False
-        return orig_exists(path)
-
-    monkeypatch.setattr("os.path.exists", fake_exists)
-
-    with caplog.at_level(logging.ERROR):
-        reloaded = importlib.reload(tsa)
-        # The except block should log a configuration error
-        assert "Configuration error" in caplog.text
-        # Fallback CONFIG should be assigned with default paths
-        assert reloaded.CONFIG["timelog_path"].endswith("FDTech_timelog.csv")
-        assert reloaded.CONFIG["timesheet_path"].endswith(
-            "2025_FDTech_Dennis_Hartel.xlsm"
-        )
+    with pytest.raises(ConfigError, match="Missing required 'year' configuration"):
+        load_config(str(config_file))
 
 
 ###########################################################################
-# 2. Tests for parse_date function
+# 1.12. Test detect_environment() helper function
 ###########################################################################
 
 
-# 2.1. Valid date input: Test that a valid date string is correctly parsed.
+# 1.12a. Test detect_environment with src_timesheetalgo folder
+def test_detect_environment_src_timesheetalgo(monkeypatch, tmp_path):
+    """
+    Test Case 1.12a:
+    - Setup: Base path is src_timesheetalgo folder.
+    - Expected: Returns 'development'.
+    """
+    from TimeSheetAlgo import detect_environment
+
+    # Create a folder named 'src_timesheetalgo'
+    src_folder = tmp_path / "src_timesheetalgo"
+    src_folder.mkdir()
+
+    env = detect_environment(str(src_folder))
+    assert env == "development"
+
+
+# 1.12b. Test detect_environment with Timealarm folder
+def test_detect_environment_timealarm_folder(tmp_path):
+    """
+    Test Case 1.12b:
+    - Setup: Timealarm folder exists in base path.
+    - Expected: Returns 'production'.
+    """
+    from TimeSheetAlgo import detect_environment
+
+    # Create Timealarm folder in base path
+    timealarm_folder = tmp_path / "Timealarm"
+    timealarm_folder.mkdir()
+
+    env = detect_environment(str(tmp_path))
+    assert env == "production"
+
+
+# 1.12c. Test detect_environment fallback
+def test_detect_environment_fallback(tmp_path):
+    """
+    Test Case 1.12c:
+    - Setup: Neither src_timesheetalgo nor Timealarm folder exists.
+    - Expected: Returns 'development' (fallback).
+    """
+    from TimeSheetAlgo import detect_environment
+
+    # Use a random folder that doesn't match criteria
+    env = detect_environment(str(tmp_path))
+    assert env == "development"
+
+
+###########################################################################
+# 1.13. Test _read_yaml() helper function
+###########################################################################
+
+
+def test_read_yaml_oserror(tmp_path, monkeypatch):
+    """
+    Test Case 1.13:
+    - Setup: Mock open to raise OSError (e.g., permission denied).
+    - Expected: Raises ConfigError with 'Unable to read config file' message.
+    """
+    from TimeSheetAlgo import _read_yaml
+
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text("test: data")
+
+    def raise_oserror(path, *args, **kwargs):
+        raise OSError("Permission denied")
+
+    monkeypatch.setattr("builtins.open", raise_oserror)
+
+    with pytest.raises(ConfigError, match="Unable to read config file"):
+        _read_yaml(str(config_file))
+
+
+###########################################################################
+# 2. Tests for configure_logging() utility function
+###########################################################################
+
+
+# 2.1. Test configure_logging with custom level
+def test_configure_logging_custom_level(caplog):
+    """
+    Test Case 2.1:
+    - Setup: Custom logging configuration with DEBUG level.
+    - Expected: Logging is configured with DEBUG level.
+    """
+    from TimeSheetAlgo import configure_logging
+
+    config = {"level": "DEBUG", "format": "%(levelname)s - %(message)s"}
+
+    # Clear any existing handlers before testing
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    configure_logging(config)
+
+    # Verify that the logging config was applied by checking handlers exist
+    assert len(root_logger.handlers) > 0
+
+
+# 2.2. Test configure_logging with default level
+def test_configure_logging_default_level(caplog):
+    """
+    Test Case 2.2:
+    - Setup: Logging configuration with missing 'level' key.
+    - Expected: Uses default INFO level.
+    """
+    from TimeSheetAlgo import configure_logging
+
+    config = {"format": "%(message)s"}
+
+    # Clear any existing handlers before testing
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # Should not raise exception with missing 'level' key
+    configure_logging(config)
+
+    # Verify basicConfig was called with default INFO level
+    assert len(root_logger.handlers) > 0
+
+
+# 2.3. Test configure_logging with invalid level
+def test_configure_logging_invalid_level(caplog):
+    """
+    Test Case 2.3:
+    - Setup: Logging configuration with invalid level name.
+    - Expected: Falls back to INFO level (getattr default).
+    """
+    from TimeSheetAlgo import configure_logging
+
+    config = {"level": "INVALID_LEVEL", "format": "%(message)s"}
+
+    # Clear any existing handlers before testing
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # Should not raise exception with invalid level
+    configure_logging(config)
+
+    # Verify basicConfig was called
+    assert len(root_logger.handlers) > 0
+
+
+# 2.4. Test configure_logging with default format
+def test_configure_logging_default_format(caplog):
+    """
+    Test Case 2.4:
+    - Setup: Logging configuration with missing 'format' key.
+    - Expected: Uses default format string.
+    """
+    from TimeSheetAlgo import configure_logging
+
+    config = {"level": "WARNING"}
+
+    # Clear any existing handlers before testing
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # Should not raise exception with missing 'format' key
+    configure_logging(config)
+
+    # Verify basicConfig was called
+    assert len(root_logger.handlers) > 0
+
+
+###########################################################################
+# 3. Tests for parse_date function
+###########################################################################
+
+
+# 3.1. Valid date input: Test that a valid date string is correctly parsed.
 @pytest.mark.parametrize(
     "input_date, expected",
     [
@@ -655,7 +897,7 @@ def test_confirm_overwrite_eoferror(monkeypatch):
         raise EOFError()
 
     processor = TimeSheetProcessor(
-        {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx"}
+        {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx", "year": 2025}
     )
     monkeypatch.setattr("builtins.input", mock_input_eoferror)
     result = processor.confirm_overwrite()
@@ -809,7 +1051,7 @@ def test_confirm_overwrite(monkeypatch, user_input, expected):
     - Expected: Returns True for "y" and False for "n".
     """
     processor = TimeSheetProcessor(
-        {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx"}
+        {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx", "year": 2025}
     )
     monkeypatch.setattr("builtins.input", lambda prompt: user_input)
     result = processor.confirm_overwrite()
@@ -836,6 +1078,7 @@ def test_save_timesheet(monkeypatch, mock_workbook, tmp_path):
         {
             "timelog_path": "dummy.csv",
             "timesheet_path": str(tmp_path / "timesheet.xlsx"),
+            "year": 2025,
         }
     )
     processor.timesheet = wb

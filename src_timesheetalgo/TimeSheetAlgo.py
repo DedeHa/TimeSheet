@@ -347,12 +347,24 @@ class TimeSheetProcessor:
         logging.info(f"Found {len(entries_with_data)} day(s) with existing data.")
         return self._prompt_overwrite_decision(len(entries_with_data))
 
+    def confirm_overwrite(self):
+        """Confirm overwrite with user (simple yes/no).
+
+        Returns:
+            bool: True for "y" input, False otherwise.
+        """
+        try:
+            response = input("Overwrite? [y/n]: ").strip().lower()
+            return response in ["y", "yes"]
+        except EOFError:
+            return True
+
     def _prompt_overwrite_decision(self, count):
         """Prompt user for overwrite decision.
-        
+
         Args:
             count: Number of entries with existing data
-            
+
         Returns:
             str: "overwrite_all", "skip_all", or "abort"
         """
@@ -361,7 +373,7 @@ class TimeSheetProcessor:
                 f"{count} day(s) have existing data. "
                 "Overwrite all (y), skip existing (s), or abort (n)? [y/s/n, default=y]: "
             ).strip().lower()
-            
+
             if response in ["y", "yes", ""]:
                 logging.info("User chose to overwrite all existing data.")
                 return "overwrite_all"

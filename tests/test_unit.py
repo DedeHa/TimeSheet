@@ -1113,3 +1113,243 @@ def test_check_file_existence_excel_lock_logs(tmp_path, monkeypatch, caplog):
         assert "Excel file may be locked" in caplog.text
         assert "Lock error" in caplog.text
         assert "Please close the Excel file" in caplog.text
+
+
+###########################################################################
+# 6. Additional tests for improved coverage
+###########################################################################
+
+
+# 6.1. Test _prompt_overwrite_decision with skip option
+def test_prompt_overwrite_decision_skip(monkeypatch, mock_processor):
+    """
+    Test Case 6.1:
+    - Setup: _prompt_overwrite_decision called with 'skip' input.
+    - Expected: Returns 'skip_all'.
+    """
+    monkeypatch.setattr("builtins.input", lambda prompt: "s")
+    result = mock_processor._prompt_overwrite_decision(2)
+    assert result == "skip_all"
+
+
+# 6.2. Test _prompt_overwrite_decision with abort option
+def test_prompt_overwrite_decision_abort(monkeypatch, mock_processor):
+    """
+    Test Case 6.2:
+    - Setup: _prompt_overwrite_decision called with 'abort' input.
+    - Expected: Returns 'abort'.
+    """
+    monkeypatch.setattr("builtins.input", lambda prompt: "n")
+    result = mock_processor._prompt_overwrite_decision(2)
+    assert result == "abort"
+
+
+# 6.3. Test _prompt_overwrite_decision with empty input (default)
+def test_prompt_overwrite_decision_empty(monkeypatch, mock_processor):
+    """
+    Test Case 6.3:
+    - Setup: _prompt_overwrite_decision called with empty input.
+    - Expected: Returns 'overwrite_all' (default).
+    """
+    monkeypatch.setattr("builtins.input", lambda prompt: "")
+    result = mock_processor._prompt_overwrite_decision(2)
+    assert result == "overwrite_all"
+
+
+# 6.4. Test _prompt_overwrite_decision with EOFError
+def test_prompt_overwrite_decision_eoferror(monkeypatch, mock_processor, caplog):
+    """
+    Test Case 6.4:
+    - Setup: _prompt_overwrite_decision called with EOFError.
+    - Expected: Returns 'overwrite_all' and logs info.
+    """
+    monkeypatch.setattr("builtins.input", lambda prompt: (_ for _ in ()).throw(EOFError()))
+    with caplog.at_level(logging.INFO):
+        result = mock_processor._prompt_overwrite_decision(2)
+        assert result == "overwrite_all"
+        assert "No input provided" in caplog.text
+
+
+# 6.5. Test _check_and_confirm_overwrite with no conflicts
+def test_check_and_confirm_overwrite_no_conflicts(monkeypatch, mock_processor):
+    """
+    Test Case 6.5:
+    - Setup: _check_and_confirm_overwrite with no overlapping data.
+    - Expected: Returns 'overwrite_all' without prompting.
+    """
+    mock_processor.timedata = [["15.03.2025", "09:00", "17:00"]]
+    # Initialize timesheet without data in that cell
+    result = mock_processor._check_and_confirm_overwrite()
+    assert result == "overwrite_all"
+
+
+# 6.6. Test _check_and_confirm_overwrite with conflicts and user confirms
+def test_check_and_confirm_overwrite_with_conflicts(monkeypatch, mock_processor, caplog):
+    """
+    Test Case 6.6:
+    - Setup: _check_and_confirm_overwrite with overlapping data.
+    - Expected: Prompts user and returns their choice.
+    """
+    mock_processor.timedata = [["05.01.2025", "09:00", "17:00"]]
+    # Add existing data at the target cell
+    sheet = mock_processor.timesheet.worksheets[0]
+    row = ROW_OFFSET + 5
+    sheet.cell(row=row, column=5, value="08:00")
+
+    monkeypatch.setattr("builtins.input", lambda prompt: "y")
+    with caplog.at_level(logging.INFO):
+        result = mock_processor._check_and_confirm_overwrite()
+        assert result == "overwrite_all"
+        assert "Found 1 day(s) with existing data" in caplog.text
+
+
+# 6.7. Test store_data() with skip decision
+def test_store_data_with_skip(monkeypatch, mock_processor, caplog):
+    """
+    Test Case 6.7:
+    - Setup: store_data with conflicting data and skip decision.
+    - Expected: Existing data is preserved.
+    """
+    mock_processor.timedata = [["05.01.2025", "09:00", "17:00"]]
+    sheet = mock_processor.timesheet.worksheets[0]
+    row = ROW_OFFSET + 5
+    original_value = "08:00"
+    sheet.cell(row=row, column=5, value=original_value)
+
+    monkeypatch.setattr("builtins.input", lambda prompt: "s")
+    with caplog.at_level(logging.INFO):
+        mock_processor.store_data()
+        assert sheet.cell(row=row, column=5).value == original_value
+        assert "Skipping existing data" in caplog.text
+
+
+# 6.8. Test store_data() with abort decision
+def test_store_data_with_abort(monkeypatch, mock_processor, caplog):
+    """
+    Test Case 6.8:
+    - Setup: store_data with conflicting data and abort decision.
+    - Expected: Operation is aborted and data is preserved.
+    """
+    mock_processor.timedata = [["05.01.2025", "09:00", "17:00"]]
+    sheet = mock_processor.timesheet.worksheets[0]
+    row = ROW_OFFSET + 5
+    original_value = "08:00"
+    sheet.cell(row=row, column=5, value=original_value)
+
+    monkeypatch.setattr("builtins.input", lambda prompt: "n")
+    with caplog.at_level(logging.INFO):
+        mock_processor.store_data()
+        assert sheet.cell(row=row, column=5).value == original_value
+        assert "Aborting due to user request" in caplog.text
+
+
+# 6.9. Test select_timelog_data with empty result triggers error
+def test_select_timelog_data_empty_result(mock_processor):
+    """
+    Test Case 6.9:
+    - Setup: No timelog entries in date range.
+    - Expected: Raises ValueError with appropriate message.
+    """
+    mock_processor.timelog = [["10.03.2025", "08:00", "16:00"]]
+    mock_processor.obj_date_startpoint = datetime.strptime("15.03.2025", DATE_FORMAT)
+    mock_processor.obj_date_endpoint = datetime.strptime("20.03.2025", DATE_FORMAT)
+
+    with pytest.raises(ValueError, match="No data found"):
+        mock_processor.select_timelog_data()
+
+
+# 6.10. Test confirm_overwrite with various inputs
+@pytest.mark.parametrize(
+    "user_input, expected",
+    [
+        ("yes", True),
+        ("YES", True),
+        ("y", True),
+        ("no", False),
+        ("NO", False),
+        ("n", False),
+        ("", False),
+        ("invalid", False),
+    ],
+)
+def test_confirm_overwrite_parametrized(monkeypatch, user_input, expected):
+    """
+    Test Case 6.10:
+    - Setup: Various user inputs for confirm_overwrite.
+    - Expected: Correct boolean return values.
+    """
+    processor = TimeSheetProcessor(
+        {"timelog_path": "dummy.csv", "timesheet_path": "dummy.xlsx", "year": 2025}
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt: user_input)
+    result = processor.confirm_overwrite()
+    assert result == expected
+
+
+# 6.11. Test _get_date with successful parse
+def test_get_date_success(monkeypatch, mock_processor):
+    """
+    Test Case 6.11:
+    - Setup: Valid date input.
+    - Expected: Returns parsed datetime.
+    """
+    monkeypatch.setattr("builtins.input", lambda prompt: "15.03.2025")
+    result = mock_processor._get_date("Enter date: ", lambda: datetime(2025, 1, 1))
+    assert result == datetime(2025, 3, 15)
+
+
+# 6.12. Test set_default_start_date with specific date in sheet
+def test_set_default_start_date_with_data(mock_processor):
+    """
+    Test Case 6.12:
+    - Setup: Timesheet contains time data in specific position.
+    - Expected: Returns the correct date based on sheet data.
+    """
+    # Add time data to June (index 5) at day 15
+    mock_processor.timesheet.worksheets[5].cell(
+        row=ROW_OFFSET + 15, column=5, value="09:00"
+    )
+    result = mock_processor.set_default_start_date()
+    assert result.month == 6
+    assert result.day == 15
+
+
+# 6.13. Test parse_date with mixed valid/invalid inputs
+def test_parse_date_with_retry(monkeypatch):
+    """
+    Test Case 6.13:
+    - Setup: Invalid then valid date input.
+    - Expected: Returns parsed datetime on retry.
+    """
+    inputs = iter(["invalid", "valid", "15.03.2025"])
+    monkeypatch.setattr("builtins.input", lambda prompt: next(inputs))
+    result = parse_date("Enter date: ", retries=3)
+    assert result == datetime(2025, 3, 15)
+
+
+# 6.14. Test load_config with default environment detection
+def test_load_config_default_environment(tmp_path, monkeypatch):
+    """
+    Test Case 6.14:
+    - Setup: Config with default_environment fallback.
+    - Expected: Uses detected environment.
+    """
+    config_file = tmp_path / "config.yaml"
+    config_content = {
+        "year": 2025,
+        "environments": {
+            "development": {
+                "file_paths": {
+                    "timelog_path": "dev_timelog.csv",
+                    "timesheet_path": "dev_timesheet.xlsx",
+                }
+            }
+        },
+        "default_environment": "development",
+    }
+    with open(config_file, "w") as f:
+        yaml.dump(config_content, f)
+
+    monkeypatch.setattr("TimeSheetAlgo.detect_environment", lambda x: "development")
+    config = load_config(str(config_file))
+    assert config["environment"] == "development"

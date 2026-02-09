@@ -293,6 +293,10 @@ class TimeSheetProcessor:
     def store_data(self):
         """Store selected timelog data into the timesheet."""
         logging.info("Storing timelog data into timesheet...")
+        
+        # Check if any existing data will be overwritten and ask once upfront
+        overwrite_decision = self._check_and_confirm_overwrite()
+        
         for entry in self.timedata:
             # Define index for storing data
             date, start_time, end_time = (
@@ -310,24 +314,66 @@ class TimeSheetProcessor:
                 row=row, column=6
             )
 
-            if start_cell.value and not self.confirm_overwrite():
-                logging.info(f"Skipping existing data for {date.date()}.")
-                break
+            if start_cell.value:
+                if overwrite_decision == "skip_all":
+                    logging.info(f"Skipping existing data for {date.date()}.")
+                    continue
+                elif overwrite_decision == "abort":
+                    logging.info("Aborting due to user request.")
+                    break
+                # overwrite_decision == "overwrite_all" -> proceed to overwrite
 
             start_cell.value, end_cell.value = start_time, end_time
 
-    def confirm_overwrite(self):
-        """Prompt user to confirm overwriting data."""
+    def _check_and_confirm_overwrite(self):
+        """Check for existing data and ask user once for overwrite decision.
+        
+        Returns:
+            str: "overwrite_all", "skip_all", or "abort"
+        """
+        # Count entries with existing data
+        entries_with_data = []
+        for entry in self.timedata:
+            date = dt.strptime(entry[0], DATE_FORMAT)
+            row, month_idx = ROW_OFFSET + date.day, date.month - 1
+            sheet = self.timesheet.worksheets[month_idx]
+            start_cell = sheet.cell(row=row, column=5)
+            if start_cell.value:
+                entries_with_data.append(date.date())
+        
+        if not entries_with_data:
+            return "overwrite_all"  # No conflicts, proceed normally
+        
+        logging.info(f"Found {len(entries_with_data)} day(s) with existing data.")
+        return self._prompt_overwrite_decision(len(entries_with_data))
+
+    def _prompt_overwrite_decision(self, count):
+        """Prompt user for overwrite decision.
+        
+        Args:
+            count: Number of entries with existing data
+            
+        Returns:
+            str: "overwrite_all", "skip_all", or "abort"
+        """
         try:
-            response = (
-                input("Data exists. Overwrite? (y/n) or press Enter for yes: ")
-                .strip()
-                .lower()
-            )
-            return response in ["y", "yes", ""]  # Default to yes if empty input
+            response = input(
+                f"{count} day(s) have existing data. "
+                "Overwrite all (y), skip existing (s), or abort (n)? [y/s/n, default=y]: "
+            ).strip().lower()
+            
+            if response in ["y", "yes", ""]:
+                logging.info("User chose to overwrite all existing data.")
+                return "overwrite_all"
+            elif response in ["s", "skip"]:
+                logging.info("User chose to skip existing data.")
+                return "skip_all"
+            else:  # "n", "no", or any other input
+                logging.info("User chose to abort.")
+                return "abort"
         except EOFError:
-            logging.info("No input provided, defaulting to overwrite (yes)")
-            return True
+            logging.info("No input provided, defaulting to overwrite all.")
+            return "overwrite_all"
 
     def save_timesheet(self):
         """Save the modified timesheet with backup and error handling."""

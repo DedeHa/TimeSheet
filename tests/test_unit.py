@@ -1163,7 +1163,9 @@ def test_prompt_overwrite_decision_eoferror(monkeypatch, mock_processor, caplog)
     - Setup: _prompt_overwrite_decision called with EOFError.
     - Expected: Returns 'overwrite_all' and logs info.
     """
-    monkeypatch.setattr("builtins.input", lambda prompt: (_ for _ in ()).throw(EOFError()))
+    monkeypatch.setattr(
+        "builtins.input", lambda prompt: (_ for _ in ()).throw(EOFError())
+    )
     with caplog.at_level(logging.INFO):
         result = mock_processor._prompt_overwrite_decision(2)
         assert result == "overwrite_all"
@@ -1184,7 +1186,9 @@ def test_check_and_confirm_overwrite_no_conflicts(monkeypatch, mock_processor):
 
 
 # 6.6. Test _check_and_confirm_overwrite with conflicts and user confirms
-def test_check_and_confirm_overwrite_with_conflicts(monkeypatch, mock_processor, caplog):
+def test_check_and_confirm_overwrite_with_conflicts(
+    monkeypatch, mock_processor, caplog
+):
     """
     Test Case 6.6:
     - Setup: _check_and_confirm_overwrite with overlapping data.

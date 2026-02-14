@@ -7,7 +7,6 @@ from TimeSheetAlgo import check_file_existence
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.integration
 def test_load_real_csv():
     path = "sup/2025_extract.csv"
     if not os.path.exists(path):
@@ -17,7 +16,6 @@ def test_load_real_csv():
     assert len(data) > 0
 
 
-@pytest.mark.integration
 def test_load_real_excel():
     path = "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm"
     if not os.path.exists(path):

@@ -13,6 +13,9 @@ from TimeSheetAlgo import (
     check_file_existence,
     load_config,
     parse_date,
+    configure_logging, 
+    detect_environment,
+    _read_yaml
 )
 
 pytestmark = pytest.mark.unit
@@ -395,7 +398,6 @@ def test_detect_environment_src_timesheetalgo(monkeypatch, tmp_path):
     - Setup: Base path is src_timesheetalgo folder.
     - Expected: Returns 'development'.
     """
-    from TimeSheetAlgo import detect_environment
 
     # Create a folder named 'src_timesheetalgo'
     src_folder = tmp_path / "src_timesheetalgo"
@@ -412,7 +414,6 @@ def test_detect_environment_timealarm_folder(tmp_path):
     - Setup: Timealarm folder exists in base path.
     - Expected: Returns 'production'.
     """
-    from TimeSheetAlgo import detect_environment
 
     # Create Timealarm folder in base path
     timealarm_folder = tmp_path / "Timealarm"
@@ -429,7 +430,6 @@ def test_detect_environment_fallback(tmp_path):
     - Setup: Neither src_timesheetalgo nor Timealarm folder exists.
     - Expected: Returns 'development' (fallback).
     """
-    from TimeSheetAlgo import detect_environment
 
     # Use a random folder that doesn't match criteria
     env = detect_environment(str(tmp_path))
@@ -447,7 +447,6 @@ def test_read_yaml_oserror(tmp_path, monkeypatch):
     - Setup: Mock open to raise OSError (e.g., permission denied).
     - Expected: Raises ConfigError with 'Unable to read config file' message.
     """
-    from TimeSheetAlgo import _read_yaml
 
     config_file = tmp_path / "config.yaml"
     config_file.write_text("test: data")
@@ -473,7 +472,6 @@ def test_configure_logging_custom_level(caplog):
     - Setup: Custom logging configuration with DEBUG level.
     - Expected: Logging is configured with DEBUG level.
     """
-    from TimeSheetAlgo import configure_logging
 
     config = {"level": "DEBUG", "format": "%(levelname)s - %(message)s"}
 
@@ -495,7 +493,6 @@ def test_configure_logging_default_level(caplog):
     - Setup: Logging configuration with missing 'level' key.
     - Expected: Uses default INFO level.
     """
-    from TimeSheetAlgo import configure_logging
 
     config = {"format": "%(message)s"}
 
@@ -518,7 +515,6 @@ def test_configure_logging_invalid_level(caplog):
     - Setup: Logging configuration with invalid level name.
     - Expected: Falls back to INFO level (getattr default).
     """
-    from TimeSheetAlgo import configure_logging
 
     config = {"level": "INVALID_LEVEL", "format": "%(message)s"}
 
@@ -541,7 +537,6 @@ def test_configure_logging_default_format(caplog):
     - Setup: Logging configuration with missing 'format' key.
     - Expected: Uses default format string.
     """
-    from TimeSheetAlgo import configure_logging
 
     config = {"level": "WARNING"}
 

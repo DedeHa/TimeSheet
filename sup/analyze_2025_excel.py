@@ -7,10 +7,11 @@ DESCRIPTION: This module analyzes the 2025 Excel timesheet structure and compare
 with the expectations defined in TimeSheetAlgo.py.
 """
 
-import openpyxl
-from datetime import datetime
-import sys
 import os
+import sys
+from datetime import datetime
+
+import openpyxl
 
 # Constants from TimeSheetAlgo.py
 ROW_OFFSET = 4

@@ -37,7 +37,7 @@ jobs:
           contains(github.ref, 'refactor/') ||
           contains(github.ref, 'test/') ||
           github.ref == 'refs/heads/develop'
-        ) && 'development' || 'production'
+        ) && 'development'
       }}
 
     strategy:
@@ -60,8 +60,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff radon pydocstyle
+          python -m pip install --upgrade build setuptools wheel
+          pip install -e .[dev]
 
       - name: Run ruff
         run: ruff check src_timesheetalgo tests
@@ -91,8 +91,8 @@ jobs:
       - name: Install dependencies and setup environment
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff
+          python -m pip install --upgrade build setuptools wheel
+          pip install -e .[dev]
 
       - name: Run tests with coverage
         run: |
@@ -125,8 +125,8 @@ jobs:
       - name: Install dependencies and setup environment
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black flake8 pytest pytest-cov openpyxl ruff
+          python -m pip install --upgrade build setuptools wheel
+          pip install -e .[dev]
 
       - name: Install packaging tools
         run: |

@@ -6,22 +6,19 @@ DESCRIPTION: Final verification test for TimeSheetAlgo.py CSV to Excel data mapp
 """
 
 import csv
-import openpyxl
-from datetime import datetime as dt
 import logging
-import sys
 import os
 import shutil
+import sys
+from datetime import datetime as dt
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("test_system_timesheetalgo_verification.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+import openpyxl
+import pytest
+
+pytestmark = pytest.mark.system
+
+# Note: logging is configured in `main()` when running as a script to avoid
+# side-effects (file creation) during pytest collection and test runs.
 
 # Constants from TimeSheetAlgo.py
 DATE_FORMAT = "%d.%m.%Y"
@@ -33,7 +30,9 @@ YEAR = 2025
 TEST_CONFIG = {
     "timelog_path": "sup/2025_extract.csv",  # Use the comprehensive 2025 data
     "timesheet_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm",
-    "backup_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel_VERIFICATION_BACKUP.xlsm",
+    "backup_path": (
+        "src_timesheetalgo/" "2025_FDTech_Dennis_Hartel_VERIFICATION_BACKUP.xlsm"
+    ),
 }
 
 
@@ -135,7 +134,8 @@ class VerificationTester:
                     "success": True,
                 }
                 logging.info(
-                    f"  ✓ {date_str} → {parsed_date.date()} (Month: {parsed_date.month}, Day: {parsed_date.day})"
+                    f"  ✓ {date_str} → {parsed_date.date()} "
+                    f"(Month: {parsed_date.month}, Day: {parsed_date.day})"
                 )
             except Exception as e:
                 test_result = {
@@ -178,11 +178,13 @@ class VerificationTester:
 
                 if test_result["success"]:
                     logging.info(
-                        f"  ✓ {date_str} → Worksheet {calculated_idx} ({actual_worksheet.title})"
+                        f"  ✓ {date_str} → Worksheet {calculated_idx} "
+                        f"({actual_worksheet.title})"
                     )
                 else:
                     logging.error(
-                        f"  ✗ {date_str} → Expected {expected_idx}, got {calculated_idx}"
+                        f"  ✗ {date_str} → Expected {expected_idx}, "
+                        f"got {calculated_idx}"
                     )
 
             except Exception as e:
@@ -221,7 +223,8 @@ class VerificationTester:
                     )
                 else:
                     logging.error(
-                        f"  ✗ {date_str} → Expected row {expected_row}, got {calculated_row}"
+                        f"  ✗ {date_str} → Expected row {expected_row}, "
+                        f"got {calculated_row}"
                     )
 
             except Exception as e:
@@ -266,10 +269,12 @@ class VerificationTester:
                 }
 
                 logging.info(
-                    f"  ✓ {date_str} → {worksheet.title} Row {row}, Cols E&F ({start_cell.coordinate}, {end_cell.coordinate})"
+                    f"  ✓ {date_str} → {worksheet.title} Row {row}, "
+                    f"Cols E&F ({start_cell.coordinate}, {end_cell.coordinate})"
                 )
                 logging.info(
-                    f"    Start: {start_time} → {start_cell.coordinate}, End: {end_time} → {end_cell.coordinate}"
+                    f"    Start: {start_time} → {start_cell.coordinate}, "
+                    f"End: {end_time} → {end_cell.coordinate}"
                 )
 
             except Exception as e:
@@ -330,7 +335,8 @@ class VerificationTester:
 
                 if test_result["success"]:
                     logging.info(
-                        f"  ✓ {date_str} → Data written successfully to {worksheet.title} row {row}"
+                        f"  ✓ {date_str} → Data written successfully to "
+                        f"{worksheet.title} row {row}"
                     )
                     logging.info(f"    Start: {start_time} ✓, End: {end_time} ✓")
                 else:
@@ -417,31 +423,33 @@ class VerificationTester:
             + data_integrity_success
         )
 
+        csv_status = "✓ PASS" if self.test_results["csv_data_loaded"] else "✗ FAIL"
+        excel_status = "✓ PASS" if self.test_results["excel_file_loaded"] else "✗ FAIL"
+        logging.info(f"CSV Data Loading: {csv_status}")
+        logging.info(f"Excel File Loading: {excel_status}")
+        date_total = len(self.test_results["date_parsing_tests"])
+        logging.info(f"Date Parsing Tests: {date_parsing_success}/{date_total} passed")
+        ws_total = len(self.test_results["worksheet_mapping_tests"])
         logging.info(
-            f"CSV Data Loading: {'✓ PASS' if self.test_results['csv_data_loaded'] else '✗ FAIL'}"
+            f"Worksheet Mapping Tests: {worksheet_mapping_success}/{ws_total} passed"
         )
+        row_total = len(self.test_results["row_calculation_tests"])
         logging.info(
-            f"Excel File Loading: {'✓ PASS' if self.test_results['excel_file_loaded'] else '✗ FAIL'}"
+            f"Row Calculation Tests: {row_calculation_success}/{row_total} passed"
         )
+        col_total = len(self.test_results["column_placement_tests"])
         logging.info(
-            f"Date Parsing Tests: {date_parsing_success}/{len(self.test_results['date_parsing_tests'])} passed"
+            f"Column Placement Tests: {column_placement_success}/{col_total} passed"
         )
+        data_total = len(self.test_results["data_integrity_tests"])
         logging.info(
-            f"Worksheet Mapping Tests: {worksheet_mapping_success}/{len(self.test_results['worksheet_mapping_tests'])} passed"
-        )
-        logging.info(
-            f"Row Calculation Tests: {row_calculation_success}/{len(self.test_results['row_calculation_tests'])} passed"
-        )
-        logging.info(
-            f"Column Placement Tests: {column_placement_success}/{len(self.test_results['column_placement_tests'])} passed"
-        )
-        logging.info(
-            f"Data Integrity Tests: {data_integrity_success}/{len(self.test_results['data_integrity_tests'])} passed"
+            f"Data Integrity Tests: {data_integrity_success}/{data_total} passed"
         )
 
         logging.info("-" * 80)
+        pct = total_success / total_tests * 100
         logging.info(
-            f"OVERALL RESULT: {total_success}/{total_tests} tests passed ({total_success/total_tests*100:.1f}%)"
+            f"OVERALL RESULT: {total_success}/{total_tests} tests passed ({pct:.1f}%)"
         )
 
         # Determine overall success
@@ -461,6 +469,29 @@ class VerificationTester:
             )
 
         logging.info("=" * 80)
+
+
+# Pytest wrapper to run the full verification as a system test
+def test_run_verification(tmp_path):
+    # Skip system test if resources are not available in the repository
+    if not os.path.exists(TEST_CONFIG["timelog_path"]) or not os.path.exists(
+        TEST_CONFIG["timesheet_path"]
+    ):
+        pytest.skip("System resources not available for system test")
+
+    # Copy real resources into an isolated temporary folder to avoid modifying originals
+    tmp_timesheet = tmp_path / "timesheet_copy.xlsm"
+    shutil.copy2(TEST_CONFIG["timesheet_path"], tmp_timesheet)
+    tmp_timelog = tmp_path / "timelog_copy.csv"
+    shutil.copy2(TEST_CONFIG["timelog_path"], tmp_timelog)
+
+    config = TEST_CONFIG.copy()
+    config["timesheet_path"] = str(tmp_timesheet)
+    config["timelog_path"] = str(tmp_timelog)
+    config["backup_path"] = str(tmp_path / "backup.xlsm")
+
+    tester = VerificationTester(config)
+    assert tester.run_comprehensive_test() is True
 
 
 def main():

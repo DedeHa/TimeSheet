@@ -10,12 +10,12 @@ from TimeSheetAlgo import (
     TIMESHEET_SHEETS,
     ConfigError,
     TimeSheetProcessor,
+    _read_yaml,
     check_file_existence,
+    configure_logging,
+    detect_environment,
     load_config,
     parse_date,
-    configure_logging, 
-    detect_environment,
-    _read_yaml
 )
 
 pytestmark = pytest.mark.unit

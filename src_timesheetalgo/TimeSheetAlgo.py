@@ -15,123 +15,116 @@ REMARK: Refactored and optimized with ChatGPT and review/updated
 """
 
 import csv
-import openpyxl
-from datetime import datetime as dt, timedelta as td
 import logging
-import yaml
 import os
+from datetime import datetime as dt
+from datetime import timedelta as td
+from typing import Optional
+
+import openpyxl
+import yaml
 
 # Constants
 DATE_FORMAT = "%d.%m.%Y"
 MAX_RETRIES = 3
 ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
-YEAR = 2025
+
+
+# ---------------------------------------------------------------------------
+# Configuration & logging
+# ---------------------------------------------------------------------------
 
 
 class ConfigError(Exception):
-    """Custom exception for configuration errors."""
-
-    pass
+    """Raised when configuration loading fails."""
 
 
-def load_config(config_path: str = None, environment: str = None) -> dict:
-    """Load configuration from external YAML file.
-
-    Args:
-        config_path: Path to config.yaml file. If None, uses default location.
-        environment: Environment name (development/production). If None, uses default.
-
-    Returns:
-        Dictionary with configuration for the selected environment.
-
-    Raises:
-        ConfigError: If config file not found or invalid.
+def detect_environment(base_path: str) -> str:
     """
-    # Determine config file path
-    if config_path is None:
-        # Try relative to this script
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        config_path = os.path.join(script_dir, "config.yaml")
+    Detect environment based on folder structure.
 
-    # Check if config file exists
-    if not os.path.exists(config_path):
+    - If current folder is 'src_timesheetalgo', use 'development'.
+    - If 'Timealarm' folder exists in current folder, use 'production'.
+    """
+    if os.path.basename(base_path) == "src_timesheetalgo":
+        return "development"
+    elif os.path.isdir(os.path.join(base_path, "Timealarm")):
+        return "production"
+    else:
+        # fallback
+        return "development"
+
+
+def load_config(config_path: Optional[str] = None) -> dict:
+    """
+    Load config.yaml and return paths, logging settings, and year.
+
+    Environment is auto-detected based on folder structure.
+    Year is a required configuration item at the root level.
+    """
+    config_path = config_path or os.path.join(os.path.dirname(__file__), "config.yaml")
+    config = _read_yaml(config_path)
+    base_dir = os.path.dirname(config_path)
+
+    # Year is required at root level - no fallback
+    if "year" not in config:
         raise ConfigError(
-            f"Configuration file not found: {config_path}. "
-            "Please ensure config.yaml exists in the src_timesheetalgo directory."
+            "Missing required 'year' configuration at root level in config.yaml. "
+            "Please add 'year' to the root of config.yaml."
         )
 
-    try:
-        with open(config_path, "r", encoding="utf-8") as f:
-            config_data = yaml.safe_load(f)
-    except yaml.YAMLError as e:
-        raise ConfigError(f"Invalid YAML format in {config_path}: {e}")
-    except Exception as e:
-        raise ConfigError(f"Error reading configuration file: {e}")
+    # Auto-detect environment
+    env_name = detect_environment(base_dir)
 
-    # Validate config structure
-    if not isinstance(config_data, dict):
-        raise ConfigError("Configuration file must contain a YAML dictionary")
+    if env_name not in config["environments"]:
+        raise ConfigError(f"Environment '{env_name}' not found in config.yaml")
 
-    if "environments" not in config_data:
-        raise ConfigError("Configuration file must contain 'environments' key")
-
-    # Determine which environment to use
-    if environment is None:
-        environment = config_data.get("default_environment", "development")
-
-    # Get environment-specific config
-    if environment not in config_data["environments"]:
-        raise ConfigError(
-            f"Environment '{environment}' not found in configuration. "
-            f"Available environments: {list(config_data['environments'].keys())}"
-        )
-
-    env_config = config_data["environments"][environment]
-
-    # Extract file paths
-    if "file_paths" not in env_config:
-        raise ConfigError(f"No 'file_paths' defined for environment '{environment}'")
-
-    file_paths = env_config["file_paths"]
-    if "timelog_path" not in file_paths or "timesheet_path" not in file_paths:
-        raise ConfigError("file_paths must contain 'timelog_path' and 'timesheet_path'")
-
-    # Convert relative paths to absolute paths if needed
-    config_dir = os.path.dirname(config_path)
-    timelog_path = file_paths["timelog_path"]
-    timesheet_path = file_paths["timesheet_path"]
-
-    if not os.path.isabs(timelog_path):
-        timelog_path = os.path.join(config_dir, timelog_path)
-    if not os.path.isabs(timesheet_path):
-        timesheet_path = os.path.join(config_dir, timesheet_path)
-
-    # Setup logging if specified in config
-    if "logging" in env_config:
-        logging_config = env_config["logging"]
-        log_level = logging_config.get("level", "INFO")
-        log_format = logging_config.get(
-            "format", "%(asctime)s - %(levelname)s - %(message)s"
-        )
-        logging.basicConfig(level=log_level, format=log_format)
+    env_config = config["environments"][env_name]
 
     return {
-        "timelog_path": timelog_path,
-        "timesheet_path": timesheet_path,
+        "environment": env_name,
+        "timelog_path": os.path.join(
+            base_dir, env_config["file_paths"]["timelog_path"]
+        ),
+        "timesheet_path": os.path.join(
+            base_dir, env_config["file_paths"]["timesheet_path"]
+        ),
+        "logging": env_config.get("logging", {}),
+        "year": config["year"],
     }
 
 
-# Load default configuration
-try:
-    CONFIG = load_config()
-except ConfigError as e:
-    logging.error(f"Configuration error: {e}")
-    # Fallback to hardcoded paths if config loading fails
-    CONFIG = {
-        "timelog_path": "src_timesheetalgo/FDTech_timelog.csv",
-        "timesheet_path": "src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm",
-    }
+def _read_yaml(path: str) -> dict:
+    if not os.path.exists(path):
+        raise ConfigError(f"Config file not found: {path}")
+
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        raise ConfigError("Invalid YAML format") from e
+    except OSError as e:
+        raise ConfigError("Unable to read config file") from e
+
+    if not isinstance(data, dict):
+        raise ConfigError("Config root must be a mapping")
+
+    return data
+
+
+def configure_logging(logging_cfg: dict) -> None:
+    """Configure logging based on configuration dictionary.
+
+    Args:
+        logging_cfg: Dictionary with 'level' and 'format' keys.
+    """
+    level_name = logging_cfg.get("level", "INFO").upper()
+    log_format = logging_cfg.get("format", "%(asctime)s - %(levelname)s - %(message)s")
+
+    level = getattr(logging, level_name, logging.INFO)
+
+    logging.basicConfig(level=level, format=log_format)
 
 
 def parse_date(input_prompt, retries=MAX_RETRIES):
@@ -178,7 +171,8 @@ def check_file_existence(filepath, filetype):
     except PermissionError as e:
         logging.error(f"Permission denied accessing file: {filepath}")
         logging.error(
-            "This usually means the file is open in Excel. Please close it and try again."
+            "This usually means the file is open in Excel. "
+            "Please close it and try again."
         )
         logging.error(f"Error details: {e}")
         raise
@@ -191,10 +185,11 @@ class TimeSheetProcessor:
         """Initialize the TimeSheetProcessor with configuration.
 
         Args:
-            config (dict): Dictionary containing file paths for timelog and timesheet.
+            config (dict): Dictionary containing file paths, year, and logging settings.
         """
         self.timelog_path = config["timelog_path"]
         self.timesheet_path = config["timesheet_path"]
+        self.year = config["year"]
         self.timelog = []
         self.timedata = []
         self.timesheet = None
@@ -218,9 +213,7 @@ class TimeSheetProcessor:
             ).strip()
             if start_input:
                 self.obj_date_startpoint = dt.strptime(start_input, DATE_FORMAT)
-                logging.info(
-                    f"Using provided start date: {self.obj_date_startpoint.date()}"
-                )
+                logging.info(f"Start date: {self.obj_date_startpoint.date()}")
             else:
                 self.obj_date_startpoint = self.set_default_start_date()
         except (ValueError, EOFError):
@@ -233,9 +226,7 @@ class TimeSheetProcessor:
             ).strip()
             if end_input:
                 self.obj_date_endpoint = dt.strptime(end_input, DATE_FORMAT)
-                logging.info(
-                    f"Using provided end date: {self.obj_date_endpoint.date()}"
-                )
+                logging.info(f"End date: {self.obj_date_endpoint.date()}")
             else:
                 self.obj_date_endpoint = self.set_default_end_date()
         except (ValueError, EOFError):
@@ -259,12 +250,8 @@ class TimeSheetProcessor:
                 time_cell = sheet.cell(row=i, column=5).value
 
                 if time_cell:  # If there's a start time, this day was worked
-                    # Get the year from the base date in row 3, column 2
-                    year_cell = self.timesheet.worksheets[0].cell(row=3, column=2).value
-                    if isinstance(year_cell, dt):
-                        year = year_cell.year
-                    else:
-                        year = YEAR  # fallback to constant
+                    # Use the configured year from config
+                    year = self.year
 
                     # Get month from sheet index (0-based + 1)
                     month = self.timesheet.worksheets.index(sheet) + 1
@@ -274,14 +261,12 @@ class TimeSheetProcessor:
 
                     # Create the date
                     default_start_date = dt(year, month, day)
-                    logging.info(
-                        f"Default start date identified: {default_start_date.date()}"
-                    )
+                    logging.info(f"Default start date: {default_start_date.date()}")
                     return default_start_date
 
         # If no date is found, set a default start date
-        default_start_date = dt(YEAR, 1, 1)
-        logging.info(
+        default_start_date = dt(self.year, 1, 1)
+        logging.warning(
             f"No valid date found. Default start date set to: "
             f"{default_start_date.date()}"
         )
@@ -290,7 +275,7 @@ class TimeSheetProcessor:
     def set_default_end_date(self):
         """Set default end date to yesterday."""
         default_end_date = dt.now() - td(days=1)
-        logging.info(f"Default end date identified: {default_end_date.date()}")
+        logging.info(f"Default end date: {default_end_date.date()}")
         return default_end_date
 
     def select_timelog_data(self):
@@ -308,6 +293,10 @@ class TimeSheetProcessor:
     def store_data(self):
         """Store selected timelog data into the timesheet."""
         logging.info("Storing timelog data into timesheet...")
+
+        # Check if any existing data will be overwritten and ask once upfront
+        overwrite_decision = self._check_and_confirm_overwrite()
+
         for entry in self.timedata:
             # Define index for storing data
             date, start_time, end_time = (
@@ -325,24 +314,80 @@ class TimeSheetProcessor:
                 row=row, column=6
             )
 
-            if start_cell.value and not self.confirm_overwrite():
-                logging.info(f"Skipping existing data for {date.date()}.")
-                break
+            if start_cell.value:
+                if overwrite_decision == "skip_all":
+                    logging.info(f"Skipping existing data for {date.date()}.")
+                    continue
+                elif overwrite_decision == "abort":
+                    logging.info("Aborting due to user request.")
+                    break
+                # overwrite_decision == "overwrite_all" -> proceed to overwrite
 
             start_cell.value, end_cell.value = start_time, end_time
 
+    def _check_and_confirm_overwrite(self):
+        """Check for existing data and ask user once for overwrite decision.
+
+        Returns:
+            str: "overwrite_all", "skip_all", or "abort"
+        """
+        # Count entries with existing data
+        entries_with_data = []
+        for entry in self.timedata:
+            date = dt.strptime(entry[0], DATE_FORMAT)
+            row, month_idx = ROW_OFFSET + date.day, date.month - 1
+            sheet = self.timesheet.worksheets[month_idx]
+            start_cell = sheet.cell(row=row, column=5)
+            if start_cell.value:
+                entries_with_data.append(date.date())
+
+        if not entries_with_data:
+            return "overwrite_all"  # No conflicts, proceed normally
+
+        logging.info(f"Found {len(entries_with_data)} day(s) with existing data.")
+        return self._prompt_overwrite_decision(len(entries_with_data))
+
     def confirm_overwrite(self):
-        """Prompt user to confirm overwriting data."""
+        """Confirm overwrite with user (simple yes/no).
+
+        Returns:
+            bool: True for "y" input, False otherwise.
+        """
         try:
-            response = (
-                input("Data exists. Overwrite? (y/n) or press Enter for yes: ")
-                .strip()
-                .lower()
-            )
-            return response in ["y", "yes", ""]  # Default to yes if empty input
+            response = input("Overwrite? [y/n]: ").strip().lower()
+            return response in ["y", "yes"]
         except EOFError:
-            logging.info("No input provided, defaulting to overwrite (yes)")
             return True
+
+    def _prompt_overwrite_decision(self, count):
+        """Prompt user for overwrite decision.
+
+        Args:
+            count: Number of entries with existing data
+
+        Returns:
+            str: "overwrite_all", "skip_all", or "abort"
+        """
+        try:
+            prompt = (
+                f"{count} day(s) have existing data. "
+                "Overwrite all (y), skip existing (s), or abort (n)? "
+                "[y/s/n, default=y]: "
+            )
+            response = input(prompt).strip().lower()
+
+            if response in ["y", "yes", ""]:
+                logging.info("User chose to overwrite all existing data.")
+                return "overwrite_all"
+            elif response in ["s", "skip"]:
+                logging.info("User chose to skip existing data.")
+                return "skip_all"
+            else:  # "n", "no", or any other input
+                logging.info("User chose to abort.")
+                return "abort"
+        except EOFError:
+            logging.info("No input provided, defaulting to overwrite all.")
+            return "overwrite_all"
 
     def save_timesheet(self):
         """Save the modified timesheet with backup and error handling."""
@@ -350,9 +395,25 @@ class TimeSheetProcessor:
         self.timesheet.save(self.timesheet_path)
 
 
-# Main execution
 if __name__ == "__main__":  # pragma: no cover
+    try:
+        CONFIG = load_config()
+    except ConfigError as e:
+        logging.basicConfig(level=logging.ERROR)
+        logging.error("Configuration error: %s", e)
+        raise SystemExit(1) from None
+
+    configure_logging(CONFIG["logging"])
+
+    logging.info("CWD: %s", os.getcwd())
+
+    logging.info("Environment: %s", CONFIG["environment"])
+    logging.info("Timelog path: %s", CONFIG["timelog_path"])
+    logging.info("Timesheet path: %s", CONFIG["timesheet_path"])
+    logging.info("Work year: %d", CONFIG["year"])
+
     processor = TimeSheetProcessor(CONFIG)
+
     try:
         processor.load_files()
         processor.request_date_input()
@@ -361,4 +422,4 @@ if __name__ == "__main__":  # pragma: no cover
         processor.save_timesheet()
         logging.info("Processing complete.")
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        logging.error("An error occurred: %s", e)

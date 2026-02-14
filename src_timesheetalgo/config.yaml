@@ -1,3 +1,5 @@
+year: 2025
+
 environments:
   development:
     file_paths:
@@ -6,13 +8,13 @@ environments:
     logging:
       level: "INFO"
       format: "%(asctime)s - %(levelname)s - %(message)s"
-      
+
   production:
     file_paths:
       timelog_path: "Timealarm/FDTech_timelog.csv"
       timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
     logging:
-      level: "WARNING"
+      level: "INFO"
       format: "%(asctime)s - %(levelname)s - %(message)s"
 
 default_environment: "development"

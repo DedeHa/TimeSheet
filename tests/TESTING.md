@@ -12,6 +12,8 @@ This document provides comprehensive testing information for the TimeSheetAlgo.p
 
 **Purpose:** Test individual functions and methods in isolation with comprehensive error handling
 
+**Marker:** `@pytest.mark.unit` (default tests for CI/PR checks)
+
 **Test Categories:**
 1. **Configuration Loading Tests (10 tests)** - Validate [`load_config()`](../src_timesheetalgo/TimeSheetAlgo.py:34) function
    - External YAML configuration parsing
@@ -43,9 +45,21 @@ This document provides comprehensive testing information for the TimeSheetAlgo.p
 - Comprehensive exception testing
 - 100% coverage of all exception handlers
 
-### 2. System Verification Tests (`test_system.py`)
+### 2. Integration Tests (`test_integration.py`)
+
+**Purpose:** Test loading of real data files (CSV and Excel)
+
+**Marker:** `@pytest.mark.integration` (requires real files)
+
+**Test Coverage:**
+- Real CSV timelog loading (93 records from `sup/2025_extract.csv`)
+- Real Excel workbook loading (structured with 12 monthly sheets)
+
+### 3. System Verification Tests (`test_system.py`)
 
 **Purpose:** End-to-end verification of the complete system functionality with real data
+
+**Marker:** `@pytest.mark.system` (may be slow, excluded from default CI runs)
 
 **Test Categories:**
 1. **Data Loading Verification** - Real file loading tests
@@ -82,7 +96,7 @@ This document provides comprehensive testing information for the TimeSheetAlgo.p
 - Non-destructive testing approach
 - Detailed verification reports
 
-### 3. Configuration Testing (Integrated)
+### 4. Configuration Testing (Integrated)
 
 **Coverage:**
 - ✅ YAML file parsing and validation
@@ -97,9 +111,24 @@ This document provides comprehensive testing information for the TimeSheetAlgo.p
 ### pytest.ini Configuration
 ```ini
 [pytest]
-pythonpath = src_timesheetalgo
+pythonpath = .
 testpaths = tests
+markers =
+    unit: fast unit tests (no external I/O)
+    integration: integration tests (require I/O)
+    system: end-to-end verification (may be slow)
+addopts = -q --disable-warnings -m "unit"
 ```
+
+**Key Points:**
+- **pythonpath = .** - Makes `src_timesheetalgo` package discoverable with correct imports
+- **Default Mode** - Runs only unit tests (`-m "unit"`)
+  - Fast feedback loop (< 1 second on PR checks)
+  - No external file dependencies
+  - No slow operations
+- **Integration/System Mode** - Use `-m "not system"` or `-m "system"` explicitly
+  - Include slower tests with real files
+  - Useful for local development and release validation
 
 ### Dependencies (pyproject.toml)
 Project dependencies and dev/extras are defined in `pyproject.toml` (PEP 621). Example key test/dev dependencies include:
@@ -110,14 +139,11 @@ Project dependencies and dev/extras are defined in `pyproject.toml` (PEP 621). E
 
 ## Running Tests
 
-### Unit Tests Only
+### Default (Unit Tests Only - Fast CI/PR Feedback)
 ```bash
+python -m pytest
+# or explicitly:
 python -m pytest -m unit -q
-```
-
-### Integration Tests Only
-```bash
-python -m pytest -m integration -q
 ```
 
 ### Unit Tests with Coverage
@@ -125,14 +151,24 @@ python -m pytest -m integration -q
 python -m pytest -m unit --cov=src_timesheetalgo --cov-report=term-missing
 ```
 
+### Integration Tests Only
+```bash
+python -m pytest -m integration -q
+```
+
 ### System Verification Tests
 ```bash
 python -m pytest -m system -q
 ```
 
-### All Tests
+### All Tests (except System)
 ```bash
-python -m pytest tests/ -v
+python -m pytest -m "not system" -v
+```
+
+### All Tests (including System)
+```bash
+python -m pytest tests/ -v --override-ini="addopts="
 ```
 
 ## Known Issues and Recommendations

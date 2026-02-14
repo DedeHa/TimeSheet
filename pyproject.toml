@@ -43,8 +43,16 @@ select = ["E", "F", "W", "C", "B", "I"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --maxfail=1"
+pythonpath = ["src_timesheetalgo"]
+testpaths = ["tests"]
+addopts = "-q --disable-warnings --strict-markers --maxfail=1"
 log_cli = true
+
+markers = [
+    "unit: fast unit tests (no external I/O)",
+    "integration: integration tests (require I/O)",
+    "system: end-to-end verification (may be slow)",
+]
 
 # Note:
 # To install in development mode: `python -m pip install -e .[dev]`

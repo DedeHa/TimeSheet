@@ -290,7 +290,7 @@ Der CI/CD-Pipeline (`.github/workflows/python-ci.yml`) setzt diese Schutzmaßnah
 ### Deployment-Strategie:
 - ❌ **Development Branches**: Kein Deployment
 - ❌ **Master Branch**: Kein Deployment
-- ✅ **Release Branch PRs** (release/* → master): **Deployment triggert hier**
+- ✅ **Release Tags** (vX.Y.Z): **Nur hier erfolgt Produktion-Deployment**
 
 ### Push Events triggern auf:
 - `feature/*`, `refactor/*`, `docs/*`, `test/*`, `bugfix/*`, `hotfix/*` (Lint-Checks)
@@ -301,17 +301,17 @@ Der CI/CD-Pipeline (`.github/workflows/python-ci.yml`) setzt diese Schutzmaßnah
   - **`release/*`** (Lint-Checks)
 
 ### Release/Deployment Events triggern auf:
-- **Release Branch PRs** (release/* mit Ziel master) - Deployment triggered
+- **Tags `vX.Y.Z`** (Production Deployment)
 
 ### Workflow-Modell (Feature → Master → Release → Deployment):
 
 ```
-feature/PRO-123          PR (Master)           master              release/vX.Y.Z        PR (Deploy)
+feature/PRO-123          PR (Master)           master              release/vX.Y.Z        Tags vX.Y.Z
    ↓                        ↓                     ↓                    ↓                     ↓
-[Development]  →  [Testing required]  →  [Stable, Tested]  →  [Release Branch]  →  [Deployment]
-   ↓                  (Lint+Tests)          (Ready for PR)       (vX.Y.Z)              (Triggers)
-Direct Push          Protected              Protected            Protected              Deploy Job
-                                                                                       (Build & Deploy)
+[Development]  →  [Testing required]  →  [Stable, Tested]  →  [Release Branch]  →  [Production]
+   ↓                  (Lint+Tests)          (Ready for PR)       (vX.Y.Z)              (Deployment)
+Direct Push          Protected              Protected            Protected              Auto/Manual
+                                                                                       Deployment
 ```
 
 **Ablauf:**
@@ -319,8 +319,8 @@ Direct Push          Protected              Protected            Protected      
 2. PR zu `master` (Tests required) - Lint + Unit-Tests + Code-Coverage
 3. Nach erfolgreichem Merge: Master ist stabil und getestet
 4. Release-Branch `release/vX.Y.Z` erstellen von Master
-5. PR öffnen von `release/vX.Y.Z` (Ziel: keine Tests, nur Lint - bereits auf master getestet)
-6. Deployment-Job triggert wenn PR von release/* erstellt wird
+5. Tag `vX.Y.Z` erstellen (markiert Release)
+6. Deployment läuft automatisch auf Release-Tags (oder manuell)
 
 ---
 

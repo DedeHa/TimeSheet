@@ -3,11 +3,17 @@
 # - PR to master: Full tests required (Lint + Unit Tests + Code Coverage) - QUALITY GATE
 # - Release tags (vX.Y.Z): Deployment to production only (tests already passed on master)
 #
+# Node.js version: Prepared for Node.js 24 migration (June 2, 2026)
+# See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+#
 # For more information see:
 # - https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 # - sup/naming_conventions.md (Development Workflow section)
 
 name: Python CI
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:

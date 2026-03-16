@@ -111,13 +111,16 @@ Beispiel:
 - Tags im Format `RX.Y.Z` (z.B. `R04.01.00`, `R03.00.00`) werden beibehalten für Rückverfolgbarkeit
 - Neue Releases verwenden ausschließlich `vX.Y.Z` Format mit entsprechenden `release/vX.Y.Z` Branches
 
-### Release-Workflow:
-1. Erstelle Release-Branch: `git checkout -b release/vX.Y.Z develop` (oder main/master)
-2. Bump Version in relevanten Dateien (z.B. README.md, Versionsnummern)
-3. Erstelle finalen Commit mit Release-Notes
-4. Erstelle Tag: `git tag vX.Y.Z`
-5. Push beides zu Origin: `git push origin release/vX.Y.Z` und `git push origin vX.Y.Z`
-6. Merge Release-Branch zurück zu master und develop (falls vorhanden)
+### Release-Workflow (Feature → Master → Release → Deployment):
+1. **Feature-Entwicklung:** Feature-Branch erstellen (z.B. `feature/PRO-123-xyz`)
+2. **PR zu Master:** PR öffnen mit Ziel `master` (Tests + Lint + Review erforderlich)
+3. **Merge zu Master:** Nur nach erfolgreichen Tests und Review-Genehmigung
+4. **Release-Branch erstellen:** `git checkout -b release/vX.Y.Z master`
+5. **Versionsnummern aktualisieren** in relevanten Dateien (z.B. README.md, Version-Konstanten)
+6. **Finalen Release-Commit erstellen** mit Release-Notes
+7. **Tag erstellen:** `git tag vX.Y.Z` (markiert den stabilen Release-Punkt)
+8. **Push zu Origin:** `git push origin release/vX.Y.Z && git push origin vX.Y.Z`
+9. **Bereitstellung:** Deployment erfolgt ausschließlich aus Release-Tags (Automation oder manuell)
 
 ## 6. Git Compatibility Rules
 
@@ -165,9 +168,23 @@ Falls kein JIRA Ticket verfügbar ist, sollten Branches, Commits und Pull-Reques
 
 ## 7. Git Workflow & Development Process
 
-### Schritt-für-Schritt Anleitung für Feature-Entwicklung:
+### Development Workflow: Feature → Master (Tests) → Release (Deployment)
 
-1. **Feature-Branch erstellen** (normalerweise von `master`):
+Die Workflow-Strategie folgt einem **Trunk-based Development** Modell mit 3 Phasen:
+
+```
+feature/*  →  [PR + Tests + Review]  →  master  →  [Create release branch]  →  release/vX.Y.Z  →  [Deploy to Production]
+bugfix/*   →  [PR + Tests + Review]  →  master  →       ↓
+hotfix/*   →  [PR + Tests + Review]  →  master  →  Stable, Tested Code
+```
+
+**Wichtig:**
+- ✅ Tests werden **nur bei PRs zu `master`** ausgeführt (erforderlich)
+- ✅ Deployment findet **nur bei Release-Tags** statt (Produktion)
+
+### Phase 1: Feature-Entwicklung (Test-optional)
+
+1. **Feature-Branch erstellen** (immer von `master`):
    ```bash
    git checkout -b feature/PRO-123-description master
    ```
@@ -175,7 +192,7 @@ Falls kein JIRA Ticket verfügbar ist, sollten Branches, Commits und Pull-Reques
 2. **Änderungen vornehmen** und mit Conventional Commits committen:
    ```bash
    git commit -m "feat(scope): description
-   
+
    Refs: PRO-123"
    ```
 
@@ -184,35 +201,68 @@ Falls kein JIRA Ticket verfügbar ist, sollten Branches, Commits und Pull-Reques
    git push origin feature/PRO-123-description
    ```
 
-4. **Pull Request öffnen** mit entsprechendem Ziel-Branch:
-   - **`master`** für Releases oder kritische Fixes
-   - **`develop`** (falls vorhanden) für Feature-Entwicklung
-   - Development Branches für Feature-Arbeit
+**Testanforderung auf Feature-Branch:** Keine Tests erforderlich (reine Entwicklungs-/Experimentierzone)
 
-5. **Auf Review und CI-Checks warten**:
-   - ✅ Lint-Checks (Ruff, Black, Pydocstyle)
-   - ✅ Unit-Tests bestanden
-   - ✅ Code-Coverage erfüllt Standards
-   - ✅ Mindestens eine Genehmigung
+### Phase 2: Integration zu Master - Quality Gate (Tests ERFORDERLICH)
 
-6. **PR mergen** nach erfolgreichen Checks und Genehmigung
+4. **Pull Request öffnen zu `master`**:
+   ```bash
+   gh pr create --base master --title "[feat][PRO-123] Clear description"
+   ```
+   - Alle PRs müssen auf `master` zielen
+   - PR-Titel: `[type][PRO-123] Description`
+   - PR sollte Beschreibung und Änderungen detailliert dokumentieren
 
-### Release-Prozess:
+5. **Auf Review und CI-Checks warten** (ALLE erforderlich):
+   - ✅ Lint-Checks (Ruff, Black, Pydocstyle, Radon) - **ERFORDERLICH**
+   - ✅ Unit-Tests - **ERFORDERLICH**
+   - ✅ Code-Coverage erfüllt Standards - **ERFORDERLICH**
+   - ✅ Mindestens eine Genehmigung erforderlich - **ERFORDERLICH**
 
-1. **Release-Branch erstellen** von `master`:
+6. **PR mergen zu `master`** nach erfolgreichen Checks und Genehmigung:
+   ```bash
+   gh pr merge <PR_NUMBER> --merge
+   ```
+   - Master bleibt immer stabil und vollständig getestet
+
+### Phase 3: Release-Deployment (nur Produktion)
+
+7. **Release-Branch erstellen** von `master` (bereits alle Tests durchlaufen):
    ```bash
    git checkout -b release/vX.Y.Z master
    ```
 
-2. **Versionsnummern aktualisieren** und finale Commits erstellen
-
-3. **Pull Request** öffnen mit Ziel `master`
-
-4. **Nach Genehmigung und Merge** Git-Tag erstellen:
+8. **Versionsnummern aktualisieren** und finale Commits erstellen:
    ```bash
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
+   git commit -am "chore(release): bump version to vX.Y.Z
+
+   Refs: PRO-123"
    ```
+
+9. **Pull Request** öffnen mit Ziel `master`:
+   ```bash
+   gh pr create --base master --title "[release][PRO-123] vX.Y.Z"
+   ```
+
+10. **Nach Genehmigung und Merge** Git-Tag erstellen:
+    ```bash
+    git tag vX.Y.Z
+    git push origin vX.Y.Z
+    ```
+
+11. **Deployment zu Produktion** (nur auf Release-Tags):
+    - Code wurde bereits alle Tests durchlaufen
+    - Deployment verursacht keine zusätzlichen Tests
+    - Automatisiert oder manuell gemäß Deployment-Pipeline
+
+### Workflow-Übersicht nach Phasen und Testing-Anforderungen
+
+| Phase | Branch | Ziel | Tests | Deployment |
+|-------|--------|------|--------|-----------|
+| **Phase 1: Feature-Entwicklung** | feature/* | - | Optional | ❌ |
+| **Phase 2: Integration zu Master** | feature/* → PR | master | ✅ **ERFORDERLICH** | ❌ |
+| **Phase 3: Release-Vorbereitung** | master → release/vX.Y.Z | - | (Geerbt, bereits getestet) | ❌ |
+| **Phase 3: Produktion-Deployment** | release/vX.Y.Z → Tag | Production | (Bereits getestet) | ✅ **DEPLOYMENT ONLY** |
 
 ### Versuch, direkt zu geschütztem Branch zu pushen:
 
@@ -224,7 +274,7 @@ remote: error: GH006: Protected branch update failed for refs/heads/master.
 remote: error: You have insufficient permissions to push to this branch on this repository.
 ```
 
-**Lösung:** Feature-Branch erstellen, Änderungen vornehmen und PR öffnen statt dessen.
+**Lösung:** Feature-Branch erstellen, Änderungen vornehmen, PR öffnen und nach erfolgreichen Tests (Lint + Unit-Tests) mergen.
 
 ---
 
@@ -232,29 +282,45 @@ remote: error: You have insufficient permissions to push to this branch on this 
 
 Der CI/CD-Pipeline (`.github/workflows/python-ci.yml`) setzt diese Schutzmaßnahmen durch:
 
-- ✅ Läuft nur auf Entwicklungs-Branches für `push` Events
-- ✅ Läuft auf PRs zu allen Branches (einschließlich geschützter Branches)
-- ✅ Test-Jobs laufen **nur** für PRs mit Ziel `master` oder `release/*`
-- ✅ Deploy-Jobs laufen **nur** für PRs mit Ziel `master`
+### Testing-Strategie:
+- ✅ **Development Branches** (push): Lint-Checks durchführen
+- ✅ **Master PRs** (required): **Vollständige Tests erforderlich** (Lint + Unit-Tests + Code-Coverage)
+- ✅ **Release Branches** (inherited): Tests bereits auf Master durchgeführt
+
+### Deployment-Strategie:
+- ❌ **Development Branches**: Kein Deployment
+- ❌ **Master Branch**: Kein Deployment
+- ✅ **Release Tags** (vX.Y.Z): **Nur hier erfolgt Produktion-Deployment**
 
 ### Push Events triggern auf:
-- `feature/*`, `refactor/*`, `docs/*`, `test/*`, `bugfix/*`, `hotfix/*`
+- `feature/*`, `refactor/*`, `docs/*`, `test/*`, `bugfix/*`, `hotfix/*` (Lint-Checks)
 
 ### PR Events triggern auf:
-- Alle Ziel-Branches (`master`, `release/*`, Entwicklungs-Branches)
+- Alle Ziel-Branches, aber besonders:
+  - **`master`** (Lint + Unit-Tests + Code-Coverage required)
+  - **`release/*`** (Lint-Checks)
 
-### Workflow-Modell für geschützte Branches:
+### Release/Deployment Events triggern auf:
+- **Tags `vX.Y.Z`** (Production Deployment)
+
+### Workflow-Modell (Feature → Master → Release → Deployment):
 
 ```
-Geschützter Branch (master/release/*)
-    ↑
-    │ PR erforderlich
-    │ (Lint-Checks + Tests)
-    │
-Development Branch
-    ↓ direkter Push erlaubt
-    ↓ (nur Lint-Checks)
+feature/PRO-123          PR + (Lint)           master              release/vX.Y.Z        Tags vX.Y.Z
+   ↓                        ↓                     ↓                    ↓                     ↓
+[Development]  →  [Testing required]  →  [Stable, Tested]  →  [Release Branch]  →  [Production]
+   ↓                  (Lint+Tests)          (Ready for PR)       (vX.Y.Z)              (Deployment)
+Direct Push          Protected              Protected            Protected              Auto/Manual
+                                                                                       Deployment
 ```
+
+**Ablauf:**
+1. Feature-Entwicklung auf `feature/PRO-123-xyz` (direkte Pushes erlaubt)
+2. PR zu `master` (Tests required) - Lint + Unit-Tests + Code-Coverage
+3. Nach erfolgreichem Merge: Master ist stabil und getestet
+4. Release-Branch `release/vX.Y.Z` erstellen von Master
+5. Tag `vX.Y.Z` erstellen (markiert Release)
+6. Deployment läuft automatisch auf Release-Tags (oder manuell)
 
 ---
 

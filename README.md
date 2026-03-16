@@ -151,6 +151,32 @@ The [`doc/`](doc/) directory contains:
 
 ## Development
 
+### Development Workflow
+
+Our development process follows a **Feature → Master → Release → Deployment** strategy:
+
+```
+feature/PRO-123  →  PR + Tests  →  master  →  release/vX.Y.Z  →  Deployment (v tags)
+  (development)    (required)    (stable)    (release branch)     (production only)
+```
+
+**Key Points:**
+1. **Feature Development:** Create feature branches from `master` with direct push allowed
+2. **Quality Gate to Master:** PRs to `master` **require** full test suite to pass (Lint + Unit Tests + Code Coverage)
+3. **Master is Always Stable:** Only tested, reviewed code merges to `master`
+4. **Release Process:** Create `release/vX.Y.Z` branches from `master` for version releases
+5. **Production Deployment:** Deploy **only** from release tags (`vX.Y.Z`), never directly from master
+
+**Testing Requirements:**
+- Feature branches: Optional linting on push
+- Master PRs: ✅ **Tests required** (Lint + Unit Tests + Code Coverage)
+- Release branches: Inherit tests from master (already verified)
+
+**Deployment:**
+- Development: No deployment
+- Master: No deployment
+- Release tags: ✅ **Production deployment only**
+
 ### Running Tests
 
 ```bash
@@ -191,4 +217,41 @@ TimeSheet/
 
 ## Naming Conventions
 
-See [`sup/naming_conventions.md`](sup/naming_conventions.md) for the full contributing guidelines and naming conventions (branch, commit, release, and PR naming rules).
+Quick reference for contributing to this project:
+
+### Branch Naming
+| Type | Format | Example |
+|------|--------|---------|
+| Feature | `feature/PRO-123-description` | `feature/PRO-123-login-api` |
+| Bugfix | `bugfix/PRO-123-description` | `bugfix/PRO-123-scan-timeout` |
+| Hotfix | `hotfix/PRO-123-description` | `hotfix/PRO-123-security-patch` |
+| Refactor | `refactor/PRO-123-description` | `refactor/PRO-296-codebase` |
+| Docs | `docs/PRO-123-description` | `docs/PRO-123-api-guide` |
+| Release | `release/vX.Y.Z` | `release/v4.1.2` |
+
+### Commit Format (Conventional Commits)
+```
+type(scope): description
+
+Optional body explaining changes in more detail.
+
+Refs: PRO-123
+```
+
+**Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
+
+### Pull Request Format
+- **Title:** `[Type][PRO-123] Clear description of changes`
+- **Example:** `[feat][PRO-123] Add dashboard UI with user authentication`
+
+### Release Versioning (Semantic Versioning)
+- **Format:** `vX.Y.Z` (X=MAJOR, Y=MINOR, Z=PATCH)
+- **Examples:** `v1.2.3`, `v2.0.0`, `v4.1.2`
+
+### Branch Protection Policy
+- **Protected (require PR + review):** `master`, `release/*`
+- **Open (direct push allowed):** `feature/*`, `bugfix/*`, `hotfix/*`, `refactor/*`, `docs/*`, `test/*`
+
+---
+
+For complete guidelines including JIRA requirements, Git compatibility rules, and detailed workflow steps, see [`sup/naming_conventions.md`](sup/naming_conventions.md).

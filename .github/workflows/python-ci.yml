@@ -1,5 +1,11 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+# This workflow implements the Feature → Master → Release → Deployment strategy
+# - Push events: Lint checks on development branches (feature/*, bugfix/*, etc.)
+# - PR to master: Full tests required (Lint + Unit Tests + Code Coverage) - QUALITY GATE
+# - Release tags (vX.Y.Z): Deployment to production only (tests already passed on master)
+#
+# For more information see:
+# - https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+# - sup/naming_conventions.md (Development Workflow section)
 
 name: Python CI
 
@@ -10,18 +16,13 @@ on:
       - 'bugfix/**'
       - 'hotfix/**'
       - 'refactor/**'
+      - 'docs/**'
       - 'test/**'
-      - 'develop'
       - '!master' # Prevent direct pushes to master
   pull_request:
     branches:
       - 'master'
       - 'release/**'
-      - 'develop'
-      - 'feature/**'
-      - 'bugfix/**'
-      - 'hotfix/**'
-      - 'refactor/**'
   workflow_dispatch:
 
 jobs:
@@ -34,9 +35,10 @@ jobs:
         (
           contains(github.ref, 'feature/') ||
           contains(github.ref, 'bugfix/') ||
+          contains(github.ref, 'hotfix/') ||
           contains(github.ref, 'refactor/') ||
-          contains(github.ref, 'test/') ||
-          github.ref == 'refs/heads/develop'
+          contains(github.ref, 'docs/') ||
+          contains(github.ref, 'test/')
         ) && 'development'
       }}
 
@@ -55,7 +57,6 @@ jobs:
           echo "GitHub Ref: ${{ github.ref }}"
           echo "GitHub Base Ref: ${{ github.base_ref }}"
           echo "GitHub Event Name: ${{ github.event_name }}"
-          #echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -79,7 +80,7 @@ jobs:
     name: Run unit tests and publish results
     runs-on: ubuntu-latest
     needs: [lint]
-    if: github.event_name == 'pull_request' && (contains(github.base_ref, 'release/') || github.base_ref == 'master' || github.base_ref == 'develop')
+    if: github.event_name == 'pull_request' && github.base_ref == 'master'
     environment: staging
 
     steps:
@@ -98,8 +99,6 @@ jobs:
         run: |
           mkdir -p tests/reports
           pytest tests --cov=src_timesheetalgo --cov-branch --cov-report=html:tests/reports/htmlcov --cov-report=term-missing --junitxml=tests/reports/test-results.xml
-          #pytest --junitxml=reports/test-results.xml --cov=my_project --cov-report=xml --cov-report=html
-          #coverage run -m pytest -v -s
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -110,10 +109,10 @@ jobs:
             tests/reports/htmlcov
 
   deploy:
-    name: Build & Deploy
+    name: Build & Deploy to Production
     runs-on: ubuntu-latest
-    needs: [lint, test]
-    if: github.event_name == 'pull_request' && github.base_ref == 'master'
+    needs: [lint]
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
     environment: production
 
     steps:

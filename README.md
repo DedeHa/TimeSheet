@@ -11,7 +11,6 @@ Automated timesheet data extraction, documentation, and AZE sheet creation tool.
 - [Usage](#usage)
 - [Documentation](#documentation)
 - [Development](#development)
-- [Naming Conventions](#naming-conventions)
 
 ## Description
 
@@ -19,7 +18,6 @@ TimeSheetAlgo automates the manual process of:
 - Extracting time data from CSV timelogs
 - Processing and validating time entries
 - Populating Excel timesheet templates
-- Creating AZE (Arbeitszeiterfassung) documentation
 
 ## Quick Start
 
@@ -138,18 +136,36 @@ The application will:
 | Document | Description |
 |----------|-------------|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
+| [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
 | [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation, test structure, and verification reports |
-| [`sup/naming_conventions.md`](sup/naming_conventions.md) | Contributing guidelines and naming conventions |
-
-### Architecture Diagrams
-
-The [`doc/`](doc/) directory contains:
-- System architecture overview (Mermaid diagrams)
-- Analysis diagrams (BDD, IBD, Use Cases)
-- Activity diagrams for detailed workflows
-- Configuration loading flow diagrams
 
 ## Development
+
+### Development Workflow
+
+Our development process follows a **Feature → Master → Release → Deployment** strategy:
+
+```
+feature/PRO-123  →  PR + Tests  →  master  →  release/vX.Y.Z  →  Deployment (v tags)
+  (development)    (required)    (stable)    (release branch)     (production only)
+```
+
+**Key Points:**
+1. **Feature Development:** Create feature branches from `master` with direct push allowed
+2. **Quality Gate to Master:** PRs to `master` **require** full test suite to pass (Lint + Unit Tests + Code Coverage)
+3. **Master is Always Stable:** Only tested, reviewed code merges to `master`
+4. **Release Process:** Create `release/vX.Y.Z` branches from `master` for version releases
+5. **Production Deployment:** Deploy **only** from release tags (`vX.Y.Z`), never directly from master
+
+**Testing Requirements:**
+- Feature branches: Optional linting on push
+- Master PRs: ✅ **Tests required** (Lint + Unit Tests + Code Coverage)
+- Release branches: Inherit tests from master (already verified)
+
+**Deployment:**
+- Development: No deployment
+- Master: No deployment
+- Release tags: ✅ **Production deployment only**
 
 ### Running Tests
 
@@ -158,10 +174,10 @@ The [`doc/`](doc/) directory contains:
 python -m pytest tests/ -v --cov=src_timesheetalgo --cov-report=term-missing
 
 # Unit tests only
-python -m pytest tests/test_unittest_timesheetalgo.py -v
+python -m pytest tests/test_unit.py -v
 
 # System verification tests
-python tests/test_systemverification_timesheetalgo.py
+python -m pytest tests/test_system.py -v
 ```
 
 ### Test Coverage
@@ -179,16 +195,18 @@ TimeSheet/
 ├── src_timesheetalgo/       # Main application source
 │   ├── TimeSheetAlgo.py     # Main application module
 │   └── config.yaml          # Configuration file
-├── src_azesheetalgo/        # AZE sheet module (future)
 ├── tests/                   # Test suite
 │   ├── TESTING.md           # Testing documentation
+│   ├── test_unit.py         # Unit tests
+│   ├── test_integration.py  # Integration tests
+│   ├── test_system.py       # System verification tests
 │   └── verification_report_*.md  # Test verification reports
 ├── doc/                     # Documentation and diagrams
+│   ├── ARCHITECTURE.md      # Architecture documentation
+│   └── CONTRIBUTING.md      # Contributing guidelines
 ├── sup/                     # Support files and test data
-├── pyproject.toml          # Project metadata & dependencies (PEP 621) - replaces requirements.txt
+├── pyproject.toml          # Project metadata & dependencies (PEP 621)
 └── pytest.ini               # Pytest configuration
 ```
 
-## Naming Conventions
-
-See [`sup/naming_conventions.md`](sup/naming_conventions.md) for the full contributing guidelines and naming conventions (branch, commit, release, and PR naming rules).
+See [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details.

@@ -1,6 +1,122 @@
-# YAML Configuration System Architecture Diagrams
+# TimeSheet Architecture
 
-## System Architecture Overview
+## System-Level Diagrams
+
+### Stakeholder Diagram
+
+```mermaid
+graph TB
+    subgraph "Stakeholders"
+        USER["👤 End Users<br/>(Time Tracking Personnel)"]
+        PM["👨‍💼 Project Manager<br/>(Dennis Hartel)"]
+        DEV["👨‍💻 Developers<br/>(System Maintainers)"]
+        ADMIN["🔧 System Administrator<br/>(Operations)"]
+    end
+
+    subgraph "Concerns"
+        USER_CONCERNS["✓ Easy time entry<br/>✓ Accurate tracking<br/>✓ Quick report generation<br/>✓ Data integrity"]
+        PM_CONCERNS["✓ Complete time records<br/>✓ Accurate billing<br/>✓ Team productivity<br/>✓ System reliability"]
+        DEV_CONCERNS["✓ Clean code<br/>✓ Maintainability<br/>✓ Test coverage<br/>✓ Documentation"]
+        ADMIN_CONCERNS["✓ System uptime<br/>✓ Data backup<br/>✓ Environment management<br/>✓ Configuration control"]
+    end
+
+    USER --> USER_CONCERNS
+    PM --> PM_CONCERNS
+    DEV --> DEV_CONCERNS
+    ADMIN --> ADMIN_CONCERNS
+
+    style USER fill:#e3f2fd
+    style PM fill:#fff3e0
+    style DEV fill:#f3e5f5
+    style ADMIN fill:#e8f5e9
+```
+
+### System Context Diagram
+
+```mermaid
+graph TB
+    subgraph "TimeSheet System"
+        TS["TimeSheetAlgo System<br/>Time Tracking & Excel Export"]
+    end
+
+    subgraph "External Systems"
+        JIRA["JIRA<br/>(Ticket Tracking)"]
+        EXCEL["Excel / Spreadsheet<br/>(Data Output)"]
+        CSV["CSV Files<br/>(Time Log Input)"]
+        CONFIG["Configuration Files<br/>(YAML)"]
+    end
+
+    subgraph "Users"
+        END_USER["End Users<br/>(Time Entry Personnel)"]
+        DEV["Developers<br/>(Code Maintainers)"]
+    end
+
+    END_USER -->|Inputs time data| TS
+    TS -->|Generates timesheet| EXCEL
+    TS -->|Reads time log| CSV
+    TS -->|Loads config| CONFIG
+    JIRA -.->|References| TS
+    TS -.->|Logs to| JIRA
+    DEV -->|Maintains| TS
+    DEV -->|Updates| CONFIG
+
+    style TS fill:#e3f2fd
+    style EXCEL fill:#fff3e0
+    style CSV fill:#c8e6c9
+    style CONFIG fill:#f3e5f5
+    style JIRA fill:#ffebee
+```
+
+### Use Cases Diagram
+
+```mermaid
+graph TB
+    USER["👤 User"]
+    ADMIN["🔧 Administrator"]
+
+    subgraph "TimeSheet System"
+        UC1["Load Time Log<br/>(CSV File)"]
+        UC2["Load Timesheet<br/>(Excel File)"]
+        UC3["Select Date Range<br/>(Start/End Dates)"]
+        UC4["Filter Time Data<br/>(By Date Range)"]
+        UC5["Populate Timesheet<br/>(Write Data)"]
+        UC6["Save Timesheet<br/>(Excel Export)"]
+        UC7["Configure Environment<br/>(Dev/Prod)"]
+        UC8["Manage Logging<br/>(Log Levels)"]
+        UC9["Validate Configuration<br/>(YAML Structure)"]
+    end
+
+    USER -->|Initiates| UC1
+    USER -->|Initiates| UC2
+    USER -->|Inputs| UC3
+    UC1 -.->|Enables| UC4
+    UC4 -.->|Enables| UC5
+    UC5 -.->|Enables| UC6
+    USER -->|Triggers| UC6
+
+    ADMIN -->|Configures| UC7
+    ADMIN -->|Sets| UC8
+    ADMIN -->|Validates| UC9
+    UC9 -.->|Validates| UC7
+
+    style USER fill:#e3f2fd
+    style ADMIN fill:#e8f5e9
+    style UC1 fill:#fff3e0
+    style UC2 fill:#fff3e0
+    style UC3 fill:#fff3e0
+    style UC4 fill:#f3e5f5
+    style UC5 fill:#f3e5f5
+    style UC6 fill:#c8e6c9
+    style UC7 fill:#ffebee
+    style UC8 fill:#ffebee
+    style UC9 fill:#ffebee
+```
+
+---
+
+## Implementation Details
+
+### System Architecture Overview
 
 ```mermaid
 graph TB
@@ -41,7 +157,7 @@ graph TB
     style ROOT fill:#c8e6c9
 ```
 
-## Configuration Loading Flow
+### Configuration Loading Flow
 
 ```mermaid
 sequenceDiagram
@@ -88,42 +204,42 @@ sequenceDiagram
     Note over TSA: Year is required - no fallback to hardcoded defaults
 ```
 
-## Environment Selection Logic
+### Environment Selection Logic
 
 ```mermaid
 flowchart TD
     START([Start Configuration Loading])
-    
+
     CHECK_PARAM{Environment parameter provided?}
     USE_PARAM[Use provided environment]
-    
+
     CHECK_DEFAULT{default_environment in config?}
     USE_DEFAULT[Use default_environment from config]
     USE_DEV[Use 'development' as fallback]
-    
+
     VALIDATE{Environment exists in config?}
     LOAD_ENV[Load environment configuration]
     RAISE_ERROR[Raise ConfigError]
-    
+
     END([Configuration Loaded])
-    
+
     START --> CHECK_PARAM
-    
+
     CHECK_PARAM -->|Yes| USE_PARAM
     CHECK_PARAM -->|No| CHECK_DEFAULT
-    
+
     CHECK_DEFAULT -->|Yes| USE_DEFAULT
     CHECK_DEFAULT -->|No| USE_DEV
-    
+
     USE_PARAM --> VALIDATE
     USE_DEFAULT --> VALIDATE
     USE_DEV --> VALIDATE
-    
+
     VALIDATE -->|Yes| LOAD_ENV
     VALIDATE -->|No| RAISE_ERROR
-    
+
     LOAD_ENV --> END
-    
+
     style START fill:#e8f5e8
     style END fill:#e8f5e8
     style RAISE_ERROR fill:#ffcdd2
@@ -131,7 +247,7 @@ flowchart TD
     style USE_DEFAULT fill:#fff3e0
 ```
 
-## Configuration Structure
+### Configuration Structure
 
 ```mermaid
 graph LR
@@ -195,7 +311,7 @@ graph LR
     style PROD_ENV fill:#ffebee
 ```
 
-## Error Handling Flow
+### Error Handling Flow
 
 ```mermaid
 flowchart TD
@@ -240,7 +356,7 @@ flowchart TD
     style ERR_PATHS fill:#ffcdd2
 ```
 
-## Class Relationship Diagram
+### Class Relationship Diagram
 
 ```mermaid
 classDiagram
@@ -314,7 +430,7 @@ classDiagram
     note for TimeSheetProcessor "Year stored as instance attribute\nUsed for default date calculations"
 ```
 
-## Deployment Architecture
+### Deployment Architecture
 
 ```mermaid
 graph TB
@@ -324,61 +440,62 @@ graph TB
         DEV_DATA[fdtech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
         DEV_LOGS[Console Output - INFO level]
     end
-    
+
     subgraph "Production Environment (set via parameter or config)"
         PROD_SCRIPT[TimeSheetAlgo.py]
         PROD_CONFIG[config.yaml]
         PROD_DATA[Timealarm/fdtech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
         PROD_LOGS[Console Output - WARNING level]
     end
-    
+
     DEV_SCRIPT --> DEV_CONFIG
     DEV_CONFIG --> DEV_DATA
     DEV_SCRIPT --> DEV_LOGS
-    
+
     PROD_SCRIPT --> PROD_CONFIG
     PROD_CONFIG --> PROD_DATA
     PROD_SCRIPT --> PROD_LOGS
-    
+
     style DEV_SCRIPT fill:#e3f2fd
     style PROD_SCRIPT fill:#ffebee
 ```
 
-## Configuration Validation Process
+### Configuration Validation Process
 
 ```mermaid
 stateDiagram-v2
     [*] --> LoadingConfig
-    
+
     LoadingConfig --> FileCheck
     FileCheck --> FileExists : file found
     FileCheck --> RaiseConfigError : file not found
-    
+
     FileExists --> YAMLParsing
     YAMLParsing --> ValidYAML : parsing successful
     YAMLParsing --> RaiseConfigError : parsing failed
-    
+
     ValidYAML --> StructureValidation
     StructureValidation --> ValidStructure : has 'environments' key
     StructureValidation --> RaiseConfigError : missing required keys
-    
+
     ValidStructure --> EnvironmentSelection
     EnvironmentSelection --> ValidEnvironment : environment found
     EnvironmentSelection --> RaiseConfigError : environment not found
-    
+
     ValidEnvironment --> PathValidation
     PathValidation --> ValidPaths : has required paths
     PathValidation --> RaiseConfigError : missing paths
-    
+
     ValidPaths --> PathConversion
     PathConversion --> ConfigurationReady
-    
+
     RaiseConfigError --> CatchException
     CatchException --> FallbackDefaults
     FallbackDefaults --> ConfigurationReady
-    
+
     ConfigurationReady --> [*]
-    
+
     note right of ConfigurationReady : Configuration loaded successfully\nLogging configured from YAML\nFile paths converted to absolute\nDiagnostics logged at WARNING level
-    
+
     note right of FallbackDefaults : Using hardcoded defaults\nError logged\nGraceful degradation
+```

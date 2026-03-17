@@ -11,7 +11,6 @@ Automated timesheet data extraction, documentation, and AZE sheet creation tool.
 - [Usage](#usage)
 - [Documentation](#documentation)
 - [Development](#development)
-- [Naming Conventions](#naming-conventions)
 
 ## Description
 
@@ -19,7 +18,6 @@ TimeSheetAlgo automates the manual process of:
 - Extracting time data from CSV timelogs
 - Processing and validating time entries
 - Populating Excel timesheet templates
-- Creating AZE (Arbeitszeiterfassung) documentation
 
 ## Quick Start
 
@@ -138,16 +136,8 @@ The application will:
 | Document | Description |
 |----------|-------------|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
+| [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
 | [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation, test structure, and verification reports |
-| [`sup/naming_conventions.md`](sup/naming_conventions.md) | Contributing guidelines and naming conventions |
-
-### Architecture Diagrams
-
-The [`doc/`](doc/) directory contains:
-- System architecture overview (Mermaid diagrams)
-- Analysis diagrams (BDD, IBD, Use Cases)
-- Activity diagrams for detailed workflows
-- Configuration loading flow diagrams
 
 ## Development
 
@@ -184,10 +174,10 @@ feature/PRO-123  →  PR + Tests  →  master  →  release/vX.Y.Z  →  Deploym
 python -m pytest tests/ -v --cov=src_timesheetalgo --cov-report=term-missing
 
 # Unit tests only
-python -m pytest tests/test_unittest_timesheetalgo.py -v
+python -m pytest tests/test_unit.py -v
 
 # System verification tests
-python tests/test_systemverification_timesheetalgo.py
+python -m pytest tests/test_system.py -v
 ```
 
 ### Test Coverage
@@ -205,53 +195,18 @@ TimeSheet/
 ├── src_timesheetalgo/       # Main application source
 │   ├── TimeSheetAlgo.py     # Main application module
 │   └── config.yaml          # Configuration file
-├── src_azesheetalgo/        # AZE sheet module (future)
 ├── tests/                   # Test suite
 │   ├── TESTING.md           # Testing documentation
+│   ├── test_unit.py         # Unit tests
+│   ├── test_integration.py  # Integration tests
+│   ├── test_system.py       # System verification tests
 │   └── verification_report_*.md  # Test verification reports
 ├── doc/                     # Documentation and diagrams
+│   ├── ARCHITECTURE.md      # Architecture documentation
+│   └── CONTRIBUTING.md      # Contributing guidelines
 ├── sup/                     # Support files and test data
-├── pyproject.toml          # Project metadata & dependencies (PEP 621) - replaces requirements.txt
+├── pyproject.toml          # Project metadata & dependencies (PEP 621)
 └── pytest.ini               # Pytest configuration
 ```
 
-## Naming Conventions
-
-Quick reference for contributing to this project:
-
-### Branch Naming
-| Type | Format | Example |
-|------|--------|---------|
-| Feature | `feature/PRO-123-description` | `feature/PRO-123-login-api` |
-| Bugfix | `bugfix/PRO-123-description` | `bugfix/PRO-123-scan-timeout` |
-| Hotfix | `hotfix/PRO-123-description` | `hotfix/PRO-123-security-patch` |
-| Refactor | `refactor/PRO-123-description` | `refactor/PRO-296-codebase` |
-| Docs | `docs/PRO-123-description` | `docs/PRO-123-api-guide` |
-| Release | `release/vX.Y.Z` | `release/v4.1.2` |
-
-### Commit Format (Conventional Commits)
-```
-type(scope): description
-
-Optional body explaining changes in more detail.
-
-Refs: PRO-123
-```
-
-**Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
-
-### Pull Request Format
-- **Title:** `[Type][PRO-123] Clear description of changes`
-- **Example:** `[feat][PRO-123] Add dashboard UI with user authentication`
-
-### Release Versioning (Semantic Versioning)
-- **Format:** `vX.Y.Z` (X=MAJOR, Y=MINOR, Z=PATCH)
-- **Examples:** `v1.2.3`, `v2.0.0`, `v4.1.2`
-
-### Branch Protection Policy
-- **Protected (require PR + review):** `master`, `release/*`
-- **Open (direct push allowed):** `feature/*`, `bugfix/*`, `hotfix/*`, `refactor/*`, `docs/*`, `test/*`
-
----
-
-For complete guidelines including JIRA requirements, Git compatibility rules, and detailed workflow steps, see [`sup/naming_conventions.md`](sup/naming_conventions.md).
+See [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details.

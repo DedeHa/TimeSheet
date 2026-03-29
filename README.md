@@ -167,6 +167,18 @@ feature/PRO-123  →  PR + Tests  →  master  →  release/vX.Y.Z  →  Deploym
 - Master: No deployment
 - Release tags: ✅ **Production deployment only**
 
+### Switching Between Branches
+
+When switching between Git branches, **always reactivate the virtual environment**:
+
+```bash
+git checkout feature/PRO-123-description
+source venv/bin/activate          # Linux/macOS
+# venv\Scripts\activate           # Windows
+```
+
+For detailed instructions on branch switching, shell aliases, and environment management, see [`doc/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management`](doc/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management).
+
 ### Running Tests
 
 ```bash

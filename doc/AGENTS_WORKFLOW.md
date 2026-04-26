@@ -27,7 +27,7 @@ Each file contains:
 - **Markdown body** with purpose, responsibilities, input/output formats, constraints, and decision rules
 
 ### Reference Documentation
-- `AGENTS.md` (this file) - Strategic overview, workflow diagrams, quality gates, and cross-agent context
+- `AGENTS_WORKFLOW.md` (this file) - Strategic overview, workflow diagrams, quality gates, and cross-agent context
 
 ## �🔄 Workflow
 
@@ -402,7 +402,8 @@ Feature complete
 - `.github/agents/tester.agent.md` - Tester & Validator Agent configuration
 - `README.md` - Project documentation
 - `doc/ARCHITECTURE.md` - System architecture
-- `doc/CONTRIBUTING.md` - Contributing guidelines
+- `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")
+- `doc/AGENTS_WORKFLOW.md` - This file
 - `tests/TESTING.md` - Testing documentation
 
 ## 🚨 Troubleshooting

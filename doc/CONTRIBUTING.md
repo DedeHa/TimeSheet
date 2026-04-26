@@ -1,5 +1,17 @@
 # Contributing Guidelines & Naming Conventions
 
+## 📌 Overview: Git Workflow + Agent-Based Development
+
+This document covers **Git workflow** and **code standards**. For information about **agent-based feature development** (using Copilot agents for structured feature planning and implementation), see [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md).
+
+### Complete Development Process:
+1. **Phase 0 (Pre-Development):** Feature planning with Copilot Agents → User Stories & Architecture (see [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md))
+2. **Phase 1 (Development):** Feature development on branch → Code & Tests (this document)
+3. **Phase 2 (Integration):** Pull Request to master → Tests + Review (this document)
+4. **Phase 3 (Release):** Release branch → Version bump → Deploy (this document)
+
+---
+
 ## 1. Branch Protection Policy
 
 ### Protected Branches (Direct Pushes Blocked)

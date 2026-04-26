@@ -11,7 +11,25 @@ This directory contains a configured team of specialized AI agents that collabor
 | **Developer** | Implement features following the plan | Implementation plan, architecture | Code changes, tests, commits | Tester |
 | **Tester** | Validate correctness and quality | Implementation, tests, requirements | Pass/Fail decision with evidence | Product Owner / Developer |
 
-## 🔄 Workflow
+## � File Structure
+
+This directory contains two types of documents:
+
+### Agent Configuration Files (`.agent.md`)
+These are **operational files** discovered and used by VS Code:
+- `product-owner.agent.md` - Product Owner Agent (YAML config + detailed documentation)
+- `architect.agent.md` - Architect Agent (YAML config + detailed documentation)
+- `developer.agent.md` - Developer Agent (YAML config + detailed documentation)
+- `tester.agent.md` - Tester & Validator Agent (YAML config + detailed documentation)
+
+Each file contains:
+- **YAML frontmatter** with tool configurations (used by VS Code)
+- **Markdown body** with purpose, responsibilities, input/output formats, constraints, and decision rules
+
+### Reference Documentation
+- `AGENTS.md` (this file) - Strategic overview, workflow diagrams, quality gates, and cross-agent context
+
+## �🔄 Workflow
 
 ### Primary Flow: Successful Feature
 
@@ -172,34 +190,16 @@ Acceptance criteria ambiguous → Product Owner clarifies and confirms
 ✅ Ready for Production / ❌ Return to Developer for fixes
 ```
 
-## 🎯 Tool Capabilities by Agent
+## 🎯 Agent Tools
 
-### Product Owner Tools
-- `codebase` - Understand system structure
-- `search` - Find related documentation
-- `fetch` - Retrieve web resources
-- `readFile` - Review project files
-- `listFiles` - Explore file structure
+Each agent is configured with specific tools in its respective `.agent.md` file:
 
-### Architect Tools
-- `codebase` - Analyze existing patterns
-- `search` - Find architecture references
-- `readFile` - Review design patterns
-- `listFiles` - Understand module organization
+- **[product-owner.agent.md](product-owner.agent.md)** → `codebase`, `search`, `fetch`, `readFile`, `listFiles`
+- **[architect.agent.md](architect.agent.md)** → `codebase`, `search`, `readFile`, `listFiles`
+- **[developer.agent.md](developer.agent.md)** → `editFiles`, `terminal`, `runTests`, `readFile`, `codebase`
+- **[tester.agent.md](tester.agent.md)** → `runTests`, `terminal`, `codebase`, `diff`, `readFile`
 
-### Developer Tools
-- `editFiles` - Modify implementation
-- `terminal` - Run commands, tests
-- `runTests` - Execute test suite
-- `readFile` - Review code
-- `codebase` - Understand dependencies
-
-### Tester Tools
-- `runTests` - Execute test suite
-- `terminal` - Run diagnostics
-- `codebase` - Analyze implementation
-- `diff` - Review changes
-- `readFile` - Check code quality
+See individual agent files for detailed descriptions of tool usage.
 
 ## 🚀 Using This Agent Team
 

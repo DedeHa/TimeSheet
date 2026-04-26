@@ -1,5 +1,17 @@
 # Contributing Guidelines & Naming Conventions
 
+## 📌 Overview: Git Workflow + Agent-Based Development
+
+This document covers **Git workflow** and **code standards**. For information about **agent-based feature development** (using Copilot agents for structured feature planning and implementation), see [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md).
+
+### Complete Development Process:
+1. **Phase 0 (Pre-Development):** Feature planning with Copilot Agents → User Stories & Architecture (see [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md))
+2. **Phase 1 (Development):** Feature development on branch → Code & Tests (this document)
+3. **Phase 2 (Integration):** Pull Request to master → Tests + Review (this document)
+4. **Phase 3 (Release):** Release branch → Version bump → Deploy (this document)
+
+---
+
 ## 1. Branch Protection Policy
 
 ### Protected Branches (Direct Pushes Blocked)
@@ -202,6 +214,71 @@ hotfix/*   →  [PR + Tests + Review]  →  master  →  Stable, Tested Code
    ```
 
 **Test requirement on feature branch:** No tests required (pure development/experimentation zone)
+
+### Phase 1a: Switching Between Branches & Environment Management
+
+**Important:** When switching between branches, you need to reactivate your virtual environment to ensure consistency.
+
+#### Switching to a Different Branch:
+
+```bash
+# 1. Switch to the target branch
+git checkout feature/PRO-123-description
+
+# 2. Reactivate the virtual environment
+source /workspaces/TimeSheet/venv/bin/activate  # Linux/macOS
+# or on Windows:
+# venv\Scripts\activate
+
+# 3. Verify you're on the correct branch and environment
+git branch --show-current     # Should show: feature/PRO-123-description
+echo $VIRTUAL_ENV             # Should show: /workspaces/TimeSheet/venv
+```
+
+#### Switching back to Master:
+
+```bash
+# 1. Switch to master
+git checkout master
+
+# 2. Reactivate the virtual environment
+source /workspaces/TimeSheet/venv/bin/activate
+
+# 3. Verify
+git branch --show-current     # Should show: master
+```
+
+#### Quick Alias for Branch Switching:
+
+Create a shell alias for faster branch switching with automatic venv reactivation:
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+alias switch-branch='function(){
+  git checkout $1
+  source /workspaces/TimeSheet/venv/bin/activate
+  echo "✅ Switched to branch: $(git branch --show-current)"
+  echo "✅ venv activated: $VIRTUAL_ENV"
+}; function'
+
+# Usage:
+switch-branch feature/PRO-123-description
+switch-branch master
+```
+
+#### Understanding venv Independence:
+
+⚠️ **Important Concept:**
+- The virtual environment (`.venv/`) is **independent of Git branches**
+- It's stored in `.gitignore` and not tracked by Git
+- When you switch branches, the `.venv/` directory doesn't change
+- This is why you need to **reactivate** it for shell consistency
+- The `.venv/` works across all branches automatically
+
+**Recommended Practice:**
+- Always reactivate venv when switching branches
+- This ensures shell prompt and environment variables are consistent with your current branch
+- You don't need to reinstall packages when switching branches
 
 ### Phase 2: Integration to Master - Quality Gate (Tests REQUIRED)
 

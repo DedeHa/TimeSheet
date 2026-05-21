@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import openpyxl
 import pytest
 import yaml
-from TimeSheetAlgo import (
+from src_timesheetalgo.TimeSheetAlgo import (
     DATE_FORMAT,
     ROW_OFFSET,
     TIMESHEET_SHEETS,
@@ -98,7 +98,7 @@ def test_load_config_valid(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     config = load_config(str(config_file))
     assert config["timelog_path"].endswith("timelog.csv")
@@ -133,7 +133,7 @@ def test_load_config_invalid_yaml(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     with pytest.raises(ConfigError, match="Invalid YAML format"):
         load_config(str(config_file))
@@ -156,7 +156,7 @@ def test_load_config_missing_environments(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     with pytest.raises(KeyError):
         load_config(str(config_file))
@@ -186,7 +186,7 @@ def test_load_config_invalid_environment(tmp_path, monkeypatch):
         yaml.dump(config_content, f)
 
     # Mock detect_environment at the import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", lambda x: "invalid")
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", lambda x: "invalid")
 
     with pytest.raises(ConfigError, match="Environment 'invalid' not found"):
         load_config(str(config_file))
@@ -213,7 +213,7 @@ def test_load_config_missing_file_paths(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     # Should raise KeyError when accessing file_paths
     with pytest.raises(KeyError):
@@ -245,7 +245,7 @@ def test_load_config_incomplete_file_paths(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     # Should raise KeyError when accessing timesheet_path
     with pytest.raises(KeyError):
@@ -282,7 +282,7 @@ def test_load_config_multiple_environments(tmp_path, monkeypatch):
         yaml.dump(config_content, f)
 
     # Mock detect_environment at the import location to return 'production'
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", lambda x: "production")
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", lambda x: "production")
 
     # Test loading production environment
     config = load_config(str(config_file))
@@ -325,7 +325,7 @@ def test_load_config_environment_auto_detection(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     # Test loading without specifying environment (auto-detects development)
     config = load_config(str(config_file))
@@ -348,7 +348,7 @@ def test_load_config_invalid_structure(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     with pytest.raises(ConfigError, match="Config root must be a mapping"):
         load_config(str(config_file))
@@ -380,7 +380,7 @@ def test_load_config_missing_year(tmp_path, monkeypatch):
         return "development"
 
     # patching at import location
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", mock_detect)
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", mock_detect)
 
     with pytest.raises(ConfigError, match="Missing required 'year' configuration"):
         load_config(str(config_file))
@@ -1349,6 +1349,6 @@ def test_load_config_default_environment(tmp_path, monkeypatch):
     with open(config_file, "w") as f:
         yaml.dump(config_content, f)
 
-    monkeypatch.setattr("TimeSheetAlgo.detect_environment", lambda x: "development")
+    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.detect_environment", lambda x: "development")
     config = load_config(str(config_file))
     assert config["environment"] == "development"

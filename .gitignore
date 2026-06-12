@@ -2,25 +2,25 @@ __pycache__
 *.py[cod]
 *$py.class
 
-# Distribution / packaging 
+# Distribution / packaging
 .Python
 build/
-develop-eggs/ 
-dist/ 
-downloads/ 
-eggs/ 
-.eggs/ 
-lib/ 
-lib64/ 
-parts/ 
-sdist/ 
-var/ 
-wheels/ 
-*.egg-info/ 
-.installed.cfg 
-*.egg 
-*.manifest 
-*.spec 
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
 
 # Log files
 pip-log.txt
@@ -33,15 +33,15 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 tests/reports/
-.tox/ 
-.coverage 
-.coverage.* 
-.cache 
-.pytest_cache/ 
-nosetests.xml 
-coverage.xml 
-*.cover 
-.hypothesis/ 
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 pytest-demo
 
 # Translations
@@ -71,42 +71,47 @@ env/
 venv/
 ENV/
 
-# If you are using PyCharm # 
-.idea/**/workspace.xml 
-.idea/**/tasks.xml 
-.idea/dictionaries 
-.idea/**/dataSources/ 
-.idea/**/dataSources.ids 
-.idea/**/dataSources.xml 
-.idea/**/dataSources.local.xml 
-.idea/**/sqlDataSources.xml 
-.idea/**/dynamic.xml 
-.idea/**/uiDesigner.xml 
-.idea/**/gradle.xml 
-.idea/**/libraries 
-*.iws /out/ 
+# If you are using PyCharm
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/dictionaries
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.xml
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/gradle.xml
+.idea/**/libraries
+*.iws
+/out/
 
 # Sublime Text
-*.tmlanguage.cache 
-*.tmPreferences.cache 
-*.stTheme.cache 
-*.sublime-workspace 
-*.sublime-project 
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
 
-# sftp configuration file 
+# sftp configuration file
 sftp-config.json
 
-# Package control specific files Package 
-Control.last-run 
-Control.ca-list 
-Control.ca-bundle 
-Control.system-ca-bundle 
-GitHub.sublime-settings 
+# Package control specific files
+Package Control.last-run
+Control.ca-list
+Control.ca-bundle
+Control.system-ca-bundle
+GitHub.sublime-settings
 
-# Visual Studio Code # 
-.vscode/* 
-!.vscode/settings.json 
-!.vscode/tasks.json 
-!.vscode/launch.json 
-!.vscode/extensions.json 
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .history
+
+# Production data (Timealarm folder contains real timesheets/timelogs)
+# Test fixtures (sup/2025_*.csv, src_timesheetalgo/2025_*.xlsm) are committed for CI
+Timealarm/

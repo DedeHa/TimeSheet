@@ -67,7 +67,7 @@ end in column 6.
 ### 3. System (`tests/system/`, marker `system`)
 
 Black-box against **real-file copies** in `tmp_path`, driving the shipped code
-end-to-end. Skipped (not failed) when the real resources are absent.
+end-to-end. Skips cleanly (not failed) when the real resources are absent.
 
 - `test_real_pipeline.py` — copies the real CSV + xlsm, runs `TimeSheetProcessor` for a January day, re-opens the saved workbook and asserts the value landed in the right cell. (This replaces the old `VerificationTester`, which re-implemented the algorithm instead of running it.)
 - `test_cli_main.py` — exercises the CLI entry points `run()` and `main()` (config load → logging → pipeline) with monkeypatched stdin and a temporary `config.yaml`, including the missing-`year` → `SystemExit(1)` path.
@@ -117,7 +117,7 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 fail_under = 90
-exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:", "raise NotImplementedError"]
 ```
 
 ### Determinism
@@ -137,37 +137,37 @@ python -m pytest -m "not system"          # fast set (PR CI)
 python -m pytest --cov=src_timesheetalgo --cov-report=term-missing
 ```
 
-CI (`.github/workflows/python-ci.yml`): PRs to `master` run the suite with
-coverage; system tests skip when the real data files aren't checked out.
+CI (`.github/workflows/python-ci.yml`): PRs to `master` run the full suite with
+coverage; all 83 tests (including 7 system tests) run because the real data files
+are committed to the repo.
 
-## External configuration system
+## Real test data files
 
-Runtime configuration lives in `src_timesheetalgo/config.yaml` (YAML, PEP 621
-deps in `pyproject.toml`). The environment is auto-detected by folder structure
-(`detect_environment`): a folder named `src_timesheetalgo` → `development`; a
-`Timealarm/` subfolder → `production`; otherwise `development`. `year` is
-required at the root level (no fallback) and raises `ConfigError` when missing.
+The system tests rely on two real data files committed to the repository:
 
-```yaml
-development:
-  file_paths:
-    timelog_path: "FDTech_timelog.csv"
-    timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
-  logging:
-    level: "INFO"
+- **`sup/2025_extract.csv`** — 93 sample timelog entries from 2025 (dates, start/end times).
+- **`src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm`** — real timesheet workbook (12 month sheets, VBA macros preserved).
+
+These files **are committed to version control** (not gitignored) to ensure:
+
+1. ✅ All 83 tests run on CI (including 7 system tests).
+2. ✅ 100% code coverage is achieved and gated at 90%.
+3. ✅ System tests verify the real end-to-end workflow.
+4. ✅ System tests skip cleanly only if cloned without history or files are manually deleted.
+
+### For local development
+
+If you don't have the real files locally:
+
+```bash
+git lfs pull  # If the files are stored with Git LFS (unlikely)
+# or
+git checkout sup/2025_extract.csv src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm  # Restore from repo
 ```
 
-Validation/error handling is covered by `tests/unit/test_config.py`: missing
-file, invalid YAML, non-mapping root, missing `environments`/`file_paths`,
-unknown environment, and missing `year`.
-
-## Test data files
-
-- `sup/2025_extract.csv` — real timelog data (system tests, copied to `tmp_path`).
-- `src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm` — real timesheet (copied to `tmp_path`).
-
-System tests operate **only on temporary copies** and never modify these
-originals. They no longer generate a `.log` file or a `_VERIFICATION_BACKUP.xlsm`.
+If system tests skip with a message like `"Real resource files not available"`, you can:
+1. Run unit + integration tests only: `pytest -m "not system"`
+2. Run the full suite once you've restored the files: `git checkout <files>`
 
 ---
 

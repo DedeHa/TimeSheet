@@ -194,6 +194,30 @@ hotfix/*   →  [PR + Tests + Review]  →  master  →  Stable, Tested Code
 - ✅ Tests are **run only on PRs to `master`** (required)
 - ✅ Deployment happens **only on release tags** (production)
 
+### Prerequisites: GitHub CLI (`gh`)
+
+Pull requests are created with the [GitHub CLI](https://cli.github.com/). Install and authenticate it once.
+
+**Install (Windows):**
+```bash
+winget install --id GitHub.cli -e        # requires admin (UAC elevation)
+```
+No admin rights? Use a portable install (no elevation):
+```bash
+# Download gh_<version>_windows_amd64.zip from https://github.com/cli/cli/releases
+# unzip into %LOCALAPPDATA%\Programs\GitHubCLI, then add its \bin to the user PATH:
+setx PATH "%PATH%;%LOCALAPPDATA%\Programs\GitHubCLI\bin"
+```
+(macOS: `brew install gh` · Linux: see the install docs. Restart the terminal after install so `gh` is on `PATH`.)
+
+**Authenticate (one-time, interactive):**
+```bash
+gh auth login      # GitHub.com → HTTPS → log in via browser, grant the 'repo' scope
+gh auth status     # verify
+```
+
+**No `gh`?** You can still open PRs via the GitHub web UI (`git push` prints a ready PR link) or the VS Code "GitHub Pull Requests" extension.
+
 ### Phase 1: Feature Development (Tests Optional)
 
 1. **Create feature branch** (always from `master`):

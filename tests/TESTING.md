@@ -1,259 +1,175 @@
-# TimeSheetAlgo.py Testing Documentation
+# TimeSheetAlgo Testing Documentation
 
-## Overview
-**Before running tests:** install the test dependencies: `python -m pip install -e .[dev]` (this provides `freezegun`, `pytest`, `openpyxl` etc.).
-This document provides comprehensive testing information for the TimeSheetAlgo.py application, including unit tests, system verification tests, and configuration testing.
+**Before running tests:** install the dev dependencies with
+`python -m pip install -e .[dev]` (provides `pytest`, `pytest-cov`,
+`freezegun`, etc.).
 
-> **Note:** For detailed test execution results and verification reports, see [`verification_report_2025-11-21.md`](verification_report_2025-11-21.md).
+This is the single reference for the test suite of
+`src_timesheetalgo/TimeSheetAlgo.py` — its layout, the intent of each level, the
+fixtures, and the configuration behind them.
 
-## Test Structure and Organization
+## Layout
 
-### 1. Unit Tests (`test_unit.py`)
-
-**Purpose:** Test individual functions and methods in isolation with comprehensive error handling
-
-**Marker:** `@pytest.mark.unit` (default tests for CI/PR checks)
-
-**Test Categories:**
-1. **Configuration Loading Tests (10 tests)** - Validate [`load_config()`](../src_timesheetalgo/TimeSheetAlgo.py:34) function
-   - External YAML configuration parsing
-   - Environment-specific configuration loading
-   - Error handling for various config issues
-   - Path resolution and validation
-   
-2. **Date Parsing Tests (2 tests)** - Validate [`parse_date()`](../src_timesheetalgo/TimeSheetAlgo.py:109) function
-   - Valid date format parsing (DD.MM.YYYY)
-   - Invalid date handling with retry logic
-
-3. **File Handling Tests (6 tests)** - Test [`check_file_existence()`](../src_timesheetalgo/TimeSheetAlgo.py:131) function
-   - CSV file loading and parsing
-   - Excel file loading with VBA preservation
-   - File not found error handling
-   - Permission denied error handling
-
-4. **TimeSheetProcessor Class Tests (15 tests)** - Test all methods of [`TimeSheetProcessor`](../src_timesheetalgo/TimeSheetAlgo.py:189)
-   - Date input and validation
-   - Timelog data selection and filtering
-   - Data storage with overwrite handling
-   - File operations (load/save)
-
-**Key Features:**
-- Uses pytest fixtures for mock data
-- Parameterized tests for multiple input scenarios
-- Monkeypatching for user input simulation
-- Temporary file creation for testing
-- Comprehensive exception testing
-- 100% coverage of all exception handlers
-
-### 2. Integration Tests (`test_integration.py`)
-
-**Purpose:** Test loading of real data files (CSV and Excel)
-
-**Marker:** `@pytest.mark.integration` (requires real files)
-
-**Test Coverage:**
-- Real CSV timelog loading (93 records from `sup/2025_extract.csv`)
-- Real Excel workbook loading (structured with 12 monthly sheets)
-
-### 3. System Verification Tests (`test_system.py`)
-
-**Purpose:** End-to-end verification of the complete system functionality with real data
-
-**Marker:** `@pytest.mark.system` (may be slow, excluded from default CI runs)
-
-**Test Categories:**
-1. **Data Loading Verification** - Real file loading tests
-   - CSV parsing with real 2025 data (93 records)
-   - Excel workbook structure validation
-   
-2. **Date Processing Verification** - Core algorithm validation
-   - Date format parsing (05 different dates)
-   - Month extraction and validation
-   
-3. **Worksheet Mapping Verification** - Component interaction
-   - Date-to-worksheet indexing (4 different months)
-   - Worksheet name verification
-   
-4. **Row Calculation Verification** - Algorithm validation
-   - ROW_OFFSET application (3 different days)
-   - Row indexing accuracy
-   
-5. **Column Placement Verification** - Target cell validation
-   - Column E (5) for start times
-   - Column F (6) for end times
-   - Coordinate accuracy
-   
-6. **Data Integrity Verification** - Actual Excel manipulation
-   - Data writing to cells
-   - Data reading/verification
-   - Original data restoration
-
-**Key Features:**
-- Uses real data files (2025_extract.csv, 2025_FDTech_Dennis_Hartel.xlsm)
-- Creates backup files before testing
-- Comprehensive logging to verification.log
-- Restores original data after testing
-- Non-destructive testing approach
-- Detailed verification reports
-
-### 4. Configuration Testing (Integrated)
-
-**Coverage:**
-- ✅ YAML file parsing and validation
-- ✅ Environment-specific configuration selection
-- ✅ File path resolution (absolute and relative)
-- ✅ Logging configuration application
-- ✅ Graceful fallback to defaults
-- ✅ Comprehensive error handling with custom ConfigError exception
-
-## Test Configuration
-
-### pytest.ini Configuration
-```ini
-[pytest]
-pythonpath = .
-testpaths = tests
-markers =
-    unit: fast unit tests (no external I/O)
-    integration: integration tests (require I/O)
-    system: end-to-end verification (may be slow)
-addopts = -q --disable-warnings -m "unit"
+```text
+tests/
+  conftest.py                    # shared: frozen_time, sys.path, workbook/processor builders
+  unit/
+    conftest.py                  # clean_root_logger
+    test_config.py               # load_config, _read_yaml, detect_environment, ConfigError
+    test_logging.py              # configure_logging
+    test_dates.py                # parse_date, _get_date, set_default_start/end_date
+    test_files.py                # check_file_existence (csv/excel/lock/permission/not-found)
+    test_processor_methods.py    # load_files, request_date_input, select_timelog_data, save_timesheet
+    test_overwrite.py            # confirm_overwrite, _prompt_overwrite_decision, _check_and_confirm_overwrite
+  integration/
+    conftest.py                  # processor_with_timelog builder
+    test_pipeline.py             # load→select→store→save (single + multi-month + week)
+    test_overwrite_workflow.py   # store_data with overwrite_all / skip_all / abort / empty / EOF
+    test_boundaries.py           # day 1 / day 31, month boundary, cross-year filtering
+  system/
+    conftest.py                  # real_resource_copy, cli_runner
+    test_real_pipeline.py        # real copies → TimeSheetProcessor end-to-end, reload & assert cells
+    test_cli_main.py             # run()/main() with stdin + tmp config
 ```
 
-**Key Points:**
-- **pythonpath = .** - Makes `src_timesheetalgo` package discoverable with correct imports
-- **Default Mode** - Runs only unit tests (`-m "unit"`)
-  - Fast feedback loop (< 1 second on PR checks)
-  - No external file dependencies
-  - No slow operations
-- **Integration/System Mode** - Use `-m "not system"` or `-m "system"` explicitly
-  - Include slower tests with real files
-  - Useful for local development and release validation
+## Test levels and their intent
 
-### Dependencies (pyproject.toml)
-Project dependencies and dev/extras are defined in `pyproject.toml` (PEP 621). Example key test/dev dependencies include:
-- `pytest==8.3.4` - Testing framework
-- `pytest-cov==5.0.0` - Coverage reporting
-- `openpyxl==3.1.5` - Excel file handling
-- Additional development tools (black, flake8, ruff, etc.)
+The suite is split into three levels — one folder and one marker each. The
+discriminator is **what the code under test touches**: tmp-file or mocked single
+call → unit; `mock_processor` multi-step → integration; real-resource copy or
+CLI flow → system. No test appears at two levels.
 
-## Running Tests
+### 1. Unit (`tests/unit/`, marker `unit`)
 
-### Default (Unit Tests Only - Fast CI/PR Feedback)
+One function or method, fully isolated. I/O is a `tmp_path` file or is
+monkeypatched (`builtins.input`, `openpyxl.load_workbook`, `detect_environment`,
+…). No real project resources, no multi-step pipeline. These pin behaviour and
+exact error messages.
+
+- `test_config.py` — `load_config`, `_read_yaml`, `detect_environment`, all `ConfigError`/`KeyError` paths, empty-YAML branch.
+- `test_logging.py` — `configure_logging` (custom/default/invalid level, default format).
+- `test_dates.py` — `parse_date` (valid / retries-exhausted / retries=0 / retry), `_get_date` (success + fallback), `set_default_start_date` (with data + no-data fallback), `set_default_end_date`.
+- `test_files.py` — `check_file_existence` (csv/excel happy path, not-found, permission denied, lock warning).
+- `test_processor_methods.py` — `load_files`, `request_date_input` (valid/invalid/empty/EOF/specific default), `select_timelog_data` (in-range + empty→ValueError), `save_timesheet`.
+- `test_overwrite.py` — `confirm_overwrite`, `_prompt_overwrite_decision`, `_check_and_confirm_overwrite` (the decision logic, in isolation).
+
+### 2. Integration (`tests/integration/`, marker `integration`)
+
+The `TimeSheetProcessor` pipeline run across multiple steps on the in-memory
+dummy 12-sheet workbook (no real `.xlsm`/`.csv`). Verifies the data model:
+sheet index = `date.month - 1`, row = `ROW_OFFSET + day`, start in column 5,
+end in column 6.
+
+- `test_pipeline.py` — `select → store → save` for single entry, multiple months, and a realistic week.
+- `test_overwrite_workflow.py` — how `store_data` *acts* on each decision (overwrite_all / skip_all / abort / empty / EOF).
+- `test_boundaries.py` — day 1, day 31, month boundary, cross-year filtering.
+
+### 3. System (`tests/system/`, marker `system`)
+
+Black-box against **real-file copies** in `tmp_path`, driving the shipped code
+end-to-end. Skipped (not failed) when the real resources are absent.
+
+- `test_real_pipeline.py` — copies the real CSV + xlsm, runs `TimeSheetProcessor` for a January day, re-opens the saved workbook and asserts the value landed in the right cell. (This replaces the old `VerificationTester`, which re-implemented the algorithm instead of running it.)
+- `test_cli_main.py` — exercises the CLI entry points `run()` and `main()` (config load → logging → pipeline) with monkeypatched stdin and a temporary `config.yaml`, including the missing-`year` → `SystemExit(1)` path.
+
+## Fixtures
+
+Defined in `tests/conftest.py` (shared) and cascading into each level's `conftest.py`.
+
+- `frozen_time` — autouse; freezes the clock to 2025-12-23 (degrades to a no-op with a warning when `freezegun` is absent).
+- `mock_workbook` / `mock_excel_file` / `mock_csv_file` — dummy 12-sheet workbook and temp files.
+- `mock_processor` — a `TimeSheetProcessor` over the mock files, already loaded.
+- `make_processor(timelog=…, timesheet_cells=…, year=2025)` — factory building a processor over a fresh dummy workbook with optional pre-populated cells.
+- `clean_root_logger` (unit) — clears/restores root logging handlers so `configure_logging` is observable.
+- `processor_with_timelog(timelog, start, end, …)` (integration) — `make_processor` plus parsed date boundaries.
+- `real_resource_copy` (system) — copies `sup/2025_extract.csv` + `src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm` into `tmp_path`, or `None` when missing.
+- `cli_runner(answers)` (system) — drives `run()` in-process against the copies, feeding `answers` to `input()`.
+
+## Configuration
+
+### pytest (`pyproject.toml` → `[tool.pytest.ini_options]`)
+
+All tooling configuration lives in `pyproject.toml` — there is no separate
+`pytest.ini`, so pytest has exactly one config source.
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --tb=short"
+markers = [
+    "unit: individual functions/methods in isolation (tmp files or mocks, no real resources)",
+    "integration: TimeSheetProcessor pipeline on the in-memory dummy workbook",
+    "system: real-resource copies + CLI flow, skipped when resources are missing",
+]
+```
+
+The repository root is placed on `sys.path` by `tests/conftest.py`, so the
+`src_timesheetalgo` package imports regardless of the invocation directory (no
+`pythonpath` setting is needed).
+
+### Coverage (`pyproject.toml`)
+
+```toml
+[tool.coverage.run]
+source = ["src_timesheetalgo"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+```
+
+### Determinism
+
+`set_default_end_date` uses `datetime.now() - 1 day`. The autouse `frozen_time`
+fixture freezes the clock to 2025-12-23; with `freezegun` installed runs are
+fully deterministic. Without it the fixture degrades to a no-op (with a warning)
+and time-relative assertions are written relative to `now()`.
+
+## Running
+
 ```bash
-python -m pytest
-# or explicitly:
-python -m pytest -m unit -q
+python -m pytest                          # full suite
+python -m pytest tests/unit               # one level by path
+python -m pytest -m unit                  # one level by marker
+python -m pytest -m "not system"          # fast set (PR CI)
+python -m pytest --cov=src_timesheetalgo --cov-report=term-missing
 ```
 
-### Unit Tests with Coverage
-```bash
-python -m pytest -m unit --cov=src_timesheetalgo --cov-report=term-missing
+CI (`.github/workflows/python-ci.yml`): PRs to `master` run the suite with
+coverage; system tests skip when the real data files aren't checked out.
+
+## External configuration system
+
+Runtime configuration lives in `src_timesheetalgo/config.yaml` (YAML, PEP 621
+deps in `pyproject.toml`). The environment is auto-detected by folder structure
+(`detect_environment`): a folder named `src_timesheetalgo` → `development`; a
+`Timealarm/` subfolder → `production`; otherwise `development`. `year` is
+required at the root level (no fallback) and raises `ConfigError` when missing.
+
+```yaml
+development:
+  file_paths:
+    timelog_path: "FDTech_timelog.csv"
+    timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
+  logging:
+    level: "INFO"
 ```
 
-### Integration Tests Only
-```bash
-python -m pytest -m integration -q
-```
+Validation/error handling is covered by `tests/unit/test_config.py`: missing
+file, invalid YAML, non-mapping root, missing `environments`/`file_paths`,
+unknown environment, and missing `year`.
 
-### System Verification Tests
-```bash
-python -m pytest -m system -q
-```
+## Test data files
 
-### All Tests (except System)
-```bash
-python -m pytest -m "not system" -v
-```
+- `sup/2025_extract.csv` — real timelog data (system tests, copied to `tmp_path`).
+- `src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm` — real timesheet (copied to `tmp_path`).
 
-### All Tests (including System)
-```bash
-python -m pytest tests/ -v --override-ini="addopts="
-```
-
-## Known Issues and Recommendations
-
-### Current Issues:
-1. **Fallback Configuration Handler:** Lines 128-131 only executed if config file missing
-   - **Impact:** Minimal - graceful fallback in place
-   - **Status:** Acceptable - fallback paths tested implicitly
-   - **Note:** Difficult to test without removing config file
-
-2. **Exception Re-raise Handlers:** Lines 69-70 in YAML error handling
-   - **Impact:** None - error handling works correctly
-   - **Status:** Acceptable - alternative paths tested
-
-### Recommendations:
-1. **Configuration Enhancement** - Add environment variable override support
-2. **Extended Testing** - Add integration tests for complete workflow scenarios
-3. **Performance Testing** - Consider performance testing with large datasets (500+ records)
-4. **Documentation** - Add configuration setup guide for developers
-
-## External Configuration System
-
-### Configuration File Location
-- **Primary Location:** `src_timesheetalgo/config.yaml`
-- **Format:** YAML (human-readable and version-controllable)
-
-### Supported Environments
-1. **Development** - For local development and testing
-   ```yaml
-   development:
-     file_paths:
-       timelog_path: "FDTech_timelog.csv"
-       timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
-     logging:
-       level: "INFO"
-   ```
-
-2. **Production** - For production deployment
-   ```yaml
-   production:
-     file_paths:
-       timelog_path: "Timealarm/FDTech_timelog.csv"
-       timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
-     logging:
-       level: "WARNING"
-   ```
-
-### Configuration Validation
-- ✅ Required keys validation (environments, file_paths)
-- ✅ File path existence checking
-- ✅ YAML syntax validation
-- ✅ Environment selection validation
-- ✅ Custom ConfigError exceptions with helpful messages
-
-### Error Handling
-The configuration system includes comprehensive error handling:
-- Missing config file → Graceful fallback to hardcoded paths
-- Invalid YAML → ConfigError with details
-- Missing environments → Clear error message with available options
-- Incomplete file paths → Validation with specific missing keys
-- Invalid structure → Clear error about expected format
-
-## Test Data Files
-
-### Input Files:
-- `sup/2025_extract.csv` - Real timelog data (93 records)
-- `src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm` - Target Excel timesheet
-
-### Generated Files:
-- `test_system_timesheetalgo_verification.log` - Detailed test execution log
-- `src_timesheetalgo/2025_FDTech_Dennis_Hartel_VERIFICATION_BACKUP.xlsm` - Backup file
-
-## Verification Reports
-
-Detailed verification reports documenting specific test runs are maintained separately:
-
-| Report | Date | Status |
-|--------|------|--------|
-| [`verification_report_2025-12-23.md`](verification_report_2025-12-23.md) | 2025-12-23 | ✅ APPROVED |
-| [`verification_report_2025-11-21.md`](verification_report_2025-11-21.md) | 2025-11-21 | ✅ APPROVED |
-
-These reports serve as audit artifacts documenting production readiness verification.
+System tests operate **only on temporary copies** and never modify these
+originals. They no longer generate a `.log` file or a `_VERIFICATION_BACKUP.xlsm`.
 
 ---
 
-**Last Updated:** 2025-12-23  
-**Test Environment:** Linux, Python 3.12, pytest 8.3.4  
-**Coverage Report:** HTML available in `tests/reports/htmlcov/index.html`
+**Counts:** unit 63 · integration 13 · system 7 · total 83.
+Branch+line coverage of `src_timesheetalgo` ≈ 99% (gate 90%).

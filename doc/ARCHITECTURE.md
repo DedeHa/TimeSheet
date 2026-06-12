@@ -1,5 +1,14 @@
 # TimeSheet Architecture
 
+TimeSheet is a single-module Python CLI (`src_timesheetalgo/TimeSheetAlgo.py`)
+that reads a CSV timelog, asks the user for a date range, writes the matching
+start/end times into the correct month worksheet of an Excel `.xlsm` timesheet,
+and saves it. Configuration is YAML-driven with folder-based environment
+detection; there is no database or network dependency.
+
+This document covers the system context, the runtime processing pipeline, the
+data model, the configuration subsystem, and the testing architecture.
+
 ## System-Level Diagrams
 
 ### Stakeholder Diagram
@@ -114,7 +123,93 @@ graph TB
 
 ---
 
-## Implementation Details
+## Processing Pipeline
+
+`main()` loads configuration and delegates to `run(config)`, which drives the
+five-step pipeline on a `TimeSheetProcessor`. A failure in any step (for example
+an empty selection) is logged and ends the run gracefully rather than crashing.
+
+```mermaid
+sequenceDiagram
+    participant CLI as main()
+    participant RUN as run(config)
+    participant P as TimeSheetProcessor
+    participant CSV as timelog.csv
+    participant XLSM as timesheet.xlsm
+
+    CLI->>CLI: load_config() + configure_logging()
+    CLI->>RUN: run(config)
+    RUN->>P: load_files()
+    P->>CSV: read rows (skip header)
+    P->>XLSM: load_workbook(keep_vba=True)
+    RUN->>P: request_date_input()
+    Note over P: prompt start/end (DD.MM.YYYY);<br/>else defaults: start = last worked day,<br/>end = yesterday
+    RUN->>P: select_timelog_data()
+    Note over P: keep rows within [start, end];<br/>raise ValueError if none
+    RUN->>P: store_data()
+    Note over P: per entry → sheet[month-1],<br/>row ROW_OFFSET+day, cols E/F
+    RUN->>P: save_timesheet()
+    P->>XLSM: workbook.save()
+```
+
+### Overwrite Decision
+
+When `store_data()` finds existing values in target cells it asks once how to
+proceed; the answer drives a small state machine applied to every conflicting day.
+
+```mermaid
+flowchart TD
+    START[store_data: any target cells already filled?]
+    NONE[No conflicts → write all entries]
+    PROMPT{Prompt: overwrite all / skip / abort}
+    OW[overwrite_all: replace existing values]
+    SK[skip_all: keep existing, skip those days]
+    AB[abort: stop writing]
+
+    START -->|none occupied| NONE
+    START -->|some occupied| PROMPT
+    PROMPT -->|y / empty / EOF| OW
+    PROMPT -->|s| SK
+    PROMPT -->|n| AB
+
+    style NONE fill:#c8e6c9
+    style OW fill:#e3f2fd
+    style SK fill:#fff3e0
+    style AB fill:#ffcdd2
+```
+
+---
+
+## Data Model
+
+### Timelog (CSV input)
+
+A header line followed by rows of `Date,Start,End,Remark`:
+
+- `Date` — `DD.MM.YYYY`
+- `Start`, `End` — `HH:MM` (or `HH:MM:SS`)
+- `Remark` — free text, **not** written to the timesheet
+
+### Timesheet (Excel `.xlsm`)
+
+- 12 month worksheets; worksheet **index = `date.month - 1`** (January = 0 … December = 11).
+- A day's entry lives at **row = `ROW_OFFSET + day`** (`ROW_OFFSET = 4`, so day 1 → row 5, day 31 → row 35).
+- **Column 5 (E)** = start time, **Column 6 (F)** = end time.
+- The work year comes from configuration (and the year cell at row 3, column 2 of the first sheet).
+- Loaded with `keep_vba=True` so embedded macros survive a save.
+
+### Constants (`TimeSheetAlgo.py`)
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `DATE_FORMAT` | `%d.%m.%Y` | date parsing/format |
+| `ROW_OFFSET` | `4` | header rows above day 1 |
+| `TIMESHEET_SHEETS` | `12` | month worksheets |
+| `MAX_RETRIES` | `3` | date-input retry budget |
+
+---
+
+## Configuration Subsystem
 
 ### System Architecture Overview
 
@@ -206,34 +301,35 @@ sequenceDiagram
 
 ### Environment Selection Logic
 
+The environment is detected purely from the **folder structure** by
+`detect_environment(base_dir)` — there is no environment parameter, and the
+`default_environment` key present in `config.yaml` is **not** read by the loader.
+
 ```mermaid
 flowchart TD
-    START([Start Configuration Loading])
+    START([load_config: base_dir = config.yaml directory])
 
-    CHECK_PARAM{Environment parameter provided?}
-    USE_PARAM[Use provided environment]
+    Q1{basename == 'src_timesheetalgo'?}
+    DEV1[environment = development]
+    Q2{'Timealarm/' subfolder exists?}
+    PROD[environment = production]
+    DEV2[environment = development fallback]
 
-    CHECK_DEFAULT{default_environment in config?}
-    USE_DEFAULT[Use default_environment from config]
-    USE_DEV[Use 'development' as fallback]
-
-    VALIDATE{Environment exists in config?}
-    LOAD_ENV[Load environment configuration]
+    VALIDATE{environment in config 'environments'?}
+    LOAD_ENV[Load that environment's file_paths + logging]
     RAISE_ERROR[Raise ConfigError]
 
     END([Configuration Loaded])
 
-    START --> CHECK_PARAM
+    START --> Q1
+    Q1 -->|Yes| DEV1
+    Q1 -->|No| Q2
+    Q2 -->|Yes| PROD
+    Q2 -->|No| DEV2
 
-    CHECK_PARAM -->|Yes| USE_PARAM
-    CHECK_PARAM -->|No| CHECK_DEFAULT
-
-    CHECK_DEFAULT -->|Yes| USE_DEFAULT
-    CHECK_DEFAULT -->|No| USE_DEV
-
-    USE_PARAM --> VALIDATE
-    USE_DEFAULT --> VALIDATE
-    USE_DEV --> VALIDATE
+    DEV1 --> VALIDATE
+    PROD --> VALIDATE
+    DEV2 --> VALIDATE
 
     VALIDATE -->|Yes| LOAD_ENV
     VALIDATE -->|No| RAISE_ERROR
@@ -244,7 +340,7 @@ flowchart TD
     style END fill:#e8f5e8
     style RAISE_ERROR fill:#ffcdd2
     style LOAD_ENV fill:#e3f2fd
-    style USE_DEFAULT fill:#fff3e0
+    style PROD fill:#fff3e0
 ```
 
 ### Configuration Structure
@@ -366,7 +462,6 @@ classDiagram
     }
 
     class TimeSheetAlgoModule {
-        +CONFIG: Dict[str, Any]
         +DATE_FORMAT: str
         +MAX_RETRIES: int
         +ROW_OFFSET: int
@@ -374,6 +469,8 @@ classDiagram
         +load_config(config_path): Dict[str, Any]
         +parse_date(input_prompt, retries): datetime
         +check_file_existence(filepath, filetype): Any
+        +run(config): None
+        +main(): None
     }
 
     class TimeSheetProcessor {
@@ -396,6 +493,8 @@ classDiagram
         +set_default_start_date(): datetime
         +set_default_end_date(): datetime
         -_get_date(prompt, fallback): datetime
+        -_check_and_confirm_overwrite(): str
+        -_prompt_overwrite_decision(count): str
     }
 
     class PyYAML {
@@ -426,7 +525,7 @@ classDiagram
     TimeSheetAlgoModule --> PythonLogging : configures
     TimeSheetAlgoModule --> OSModule : uses
 
-    note for TimeSheetAlgoModule "Year loaded from config.yaml\nEnvironment auto-detected\nNo hardcoded fallbacks"
+    note for TimeSheetAlgoModule "Year required from config.yaml (no fallback)\nEnvironment auto-detected by folder (detect_environment)\nrun()/main() orchestrate the pipeline"
     note for TimeSheetProcessor "Year stored as instance attribute\nUsed for default date calculations"
 ```
 
@@ -434,17 +533,17 @@ classDiagram
 
 ```mermaid
 graph TB
-    subgraph "Development Environment (default_environment: development)"
+    subgraph "Development Environment (folder: src_timesheetalgo)"
         DEV_SCRIPT[TimeSheetAlgo.py]
         DEV_CONFIG[config.yaml]
-        DEV_DATA[fdtech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
+        DEV_DATA[FDTech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
         DEV_LOGS[Console Output - INFO level]
     end
 
-    subgraph "Production Environment (set via parameter or config)"
+    subgraph "Production Environment (folder contains Timealarm/)"
         PROD_SCRIPT[TimeSheetAlgo.py]
         PROD_CONFIG[config.yaml]
-        PROD_DATA[Timealarm/fdtech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
+        PROD_DATA[Timealarm/FDTech_timelog.csv<br/>2025_FDTech_Dennis_Hartel.xlsm]
         PROD_LOGS[Console Output - WARNING level]
     end
 
@@ -460,42 +559,27 @@ graph TB
     style PROD_SCRIPT fill:#ffebee
 ```
 
-### Configuration Validation Process
+> The end-to-end validation order is shown in **Error Handling Flow** above
+> (file → YAML → year → environment → file_paths). There is **no** fallback to
+> hardcoded defaults: any `ConfigError` propagates to `main()`, which logs it and
+> exits with status 1.
 
-```mermaid
-stateDiagram-v2
-    [*] --> LoadingConfig
+---
 
-    LoadingConfig --> FileCheck
-    FileCheck --> FileExists : file found
-    FileCheck --> RaiseConfigError : file not found
+## Testing Architecture
 
-    FileExists --> YAMLParsing
-    YAMLParsing --> ValidYAML : parsing successful
-    YAMLParsing --> RaiseConfigError : parsing failed
+Tests mirror the runtime boundaries described above, in three levels — one
+folder and one marker each. Full detail (fixtures, run commands, coverage gate)
+lives in [`../tests/TESTING.md`](../tests/TESTING.md).
 
-    ValidYAML --> StructureValidation
-    StructureValidation --> ValidStructure : has 'environments' key
-    StructureValidation --> RaiseConfigError : missing required keys
+| Level | Folder | Exercises |
+|-------|--------|-----------|
+| unit | `tests/unit/` | one function/method in isolation — the configuration subsystem, date logic, file I/O, and the overwrite-decision logic |
+| integration | `tests/integration/` | the processing pipeline on an in-memory dummy workbook — data-model mapping (`month-1`, `ROW_OFFSET+day`, columns E/F), the overwrite workflow, and date boundaries |
+| system | `tests/system/` | the shipped `TimeSheetProcessor` / `run()` / `main()` against real-file copies (skipped when the real resources are absent) |
 
-    ValidStructure --> EnvironmentSelection
-    EnvironmentSelection --> ValidEnvironment : environment found
-    EnvironmentSelection --> RaiseConfigError : environment not found
-
-    ValidEnvironment --> PathValidation
-    PathValidation --> ValidPaths : has required paths
-    PathValidation --> RaiseConfigError : missing paths
-
-    ValidPaths --> PathConversion
-    PathConversion --> ConfigurationReady
-
-    RaiseConfigError --> CatchException
-    CatchException --> FallbackDefaults
-    FallbackDefaults --> ConfigurationReady
-
-    ConfigurationReady --> [*]
-
-    note right of ConfigurationReady : Configuration loaded successfully\nLogging configured from YAML\nFile paths converted to absolute\nDiagnostics logged at WARNING level
-
-    note right of FallbackDefaults : Using hardcoded defaults\nError logged\nGraceful degradation
-```
+Mapping back to this document: the **configuration subsystem** is verified at the
+unit level (`tests/unit/test_config.py`), the **data model** and **overwrite
+decision** at the integration level, and the **processing pipeline** end-to-end
+at the system level. Coverage is gated at 90% (`[tool.coverage]` in
+`pyproject.toml`); see `tests/TESTING.md`.

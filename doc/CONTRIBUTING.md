@@ -194,6 +194,30 @@ hotfix/*   →  [PR + Tests + Review]  →  master  →  Stable, Tested Code
 - ✅ Tests are **run only on PRs to `master`** (required)
 - ✅ Deployment happens **only on release tags** (production)
 
+### Prerequisites: GitHub CLI (`gh`)
+
+Pull requests are created with the [GitHub CLI](https://cli.github.com/). Install and authenticate it once.
+
+**Install (Windows):**
+```bash
+winget install --id GitHub.cli -e        # requires admin (UAC elevation)
+```
+No admin rights? Use a portable install (no elevation):
+```bash
+# Download gh_<version>_windows_amd64.zip from https://github.com/cli/cli/releases
+# unzip into %LOCALAPPDATA%\Programs\GitHubCLI, then add its \bin to the user PATH:
+setx PATH "%PATH%;%LOCALAPPDATA%\Programs\GitHubCLI\bin"
+```
+(macOS: `brew install gh` · Linux: see the install docs. Restart the terminal after install so `gh` is on `PATH`.)
+
+**Authenticate (one-time, interactive):**
+```bash
+gh auth login      # GitHub.com → HTTPS → log in via browser, grant the 'repo' scope
+gh auth status     # verify
+```
+
+**No `gh`?** You can still open PRs via the GitHub web UI (`git push` prints a ready PR link) or the VS Code "GitHub Pull Requests" extension.
+
 ### Phase 1: Feature Development (Tests Optional)
 
 1. **Create feature branch** (always from `master`):
@@ -226,13 +250,13 @@ hotfix/*   →  [PR + Tests + Review]  →  master  →  Stable, Tested Code
 git checkout feature/PRO-123-description
 
 # 2. Reactivate the virtual environment
-source /workspaces/TimeSheet/venv/bin/activate  # Linux/macOS
+source /workspaces/TimeSheet/.venv/bin/activate  # Linux/macOS
 # or on Windows:
-# venv\Scripts\activate
+# .venv\Scripts\activate
 
 # 3. Verify you're on the correct branch and environment
 git branch --show-current     # Should show: feature/PRO-123-description
-echo $VIRTUAL_ENV             # Should show: /workspaces/TimeSheet/venv
+echo $VIRTUAL_ENV             # Should show: /workspaces/TimeSheet/.venv
 ```
 
 #### Switching back to Master:
@@ -242,7 +266,7 @@ echo $VIRTUAL_ENV             # Should show: /workspaces/TimeSheet/venv
 git checkout master
 
 # 2. Reactivate the virtual environment
-source /workspaces/TimeSheet/venv/bin/activate
+source /workspaces/TimeSheet/.venv/bin/activate
 
 # 3. Verify
 git branch --show-current     # Should show: master
@@ -256,7 +280,7 @@ Create a shell alias for faster branch switching with automatic venv reactivatio
 # Add to ~/.bashrc or ~/.zshrc
 alias switch-branch='function(){
   git checkout $1
-  source /workspaces/TimeSheet/venv/bin/activate
+  source /workspaces/TimeSheet/.venv/bin/activate
   echo "✅ Switched to branch: $(git branch --show-current)"
   echo "✅ venv activated: $VIRTUAL_ENV"
 }; function'

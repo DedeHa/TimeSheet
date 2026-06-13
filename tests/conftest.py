@@ -1,4 +1,8 @@
-"""Configuration and fixtures for pytest tests."""
+"""Shared pytest fixtures for all test levels.
+
+Level-specific fixtures live in tests/<level>/conftest.py and cascade on top of
+the fixtures defined here (root -> level -> test).
+"""
 
 import os
 import sys
@@ -7,9 +11,11 @@ from datetime import datetime
 import openpyxl
 import pytest
 
-# Ensure repository root is on sys.path so tests can import local package src_timesheetalgo
+# Ensure repository root is on sys.path so tests can import the local package
+# `src_timesheetalgo` regardless of where pytest is invoked from.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src_timesheetalgo.TimeSheetAlgo import (
+from src_timesheetalgo.TimeSheetAlgo import (  # noqa: E402
+    ROW_OFFSET,
     TIMESHEET_SHEETS,
     TimeSheetProcessor,
 )
@@ -37,29 +43,31 @@ except Exception:  # pragma: no cover - fallback path in user envs without freez
 
 @pytest.fixture(autouse=True)
 def frozen_time():
-    """Freeze time for deterministic tests."""
+    """Freeze time so date defaults (e.g. ``now() - 1 day``) are deterministic."""
     with freeze_time("2025-12-23"):
         yield
 
 
 def create_dummy_workbook():
-    """Create a dummy workbook mimicking the timesheet structure."""
+    """Create a dummy workbook mimicking the timesheet structure.
+
+    - ``TIMESHEET_SHEETS`` worksheets (month 1..12 -> index 0..11).
+    - A year value in cell (3, 2) of the first sheet.
+    """
     wb = openpyxl.Workbook()
-    # Ensure we have TIMESHEET_SHEETS worksheets
     for i in range(TIMESHEET_SHEETS):
         if i == 0:
             ws = wb.active
             ws.title = "Month1"
         else:
             wb.create_sheet(title=f"Month{i+1}")
-    # Set a year cell used by TimeSheetProcessor
     wb.worksheets[0].cell(row=3, column=2, value=datetime(2025, 1, 1))
     return wb
 
 
 @pytest.fixture
 def mock_workbook():
-    """Create a mock workbook with timesheet structure."""
+    """Create a mock workbook with the timesheet structure."""
     return create_dummy_workbook()
 
 
@@ -81,7 +89,7 @@ def mock_csv_file(tmp_path):
 
 @pytest.fixture
 def mock_processor(mock_csv_file, mock_excel_file):
-    """Create a TimeSheetProcessor with mock files for testing."""
+    """Create a TimeSheetProcessor with mock files, already loaded."""
     config = {
         "timelog_path": str(mock_csv_file),
         "timesheet_path": str(mock_excel_file),
@@ -93,24 +101,34 @@ def mock_processor(mock_csv_file, mock_excel_file):
 
 
 @pytest.fixture
-def real_resource_copy(tmp_path):
-    """Copy real resource files into temporary directory.
+def make_processor(tmp_path):
+    """Build TimeSheetProcessor instances over a fresh dummy workbook (factory).
 
-    Returns a dict with paths if available, else None.
+    Avoids the repeated "build workbook -> poke cells -> assign timelog"
+    boilerplate. The workbook is held in memory; no real files are read.
+
+    Args (all optional):
+        timelog: list of ``[date, start, end]`` rows assigned to ``processor.timelog``.
+        timesheet_cells: list of ``(sheet_index, day, start, end)`` tuples used to
+            pre-populate existing data (``end`` may be ``None`` to set only start).
+        year: configured work year (default 2025).
     """
-    import shutil
-    from pathlib import Path
 
-    result = {}
-    timelog_src = Path("sup/2025_extract.csv")
-    timesheet_src = Path("src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm")
-    if timelog_src.exists() and timesheet_src.exists():
-        timelog_dst = tmp_path / "timelog_copy.csv"
-        timesheet_dst = tmp_path / "timesheet_copy.xlsm"
-        shutil.copy2(timelog_src, timelog_dst)
-        shutil.copy2(timesheet_src, timesheet_dst)
-        result["timelog_path"] = str(timelog_dst)
-        result["timesheet_path"] = str(timesheet_dst)
-        result["backup_path"] = str(tmp_path / "backup.xlsm")
-        return result
-    return None
+    def _make(timelog=None, timesheet_cells=None, year=2025):
+        wb = create_dummy_workbook()
+        for sheet_idx, day, start, end in timesheet_cells or []:
+            ws = wb.worksheets[sheet_idx]
+            ws.cell(row=ROW_OFFSET + day, column=5, value=start)
+            if end is not None:
+                ws.cell(row=ROW_OFFSET + day, column=6, value=end)
+        config = {
+            "timelog_path": "dummy.csv",
+            "timesheet_path": str(tmp_path / "timesheet.xlsx"),
+            "year": year,
+        }
+        processor = TimeSheetProcessor(config)
+        processor.timesheet = wb
+        processor.timelog = timelog or []
+        return processor
+
+    return _make

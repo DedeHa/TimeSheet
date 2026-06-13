@@ -137,7 +137,7 @@ The application will:
 |----------|-------------|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
 | [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
-| [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation, test structure, and verification reports |
+| [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation and test structure |
 
 ## Development
 
@@ -183,20 +183,23 @@ For detailed instructions on branch switching, shell aliases, and environment ma
 
 ```bash
 # All tests with coverage
-python -m pytest tests/ -v --cov=src_timesheetalgo --cov-report=term-missing
+python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
 
-# Unit tests only
-python -m pytest tests/test_unit.py -v
+# One level (by path or marker)
+python -m pytest tests/unit          # or: -m unit
+python -m pytest tests/integration   # or: -m integration
+python -m pytest tests/system        # or: -m system
 
-# System verification tests
-python -m pytest tests/test_system.py -v
+# Fast set (no real resources) — what PR CI runs
+python -m pytest -m "not system"
 ```
 
 ### Test Coverage
 
-- **51 tests** with **97% code coverage**
-- Unit tests for all functions and classes
-- System verification tests with real data
+- **83 tests** across three levels (unit 63 · integration 13 · system 7), ~99% branch+line coverage of `src_timesheetalgo` (CI gate: 90%)
+- Unit: individual functions/methods in isolation
+- Integration: the `TimeSheetProcessor` pipeline on an in-memory workbook
+- System: black-box runs against real-file copies (skipped when data is absent)
 
 See [`tests/TESTING.md`](tests/TESTING.md) for detailed testing documentation.
 
@@ -207,18 +210,17 @@ TimeSheet/
 ├── src_timesheetalgo/       # Main application source
 │   ├── TimeSheetAlgo.py     # Main application module
 │   └── config.yaml          # Configuration file
-├── tests/                   # Test suite
-│   ├── TESTING.md           # Testing documentation
-│   ├── test_unit.py         # Unit tests
-│   ├── test_integration.py  # Integration tests
-│   ├── test_system.py       # System verification tests
-│   └── verification_report_*.md  # Test verification reports
+├── tests/                   # Test suite (one folder per level)
+│   ├── TESTING.md           # Test docs: layout, levels, fixtures, configuration
+│   ├── conftest.py          # Shared fixtures
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   └── system/              # System tests (real resources)
 ├── doc/                     # Documentation and diagrams
 │   ├── ARCHITECTURE.md      # Architecture documentation
 │   └── CONTRIBUTING.md      # Contributing guidelines
 ├── sup/                     # Support files and test data
-├── pyproject.toml          # Project metadata & dependencies (PEP 621)
-└── pytest.ini               # Pytest configuration
+└── pyproject.toml          # Project metadata, deps, and all tool config (pytest, coverage, black, ruff)
 ```
 
 See [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details.

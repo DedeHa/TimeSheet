@@ -395,24 +395,17 @@ class TimeSheetProcessor:
         self.timesheet.save(self.timesheet_path)
 
 
-if __name__ == "__main__":  # pragma: no cover
-    try:
-        CONFIG = load_config()
-    except ConfigError as e:
-        logging.basicConfig(level=logging.ERROR)
-        logging.error("Configuration error: %s", e)
-        raise SystemExit(1) from None
+def run(config: dict) -> None:
+    """Execute the timesheet processing pipeline for a given config.
 
-    configure_logging(CONFIG["logging"])
+    Steps: load files -> request date range -> select data -> store -> save.
+    Errors raised by individual steps are logged rather than propagated, so a
+    bad date range or empty selection ends the run gracefully.
 
-    logging.info("CWD: %s", os.getcwd())
-
-    logging.info("Environment: %s", CONFIG["environment"])
-    logging.info("Timelog path: %s", CONFIG["timelog_path"])
-    logging.info("Timesheet path: %s", CONFIG["timesheet_path"])
-    logging.info("Work year: %d", CONFIG["year"])
-
-    processor = TimeSheetProcessor(CONFIG)
+    Args:
+        config: Mapping with ``timelog_path``, ``timesheet_path`` and ``year``.
+    """
+    processor = TimeSheetProcessor(config)
 
     try:
         processor.load_files()
@@ -423,3 +416,27 @@ if __name__ == "__main__":  # pragma: no cover
         logging.info("Processing complete.")
     except Exception as e:
         logging.error("An error occurred: %s", e)
+
+
+def main() -> None:
+    """Load configuration, configure logging, and run the pipeline."""
+    try:
+        config = load_config()
+    except ConfigError as e:
+        logging.basicConfig(level=logging.ERROR)
+        logging.error("Configuration error: %s", e)
+        raise SystemExit(1) from None
+
+    configure_logging(config["logging"])
+
+    logging.info("CWD: %s", os.getcwd())
+    logging.info("Environment: %s", config["environment"])
+    logging.info("Timelog path: %s", config["timelog_path"])
+    logging.info("Timesheet path: %s", config["timesheet_path"])
+    logging.info("Work year: %d", config["year"])
+
+    run(config)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

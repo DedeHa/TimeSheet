@@ -42,16 +42,37 @@ per-file-ignores = { "tests/**" = ["E501"] }
 select = ["E", "F", "W", "C", "B", "I"]
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-pythonpath = ["src_timesheetalgo"]
+# Single source of truth for pytest. Test levels = one folder + one marker each:
+#   unit         tests/unit/         individual functions/methods in isolation
+#   integration  tests/integration/  TimeSheetProcessor pipeline on a mock workbook
+#   system       tests/system/       real-resource copies + CLI flow (skip if missing)
 testpaths = ["tests"]
-addopts = "-q --disable-warnings --strict-markers --maxfail=1"
-log_cli = true
-
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra --strict-markers --tb=short"
+# Keep this section free of '%' (e.g. a log_cli_format): radon reads pyproject
+# through configparser, which treats '%' as interpolation and crashes. Live
+# logging is off, so a custom format is not needed here.
+log_cli = false
 markers = [
-    "unit: fast unit tests (no external I/O)",
-    "integration: integration tests (require I/O)",
-    "system: end-to-end verification (may be slow)",
+    "unit: individual functions/methods in isolation (tmp files or mocks, no real resources)",
+    "integration: TimeSheetProcessor pipeline on the in-memory dummy workbook",
+    "system: real-resource copies + CLI flow, skipped when resources are missing",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["src_timesheetalgo"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
 ]
 
 # Note:

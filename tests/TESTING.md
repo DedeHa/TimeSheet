@@ -21,6 +21,7 @@ tests/
     test_files.py                # check_file_existence (csv/excel/lock/permission/not-found)
     test_processor_methods.py    # load_files, request_date_input, select_timelog_data, save_timesheet
     test_overwrite.py            # confirm_overwrite, _prompt_overwrite_decision, _check_and_confirm_overwrite
+    test_consistency.py          # check_year_consistency (config vs. timesheet year)
   integration/
     conftest.py                  # processor_with_timelog builder
     test_pipeline.py             # load→select→store→save (single + multi-month + week)
@@ -52,6 +53,7 @@ exact error messages.
 - `test_files.py` — `check_file_existence` (csv/excel happy path, not-found, permission denied, lock warning).
 - `test_processor_methods.py` — `load_files`, `request_date_input` (valid/invalid/empty/EOF/specific default), `select_timelog_data` (in-range + empty→ValueError), `save_timesheet`.
 - `test_overwrite.py` — `confirm_overwrite`, `_prompt_overwrite_decision`, `_check_and_confirm_overwrite` (the decision logic, in isolation).
+- `test_consistency.py` — `check_year_consistency` (year as date, year as text, mismatch → `ConsistencyError`, empty `B3`).
 
 ### 2. Integration (`tests/integration/`, marker `integration`)
 
@@ -138,7 +140,7 @@ python -m pytest --cov=src_timesheetalgo --cov-report=term-missing
 ```
 
 CI (`.github/workflows/python-ci.yml`): PRs to `master` run the full suite with
-coverage; all 83 tests (including 7 system tests) run because the real data files
+coverage; all 87 tests (including 7 system tests) run because the real data files
 are committed to the repo.
 
 ## Real test data files
@@ -150,7 +152,7 @@ The system tests rely on two real data files committed to the repository:
 
 These files **are committed to version control** (not gitignored) to ensure:
 
-1. ✅ All 83 tests run on CI (including 7 system tests).
+1. ✅ All 87 tests run on CI (including 7 system tests).
 2. ✅ 100% code coverage is achieved and gated at 90%.
 3. ✅ System tests verify the real end-to-end workflow.
 4. ✅ System tests skip cleanly only if cloned without history or files are manually deleted.
@@ -171,5 +173,5 @@ If system tests skip with a message like `"Real resource files not available"`, 
 
 ---
 
-**Counts:** unit 63 · integration 13 · system 7 · total 83.
+**Counts:** unit 67 · integration 13 · system 7 · total 87.
 Branch+line coverage of `src_timesheetalgo` ≈ 99% (gate 90%).

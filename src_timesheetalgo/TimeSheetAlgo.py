@@ -30,6 +30,10 @@ MAX_RETRIES = 3
 ROW_OFFSET = 4
 TIMESHEET_SHEETS = 12
 
+# Cell holding the timesheet year (used for the config/timesheet consistency check)
+YEAR_CHECK_SHEET = "Januar"
+YEAR_CHECK_CELL = "B3"
+
 
 # ---------------------------------------------------------------------------
 # Configuration & logging
@@ -38,6 +42,10 @@ TIMESHEET_SHEETS = 12
 
 class ConfigError(Exception):
     """Raised when configuration loading fails."""
+
+
+class ConsistencyError(Exception):
+    """Raised when configuration and timesheet data are inconsistent."""
 
 
 def detect_environment(base_path: str) -> str:
@@ -201,6 +209,33 @@ class TimeSheetProcessor:
         logging.info("Loading files...")
         self.timelog = check_file_existence(self.timelog_path, "csv")
         self.timesheet = check_file_existence(self.timesheet_path, "excel")
+
+    def check_year_consistency(self):
+        """Abort if the configured year differs from the timesheet year.
+
+        The timesheet stores its year as a date in cell
+        ``YEAR_CHECK_SHEET``!``YEAR_CHECK_CELL``. This input check runs after
+        config and timesheet are loaded and prevents writing into the wrong
+        year's workbook.
+
+        Raises:
+            ConsistencyError: If the years differ or the cell holds no usable
+                year.
+        """
+        cell = self.timesheet[YEAR_CHECK_SHEET][YEAR_CHECK_CELL].value
+        excel_year = getattr(cell, "year", None) or (
+            int(cell) if str(cell).strip().isdigit() else None
+        )
+
+        if excel_year != self.year:
+            message = (
+                f"Year mismatch: config year {self.year} vs. timesheet "
+                f"{YEAR_CHECK_SHEET}!{YEAR_CHECK_CELL} = {cell!r}. Aborting."
+            )
+            logging.error(message)
+            raise ConsistencyError(message)
+
+        logging.info("Year consistency OK: %s", excel_year)
 
     def request_date_input(self):
         """Request start and end date from user or use defaults."""
@@ -409,6 +444,7 @@ def run(config: dict) -> None:
 
     try:
         processor.load_files()
+        processor.check_year_consistency()
         processor.request_date_input()
         processor.select_timelog_data()
         processor.store_data()

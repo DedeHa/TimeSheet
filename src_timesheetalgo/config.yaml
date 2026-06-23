@@ -1,10 +1,10 @@
-year: 2025
+year: 2026
 
 environments:
   development:
     file_paths:
       timelog_path: "FDTech_timelog.csv"
-      timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
+      timesheet_path: "2026_FDTech_Dennis_Hartel.xlsm"
     logging:
       level: "INFO"
       format: "%(asctime)s - %(levelname)s - %(message)s"
@@ -12,7 +12,7 @@ environments:
   production:
     file_paths:
       timelog_path: "Timealarm/FDTech_timelog.csv"
-      timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
+      timesheet_path: "2026_FDTech_Dennis_Hartel.xlsm"
     logging:
       level: "INFO"
       format: "%(asctime)s - %(levelname)s - %(message)s"

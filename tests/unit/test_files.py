@@ -101,3 +101,23 @@ def test_excel_locked_warns_but_returns_workbook(mock_excel_file, monkeypatch, c
     assert "Excel file may be locked" in caplog.text
     assert "Lock error" in caplog.text
     assert "Please close the Excel file" in caplog.text
+
+
+# ---------------------------------------------------------------------------
+# PRO-262: CSV column-count equivalence
+# ---------------------------------------------------------------------------
+
+
+def test_csv_preserves_remark_column(tmp_path):
+    """A 4-column row (Date,Start,End,Remark) is loaded intact, header stripped.
+
+    The real timelog carries a free-text Remark column; the loader must keep
+    it (store_data later ignores everything past End).
+    """
+    csv_file = tmp_path / "timelog.csv"
+    csv_file.write_text(
+        "Date,Start,End,Remark\n15.03.2025,09:00,17:00,Project A\n",
+        encoding="utf-8",
+    )
+    data = check_file_existence(str(csv_file), "csv")
+    assert data == [["15.03.2025", "09:00", "17:00", "Project A"]]

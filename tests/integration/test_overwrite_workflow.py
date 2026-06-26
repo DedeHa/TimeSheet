@@ -76,6 +76,53 @@ def test_empty_answer_overwrites(processor_with_timelog, monkeypatch):
     assert processor.timesheet.worksheets[0].cell(row=_ROW, column=5).value == "09:00"
 
 
+# ---------------------------------------------------------------------------
+# PRO-262: partial-conflict equivalence (a mix of occupied and free days)
+# ---------------------------------------------------------------------------
+
+
+def test_skip_all_keeps_conflict_but_writes_free_day(
+    processor_with_timelog, monkeypatch
+):
+    """skip_all preserves the occupied day yet still writes a non-conflicting day."""
+    processor = processor_with_timelog(
+        [["05.01.2025", "09:00", "17:00"], ["06.01.2025", "10:00", "18:00"]],
+        "05.01.2025",
+        "06.01.2025",
+        timesheet_cells=[(0, 5, "08:00", "16:00")],  # only Jan 5 is occupied
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt: "s")
+
+    processor.select_timelog_data()
+    processor.store_data()
+
+    sheet = processor.timesheet.worksheets[0]
+    assert sheet.cell(row=ROW_OFFSET + 5, column=5).value == "08:00"  # kept
+    assert sheet.cell(row=ROW_OFFSET + 6, column=5).value == "10:00"  # written
+
+
+def test_abort_is_not_atomic_for_earlier_free_days(processor_with_timelog, monkeypatch):
+    """abort stops at the first conflict but keeps an earlier free day already written.
+
+    Documents (PRO-262) that 'abort' is not all-or-nothing: a non-conflicting
+    day processed before the conflict is written and never rolled back.
+    """
+    processor = processor_with_timelog(
+        [["06.01.2025", "10:00", "18:00"], ["05.01.2025", "09:00", "17:00"]],
+        "05.01.2025",
+        "06.01.2025",
+        timesheet_cells=[(0, 5, "08:00", "16:00")],  # Jan 5 occupied, Jan 6 free
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt: "n")
+
+    processor.select_timelog_data()
+    processor.store_data()
+
+    sheet = processor.timesheet.worksheets[0]
+    assert sheet.cell(row=ROW_OFFSET + 6, column=5).value == "10:00"  # already written
+    assert sheet.cell(row=ROW_OFFSET + 5, column=5).value == "08:00"  # conflict kept
+
+
 def test_eof_answer_overwrites(processor_with_timelog, monkeypatch):
     """An EOF at the overwrite prompt defaults to overwrite_all."""
     processor = _build(processor_with_timelog)

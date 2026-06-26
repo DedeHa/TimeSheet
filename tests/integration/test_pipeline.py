@@ -93,3 +93,17 @@ def test_pipeline_full_workflow_with_save(processor_with_timelog, monkeypatch):
     processor.save_timesheet()
 
     assert len(save_calls) == 1
+
+
+def test_pipeline_ignores_remark_column(processor_with_timelog):
+    """A 4th 'Remark' column is ignored; only start/end reach the worksheet."""
+    processor = processor_with_timelog(
+        [["12.03.2025", "09:00", "17:00", "Project X"]], "12.03.2025", "12.03.2025"
+    )
+
+    processor.select_timelog_data()
+    processor.store_data()
+
+    march = processor.timesheet.worksheets[2]
+    assert march.cell(row=ROW_OFFSET + 12, column=5).value == "09:00"
+    assert march.cell(row=ROW_OFFSET + 12, column=6).value == "17:00"

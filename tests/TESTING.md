@@ -13,20 +13,21 @@ fixtures, and the configuration behind them.
 ```text
 tests/
   conftest.py                    # shared: frozen_time, sys.path, workbook/processor builders
+  boundary_equivalence_analysis.md  # ECP/BVA analysis, derived cases, findings (PRO-262)
   unit/
     conftest.py                  # clean_root_logger
     test_config.py               # load_config, _read_yaml, detect_environment, ConfigError
     test_logging.py              # configure_logging
-    test_dates.py                # parse_date, _get_date, set_default_start/end_date
-    test_files.py                # check_file_existence (csv/excel/lock/permission/not-found)
-    test_processor_methods.py    # load_files, request_date_input, select_timelog_data, save_timesheet
+    test_dates.py                # parse_date (incl. calendar/leap-day BVA), _get_date, set_default_start/end_date
+    test_files.py                # check_file_existence (csv/excel/lock/permission/not-found, remark column)
+    test_processor_methods.py    # load_files, request_date_input, select_timelog_data (range BVA), save_timesheet
     test_overwrite.py            # confirm_overwrite, _prompt_overwrite_decision, _check_and_confirm_overwrite
     test_consistency.py          # check_year_consistency (config vs. timesheet year)
   integration/
     conftest.py                  # processor_with_timelog builder
-    test_pipeline.py             # load→select→store→save (single + multi-month + week)
-    test_overwrite_workflow.py   # store_data with overwrite_all / skip_all / abort / empty / EOF
-    test_boundaries.py           # day 1 / day 31, month boundary, cross-year filtering
+    test_pipeline.py             # load→select→store→save (single + multi-month + week + remark column)
+    test_overwrite_workflow.py   # store_data with overwrite_all / skip_all / abort / empty / EOF / mixed conflicts
+    test_boundaries.py           # day 1 / day 31, month boundary, December/last sheet, cross-year filtering
   system/
     conftest.py                  # real_resource_copy, cli_runner
     test_real_pipeline.py        # real copies → TimeSheetProcessor end-to-end, reload & assert cells
@@ -49,9 +50,9 @@ exact error messages.
 
 - `test_config.py` — `load_config`, `_read_yaml`, `detect_environment`, all `ConfigError`/`KeyError` paths, empty-YAML branch.
 - `test_logging.py` — `configure_logging` (custom/default/invalid level, default format).
-- `test_dates.py` — `parse_date` (valid / retries-exhausted / retries=0 / retry), `_get_date` (success + fallback), `set_default_start_date` (with data + no-data fallback), `set_default_end_date`.
-- `test_files.py` — `check_file_existence` (csv/excel happy path, not-found, permission denied, lock warning).
-- `test_processor_methods.py` — `load_files`, `request_date_input` (valid/invalid/empty/EOF/specific default), `select_timelog_data` (in-range + empty→ValueError), `save_timesheet`.
+- `test_dates.py` — `parse_date` (valid / retries-exhausted / retries=0 / retry / calendar-invalid / leap-day BVA), `_get_date` (success + fallback), `set_default_start_date` (with data + no-data fallback + day-31 boundary `xfail`), `set_default_end_date`.
+- `test_files.py` — `check_file_existence` (csv/excel happy path, not-found, permission denied, lock warning, 4-column/remark row).
+- `test_processor_methods.py` — `load_files`, `request_date_input` (valid/invalid/empty/EOF/specific default), `select_timelog_data` (in-range, empty→ValueError, inclusive-range BVA, single-day, inverted range, empty timelog, malformed row), `save_timesheet`.
 - `test_overwrite.py` — `confirm_overwrite`, `_prompt_overwrite_decision`, `_check_and_confirm_overwrite` (the decision logic, in isolation).
 - `test_consistency.py` — `check_year_consistency` (year as date, year as text, mismatch → `ConsistencyError`, empty `B3`).
 
@@ -62,9 +63,13 @@ dummy 12-sheet workbook (no real `.xlsm`/`.csv`). Verifies the data model:
 sheet index = `date.month - 1`, row = `ROW_OFFSET + day`, start in column 5,
 end in column 6.
 
-- `test_pipeline.py` — `select → store → save` for single entry, multiple months, and a realistic week.
-- `test_overwrite_workflow.py` — how `store_data` *acts* on each decision (overwrite_all / skip_all / abort / empty / EOF).
-- `test_boundaries.py` — day 1, day 31, month boundary, cross-year filtering.
+- `test_pipeline.py` — `select → store → save` for single entry, multiple months, a realistic week, and a 4-column row whose remark is ignored.
+- `test_overwrite_workflow.py` — how `store_data` *acts* on each decision (overwrite_all / skip_all / abort / empty / EOF), plus mixed occupied+free days (skip keeps the conflict but writes the free day; abort is not atomic).
+- `test_boundaries.py` — day 1, day 31, month boundary, December → last sheet, cross-year filtering.
+
+For the equivalence-class and boundary-value rationale behind these cases — and
+the findings they document (e.g. the day-31 default-start gap) — see
+[`boundary_equivalence_analysis.md`](boundary_equivalence_analysis.md).
 
 ### 3. System (`tests/system/`, marker `system`)
 
@@ -140,8 +145,8 @@ python -m pytest --cov=src_timesheetalgo --cov-report=term-missing
 ```
 
 CI (`.github/workflows/python-ci.yml`): PRs to `master` run the full suite with
-coverage; all 87 tests (including 7 system tests) run because the real data files
-are committed to the repo.
+coverage; all 103 tests (including 7 system tests) run because the real data
+files are committed to the repo.
 
 ## Real test data files
 
@@ -152,7 +157,7 @@ The system tests rely on two real data files committed to the repository:
 
 These files **are committed to version control** (not gitignored) to ensure:
 
-1. ✅ All 87 tests run on CI (including 7 system tests).
+1. ✅ All 103 tests run on CI (including 7 system tests).
 2. ✅ 100% code coverage is achieved and gated at 90%.
 3. ✅ System tests verify the real end-to-end workflow.
 4. ✅ System tests skip cleanly only if cloned without history or files are manually deleted.
@@ -173,5 +178,5 @@ If system tests skip with a message like `"Real resource files not available"`, 
 
 ---
 
-**Counts:** unit 67 · integration 13 · system 7 · total 87.
+**Counts:** unit 79 · integration 17 · system 7 · total 103 (1 `xfail`).
 Branch+line coverage of `src_timesheetalgo` ≈ 99% (gate 90%).

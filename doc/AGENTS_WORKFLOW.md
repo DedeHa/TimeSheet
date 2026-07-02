@@ -280,7 +280,7 @@ All agents operate on shared context from:
    - Used by Tester for quality assessment
    - Used by all agents for commit conventions
 
-4. **tests/TESTING.md** - Testing strategy and requirements
+4. **doc/TESTING.md** - Testing strategy and requirements
    - Used by Architect for test planning
    - Used by Developer for test implementation
    - Used by Tester for coverage validation
@@ -404,7 +404,7 @@ Feature complete
 - `doc/ARCHITECTURE.md` - System architecture
 - `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")
 - `doc/AGENTS_WORKFLOW.md` - This file
-- `tests/TESTING.md` - Testing documentation
+- `doc/TESTING.md` - Testing documentation
 
 ## 🚨 Troubleshooting
 

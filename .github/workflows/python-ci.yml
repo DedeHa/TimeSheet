@@ -135,6 +135,14 @@ jobs:
           python -m pip install --upgrade build setuptools wheel
           pip install -e .[dev]
 
+      - name: Run integration tests
+        run: |
+          pytest tests/integration --junitxml=tests/reports/integration-test-results.xml
+
+      - name: Run system tests
+        run: |
+          pytest tests/system --junitxml=tests/reports/system-test-results.xml
+
       - name: Install packaging tools
         run: |
           pip install build

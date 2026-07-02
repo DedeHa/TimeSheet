@@ -137,7 +137,7 @@ The application will:
 |----------|-------------|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
 | [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
-| [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation and test structure |
+| [`doc/TESTING.md`](doc/TESTING.md) | Testing documentation and test structure |
 
 ## Development
 
@@ -212,6 +212,11 @@ TimeSheet/
 │   ├── TimeSheetAlgo.py     # Main application module
 │   └── config.yaml          # Configuration file
 ├── tests/                   # Test suite (one folder per level)
+│   ├── conftest.py          # Shared fixtures
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   └── system/              # System tests (real resources)
+├── doc/                     # Documentation and diagrams
 │   ├── TESTING.md           # Test docs: layout, levels, fixtures, configuration
 │   ├── conftest.py          # Shared fixtures
 │   ├── unit/                # Unit tests

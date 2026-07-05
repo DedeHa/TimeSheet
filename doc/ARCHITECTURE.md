@@ -143,7 +143,7 @@ sequenceDiagram
     P->>CSV: read rows (skip header)
     P->>XLSM: load_workbook(keep_vba=True)
     RUN->>P: request_date_input()
-    Note over P: prompt start/end (DD.MM.YYYY);<br/>else defaults: start = last worked day,<br/>end = yesterday
+    Note over P: prompt start/end (DD.MM.YYYY)<br/>otherwise defaults: start = last worked day,<br/>end = yesterday
     RUN->>P: select_timelog_data()
     Note over P: keep rows within [start, end];<br/>raise ValueError if none
     RUN->>P: store_data()
@@ -570,7 +570,7 @@ graph TB
 
 Tests mirror the runtime boundaries described above, in three levels — one
 folder and one marker each. Full detail (fixtures, run commands, coverage gate)
-lives in [`../tests/TESTING.md`](../tests/TESTING.md).
+lives in [`./TESTING.md`](./TESTING.md).
 
 | Level | Folder | Exercises |
 |-------|--------|-----------|
@@ -582,4 +582,4 @@ Mapping back to this document: the **configuration subsystem** is verified at th
 unit level (`tests/unit/test_config.py`), the **data model** and **overwrite
 decision** at the integration level, and the **processing pipeline** end-to-end
 at the system level. Coverage is gated at 90% (`[tool.coverage]` in
-`pyproject.toml`); see `tests/TESTING.md`.
+`pyproject.toml`); see `TESTING.md`.

@@ -100,3 +100,48 @@ def test_set_default_end_date_is_yesterday(mock_processor):
     """
     result = mock_processor.set_default_end_date()
     assert result.date() == (datetime.now() - timedelta(days=1)).date()
+
+
+# ---------------------------------------------------------------------------
+# PRO-262: boundary / equivalence-class additions
+# ---------------------------------------------------------------------------
+#
+# parse_date currently distinguishes only "format-malformed" input. These cases
+# add the second invalid equivalence class - strings that match the DD.MM.YYYY
+# format but are not real calendar dates - and the leap-year boundary.
+
+
+@pytest.mark.parametrize("bad_date", ["32.01.2025", "30.02.2025", "31.04.2025"])
+def test_parse_date_calendar_invalid_is_rejected(monkeypatch, bad_date):
+    """A well-formatted but non-existent calendar date is rejected."""
+    monkeypatch.setattr("builtins.input", lambda prompt: bad_date)
+    with pytest.raises(ValueError, match="Maximum retries reached"):
+        parse_date("Enter date: ", retries=1)
+
+
+def test_parse_date_leap_day_valid(monkeypatch):
+    """29 February in a leap year (2024) parses successfully."""
+    monkeypatch.setattr("builtins.input", lambda prompt: "29.02.2024")
+    assert parse_date("Enter date: ") == datetime(2024, 2, 29)
+
+
+def test_parse_date_leap_day_non_leap_year_rejected(monkeypatch):
+    """29 February in a non-leap year (2025) is rejected as calendar-invalid."""
+    monkeypatch.setattr("builtins.input", lambda prompt: "29.02.2025")
+    with pytest.raises(ValueError, match="Maximum retries reached"):
+        parse_date("Enter date: ", retries=1)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="BVA gap (PRO-262): set_default_start_date scans rows ROW_OFFSET+30..+1, "
+    "so a worked day on the 31st is never detected. See "
+    "tests/boundary_equivalence_analysis.md.",
+)
+def test_set_default_start_date_day_31_boundary(mock_processor):
+    """A worked day on the 31st should become the default start date."""
+    mock_processor.timesheet.worksheets[0].cell(
+        row=ROW_OFFSET + 31, column=5, value="09:00"
+    )
+    result = mock_processor.set_default_start_date()
+    assert (result.year, result.month, result.day) == (2025, 1, 31)

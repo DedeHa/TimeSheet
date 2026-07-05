@@ -76,3 +76,16 @@ def test_cross_year_entries_excluded(processor_with_timelog):
         processor.timesheet.worksheets[11].cell(row=ROW_OFFSET + 30, column=5).value
         is None
     )
+
+
+def test_december_31_routes_to_last_sheet(processor_with_timelog):
+    """The upper month/day boundary: 31 Dec -> worksheets[11], row ROW_OFFSET+31."""
+    processor = processor_with_timelog(
+        [["31.12.2025", "09:00", "17:00"]], "01.12.2025", "31.12.2025"
+    )
+    processor.select_timelog_data()
+    processor.store_data()
+
+    december = processor.timesheet.worksheets[11]
+    assert december.cell(row=ROW_OFFSET + 31, column=5).value == "09:00"
+    assert december.cell(row=ROW_OFFSET + 31, column=6).value == "17:00"

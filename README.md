@@ -137,7 +137,7 @@ The application will:
 |----------|-------------|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
 | [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
-| [`tests/TESTING.md`](tests/TESTING.md) | Testing documentation and test structure |
+| [`doc/TESTING.md`](doc/TESTING.md) | Testing documentation and test structure |
 
 ## Development
 
@@ -196,10 +196,11 @@ python -m pytest -m "not system"
 
 ### Test Coverage
 
-- **83 tests** across three levels (unit 63 · integration 13 · system 7), ~99% branch+line coverage of `src_timesheetalgo` (CI gate: 90%)
+- **103 tests** across three levels (unit 79 · integration 17 · system 7; 1 `xfail`), ~99% branch+line coverage of `src_timesheetalgo` (CI gate: 90%)
 - Unit: individual functions/methods in isolation
 - Integration: the `TimeSheetProcessor` pipeline on an in-memory workbook
 - System: black-box runs against real-file copies (skipped when data is absent)
+- Boundary-value & equivalence-class rationale: [`tests/boundary_equivalence_analysis.md`](tests/boundary_equivalence_analysis.md)
 
 See [`tests/TESTING.md`](tests/TESTING.md) for detailed testing documentation.
 
@@ -211,6 +212,11 @@ TimeSheet/
 │   ├── TimeSheetAlgo.py     # Main application module
 │   └── config.yaml          # Configuration file
 ├── tests/                   # Test suite (one folder per level)
+│   ├── conftest.py          # Shared fixtures
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   └── system/              # System tests (real resources)
+├── doc/                     # Documentation and diagrams
 │   ├── TESTING.md           # Test docs: layout, levels, fixtures, configuration
 │   ├── conftest.py          # Shared fixtures
 │   ├── unit/                # Unit tests

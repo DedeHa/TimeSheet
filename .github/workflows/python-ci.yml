@@ -106,6 +106,9 @@ jobs:
       - name: Prepare report directory
         run: mkdir -p tests/reports
 
+      - name: Validate documentation traceability
+        run: pytest -q .github/workflows/test_docs_traceability.py
+
       # Each test level runs as its own visible, attributable step so a failure
       # points straight at the level that broke. Coverage is measured fresh on
       # the unit step and accumulated across the later levels (--cov-append);
@@ -136,6 +139,7 @@ jobs:
             tests/reports/integration-results.xml
             tests/reports/system-results.xml
             tests/reports/htmlcov
+            tests/reports/traceability-matrix.md
 
   deploy:
     name: Build & Deploy to Production

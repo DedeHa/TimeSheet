@@ -91,8 +91,8 @@ def _build_traceability_matrix(
 def _build_traceability_html(
     requirement_ids: list[str], architecture_ids: set[str], code_ids: set[str], test_map: Dict[str, Set[str]], test_files: List[Path]
 ) -> str:
-    tests = sorted({p.name for p in test_files})
-
+    # The HTML view will not include per-test columns — only a compact matrix
+    # showing Requirement, Type, Spec count, In Architecture and In Code.
     def cell(val: str) -> str:
         return f"<td>{val}</td>"
 
@@ -105,12 +105,10 @@ def _build_traceability_html(
         "<title>Traceability Matrix</title>",
         "<style>",
         "body{font-family:Arial,Helvetica,sans-serif;margin:16px;background:#0f1724;color:#e6eef8}",
-        "table{border-collapse:collapse;width:100%;overflow:auto;display:block}",
-        "th,td{border:1px solid #2b3350;padding:6px;text-align:left}",
-        "th{background:#111827;color:#9fb4ff;position:sticky;top:0}",
+        "table{border-collapse:collapse;width:100%;overflow:auto}",
+        "th,td{border:1px solid #2b3350;padding:8px;text-align:left}",
+        "th{background:#111827;color:#9fb4ff}",
         "tr:nth-child(even){background:#071026}",
-        ".req-type{width:140px}",
-        ".indicator{font-weight:bold;text-align:center}",
         "</style>",
         "</head>",
         "<body>",
@@ -128,9 +126,8 @@ def _build_traceability_html(
         if not reqs:
             continue
         html_lines.append(f"<h2>{title}</h2>")
-        # header
         html_lines.append("<table>")
-        header_cols = ["Requirement", "Type", "Spec count", "In Architecture", "In Code"] + tests
+        header_cols = ["Requirement", "Type", "Spec count", "In Architecture", "In Code"]
         html_lines.append("<thead><tr>" + "".join(f"<th>{c}</th>" for c in header_cols) + "</tr></thead>")
         html_lines.append("<tbody>")
 
@@ -139,15 +136,17 @@ def _build_traceability_html(
             in_code = req in code_ids
             specs = sorted(test_map.get(req, set()))
             spec_count = len(specs)
-            row_cells = [req, ("Functional" if req.startswith("FR-") else "Quality"), str(spec_count), ("✅" if in_arch else "◯"), ("✅" if in_code else "◯")]
-            # per-test indicators
-            for t in tests:
-                row_cells.append("✅" if t in specs else "◯")
+            row_cells = [
+                req,
+                ("Functional" if req.startswith("FR-") else "Quality"),
+                str(spec_count),
+                ("✅" if in_arch else "◯"),
+                ("✅" if in_code else "◯"),
+            ]
             html_lines.append("<tr>" + "".join(cell(c) for c in row_cells) + "</tr>")
 
         html_lines.append("</tbody></table>")
 
-    # summary
     total = len(requirement_ids)
     arch_cov = round(100 * sum(1 for r in requirement_ids if r in architecture_ids) / max(1, total), 1)
     code_cov = round(100 * sum(1 for r in requirement_ids if r in code_ids) / max(1, total), 1)

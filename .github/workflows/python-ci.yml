@@ -158,7 +158,7 @@ jobs:
             const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
             const body = `### Generated Traceability Report\n\n${md}\n---\n\nTest results and artifacts are available at: ${runUrl}`;
             const issue_number = context.issue.number;
-            await github.issues.createComment({
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number,

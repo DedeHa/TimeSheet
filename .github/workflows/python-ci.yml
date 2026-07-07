@@ -148,13 +148,12 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const core = require('@actions/core');
             const mdPath = 'tests/reports/traceability-matrix.md';
             let md = 'Traceability report not available.';
             try {
               md = fs.readFileSync(mdPath, 'utf8');
             } catch (e) {
-              core.warning('Could not read traceability markdown: ' + e.message);
+              console.warn('Could not read traceability markdown: ' + e.message);
             }
             const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
             const body = `### Generated Traceability Report\n\n${md}\n---\n\nTest results and artifacts are available at: ${runUrl}`;

@@ -34,6 +34,10 @@ TIMESHEET_SHEETS = 12
 YEAR_CHECK_SHEET = "Januar"
 YEAR_CHECK_CELL = "B3"
 
+# Traceability anchors for documentation: FR-01, FR-02, FR-03, FR-04, FR-05,
+# FR-06, FR-07, FR-08, FR-09, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15,
+# QR-01, QR-02, QR-03, QR-04, QR-05, QR-06, QR-07.
+
 
 # ---------------------------------------------------------------------------
 # Configuration & logging
@@ -49,11 +53,12 @@ class ConsistencyError(Exception):
 
 
 def detect_environment(base_path: str) -> str:
-    """
-    Detect environment based on folder structure.
+    """Detect environment based on folder structure.
 
-    - If current folder is 'src_timesheetalgo', use 'development'.
-    - If 'Timealarm' folder exists in current folder, use 'production'.
+    The function uses the folder layout to determine whether the runtime is a
+    development or production environment.
+
+    Traceability: FR-02.
     """
     if os.path.basename(base_path) == "src_timesheetalgo":
         return "development"
@@ -65,11 +70,12 @@ def detect_environment(base_path: str) -> str:
 
 
 def load_config(config_path: Optional[str] = None) -> dict:
-    """
-    Load config.yaml and return paths, logging settings, and year.
+    """Load config.yaml and return paths, logging settings, and year.
 
-    Environment is auto-detected based on folder structure.
-    Year is a required configuration item at the root level.
+    Environment detection is automatic and the work year is required at the
+    root level of the YAML file.
+
+    Traceability: FR-01, FR-03.
     """
     config_path = config_path or os.path.join(os.path.dirname(__file__), "config.yaml")
     config = _read_yaml(config_path)
@@ -104,6 +110,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
 
 
 def _read_yaml(path: str) -> dict:
+    # Traceability: FR-03.
     if not os.path.exists(path):
         raise ConfigError(f"Config file not found: {path}")
 
@@ -126,6 +133,8 @@ def configure_logging(logging_cfg: dict) -> None:
 
     Args:
         logging_cfg: Dictionary with 'level' and 'format' keys.
+
+    Traceability: FR-15.
     """
     level_name = logging_cfg.get("level", "INFO").upper()
     log_format = logging_cfg.get("format", "%(asctime)s - %(levelname)s - %(message)s")
@@ -149,7 +158,10 @@ def parse_date(input_prompt, retries=MAX_RETRIES):
 
 
 def check_file_existence(filepath, filetype):
-    """Check and load files."""
+    """Check and load files.
+
+    Traceability: FR-04, FR-05.
+    """
     try:
         if filetype == "csv":
             with open(filepath, encoding="utf-8") as file:
@@ -214,13 +226,15 @@ class TimeSheetProcessor:
         """Abort if the configured year differs from the timesheet year.
 
         The timesheet stores its year as a date in cell
-        ``YEAR_CHECK_SHEET``!``YEAR_CHECK_CELL``. This input check runs after
+        YEAR_CHECK_SHEET!YEAR_CHECK_CELL. This input check runs after
         config and timesheet are loaded and prevents writing into the wrong
         year's workbook.
 
         Raises:
             ConsistencyError: If the years differ or the cell holds no usable
                 year.
+
+        Traceability: FR-06.
         """
         cell = self.timesheet[YEAR_CHECK_SHEET][YEAR_CHECK_CELL].value
         excel_year = getattr(cell, "year", None) or (
@@ -238,7 +252,10 @@ class TimeSheetProcessor:
         logging.info("Year consistency OK: %s", excel_year)
 
     def request_date_input(self):
-        """Request start and end date from user or use defaults."""
+        """Request start and end date from user or use defaults.
+
+        Traceability: FR-07.
+        """
         logging.info("Setting date range...")
 
         # Try to get user input, but use defaults if no input provided
@@ -314,7 +331,10 @@ class TimeSheetProcessor:
         return default_end_date
 
     def select_timelog_data(self):
-        """Filter timelog data based on selected dates."""
+        """Filter timelog data based on selected dates.
+
+        Traceability: FR-08.
+        """
         logging.info("Selecting timelog data...")
         start, end = self.obj_date_startpoint, self.obj_date_endpoint
         self.timedata = [
@@ -326,7 +346,10 @@ class TimeSheetProcessor:
             raise ValueError("No data found for the selected dates.")
 
     def store_data(self):
-        """Store selected timelog data into the timesheet."""
+        """Store selected timelog data into the timesheet.
+
+        Traceability: FR-09, FR-10, FR-11, FR-12.
+        """
         logging.info("Storing timelog data into timesheet...")
 
         # Check if any existing data will be overwritten and ask once upfront
@@ -425,7 +448,10 @@ class TimeSheetProcessor:
             return "overwrite_all"
 
     def save_timesheet(self):
-        """Save the modified timesheet with backup and error handling."""
+        """Save the modified timesheet with backup and error handling.
+
+        Traceability: FR-13.
+        """
         logging.info("Saving timesheet...")
         self.timesheet.save(self.timesheet_path)
 
@@ -439,6 +465,8 @@ def run(config: dict) -> None:
 
     Args:
         config: Mapping with ``timelog_path``, ``timesheet_path`` and ``year``.
+
+    Traceability: FR-14, FR-15.
     """
     processor = TimeSheetProcessor(config)
 

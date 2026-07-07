@@ -140,6 +140,7 @@ jobs:
             tests/reports/system-results.xml
             tests/reports/htmlcov
             tests/reports/traceability-matrix.md
+            tests/reports/traceability-matrix.html
 
   deploy:
     name: Build & Deploy to Production

@@ -331,7 +331,18 @@ This keeps the documentation lightweight and reproducible without introducing ex
    ```
    - All PRs must target `master`
    - PR title: `[type][PRO-123] Description`
-   - PR should document description and changes in detail
+   - PR body should include a short `## Summary` section with bullet points, a `## Testing` section with the exact validation commands, and an optional `## Notes` section when rollout or risk context matters
+
+   Example structure:
+   ```md
+   ## Summary
+   - what changed
+   - why it matters
+
+   ## Testing
+   - command 1
+   - command 2
+   ```
 
 5. **Wait for review and CI checks** (ALL required):
    - ✅ Lint checks (Ruff, Black, Pydocstyle, Radon) - **REQUIRED**

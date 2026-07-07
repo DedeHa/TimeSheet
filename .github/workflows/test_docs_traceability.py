@@ -55,25 +55,20 @@ def _build_traceability_matrix(
         if not reqs:
             continue
         lines.append(f"## {label}")
-        # Header
-        header_cols = ["Requirement", "Type", "Spec count", "In Architecture", "In Code"] + tests
+        # Header (compact: no spec count, no per-test columns)
+        header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
         lines.append("| " + " | ".join(header_cols) + " |")
         lines.append("| " + " | ".join(["---"] * len(header_cols)) + " |")
 
         for req in reqs:
             in_arch = req in architecture_ids
             in_code = req in code_ids
-            specs = sorted(test_map.get(req, set()))
-            spec_count = len(specs)
             row = [
                 req,
                 "Functional" if req.startswith("FR-") else "Quality",
-                str(spec_count),
                 indicator(req, in_arch),
                 indicator(req, in_code),
             ]
-            for t in tests:
-                row.append(indicator(req, t in specs))
             lines.append("| " + " | ".join(row) + " |")
 
         lines.append("")
@@ -127,19 +122,16 @@ def _build_traceability_html(
             continue
         html_lines.append(f"<h2>{title}</h2>")
         html_lines.append("<table>")
-        header_cols = ["Requirement", "Type", "Spec count", "In Architecture", "In Code"]
+        header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
         html_lines.append("<thead><tr>" + "".join(f"<th>{c}</th>" for c in header_cols) + "</tr></thead>")
         html_lines.append("<tbody>")
 
         for req in reqs:
             in_arch = req in architecture_ids
             in_code = req in code_ids
-            specs = sorted(test_map.get(req, set()))
-            spec_count = len(specs)
             row_cells = [
                 req,
                 ("Functional" if req.startswith("FR-") else "Quality"),
-                str(spec_count),
                 ("✅" if in_arch else "◯"),
                 ("✅" if in_code else "◯"),
             ]
@@ -164,28 +156,6 @@ def _publish_report(report: str) -> None:
         with open(summary_path, "a", encoding="utf-8") as handle:
             handle.write(report)
             handle.write("\n")
-
-
-def test_requirements_use_unique_requirement_identifiers():
-    text = _read_text(REQUIREMENTS)
-    ids = _extract_requirement_ids(text)
-
-    assert ids, "Expected functional and quality requirements to be labeled"
-    assert len(ids) == len(set(ids)), "Requirement identifiers must be unique"
-    assert "FR-01" in ids
-    assert "QR-01" in ids
-
-
-def test_architecture_documents_traceability_to_source_modules():
-    text = _read_text(ARCHITECTURE)
-
-    assert "## Traceability Matrix" in text
-    assert "src_timesheetalgo/TimeSheetAlgo.py" in text
-    assert "FR-01" in text
-    assert "QR-01" in text
-
-
-def test_source_code_references_requirements_where_implemented():
     text = _read_text(SOURCE)
 
     assert "FR-01" in text

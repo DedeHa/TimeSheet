@@ -178,7 +178,7 @@ sequenceDiagram
     RUN->>P: request_date_input()
     Note over P: prompt start/end (DD.MM.YYYY)<br/>otherwise defaults: start = last worked day,<br/>end = yesterday
     RUN->>P: select_timelog_data()
-    Note over P: keep rows within [start, end];<br/>raise ValueError if none
+    Note over P: keep rows within (start, end);<br/>raise ValueError if none
     RUN->>P: store_data()
     Note over P: per entry → sheet[month-1],<br/>row ROW_OFFSET+day, cols E/F
     RUN->>P: save_timesheet()

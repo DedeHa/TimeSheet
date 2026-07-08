@@ -34,6 +34,22 @@ tests/
     test_cli_main.py             # run()/main() with stdin + tmp config
 ```
 
+## Testing Architecture
+
+Tests mirror the runtime boundaries described in [doc/ARCHITECTURE.md](ARCHITECTURE.md), in three levels — one folder and one marker each.
+
+| Level | Folder | Exercises |
+|-------|--------|-----------|
+| unit | `tests/unit/` | one function/method in isolation — the configuration subsystem, date logic, file I/O, and the overwrite-decision logic |
+| integration | `tests/integration/` | the processing pipeline on an in-memory dummy workbook — data-model mapping (`month-1`, `ROW_OFFSET+day`, columns E/F), the overwrite workflow, and date boundaries |
+| system | `tests/system/` | the shipped `TimeSheetProcessor` / `run()` / `main()` against real-file copies (skipped when the real resources are absent) |
+
+Mapping back to the architecture: the **configuration subsystem** is verified at the unit level (`tests/unit/test_config.py`), the **data model** and **overwrite decision** at the integration level, and the **processing pipeline** end-to-end at the system level. Coverage is gated at 90% (`[tool.coverage]` in `pyproject.toml`).
+
+## Traceability Validation
+
+Requirement-to-architecture-to-code traceability is validated by [.github/workflows/test_docs_traceability.py](../.github/workflows/test_docs_traceability.py). The test scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and fails the build when any requirement is missing a mapping. The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
+
 ## Test levels and their intent
 
 The suite is split into three levels — one folder and one marker each. The

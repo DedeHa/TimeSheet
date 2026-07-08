@@ -7,7 +7,40 @@ and saves it. Configuration is YAML-driven with folder-based environment
 detection; there is no database or network dependency.
 
 This document covers the system context, the runtime processing pipeline, the
-data model, the configuration subsystem, and the testing architecture.
+data model, and the configuration subsystem.
+
+Testing details, including the suite layout and the traceability validation workflow, are documented in [doc/TESTING.md](TESTING.md).
+
+## Traceability Approach
+
+The repository uses lightweight requirement identifiers in the form FR-XX and QR-XX. These IDs are used in [doc/REQUIREMENTS.md](REQUIREMENTS.md), the implementation in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and the traceability entries below so that design, code, and tests remain aligned.
+
+## Traceability Matrix
+
+| Requirement ID | Architectural concern | Implementation reference |
+| --- | --- | --- |
+| FR-01 | Configuration loading | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_config()` and `configure_logging()` |
+| FR-02 | Environment detection | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `detect_environment()` |
+| FR-03 | Configuration validation | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `_read_yaml()` and `load_config()` |
+| FR-04 | Input file loading | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_files()` and `check_file_existence()` |
+| FR-05 | Input file validation | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()` |
+| FR-06 | Timesheet consistency check | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_year_consistency()` |
+| FR-07 | Date range determination | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `request_date_input()` |
+| FR-08 | Timelog filtering | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `select_timelog_data()` |
+| FR-09 | Mapping logic | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `store_data()` |
+| FR-10 | Existing data detection | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `_check_and_confirm_overwrite()` |
+| FR-11 | Overwrite decision | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `_prompt_overwrite_decision()` |
+| FR-12 | Data transfer | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `store_data()` |
+| FR-13 | Saving | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `save_timesheet()` |
+| FR-14 | Error handling | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `run()` |
+| FR-15 | Logging | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `configure_logging()` and `run()` |
+| QR-01 | Reliability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_year_consistency()` and `run()` |
+| QR-02 | Data integrity | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `select_timelog_data()` and `store_data()` |
+| QR-03 | Consistency | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_year_consistency()` |
+| QR-04 | Usability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `request_date_input()` |
+| QR-05 | Robustness | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()` and `parse_date()` |
+| QR-06 | Maintainability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_config()` and `configure_logging()` |
+| QR-07 | Traceability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - this module and the traceability comments in each function |
 
 ## System-Level Diagrams
 
@@ -565,21 +598,3 @@ graph TB
 > exits with status 1.
 
 ---
-
-## Testing Architecture
-
-Tests mirror the runtime boundaries described above, in three levels — one
-folder and one marker each. Full detail (fixtures, run commands, coverage gate)
-lives in [`./TESTING.md`](./TESTING.md).
-
-| Level | Folder | Exercises |
-|-------|--------|-----------|
-| unit | `tests/unit/` | one function/method in isolation — the configuration subsystem, date logic, file I/O, and the overwrite-decision logic |
-| integration | `tests/integration/` | the processing pipeline on an in-memory dummy workbook — data-model mapping (`month-1`, `ROW_OFFSET+day`, columns E/F), the overwrite workflow, and date boundaries |
-| system | `tests/system/` | the shipped `TimeSheetProcessor` / `run()` / `main()` against real-file copies (skipped when the real resources are absent) |
-
-Mapping back to this document: the **configuration subsystem** is verified at the
-unit level (`tests/unit/test_config.py`), the **data model** and **overwrite
-decision** at the integration level, and the **processing pipeline** end-to-end
-at the system level. Coverage is gated at 90% (`[tool.coverage]` in
-`pyproject.toml`); see `TESTING.md`.

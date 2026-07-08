@@ -220,6 +220,14 @@ gh auth status     # verify
 
 ### Phase 1: Feature Development (Tests Optional)
 
+When the change affects documentation traceability or CI behaviour, also update the relevant docs and run the local CI-equivalent checks before opening the pull request:
+
+```bash
+ruff check src_timesheetalgo tests
+black --check src_timesheetalgo tests
+pytest -q .github/workflows/test_docs_traceability.py
+```
+
 1. **Create feature branch** (always from `master`):
    ```bash
    git checkout -b feature/PRO-123-description master
@@ -290,6 +298,17 @@ switch-branch feature/PRO-123-description
 switch-branch master
 ```
 
+#### Documentation Traceability Maintenance
+
+When a new requirement or implementation change is introduced, update the traceability chain in the same change:
+
+1. Add or update the requirement ID in [doc/REQUIREMENTS.md](REQUIREMENTS.md).
+2. Update the corresponding row in the traceability matrix in [doc/ARCHITECTURE.md](ARCHITECTURE.md).
+3. Add the requirement ID to the relevant implementation function or class in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py).
+4. Re-run the relevant unit tests so the documentation and implementation remain aligned.
+
+This keeps the documentation lightweight and reproducible without introducing external tooling.
+
 #### Understanding venv Independence:
 
 ⚠️ **Important Concept:**
@@ -312,7 +331,18 @@ switch-branch master
    ```
    - All PRs must target `master`
    - PR title: `[type][PRO-123] Description`
-   - PR should document description and changes in detail
+   - PR body should include a short `## Summary` section with bullet points, a `## Testing` section with the exact validation commands, and an optional `## Notes` section when rollout or risk context matters
+
+   Example structure:
+   ```md
+   ## Summary
+   - what changed
+   - why it matters
+
+   ## Testing
+   - command 1
+   - command 2
+   ```
 
 5. **Wait for review and CI checks** (ALL required):
    - ✅ Lint checks (Ruff, Black, Pydocstyle, Radon) - **REQUIRED**

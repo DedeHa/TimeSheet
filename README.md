@@ -137,7 +137,7 @@ The application will:
 |----------|-------------|
 | [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
 | [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
-| [`doc/TESTING.md`](doc/TESTING.md) | Testing documentation and test structure |
+| [`doc/TESTING.md`](doc/TESTING.md) | Testing documentation, CI validation, and traceability checks |
 
 ## Development
 
@@ -197,6 +197,7 @@ python -m pytest -m "not system"
 ### Test Coverage
 
 - **103 tests** across three levels (unit 79 · integration 17 · system 7; 1 `xfail`), ~99% branch+line coverage of `src_timesheetalgo` (CI gate: 90%)
+- Traceability between requirements, architecture, and implementation is validated in CI via [.github/workflows/test_docs_traceability.py](.github/workflows/test_docs_traceability.py) and published as a markdown matrix in the workflow summary and artifacts.
 - Unit: individual functions/methods in isolation
 - Integration: the `TimeSheetProcessor` pipeline on an in-memory workbook
 - System: black-box runs against real-file copies (skipped when data is absent)

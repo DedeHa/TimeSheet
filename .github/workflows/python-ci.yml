@@ -106,6 +106,9 @@ jobs:
       - name: Prepare report directory
         run: mkdir -p tests/reports
 
+      - name: Validate documentation traceability
+        run: pytest -q .github/workflows/test_docs_traceability.py
+
       # Each test level runs as its own visible, attributable step so a failure
       # points straight at the level that broke. Coverage is measured fresh on
       # the unit step and accumulated across the later levels (--cov-append);
@@ -136,6 +139,40 @@ jobs:
             tests/reports/integration-results.xml
             tests/reports/system-results.xml
             tests/reports/htmlcov
+            tests/reports/traceability-matrix.md
+            tests/reports/traceability-matrix.html
+
+      - name: Comment traceability report on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const mdPath = 'tests/reports/traceability-matrix.md';
+            let md = '';
+            try {
+              md = fs.readFileSync(mdPath, 'utf8');
+            } catch (e) {
+              console.warn('Could not read traceability markdown: ' + e.message);
+            }
+            // Extract coverage numbers from the markdown if present
+            const archMatch = md.match(/Architecture coverage:\s*([0-9.]+)%/i);
+            const codeMatch = md.match(/Code coverage:\s*([0-9.]+)%/i);
+            const archCov = archMatch ? archMatch[1] + '%' : 'n/a';
+            const codeCov = codeMatch ? codeMatch[1] + '%' : 'n/a';
+            // Evaluation: simple pass/fail hint based on 100% coverage (customize as needed)
+            const evaluation = (archMatch && codeMatch && parseFloat(archMatch[1]) >= 100 && parseFloat(codeMatch[1]) >= 100) ? '✅ Fully covered' : '⚠️ Coverage gaps or missing links';
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            const compact = `**Status:** ✅ Completed\n**Evaluation:** ${evaluation}\n**Architecture coverage:** ${archCov}\n**Code coverage:** ${codeCov}\n\nArtifacts and full report: ${runUrl}`;
+            // Post compact summary with a collapsible full report
+            const body = `### Traceability Summary\n\n${compact}\n\n<details><summary>Full traceability report (click to expand)</summary>\n\n\n\n\`\`\`markdown\n${md || 'Traceability report not available.'}\n\`\`\`\n\n</details>`;
+            const issue_number = context.issue.number;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body,
+            });
 
   deploy:
     name: Build & Deploy to Production

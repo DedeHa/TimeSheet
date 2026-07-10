@@ -158,7 +158,7 @@ feature/PRO-123  →  PR + Tests  →  master  →  release/vX.Y.Z  →  Deploym
 5. **Production Deployment:** Deploy **only** from release tags (`vX.Y.Z`), never directly from master
 
 **Testing Requirements:**
-- Feature branches: Optional linting on push
+- Feature branches: No CI on branch pushes — checks run on the pull request (avoids duplicate push + PR runs)
 - Master PRs: ✅ **Tests required** (Lint + Unit Tests + Code Coverage)
 - Release branches: Inherit tests from master (already verified)
 

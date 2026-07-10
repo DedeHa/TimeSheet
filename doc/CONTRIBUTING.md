@@ -414,7 +414,7 @@ remote: error: You have insufficient permissions to push to this branch on this 
 The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these protections:
 
 ### Testing Strategy:
-- ✅ **Development Branches** (push): Run lint checks
+- ➖ **Development Branches** (push): No CI on branch pushes — checks run on the pull request, so a branch with an open PR is validated once instead of twice
 - ✅ **Master PRs** (required): **Full tests required** (Lint + Unit Tests + Code Coverage)
 - ✅ **Release Branches** (inherited): Tests already run on Master
 
@@ -429,12 +429,14 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these protection
 - ✅ **Release Tags** (vX.Y.Z): **Production deployment only**
 
 ### Push Events trigger on:
-- `feature/*`, `refactor/*`, `docs/*`, `test/*`, `bugfix/*`, `hotfix/*` (Lint checks)
+- **Tags `vX.Y.Z`** (Production deployment) — branch pushes do **not** trigger CI
+- Manual runs are available via `workflow_dispatch`
 
 ### PR Events trigger on:
 - All target branches, especially:
   - **`master`** (Lint + Unit Tests + Code Coverage required)
   - **`release/*`** (Lint checks)
+- A `concurrency` group supersedes an in-progress run when a new commit is pushed to the same PR
 
 ### Release/Deployment Events trigger on:
 - **Tags `vX.Y.Z`** (Production Deployment)

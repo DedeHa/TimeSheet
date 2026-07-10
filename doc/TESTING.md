@@ -50,6 +50,25 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 
 Requirement-to-architecture-to-code traceability is validated by [.github/workflows/test_docs_traceability.py](../.github/workflows/test_docs_traceability.py). The test scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and fails the build when any requirement is missing a mapping. The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
 
+## Pull Request Quality-Gate Summary (PRO-337)
+
+Every Pull Request targeting `master` publishes a consolidated quality-gate summary as a **sticky** comment (updated in place on re-runs, never duplicated) and in the GitHub Actions job summary. The summary reports, with ✅ / ❌ / ⚠️ indicators:
+
+- Overall workflow result
+- Lint & formatting status
+- Unit / Integration / System test status
+- Executed, passed, failed and skipped counts per level (from the JUnit reports)
+- Combined line + branch coverage and the 90% gate result
+- A link to the workflow run and its downloadable artifacts (including `htmlcov/index.html`)
+
+How it is produced:
+
+1. The `test` job writes a JUnit report per level (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` (`coverage json --fail-under=0`), all uploaded in the `test-results` artifact.
+2. A dedicated `report` job (`needs: [lint, test]`, `if: always()`) downloads that artifact and runs [.github/workflows/pr_test_summary.py](../.github/workflows/pr_test_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, and the `lint` / `test` job outcomes.
+3. An `actions/github-script` step finds the previous summary by a hidden marker and updates it, or creates it on the first run.
+
+The `report` job is **publication-only**: it runs even when lint or a test level fails (so failed runs still publish available results) and it never gates the merge — the quality gates themselves are still enforced by the `lint` and `test` jobs. The generator uses the standard library only and is covered by [.github/workflows/test_pr_test_summary.py](../.github/workflows/test_pr_test_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
+
 ## Test levels and their intent
 
 The suite is split into three levels — one folder and one marker each. The

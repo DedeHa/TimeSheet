@@ -414,9 +414,14 @@ remote: error: You have insufficient permissions to push to this branch on this 
 The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these protections:
 
 ### Testing Strategy:
-- ✅ **Development Branches** (push): Run lint checks
+- ➖ **Development Branches** (push): No CI on branch pushes — checks run on the pull request, so a branch with an open PR is validated once instead of twice
 - ✅ **Master PRs** (required): **Full tests required** (Lint + Unit Tests + Code Coverage)
 - ✅ **Release Branches** (inherited): Tests already run on Master
+
+### Quality-Gate Result Publication:
+- ✅ **Master PRs**: at the end of the `test` job, a consolidated **quality-gate summary** is published as a sticky PR comment and in the job summary — Lint, Unit/Integration/System test status with executed/passed/failed/skipped counts, combined coverage vs. the 90% gate, and artifact links.
+- ✅ The comment is **updated in place** on re-runs (no duplicates) and is still published when a test level or the coverage gate fails, so a failing PR clearly shows which level broke.
+- ℹ️ Publication runs as `if: always()` steps inside the `test` job and is **non-gating** — it only reports results; the merge is still gated by the `lint` and `test` steps. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
 
 ### Deployment Strategy:
 - ❌ **Development Branches**: No deployment
@@ -424,12 +429,14 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these protection
 - ✅ **Release Tags** (vX.Y.Z): **Production deployment only**
 
 ### Push Events trigger on:
-- `feature/*`, `refactor/*`, `docs/*`, `test/*`, `bugfix/*`, `hotfix/*` (Lint checks)
+- **Tags `vX.Y.Z`** (Production deployment) — branch pushes do **not** trigger CI
+- Manual runs are available via `workflow_dispatch`
 
 ### PR Events trigger on:
 - All target branches, especially:
   - **`master`** (Lint + Unit Tests + Code Coverage required)
   - **`release/*`** (Lint checks)
+- A `concurrency` group supersedes an in-progress run when a new commit is pushed to the same PR
 
 ### Release/Deployment Events trigger on:
 - **Tags `vX.Y.Z`** (Production Deployment)

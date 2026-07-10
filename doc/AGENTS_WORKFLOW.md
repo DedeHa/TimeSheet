@@ -240,7 +240,7 @@ Implement the following architecture plan:
 
 Constraints:
 - Follow doc/CONTRIBUTING.md
-- Add tests per tests/TESTING.md
+- Add tests per doc/TESTING.md
 ```
 
 **Output:** Code changes, tests, commits

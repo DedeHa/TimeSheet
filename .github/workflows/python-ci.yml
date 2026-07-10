@@ -1,7 +1,8 @@
 # This workflow implements the Feature → Master → Release → Deployment strategy
-# - Push events: Lint checks on development branches (feature/*, bugfix/*, etc.)
-# - PR to master: Full tests required (Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
+# - Pull requests to master: Full checks (Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
+# - Pull requests to release/*: Lint checks
 # - Release tags (vX.Y.Z): Deployment to production only (tests already passed on master)
+# Branch pushes do not trigger CI; a branch with an open PR is validated once (by the PR).
 #
 # Node.js version: Prepared for Node.js 24 migration (June 2, 2026)
 # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
@@ -15,23 +16,26 @@ name: Python CI
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Quality checks run on pull requests only. A branch with an open PR is
+# therefore validated once (by the PR) instead of twice (branch push + PR).
+# Direct branch pushes no longer trigger CI; release tags still trigger the
+# deploy job, and workflow_dispatch keeps manual runs available.
 on:
-  push:
-    branches:
-      - 'feature/**'
-      - 'bugfix/**'
-      - 'hotfix/**'
-      - 'refactor/**'
-      - 'docs/**'
-      - 'test/**'
-      - '!master' # Prevent direct pushes to master
-    tags:
-      - 'v*' # Deploy on release tags (vX.Y.Z)
   pull_request:
     branches:
       - 'master'
       - 'release/**'
+  push:
+    tags:
+      - 'v*' # Deploy on release tags (vX.Y.Z)
   workflow_dispatch:
+
+# Supersede an in-progress run when a new commit is pushed to the same PR, so
+# rapid successive pushes do not stack redundant runs. Release tags get a unique
+# group (no PR number), so deployments are never cancelled by this rule.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
@@ -90,6 +94,12 @@ jobs:
     needs: [lint]
     if: github.event_name == 'pull_request' && github.base_ref == 'master'
     environment: staging
+    # Least-privilege token: read the repo (checkout) and write PR comments
+    # (traceability comment + PRO-337 sticky quality-gate summary).
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
 
     steps:
       - uses: actions/checkout@v4
@@ -109,6 +119,9 @@ jobs:
       - name: Validate documentation traceability
         run: pytest -q .github/workflows/test_docs_traceability.py
 
+      - name: Validate PR quality-gate summary generator
+        run: pytest -q .github/workflows/test_pr_test_summary.py
+
       # Each test level runs as its own visible, attributable step so a failure
       # points straight at the level that broke. Coverage is measured fresh on
       # the unit step and accumulated across the later levels (--cov-append);
@@ -124,6 +137,14 @@ jobs:
       - name: Run system tests
         run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
+      # Additive (PRO-337): export machine-readable coverage for the PR summary.
+      # Runs even if an earlier level failed so the summary always has coverage
+      # data; --fail-under=0 keeps this step green - the real 90% quality gate is
+      # still enforced by the step below, so existing behaviour is unchanged.
+      - name: Export machine-readable coverage
+        if: always()
+        run: coverage json -o tests/reports/coverage.json --fail-under=0
+
       - name: Combined coverage report and 90% gate
         run: |
           coverage report --show-missing --fail-under=90
@@ -138,6 +159,7 @@ jobs:
             tests/reports/unit-results.xml
             tests/reports/integration-results.xml
             tests/reports/system-results.xml
+            tests/reports/coverage.json
             tests/reports/htmlcov
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html
@@ -173,6 +195,56 @@ jobs:
               issue_number,
               body,
             });
+
+      # PRO-337: publish a consolidated quality-gate summary from within the test
+      # job (no separate job, so the pipeline graph stays lint -> test -> deploy).
+      # Both steps use if: always() so the summary is still published when a test
+      # level or the coverage gate fails. TEST_RESULT is taken from job.status,
+      # which reflects whether the earlier steps in this job passed. The JUnit and
+      # coverage.json files already sit in tests/reports, so no download is needed.
+      - name: Generate PR quality-gate summary
+        if: always()
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_RESULT: ${{ job.status }}
+        run: python .github/workflows/pr_test_summary.py
+
+      - name: Publish or update sticky PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- pro-337-ci-quality-gate-summary -->';
+            let body;
+            try {
+              body = fs.readFileSync('tests/reports/test-summary.md', 'utf8');
+            } catch (e) {
+              core.warning('Summary file not found: ' + e.message);
+              return;
+            }
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            if (!issue_number) {
+              core.warning('No pull request number in context; skipping comment.');
+              return;
+            }
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 }
+            );
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+              core.info('Updated existing summary comment #' + existing.id);
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+              core.info('Created new summary comment');
+            }
 
   deploy:
     name: Build & Deploy to Production

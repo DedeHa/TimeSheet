@@ -197,14 +197,14 @@ python -m pytest -m "not system"
 ### Test Coverage
 
 - **103 tests** across three levels (unit 79 · integration 17 · system 7; 1 `xfail`), ~99% branch+line coverage of `src_timesheetalgo` (CI gate: 90%)
-- Every PR to `master` gets a consolidated **quality-gate summary** posted as a sticky PR comment (Lint, Unit/Integration/System tests with pass/fail/skip counts, combined coverage vs. the 90% gate, and artifact links). See [`doc/TESTING.md`](doc/TESTING.md#pull-request-quality-gate-summary-pro-337).
+- Every PR to `master` gets a consolidated **quality-gate summary** posted as a sticky PR comment (Lint, Unit/Integration/System tests with pass/fail/skip counts, combined coverage vs. the 90% gate, and artifact links). See [`doc/TESTING.md`](doc/TESTING.md#pull-request-quality-gate-summary).
 - Traceability between requirements, architecture, and implementation is validated in CI via [.github/workflows/test_docs_traceability.py](.github/workflows/test_docs_traceability.py) and published as a markdown matrix in the workflow summary and artifacts.
 - Unit: individual functions/methods in isolation
 - Integration: the `TimeSheetProcessor` pipeline on an in-memory workbook
 - System: black-box runs against real-file copies (skipped when data is absent)
 - Boundary-value & equivalence-class rationale: [`tests/boundary_equivalence_analysis.md`](tests/boundary_equivalence_analysis.md)
 
-See [`tests/TESTING.md`](tests/TESTING.md) for detailed testing documentation.
+See [`doc/TESTING.md`](doc/TESTING.md) for detailed testing documentation.
 
 ### Project Structure
 

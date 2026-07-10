@@ -13,7 +13,7 @@ fixtures, and the configuration behind them.
 ```text
 tests/
   conftest.py                    # shared: frozen_time, sys.path, workbook/processor builders
-  boundary_equivalence_analysis.md  # ECP/BVA analysis, derived cases, findings (PRO-262)
+  boundary_equivalence_analysis.md  # ECP/BVA analysis, derived cases, findings
   unit/
     conftest.py                  # clean_root_logger
     test_config.py               # load_config, _read_yaml, detect_environment, ConfigError
@@ -50,7 +50,7 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 
 Requirement-to-architecture-to-code traceability is validated by [.github/workflows/test_docs_traceability.py](../.github/workflows/test_docs_traceability.py). The test scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and fails the build when any requirement is missing a mapping. The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
 
-## Pull Request Quality-Gate Summary (PRO-337)
+## Pull Request Quality-Gate Summary
 
 Every Pull Request targeting `master` publishes a consolidated quality-gate summary as a **sticky** comment (updated in place on re-runs, never duplicated) and in the GitHub Actions job summary. The summary reports, with ✅ / ❌ / ⚠️ indicators:
 

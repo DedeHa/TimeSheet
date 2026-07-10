@@ -238,6 +238,6 @@ The Tester will validate that implementation meets all acceptance criteria and i
 
 Reference these patterns from project docs:
 - `doc/CONTRIBUTING.md` - Coding style, naming conventions, commit format
-- `tests/TESTING.md` - Test structure, test markers, test organization
+- `doc/TESTING.md` - Test structure, test markers, test organization
 - `doc/ARCHITECTURE.md` - Module patterns, configuration flow, class design
 - `README.md` - Project structure and module dependencies

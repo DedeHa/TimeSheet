@@ -1,7 +1,8 @@
 # This workflow implements the Feature → Master → Release → Deployment strategy
-# - Push events: Lint checks on development branches (feature/*, bugfix/*, etc.)
-# - PR to master: Full tests required (Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
+# - Pull requests to master: Full checks (Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
+# - Pull requests to release/*: Lint checks
 # - Release tags (vX.Y.Z): Deployment to production only (tests already passed on master)
+# Branch pushes do not trigger CI; a branch with an open PR is validated once (by the PR).
 #
 # Node.js version: Prepared for Node.js 24 migration (June 2, 2026)
 # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

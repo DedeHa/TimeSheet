@@ -300,7 +300,7 @@ Handoff back to Developer:
 ## Test Execution Patterns
 
 Use these testing patterns from project docs:
-- `tests/TESTING.md` - Test markers and organization (@pytest.mark.unit, @pytest.mark.integration)
+- `doc/TESTING.md` - Test markers and organization (@pytest.mark.unit, @pytest.mark.integration)
 - `tests/test_unit.py` - Unit test patterns and fixtures
 - `tests/test_integration.py` - Integration test patterns
 - `tests/test_system.py` - System verification patterns

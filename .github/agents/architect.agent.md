@@ -205,4 +205,4 @@ All architecture decisions should reference patterns from:
 - `doc/ARCHITECTURE.md` - System design and configuration flow
 - `README.md` - Project structure and module organization
 - `doc/CONTRIBUTING.md` - Coding patterns and naming conventions
-- `tests/TESTING.md` - Testing patterns and test organization
+- `doc/TESTING.md` - Testing patterns and test organization

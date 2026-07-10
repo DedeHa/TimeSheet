@@ -15,23 +15,26 @@ name: Python CI
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Quality checks run on pull requests only. A branch with an open PR is
+# therefore validated once (by the PR) instead of twice (branch push + PR).
+# Direct branch pushes no longer trigger CI; release tags still trigger the
+# deploy job, and workflow_dispatch keeps manual runs available.
 on:
-  push:
-    branches:
-      - 'feature/**'
-      - 'bugfix/**'
-      - 'hotfix/**'
-      - 'refactor/**'
-      - 'docs/**'
-      - 'test/**'
-      - '!master' # Prevent direct pushes to master
-    tags:
-      - 'v*' # Deploy on release tags (vX.Y.Z)
   pull_request:
     branches:
       - 'master'
       - 'release/**'
+  push:
+    tags:
+      - 'v*' # Deploy on release tags (vX.Y.Z)
   workflow_dispatch:
+
+# Supersede an in-progress run when a new commit is pushed to the same PR, so
+# rapid successive pushes do not stack redundant runs. Release tags get a unique
+# group (no PR number), so deployments are never cancelled by this rule.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
 

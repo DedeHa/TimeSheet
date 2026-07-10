@@ -61,13 +61,15 @@ Every Pull Request targeting `master` publishes a consolidated quality-gate summ
 - Combined line + branch coverage and the 90% gate result
 - A link to the workflow run and its downloadable artifacts (including `htmlcov/index.html`)
 
-How it is produced:
+How it is produced (all inside the `test` job, so the pipeline graph stays `lint -> test -> deploy`):
 
-1. The `test` job writes a JUnit report per level (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` (`coverage json --fail-under=0`), all uploaded in the `test-results` artifact.
-2. A dedicated `report` job (`needs: [lint, test]`, `if: always()`) downloads that artifact and runs [.github/workflows/pr_test_summary.py](../.github/workflows/pr_test_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, and the `lint` / `test` job outcomes.
-3. An `actions/github-script` step finds the previous summary by a hidden marker and updates it, or creates it on the first run.
+1. Each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); both are also uploaded in the `test-results` artifact.
+2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/workflows/pr_test_summary.py](../.github/workflows/pr_test_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, the `lint` job result (`needs.lint.result`) and the test outcome so far (`job.status`).
+3. A `Publish or update sticky PR comment` step (`if: always()`) uses `actions/github-script` to find the previous summary by a hidden marker and update it, or create it on the first run.
 
-The `report` job is **publication-only**: it runs even when lint or a test level fails (so failed runs still publish available results) and it never gates the merge — the quality gates themselves are still enforced by the `lint` and `test` jobs. The generator uses the standard library only and is covered by [.github/workflows/test_pr_test_summary.py](../.github/workflows/test_pr_test_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
+Both publishing steps use `if: always()`, so the summary is still published when a test level or the 90% coverage gate fails, and publication never gates the merge — the quality gates themselves are still enforced by the preceding steps. (One edge case: because the `test` job `needs: lint`, a `lint` failure skips the whole job and therefore skips publication; lint failures remain visible directly in the PR checks.)
+
+The generator uses the standard library only and is covered by [.github/workflows/test_pr_test_summary.py](../.github/workflows/test_pr_test_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
 
 ## Test levels and their intent
 

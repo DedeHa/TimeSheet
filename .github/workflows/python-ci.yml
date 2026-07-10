@@ -90,6 +90,12 @@ jobs:
     needs: [lint]
     if: github.event_name == 'pull_request' && github.base_ref == 'master'
     environment: staging
+    # Least-privilege token: read the repo (checkout) and write PR comments
+    # (traceability comment + PRO-337 sticky quality-gate summary).
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
 
     steps:
       - uses: actions/checkout@v4
@@ -186,47 +192,21 @@ jobs:
               body,
             });
 
-  # PRO-337: Publish a consolidated quality-gate summary to the Pull Request.
-  # This job is publication-only - it never gates the merge (the quality gates
-  # are still enforced by the lint/test jobs). It runs with if: always() so the
-  # summary is published even when lint or a test level fails, or when the test
-  # job is skipped, and it updates a single sticky comment instead of adding a
-  # new one on every re-run.
-  report:
-    name: Publish quality-gate summary to PR
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    if: always() && github.event_name == 'pull_request' && github.base_ref == 'master'
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Prepare report directory
-        run: mkdir -p tests/reports
-
-      # The artifact is absent when the test job was skipped (e.g. lint failed);
-      # continue-on-error lets the summary still publish the gates it knows about.
-      - name: Download test result artifacts
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: test-results
-          path: tests/reports
-
+      # PRO-337: publish a consolidated quality-gate summary from within the test
+      # job (no separate job, so the pipeline graph stays lint -> test -> deploy).
+      # Both steps use if: always() so the summary is still published when a test
+      # level or the coverage gate fails. TEST_RESULT is taken from job.status,
+      # which reflects whether the earlier steps in this job passed. The JUnit and
+      # coverage.json files already sit in tests/reports, so no download is needed.
       - name: Generate PR quality-gate summary
+        if: always()
         env:
           LINT_RESULT: ${{ needs.lint.result }}
-          TEST_RESULT: ${{ needs.test.result }}
+          TEST_RESULT: ${{ job.status }}
         run: python .github/workflows/pr_test_summary.py
 
       - name: Publish or update sticky PR comment
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |

@@ -58,3 +58,17 @@ black .
 - `pyproject.toml` uses `configparser` for radon → no `%` in values (e.g., `log_cli_format`)
 - Run order in CI: lint → typecheck (none) → test
 - Commit/PR titles validated in GitHub Actions per `doc/CONTRIBUTING.md`
+
+## CI Workflow File Conventions
+For GitHub Actions workflow support files in `.github/workflows/`, follow these naming conventions:
+
+| Pattern              | Examples                               | Reasoning                                  |
+|----------------------|----------------------------------------|---------------------------------------------|
+| `test-*.py`          | `test-docs-traceability.py`             | Tests for workflow scripts                 |
+| `*-*.py`             | `pr-test-summary.py`, `naming-validation.py` | Action-oriented, hyphenated names          |
+| `*.yml`              | `python-ci.yml`                        | Workflow definitions                     |
+
+### Optimization Tips
+- Add `actions/cache@v3` step after checkout to cache pip dependencies (reduces install time by ~60%).
+- Merge ruff/black/pydocstyle/radon into a single `Run lint tools` step to reduce job overhead.
+- Consider splitting unit/integration/system tests into parallel jobs for faster CI.

@@ -1,12 +1,12 @@
 """Unit tests for the PR quality-gate summary generator (PRO-337).
 
-These validate the parsing and rendering logic of ``pr_test_summary.py`` in
+These validate the parsing and rendering logic of ``pr-test-summary.py`` in
 isolation. Like ``test_docs_traceability.py`` this file lives next to the
 workflow and is *not* part of the ``tests/`` suite (``testpaths = ["tests"]``),
 so it does not change the 103-test application suite or the coverage gate. It is
 executed explicitly by the CI ``test`` job and can be run locally with::
 
-    pytest -q .github/workflows/test_pr_test_summary.py
+    pytest -q .github/workflows/test_pr-test-summary.py
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-_MODULE_PATH = Path(__file__).with_name("pr_test_summary.py")
+_MODULE_PATH = Path(__file__).with_name("pr-test-summary.py")
 _spec = importlib.util.spec_from_file_location("pr_test_summary", _MODULE_PATH)
 mod = importlib.util.module_from_spec(_spec)
 assert _spec and _spec.loader

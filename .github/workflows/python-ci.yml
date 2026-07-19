@@ -25,9 +25,14 @@ on:
     branches:
       - 'master'
       - 'release/**'
-
+    paths-ignore:
+      - '**/sup/**'  # Skip real data files in CI prep steps
+    paths:
+      - 'src_timesheetalgo/**'
+      - 'tests/**'
+  push:
     tags:
-      - 'v*' # Deploy on release tags (vX.Y.Z)
+      - 'v*'  # Deploy on release tags (vX.Y.Z)
   workflow_dispatch:
 
 # Supersede an in-progress run when a new commit is pushed to the same PR, so
@@ -76,17 +81,12 @@ jobs:
           python -m pip install --upgrade build setuptools wheel
           pip install -e .[dev]
 
-      - name: Run ruff
-        run: ruff check src_timesheetalgo tests
-
-      - name: Run black formatter
-        run: black --check src_timesheetalgo tests
-
-      - name: Run pydocstyle
-        run: pydocstyle src_timesheetalgo tests
-
-      - name: Run radon
-        run: radon cc src_timesheetalgo -a
+      - name: Run lint tools (ruff, black, pydocstyle, radon)
+        run: |
+          ruff check src_timesheetalgo tests
+          black --check src_timesheetalgo tests
+          pydocstyle src_timesheetalgo tests
+          radon cc src_timesheetalgo -a
 
   test:
     name: Run all test levels (unit + integration + system)
@@ -117,10 +117,10 @@ jobs:
         run: mkdir -p tests/reports
 
       - name: Validate documentation traceability
-        run: pytest -q .github/workflows/test_docs_traceability.py
+        run: pytest -q .github/workflows/test-docs-traceability.py
 
       - name: Validate PR quality-gate summary generator
-        run: pytest -q .github/workflows/test_pr_test_summary.py
+        run: pytest -q .github/workflows/test-pr-test-summary.py
 
       # Each test level runs as its own visible, attributable step so a failure
       # points straight at the level that broke. Coverage is measured fresh on
@@ -207,7 +207,7 @@ jobs:
         env:
           LINT_RESULT: ${{ needs.lint.result }}
           TEST_RESULT: ${{ job.status }}
-        run: python .github/workflows/pr_test_summary.py
+        run: python .github/workflows/pr-test-summary.py
 
       - name: Publish or update sticky PR comment
         if: always()

@@ -14,7 +14,7 @@ fixtures, and the configuration behind them.
 tests/
   conftest.py                    # shared: frozen_time, sys.path, workbook/processor builders
   boundary_equivalence_analysis.md  # ECP/BVA analysis, derived cases, findings
-  unit/
+  @tests/unit/
     conftest.py                  # clean_root_logger
     test_config.py               # load_config, _read_yaml, detect_environment, ConfigError
     test_logging.py              # configure_logging
@@ -32,6 +32,9 @@ tests/
     conftest.py                  # real_resource_copy, cli_runner
     test_real_pipeline.py        # real copies → TimeSheetProcessor end-to-end, reload & assert cells
     test_cli_main.py             # run()/main() with stdin + tmp config
+```
+
+Mapped each level to its folder and marker — unit lives under the `@tests/unit/` sub‑folder.
 ```
 
 ## Testing Architecture

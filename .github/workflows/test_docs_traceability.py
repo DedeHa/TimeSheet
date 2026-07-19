@@ -19,7 +19,9 @@ def _extract_requirement_ids(text: str) -> list[str]:
 
 def _coverage_percent(requirement_ids: list[str], present_ids: set[str]) -> float:
     total = len(requirement_ids)
-    return round(100 * sum(1 for r in requirement_ids if r in present_ids) / max(1, total), 1)
+    return round(
+        100 * sum(1 for r in requirement_ids if r in present_ids) / max(1, total), 1
+    )
 
 
 def _group_by_type(requirement_ids: list[str]) -> dict[str, list[str]]:
@@ -61,7 +63,9 @@ def _build_traceability_matrix(
 
         lines.append("")
 
-    lines.append(f"- Architecture coverage: {_coverage_percent(requirement_ids, architecture_ids)}%")
+    lines.append(
+        f"- Architecture coverage: {_coverage_percent(requirement_ids, architecture_ids)}%"
+    )
     lines.append(f"- Code coverage: {_coverage_percent(requirement_ids, code_ids)}%")
 
     return "\n".join(lines)
@@ -76,10 +80,10 @@ def _build_traceability_html(
 
     html_lines = [
         "<!doctype html>",
-        "<html lang=\"en\">",
+        '<html lang="en">',
         "<head>",
-        "<meta charset=\"utf-8\">",
-        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+        '<meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width,initial-scale=1">',
         "<title>Traceability Matrix</title>",
         "<style>",
         "body{font-family:Arial,Helvetica,sans-serif;margin:16px;background:#0f1724;color:#e6eef8}",
@@ -103,7 +107,11 @@ def _build_traceability_html(
         html_lines.append(f"<h2>{title}</h2>")
         html_lines.append("<table>")
         header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
-        html_lines.append("<thead><tr>" + "".join(f"<th>{c}</th>" for c in header_cols) + "</tr></thead>")
+        html_lines.append(
+            "<thead><tr>"
+            + "".join(f"<th>{c}</th>" for c in header_cols)
+            + "</tr></thead>"
+        )
         html_lines.append("<tbody>")
 
         for req in reqs:
@@ -119,7 +127,9 @@ def _build_traceability_html(
 
     arch_cov = _coverage_percent(requirement_ids, architecture_ids)
     code_cov = _coverage_percent(requirement_ids, code_ids)
-    html_lines.append(f"<p>Architecture coverage: {arch_cov}%<br/>Code coverage: {code_cov}%</p>")
+    html_lines.append(
+        f"<p>Architecture coverage: {arch_cov}%<br/>Code coverage: {code_cov}%</p>"
+    )
     html_lines.append("</body></html>")
     return "\n".join(html_lines)
 

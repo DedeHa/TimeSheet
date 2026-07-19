@@ -25,7 +25,7 @@ on:
     branches:
       - 'master'
       - 'release/**'
-  push:
+
     tags:
       - 'v*' # Deploy on release tags (vX.Y.Z)
   workflow_dispatch:

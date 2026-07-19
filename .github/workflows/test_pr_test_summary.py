@@ -42,7 +42,9 @@ def _write_coverage(path: Path, percent: float):
 
 
 def _all_green_reports(tmp_path: Path):
-    _write_junit(tmp_path / "unit-results.xml", tests=79, failures=0, errors=0, skipped=1)
+    _write_junit(
+        tmp_path / "unit-results.xml", tests=79, failures=0, errors=0, skipped=1
+    )
     _write_junit(
         tmp_path / "integration-results.xml", tests=17, failures=0, errors=0, skipped=0
     )
@@ -53,7 +55,9 @@ def _all_green_reports(tmp_path: Path):
 
 
 def test_parse_junit_counts(tmp_path):
-    _write_junit(tmp_path / "unit-results.xml", tests=79, failures=2, errors=1, skipped=1)
+    _write_junit(
+        tmp_path / "unit-results.xml", tests=79, failures=2, errors=1, skipped=1
+    )
     stats = mod.parse_junit(tmp_path / "unit-results.xml")
     assert stats.executed == 79
     assert stats.failed == 3  # failures + errors
@@ -67,7 +71,9 @@ def test_parse_junit_missing_file(tmp_path):
 
 
 def test_level_skipped_when_all_skipped(tmp_path):
-    _write_junit(tmp_path / "system-results.xml", tests=7, failures=0, errors=0, skipped=7)
+    _write_junit(
+        tmp_path / "system-results.xml", tests=7, failures=0, errors=0, skipped=7
+    )
     stats = mod.parse_junit(tmp_path / "system-results.xml")
     assert stats.status == mod.SKIP
 

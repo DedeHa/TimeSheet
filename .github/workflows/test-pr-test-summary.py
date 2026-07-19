@@ -1,12 +1,12 @@
 """Unit tests for the PR quality-gate summary generator (PRO-337).
 
-These validate the parsing and rendering logic of ``pr_test_summary.py`` in
+These validate the parsing and rendering logic of ``pr-test-summary.py`` in
 isolation. Like ``test_docs_traceability.py`` this file lives next to the
 workflow and is *not* part of the ``tests/`` suite (``testpaths = ["tests"]``),
 so it does not change the 103-test application suite or the coverage gate. It is
 executed explicitly by the CI ``test`` job and can be run locally with::
 
-    pytest -q .github/workflows/test_pr_test_summary.py
+    pytest -q .github/workflows/test_pr-test-summary.py
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-_MODULE_PATH = Path(__file__).with_name("pr_test_summary.py")
+_MODULE_PATH = Path(__file__).with_name("pr-test-summary.py")
 _spec = importlib.util.spec_from_file_location("pr_test_summary", _MODULE_PATH)
 mod = importlib.util.module_from_spec(_spec)
 assert _spec and _spec.loader
@@ -42,7 +42,9 @@ def _write_coverage(path: Path, percent: float):
 
 
 def _all_green_reports(tmp_path: Path):
-    _write_junit(tmp_path / "unit-results.xml", tests=79, failures=0, errors=0, skipped=1)
+    _write_junit(
+        tmp_path / "unit-results.xml", tests=79, failures=0, errors=0, skipped=1
+    )
     _write_junit(
         tmp_path / "integration-results.xml", tests=17, failures=0, errors=0, skipped=0
     )
@@ -53,7 +55,9 @@ def _all_green_reports(tmp_path: Path):
 
 
 def test_parse_junit_counts(tmp_path):
-    _write_junit(tmp_path / "unit-results.xml", tests=79, failures=2, errors=1, skipped=1)
+    _write_junit(
+        tmp_path / "unit-results.xml", tests=79, failures=2, errors=1, skipped=1
+    )
     stats = mod.parse_junit(tmp_path / "unit-results.xml")
     assert stats.executed == 79
     assert stats.failed == 3  # failures + errors
@@ -67,7 +71,9 @@ def test_parse_junit_missing_file(tmp_path):
 
 
 def test_level_skipped_when_all_skipped(tmp_path):
-    _write_junit(tmp_path / "system-results.xml", tests=7, failures=0, errors=0, skipped=7)
+    _write_junit(
+        tmp_path / "system-results.xml", tests=7, failures=0, errors=0, skipped=7
+    )
     stats = mod.parse_junit(tmp_path / "system-results.xml")
     assert stats.status == mod.SKIP
 

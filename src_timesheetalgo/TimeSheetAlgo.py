@@ -7,3 +7,6 @@ class TimeSheetAlgo:
     
     def validate_hours(self, hours):
         return hours >= 0 and hours <= 24
+    
+    def validate_minutes(self, minutes):
+        return minutes >= 0 and minutes < 60

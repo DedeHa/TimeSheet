@@ -435,3 +435,95 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Timing**: Validation runs for every relevant PR event
 - ✅ **Failure**: Invalid names fail the workflow immediately, blocking linting and testing
 - ✅ **Blocks**: Merging through the existing **Python CI** status check
+
+### Testing Strategy:
+- ➖ **Development Branches** (push): No CI on branch pushes — checks run on the pull request, so a branch with an open PR is validated once instead of twice
+- ✅ **Master PRs** (required): **Full tests required** (Lint + Unit Tests + Code Coverage)
+- ✅ **Release Branches** (inherited): Tests already run on Master
+
+### Quality-Gate Result Publication:
+- ✅ **Master PRs**: at the end of the `test` job, a consolidated **quality-gate summary** is published as a sticky PR comment and in the job summary — Lint, Unit/Integration/System test status with executed/passed/failed/skipped counts, combined coverage vs. the 90% gate, and artifact links.
+- ✅ The comment is **updated in place** on re-runs (no duplicates) and is still published when a test level or the coverage gate fails, so a failing PR clearly shows which level broke.
+- ℹ️ Publication runs as `if: always()` steps inside the `test` job and is **non-gating** — it only reports results; the merge is still gated by the `lint` and `test` steps. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
+
+### Deployment Strategy:
+- ❌ **Development Branches**: No deployment
+- ❌ **Master Branch**: No deployment
+- ✅ **Release Tags** (vX.Y.Z): **Production deployment only**
+
+### Push Events trigger on:
+- **Tags `vX.Y.Z`** (Production deployment) — branch pushes do **not** trigger CI
+- Manual runs are available via `workflow_dispatch`
+
+### PR Events trigger on:
+- All target branches, especially:
+  - **`master`** (Lint + Unit Tests + Code Coverage required)
+  - **`release/*`** (Lint checks)
+- A `concurrency` group supersedes an in-progress run when a new commit is pushed to the same PR
+
+### Release/Deployment Events trigger on:
+- **Tags `vX.Y.Z`** (Production Deployment)
+
+### Workflow Model (Feature → Master → Release → Deployment):
+
+```
+feature/PRO-123          PR (Master)           master              release/vX.Y.Z        Tags vX.Y.Z
+   ↓                        ↓                     ↓                    ↓                     ↓
+[Development]  →  [Testing required]  →  [Stable, Tested]  →  [Release Branch]  →  [Production]
+   ↓                  (Lint+Tests)          (Ready for PR)       (vX.Y.Z)              (Deployment)
+Direct Push          Protected              Protected            Protected              Auto/Manual
+                                                                                       Deployment
+```
+
+**Process:**
+1. Feature development on `feature/PRO-123-xyz` (direct pushes allowed)
+2. PR to `master` (tests required) - Lint + Unit Tests + Code Coverage
+3. After successful merge: Master is stable and tested
+4. Create release branch `release/vX.Y.Z` from Master
+5. Create tag `vX.Y.Z` (marks release)
+6. Deployment runs automatically on release tags (or manually)
+
+---
+
+## 9. Code Quality Requirements
+
+All PRs must meet these requirements:
+
+### 1. Lint Checks:
+- ✅ **Ruff** - Python linter
+- ✅ **Black** - Code formatter
+- ✅ **Pydocstyle** - Docstring validator
+- ✅ **Radon** - Complexity analyzer
+
+### 2. Testing:
+- ✅ All unit tests pass
+- ✅ Code coverage maintained
+
+### 3. Review:
+- ✅ At least one approval
+- ✅ No pending review requests
+
+---
+
+## 10. Quick Reference
+
+| Type | Branch | PR Title | Commit | Protected |
+|-----|--------|---------|--------|-----------|
+| Feature | `feature/PRO-123-desc` | `[feat][PRO-123] Description` | `feat(scope): desc` | ❌ |
+| Bugfix | `bugfix/PRO-123-desc` | `[fix][PRO-123] Description` | `fix(scope): desc` | ❌ |
+| Hotfix | `hotfix/PRO-123-desc` | `[hotfix][PRO-123] Description` | `fix(scope): desc` | ❌ |
+| Refactor | `refactor/PRO-123-desc` | `[refactor][PRO-123] Description` | `refactor(scope): desc` | ❌ |
+| Docs | `docs/PRO-123-desc` | `[docs][PRO-123] Description` | `docs(scope): desc` | ❌ |
+| Test | `test/PRO-123-desc` | `[test][PRO-123] Description` | `test(scope): desc` | ❌ |
+| Release | `release/vX.Y.Z` | `[release][PRO-123] vX.Y.Z` | `chore(release): vX.Y.Z` | ✅ |
+| Main | `master` | N/A | N/A | ✅ |
+
+---
+
+## 11. Additional Resources
+
+- **Branch Protection Settings**: GitHub Repository Settings → Branches → Branch Protection Rules
+- **GitHub Actions Workflow**: `.github/workflows/python-ci.yml`
+- **Conventional Commits**: https://www.conventionalcommits.org/
+- **Semantic Versioning**: https://semver.org/
+

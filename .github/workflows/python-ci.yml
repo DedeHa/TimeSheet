@@ -80,9 +80,9 @@ jobs:
       # Add commit message validation
       - name: Validate commit messages
         if: github.event_name == 'pull_request'
-        uses: commitlint/action-commitlint@v2
+        uses: github/commitlint-action@v2
         with:
-          config-file: .commitlintrc.json
+          configuration-file: .commitlintrc.json
         # Add debugging if needed
         # env:
         #   DEBUG: true

@@ -417,7 +417,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Conventional Commits standard**: `type(scope): description`
 - ✅ **Required JIRA reference**: `Refs: PRO-XXX` for commits with JIRA tickets
 - ✅ **Allowed types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
-- ✅ **Validation**: Performed via `commitlint` action at the start of the `lint` job
+- ✅ **Validation**: Performed via `commitlint` action using `.commitlintrc.json` at the start of the `lint` job
 
 #### Pull Request Title Validation
 - ✅ **Format**: `[type][PRO-XXX] Description`

@@ -87,6 +87,9 @@ strategy:
         uses: commitlint/action-commitlint@v2
         with:
           config-file: .commitlintrc.json
+        # Add debugging if needed
+        # env:
+        #   DEBUG: true
 
       # Add PR title validation
       - name: Validate PR Title

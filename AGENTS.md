@@ -1,74 +1,144 @@
 # AGENTS.md — TimeSheetAlgo
 
-## Commands
+## Critical Commands (Agents often miss these specifics)
 
-**Install (dev):**
+**Install development dependencies** (required for local work):
 ```bash
 python -m pip install -e .[dev]
 ```
 
-**Run app:**
+**Activate virtual environment when switching branches** (critical for config):
 ```bash
-python src_timesheetalgo/TimeSheetAlgo.py
+git checkout <branch-name>
+source venv/bin/activate   # Linux/macOS
+# venv\Scripts\activate    # Windows
 ```
 
-**Tests:**
+**Run complete test suite with coverage verification** (required for PRs to master):
 ```bash
-# All + coverage (CI gate: 90%)
 python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
+```
+- Must achieve ≥90% branch+line coverage (CI gate)
+- Output shows missing coverage areas
 
-# By level (folder or marker)
-python -m pytest tests/unit          # -m unit
-python -m pytest tests/integration   # -m integration
-python -m pytest tests/system        # -m system (skipped if data missing)
+**Run specific test types** (use markers or folder paths):
+```bash
+# Unit tests only
+python -m pytest tests/unit -m unit
 
-# Fast set (no real resources) — what PR CI runs
+# Integration tests only  
+python -m pytest tests/integration -m integration
+
+# System tests (requires real data files)
+python -m pytest tests/system -m system
+```
+
+**Fast CI mode** (skip system tests when no real data):
+```bash
 python -m pytest -m "not system"
 ```
 
-**Lint/Format:**
+**Run full test suite locally** (verifies all checks):
 ```bash
-ruff check .
-black --check .
-# or fix:
-ruff check . --fix
-black .
+python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing -q
 ```
 
-## Project Structure
+## Critical Project Structure (Agents often miss these paths)
 
-- `src_timesheetalgo/` — main package (`TimeSheetAlgo.py` entrypoint, `config.yaml`, `naming_validation.py`)
-- `tests/` — three levels: `unit/`, `integration/`, `system/` (each has matching pytest marker)
-- `doc/` — `ARCHITECTURE.md`, `CONTRIBUTING.md`, `TESTING.md`
-- `sup/` — support files / test data
-- `pyproject.toml` — single source of truth for tool config (pytest, coverage, black, ruff)
+- **Main package**: `src_timesheetalgo/` 
+  - Contains `TimeSheetAlgo.py` (entrypoint)
+  - Contains `config.yaml` (configuration file)
+  - Contains `naming_validation.py` (naming convention rules)
 
-## Key Conventions
+- **Test structure** (mirror of code structure):
+  - `tests/unit/` - Unit tests (80% of tests)
+  - `tests/integration/` - Integration tests (17 tests)
+  - `tests/system/` - System tests (7 tests, requires real data)
+  - All test files use markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.system`
 
-- **Python ≥3.9**, dependencies: `openpyxl==3.1.5`, `PyYAML==6.0.1`
-- **Config**: `src_timesheetalgo/config.yaml` — `year`, `environments.{development,production}.file_paths`, `logging`, `default_environment`
-- **Test markers** defined in `pyproject.toml`: `unit`, `integration`, `system`
-- **Coverage gate**: 90% branch+line (enforced in CI)
-- **Branch strategy**: feature → PR (tests required) → master → release/vX.Y.Z → deploy from tags only
-- **Virtual env**: re-activate on branch switch (`source venv/bin/activate`)
+- **Documentation structure**:
+  - `doc/ARCHITECTURE.md` - System architecture diagrams
+  - `doc/CONTRIBUTING.md` - Detailed contributing guidelines
+  - `doc/TESTING.md` - Comprehensive testing documentation
+  - `tests/boundary_equivalence_analysis.md` - Boundary analysis documentation
 
-## Gotchas
+## Key Conventions Agents Often Miss
 
-- System tests are skipped when real CSV/Excel files absent — CI provides them
-- `pyproject.toml` uses `configparser` for radon → no `%` in values (e.g., `log_cli_format`)
-- Run order in CI: lint → typecheck (none) → test
-- Commit/PR titles validated in GitHub Actions per `doc/CONTRIBUTING.md`
+**Python Requirements**:
+- Python ≥3.9 (currently 3.12 in README)
+- Dependencies: `openpyxl==3.1.5`, `PyYAML==6.0.1` (exact versions pinned)
 
-## CI Workflow File Conventions
-For GitHub Actions workflow support files in `.github/workflows/`, follow these naming conventions:
+**Configuration Structure** (`src_timesheetalgo/config.yaml`):
+```yaml
+year: 2025
+environments:
+  development:
+    file_paths:
+      timelog_path: "FDTech_timelog.csv"
+      timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
+    logging:
+      level: "INFO"
+      format: "%(asctime)s - %(levelname)s - %(message)s"
+  production:
+    file_paths:
+      timelog_path: "Timealarm/FDTech_timelog.csv"
+      timesheet_path: "2025_FDTech_Dennis_Hartel.xlsm"
+    logging:
+      level: "WARNING"
+      format: "%(asctime)s - %(levelname)s - %(message)s"
+default_environment: "development"
+```
 
-| Pattern              | Examples                               | Reasoning                                  |
-|----------------------|----------------------------------------|---------------------------------------------|
-| `test-*.py`          | `test-docs-traceability.py`             | Tests for workflow scripts                 |
-| `*-*.py`             | `pr-test-summary.py`, `naming-validation.py` | Action-oriented, hyphenated names          |
-| `*.yml`              | `python-ci.yml`                        | Workflow definitions                     |
+**Testing Requirements**:
+- 103 total tests (79 unit, 17 integration, 7 system, 1 xfail)
+- ~99% branch/line coverage (CI gate: 90%)
+- Traceability between requirements/architecture/implementation validated in CI
+- Boundary-value and equivalence-class testing documented in `tests/boundary_equivalence_analysis.md`
 
-### Optimization Tips
-- Add `actions/cache@v3` step after checkout to cache pip dependencies (reduces install time by ~60%).
-- Merge ruff/black/pydocstyle/radon into a single `Run lint tools` step to reduce job overhead.
-- Consider splitting unit/integration/system tests into parallel jobs for faster CI.
+## Critical CI/CD Workflow Details
+
+**.github/workflows/** naming conventions:
+- `test-*.py` → Tests for workflow scripts (e.g., `test-docs-traceability.py`)
+- `*-*.py` → Action implementation files (e.g., `pr-test-summary.py`, `naming-validation.py`)
+- `*.yml` → Complete workflow definitions (e.g., `python-ci.yml`)
+
+**Commit/PR Title Validation**:
+- Enforced via GitHub Actions per `doc/CONTRIBUTING.md`
+- Required format: `feat:`, `fix:`, `docs:`, etc. prefixes
+- Automated validation prevents invalid titles from being merged
+
+## Gotchas Agents Commonly Miss
+
+1. **Virtual Environment Activation**:
+   - Must reactivate after branch switching
+   - Failure results in "ModuleNotFoundError" for local packages
+
+2. **System Test Data Requirements**:
+   - System tests require real CSV/Excel files
+   - CI provides test data files - local runs may fail without sample data
+
+3. **Configuration Path Resolution**:
+   - Paths in `config.yaml` are relative to project root, not script location
+   - Working directory must be repository root
+
+4. **Branch Strategy Flow**:
+   - Feature branches → PR to master (tests required) → merge to master
+   - Master → release/vX.Y.Z branches (for versioning)
+   - Release tags → production deployment
+   - Never deploy directly from master
+
+5. **Testing Hierarchy**:
+   - Unit tests: Isolated function/method testing
+   - Integration tests: `TimeSheetProcessor` pipeline on memory workbook
+   - System tests: Black-box real-file testing (skipped if data missing)
+
+## Critical Conventions
+
+- **Branch naming**: `feature/PRO-123-description` format
+- **Commit messages**: Must follow conventional Commits spec (fe-review required)
+- **PR validation**: Full test suite required for master merges
+- **Release process**: Only deploy from version tags (`vX.Y.Z`)
+- **Environment management**: Always activate venv when switching branches
+
+> **Note**: All paths are relative to repository root, not script execution directory.
+> Working directory must be the project root for proper configuration loading.

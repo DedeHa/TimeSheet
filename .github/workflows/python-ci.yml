@@ -54,82 +54,82 @@ jobs:
         ) && 'development'
       }}
 
-    strategy:
+strategy:
       matrix:
         python-version: [3.11, 3.12]
 
-steps:
-       - uses: actions/checkout@v4
-       - uses: actions/setup-python@v6
-         with:
-           python-version: ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
 
-       - name: Print GitHub Context Information and setup environment
-         run: |
-           echo "GitHub Ref: ${{ github.ref }}"
-           echo "GitHub Base Ref: ${{ github.base_ref }}"
-           echo "GitHub Event Name: ${{ github.event_name }}"
+      - name: Print GitHub Context Information and setup environment
+        run: |
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "GitHub Base Ref: ${{ github.base_ref }}"
+          echo "GitHub Event Name: ${{ github.event_name }}"
 
-       - name: Setup Node.js
-         uses: actions/setup-node@v4
-         with:
-           node-version: 24
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
 
-       - name: Install dependencies
-         run: |
-           python -m pip install --upgrade pip
-           python -m pip install --upgrade build setuptools wheel
-           pip install -e .[dev]
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build setuptools wheel
+          pip install -e .[dev]
 
-       # Add commit message validation
-       - name: Validate commit messages
-         if: github.event_name == 'pull_request'
-         uses: commitlint/action-commitlint@v2
-         with:
-           # config-file: .commitlintrc.json
+      # Add commit message validation
+      - name: Validate commit messages
+        if: github.event_name == 'pull_request'
+        uses: commitlint/action-commitlint@v2
+        with:
+          config-file: .commitlintrc.json
 
-       # Add PR title validation
-       - name: Validate PR Title
-         if: github.event_name == 'pull_request'
-         uses: actions/github-script@v8
-         with:
-           github-token: ${{ secrets.GITHUB_TOKEN }}
-           script: |
-             const prTitle = context.payload.pull_request.title;
-             // Format: [type][PRO-123] Description
-             // Types from CONTRIBUTING.md: feat, fix, docs, refactor, test, chore, hotfix
-             const regex = /^\[(feat|fix|docs|refactor|test|chore|hotfix)\]\[PRO-\d+\]\s+.+$/i;
-             if (!regex.test(prTitle)) {
-               core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
-             }
+      # Add PR title validation
+      - name: Validate PR Title
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prTitle = context.payload.pull_request.title;
+            // Format: [type][PRO-123] Description
+            // Types from CONTRIBUTING.md: feat, fix, docs, refactor, test, chore, hotfix
+            const regex = /^\[(feat|fix|docs|refactor|test|chore|hotfix)\]\[PRO-\d+\]\s+.+$/i;
+            if (!regex.test(prTitle)) {
+              core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
+            }
 
-       # Add PR body validation
-       - name: Validate PR Body
-         if: github.event_name == 'pull_request'
-         uses: actions/github-script@v8
-         with:
-           github-token: ${{ secrets.GITHUB_TOKEN }}
-           script: |
-             const body = context.payload.pull_request.body || '';
-             const hasSummary = /##\s+Summary\s*\n/.test(body);
-             const hasTesting = /##\s+Testing\s*\n/.test(body);
-             if (!hasSummary) {
-               core.setFailed('PR body missing mandatory "## Summary" section');
-             }
-             if (!hasTesting) {
-               core.setFailed('PR body missing mandatory "## Testing" section');
-             }
-             // Check for placeholder text
-             if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
-               core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
-             }
+      # Add PR body validation
+      - name: Validate PR Body
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const hasSummary = /##\s+Summary\s*\n/.test(body);
+            const hasTesting = /##\s+Testing\s*\n/.test(body);
+            if (!hasSummary) {
+              core.setFailed('PR body missing mandatory "## Summary" section');
+            }
+            if (!hasTesting) {
+              core.setFailed('PR body missing mandatory "## Testing" section');
+            }
+            // Check for placeholder text
+            if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
+              core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
+            }
 
-       - name: Run lint tools (ruff, black, pydocstyle, radon)
-         run: |
-           ruff check src_timesheetalgo tests
-           black --check src_timesheetalgo tests
-           pydocstyle src_timesheetalgo tests
-           radon cc src_timesheetalgo -a
+      - name: Run lint tools (ruff, black, pydocstyle, radon)
+        run: |
+          ruff check src_timesheetalgo tests
+          black --check src_timesheetalgo tests
+          pydocstyle src_timesheetalgo tests
+          radon cc src_timesheetalgo -a
 
   test:
     name: Run all test levels (unit + integration + system)

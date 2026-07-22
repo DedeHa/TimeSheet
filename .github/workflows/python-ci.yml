@@ -38,22 +38,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-    
-    lint:
-      name: Lint and Format Check
-      runs-on: ubuntu-latest
-      environment:
-        ${{
-          (
-            contains(github.ref, 'feature/') ||
-            contains(github.ref, 'bugfix/') ||
-            contains(github.ref, 'hotfix/') ||
-            contains(github.ref, 'refactor/') ||
-            contains(github.ref, 'docs/') ||
-            contains(github.ref, 'test/')
-          ) && 'development'
-        }}
-      steps:
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    environment:
+      ${{
+        (
+          contains(github.ref, 'feature/') ||
+          contains(github.ref, 'bugfix/') ||
+          contains(github.ref, 'hotfix/') ||
+          contains(github.ref, 'refactor/') ||
+          contains(github.ref, 'docs/') ||
+          contains(github.ref, 'test/')
+        ) && 'development'
+      }}
+    steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -77,21 +76,22 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade build setuptools wheel
           pip install -e .[dev]
-# Add commit message validation
-       - name: Validate commit messages
-         if: github.event_name == 'pull_request'
-         uses: wagoid/commitlint-github-action@v6
-         with:
-           configuration-file: .commitlintrc.json
 
-       # Add JIRA reference validation in commit messages
-       - name: Validate Jira reference in commits
-         if: github.event_name == 'pull_request'
-         run: |
-           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
-           awk 'BEGIN{RS="\n\n"} { if ($0 !~ /Refs: PRO-[0-9]+/) { print "Missing or invalid Jira reference:\n" $0; exit 1 } }'
+      # Add commit message validation
+      - name: Validate commit messages
+        if: github.event_name == 'pull_request'
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configuration-file: .commitlintrc.json
 
-       # Add PR title validation
+      # Add JIRA reference validation in commit messages
+      - name: Validate Jira reference in commits
+        if: github.event_name == 'pull_request'
+        run: |
+          git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
+          awk 'BEGIN{RS="\n\n"} { if ($0 !~ /Refs: PRO-[0-9]+/) { print "Missing or invalid Jira reference:\n" $0; exit 1 } }'
+
+      # Add PR title validation
       - name: Validate PR Title
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
@@ -106,30 +106,30 @@ jobs:
               core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
             }
 
-# Add PR body validation
-       - name: Validate PR Body
-         if: github.event_name == 'pull_request'
-         uses: actions/github-script@v8
-         with:
-           github-token: ${{ secrets.GITHUB_TOKEN }}
-           script: |
-             const body = context.payload.pull_request.body || '';
-             const hasSummary = /##\s+Summary\s*\n/.test(body);
-             const hasTesting = /##\s+Testing\s*\n/.test(body);
-             if (!hasSummary) {
-               core.setFailed('PR body missing mandatory "## Summary" section');
-             }
-             if (!hasTesting) {
-               core.setFailed('PR body missing mandatory "## Testing" section');
-             }
-             // Check for placeholder text
-             if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
-               core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
-             }
-             // Check for mandatory JIRA reference in body
-             if (!/Refs: PRO-[0-9]+/i.test(body)) {
-               core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
-             }
+      # Add PR body validation
+      - name: Validate PR Body
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const hasSummary = /##\s+Summary\s*\n/.test(body);
+            const hasTesting = /##\s+Testing\s*\n/.test(body);
+            if (!hasSummary) {
+              core.setFailed('PR body missing mandatory "## Summary" section');
+            }
+            if (!hasTesting) {
+              core.setFailed('PR body missing mandatory "## Testing" section');
+            }
+            // Check for placeholder text
+            if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
+              core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
+            }
+            // Check for mandatory JIRA reference in body
+            if (!/Refs: PRO-[0-9]+/i.test(body)) {
+              core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
+            }
 
       - name: Run lint tools (ruff, black, pydocstyle, radon)
         run: |
@@ -138,191 +138,191 @@ jobs:
           pydocstyle src_timesheetalgo tests
           radon cc src_timesheetalgo -a
 
-  test:
-    name: Run all test levels (unit + integration + system)
-    runs-on: ubuntu-latest
-    needs: [lint]
-    if: github.event_name == 'pull_request' && github.base_ref == 'master'
-    environment: staging
-    # Least-privilege token: read the repo (checkout) and write PR comments
-    # (traceability comment + PRO-337 sticky quality-gate summary).
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
+    test:
+      name: Run all test levels (unit + integration + system)
+      runs-on: ubuntu-latest
+      needs: [lint]
+      if: github.event_name == 'pull_request' && github.base_ref == 'master'
+      environment: staging
+      # Least-privilege token: read the repo (checkout) and write PR comments
+      # (traceability comment + PRO-337 sticky quality-gate summary).
+      permissions:
+        contents: read
+        pull-requests: write
+        issues: write
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v6
+          with:
+            python-version: '3.12'
 
-      - name: Install dependencies and setup environment
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade build setuptools wheel
-          pip install -e .[dev]
+        - name: Install dependencies and setup environment
+          run: |
+            python -m pip install --upgrade pip
+            python -m pip install --upgrade build setuptools wheel
+            pip install -e .[dev]
 
-      - name: Prepare report directory
-        run: mkdir -p tests/reports
+        - name: Prepare report directory
+          run: mkdir -p tests/reports
 
-      - name: Validate documentation traceability
-        run: pytest -q .github/workflows/test-docs-traceability.py
+        - name: Validate documentation traceability
+          run: pytest -q .github/workflows/test-docs-traceability.py
 
-      - name: Validate PR quality-gate summary generator
-        run: pytest -q .github/workflows/test-pr-test-summary.py
+        - name: Validate PR quality-gate summary generator
+          run: pytest -q .github/workflows/test-pr-test-summary.py
 
-      # Each test level runs as its own visible, attributable step so a failure
-      # points straight at the level that broke. Coverage is measured fresh on
-      # the unit step and accumulated across the later levels (--cov-append);
-      # the 90% gate is enforced once at the end over the combined data. The
-      # per-step --cov-fail-under=0 stops an individual level (which on its own
-      # cannot reach 90%) from failing the run prematurely.
-      - name: Run unit tests
-        run: pytest -m unit --cov=src_timesheetalgo --cov-branch --cov-report= --cov-fail-under=0 --junitxml=tests/reports/unit-results.xml
+        # Each test level runs as its own visible, attributable step so a failure
+        # points straight at the level that broke. Coverage is measured fresh on
+        # the unit step and accumulated across the later levels (--cov-append);
+        # the 90% gate is enforced once at the end over the combined data. The
+        # per-step --cov-fail-under=0 stops an individual level (which on its own
+        # cannot reach 90%) from failing the run prematurely.
+        - name: Run unit tests
+          run: pytest -m unit --cov=src_timesheetalgo --cov-branch --cov-report= --cov-fail-under=0 --junitxml=tests/reports/unit-results.xml
 
-      - name: Run integration tests
-        run: pytest -m integration --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/integration-results.xml
+        - name: Run integration tests
+          run: pytest -m integration --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/integration-results.xml
 
-      - name: Run system tests
-        run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
+        - name: Run system tests
+          run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
-      # Additive (PRO-337): export machine-readable coverage for the PR summary.
-      # Runs even if an earlier level failed so the summary always has coverage
-      # data; --fail-under=0 keeps this step green - the real 90% quality gate is
-      # still enforced by the step below, so existing behaviour is unchanged.
-      - name: Export machine-readable coverage
-        if: always()
-        run: coverage json -o tests/reports/coverage.json --fail-under=0
+        # Additive (PRO-337): export machine-readable coverage for the PR summary.
+        # Runs even if an earlier level failed so the summary always has coverage
+        # data; --fail-under=0 keeps this step green - the real 90% quality gate is
+        # still enforced by the step below, so existing behaviour is unchanged.
+        - name: Export machine-readable coverage
+          if: always()
+          run: coverage json -o tests/reports/coverage.json --fail-under=0
 
-      - name: Combined coverage report and 90% gate
-        run: |
-          coverage report --show-missing --fail-under=90
-          coverage html -d tests/reports/htmlcov
+        - name: Combined coverage report and 90% gate
+          run: |
+            coverage report --show-missing --fail-under=90
+            coverage html -d tests/reports/htmlcov
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v5
-        if: always()
-        with:
-          name: test-results
-          path: |
-            tests/reports/unit-results.xml
-            tests/reports/integration-results.xml
-            tests/reports/system-results.xml
-            tests/reports/coverage.json
-            tests/reports/htmlcov
-            tests/reports/traceability-matrix.md
-            tests/reports/traceability-matrix.html
+        - name: Upload test results
+          uses: actions/upload-artifact@v5
+          if: always()
+          with:
+            name: test-results
+            path: |
+              tests/reports/unit-results.xml
+              tests/reports/integration-results.xml
+              tests/reports/system-results.xml
+              tests/reports/coverage.json
+              tests/reports/htmlcov
+              tests/reports/traceability-matrix.md
+              tests/reports/traceability-matrix.html
 
-      - name: Comment traceability report on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const mdPath = 'tests/reports/traceability-matrix.md';
-            let md = '';
-            try {
-              md = fs.readFileSync(mdPath, 'utf8');
-            } catch (e) {
-              console.warn('Could not read traceability markdown: ' + e.message);
-            }
-            // Extract coverage numbers from the markdown if present
-            const archMatch = md.match(/Architecture coverage:\s*([0-9.]+)%/i);
-            const codeMatch = md.match(/Code coverage:\s*([0-9.]+)%/i);
-            const archCov = archMatch ? archMatch[1] + '%' : 'n/a';
-            const codeCov = codeMatch ? codeMatch[1] + '%' : 'n/a';
-            // Evaluation: simple pass/fail hint based on 100% coverage (customize as needed)
-            const evaluation = (archMatch && codeMatch && parseFloat(archMatch[1]) >= 100 && parseFloat(codeMatch[1]) >= 100) ? '✅ Fully covered' : '⚠️ Coverage gaps or missing links';
-            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            const compact = `**Status:** ✅ Completed\n**Evaluation:** ${evaluation}\n**Architecture coverage:** ${archCov}\n**Code coverage:** ${codeCov}\n\nArtifacts and full report: ${runUrl}`;
-            // Post compact summary with a collapsible full report
-            const body = `### Traceability Summary\n\n${compact}\n\n<details><summary>Full traceability report (click to expand)</summary>\n\n\n\n\`\`\`markdown\n${md || 'Traceability report not available.'}\n\`\`\`\n\n</details>`;
-            const issue_number = context.issue.number;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              body,
-            });
-
-      # PRO-337: publish a consolidated quality-gate summary from within the test
-      # job (no separate job, so the pipeline graph stays lint -> test -> deploy).
-      # Both steps use if: always() so the summary is still published when a test
-      # level or the coverage gate fails. TEST_RESULT is taken from job.status,
-      # which reflects whether the earlier steps in this job passed. The JUnit and
-      # coverage.json files already sit in tests/reports, so no download is needed.
-      - name: Generate PR quality-gate summary
-        if: always()
-        env:
-          LINT_RESULT: ${{ needs.lint.result }}
-          TEST_RESULT: ${{ job.status }}
-        run: python .github/workflows/pr-test-summary.py
-
-      - name: Publish or update sticky PR comment
-        if: always()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const marker = '<!-- pro-337-ci-quality-gate-summary -->';
-            let body;
-            try {
-              body = fs.readFileSync('tests/reports/test-summary.md', 'utf8');
-            } catch (e) {
-              core.warning('Summary file not found: ' + e.message);
-              return;
-            }
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            if (!issue_number) {
-              core.warning('No pull request number in context; skipping comment.');
-              return;
-            }
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              { owner, repo, issue_number, per_page: 100 }
-            );
-            const existing = comments.find(c => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner, repo, comment_id: existing.id, body,
-              });
-              core.info('Updated existing summary comment #' + existing.id);
-            } else {
+        - name: Comment traceability report on PR
+          if: github.event_name == 'pull_request'
+          uses: actions/github-script@v8
+          with:
+            script: |
+              const fs = require('fs');
+              const mdPath = 'tests/reports/traceability-matrix.md';
+              let md = '';
+              try {
+                md = fs.readFileSync(mdPath, 'utf8');
+              } catch (e) {
+                console.warn('Could not read traceability markdown: ' + e.message);
+              }
+              // Extract coverage numbers from the markdown if present
+              const archMatch = md.match(/Architecture coverage:\s*([0-9.]+)%/i);
+              const codeMatch = md.match(/Code coverage:\s*([0-9.]+)%/i);
+              const archCov = archMatch ? archMatch[1] + '%' : 'n/a';
+              const codeCov = codeMatch ? codeMatch[1] + '%' : 'n/a';
+              // Evaluation: simple pass/fail hint based on 100% coverage (customize as needed)
+              const evaluation = (archMatch && codeMatch && parseFloat(archMatch[1]) >= 100 && parseFloat(codeMatch[1]) >= 100) ? '✅ Fully covered' : '⚠️ Coverage gaps or missing links';
+              const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+              const compact = `**Status:** ✅ Completed\n**Evaluation:** ${evaluation}\n**Architecture coverage:** ${archCov}\n**Code coverage:** ${codeCov}\n\nArtifacts and full report: ${runUrl}`;
+              // Post compact summary with a collapsible full report
+              const body = `### Traceability Summary\n\n${compact}\n\n<details><summary>Full traceability report (click to expand)</summary>\n\n\n\n\`\`\`markdown\n${md || 'Traceability report not available.'}\n\`\`\`\n\n</details>`;
+              const issue_number = context.issue.number;
               await github.rest.issues.createComment({
-                owner, repo, issue_number, body,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
               });
-              core.info('Created new summary comment');
-            }
 
-  deploy:
-    name: Build & Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
-    environment: production
+        # PRO-337: publish a consolidated quality-gate summary from within the test
+        # job (no separate job, so the pipeline graph stays lint -> test -> deploy).
+        # Both steps use if: always() so the summary is still published when a test
+        # level or the coverage gate fails. TEST_RESULT is taken from job.status,
+        # which reflects whether the earlier steps in this job passed. The JUnit and
+        # coverage.json files already sit in tests/reports, so no download is needed.
+        - name: Generate PR quality-gate summary
+          if: always()
+          env:
+            LINT_RESULT: ${{ needs.lint.result }}
+            TEST_RESULT: ${{ job.status }}
+          run: python .github/workflows/pr-test-summary.py
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+        - name: Publish or update sticky PR comment
+          if: always()
+          uses: actions/github-script@v8
+          with:
+            script: |
+              const fs = require('fs');
+              const marker = '<!-- pro-337-ci-quality-gate-summary -->';
+              let body;
+              try {
+                body = fs.readFileSync('tests/reports/test-summary.md', 'utf8');
+              } catch (e) {
+                core.warning('Summary file not found: ' + e.message);
+                return;
+              }
+              const { owner, repo } = context.repo;
+              const issue_number = context.issue.number;
+              if (!issue_number) {
+                core.warning('No pull request number in context; skipping comment.');
+                return;
+              }
+              const comments = await github.paginate(
+                github.rest.issues.listComments,
+                { owner, repo, issue_number, per_page: 100 }
+              );
+              const existing = comments.find(c => c.body && c.body.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner, repo, comment_id: existing.id, body,
+                });
+                core.info('Updated existing summary comment #' + existing.id);
+              } else {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number, body,
+                });
+                core.info('Created new summary comment');
+              }
 
-      - name: Install dependencies and setup environment
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade build setuptools wheel
-          pip install -e .[dev]
+    deploy:
+      name: Build & Deploy to Production
+      runs-on: ubuntu-latest
+      needs: [lint, test]
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+      environment: production
 
-      - name: Run integration tests
-        run: |
-          pytest tests/integration --junitxml=tests/reports/integration-test-results.xml
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v6
+          with:
+            python-version: '3.12'
 
-      - name: Run system tests
-        run: |
-          pytest tests/system --junitxml=tests/reports/system-test-results.xml
+        - name: Install dependencies and setup environment
+          run: |
+            python -m pip install --upgrade pip
+            python -m pip install --upgrade build setuptools wheel
+            pip install -e .[dev]
 
-      - name: Install packaging tools
-        run: |
-          pip install build
+        - name: Run integration tests
+          run: |
+            pytest tests/integration --junitxml=tests/reports/integration-test-results.xml
+
+        - name: Run system tests
+          run: |
+            pytest tests/system --junitxml=tests/reports/system-test-results.xml
+
+        - name: Install packaging tools
+          run: |
+            pip install build

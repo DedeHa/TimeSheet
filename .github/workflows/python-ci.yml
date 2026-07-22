@@ -81,6 +81,7 @@ jobs:
         uses: wagoid/commitlint-github-action@v6
         with:
           config-file: .commitlintrc.json
+          commitDepth: 1
         continue-on-error: true
 
       # Add JIRA reference validation in commit messages

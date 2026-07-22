@@ -86,10 +86,20 @@ Examples:
 - `fix(vpn): resolve connection timeout issue`
 - `docs(api): update authentication guide`
 
-## 4. Pull Request Naming
-- **Format:** `[Type][PRO-123] Clear description of changes`
+### Scope Guidelines:
+- **Optional:** Scope improves clarity
+- **Use scope** when the change affects a specific module/component (e.g., `auth`, `vpn`, `api`)
+- **Omit scope** for cross-cutting changes or when scope is not clear (e.g., `feat: update dependencies`)
+
+## 4. Pull Request Requirements
+- **Title Format:** `[Type][PRO-123] Clear description of changes`
 - **Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
 - **Description:** What is being changed? (max. 72 characters)
+- **Body Requirements:**
+  - Must include `## Summary` section
+  - Must include `## Testing` section
+  - **Must include JIRA reference:** `Refs: PRO-123`
+  - No placeholder text (TODO, TBD, etc.)
 - **Template:** Use PR templates for consistent structure
 
 Examples:

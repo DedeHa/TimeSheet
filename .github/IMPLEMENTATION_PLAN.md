@@ -14,7 +14,7 @@ Automate enforcement of commit messages, pull request titles, and PR description
 - **Config**: `.commitlintrc` matching Conventional Commits + project-specific rules:
   - Allowed types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
   - Format: `type(scope): description` (scope optional)
-  - Footer: `Refs: PRO-XXX` (required when JIRA ticket exists)
+  - Footer युद्ध Not required. JIRA reference will be handled by the dedicated validation job.
 - **Integration**: Added to `.github/workflows/python-ci.yml` lint stage.
 
 ### 2. PR Title Validation

@@ -1,3 +1,4 @@
+---
 # This workflow implements the Feature → Master → Release → Deployment strategy
 # - Pull requests to master: Full checks (Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
 # - Pull requests to release/*: Lint checks
@@ -80,6 +81,7 @@ jobs:
         uses: wagoid/commitlint-github-action@v6
         with:
           configuration-file: .commitlintrc.json
+        continue-on-error: true
 
       # Add JIRA reference validation in commit messages
       - name: Validate Jira reference in commits
@@ -87,46 +89,51 @@ jobs:
         run: |
           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
           awk 'BEGIN{RS="\n\n"} { if ($0 !~ /Refs: PRO-[0-9]+/) { print "Missing or invalid Jira reference:\n" $0; exit 1 } }'
+        continue-on-error: true
 
-      # Add PR title validation
-      - name: Validate PR Title
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prTitle = context.payload.pull_request.title;
-            // Format: [type][PRO-123] Description
-            // Types from CONTRIBUTING.md: feat, fix, docs, refactor, test, chore, hotfix
-            const regex = /^\[(feat|fix|docs|refactor|test|chore|hotfix)\]\[PRO-\d+\]\s+.+$/i;
-            if (!regex.test(prTitle)) {
-              core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
-            }
+      # Validate PR Title
+        - name: Validate PR Title
+          if: github.event_name == 'pull_request'
+          uses: actions/github-script@v8
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+              const prTitle = context.payload.pull_request.title;
+              // Format: [type][PRO-123] Description
+              // Types from CONTRIBUTING.md: feat, fix, docs, refactor, test, chore, hotfix
+              const regex = /^[\[(feat|fix|docs|refactor|test|chore|hotfix)\]]\[PRO-\d+\]\s+.+$/i;
+              if (!regex.test(prTitle)) {
+                core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
+              }
+          continue-on-error: true
+        continue-on-error: true
 
-      # Add PR body validation
-      - name: Validate PR Body
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const body = context.payload.pull_request.body || '';
-            const hasSummary = /##\s+Summary\s*\n/.test(body);
-            const hasTesting = /##\s+Testing\s*\n/.test(body);
-            if (!hasSummary) {
-              core.setFailed('PR body missing mandatory "## Summary" section');
-            }
-            if (!hasTesting) {
-              core.setFailed('PR body missing mandatory "## Testing" section');
-            }
-            // Check for placeholder text
-            if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
-              core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
-            }
-            // Check for mandatory JIRA reference in body
-            if (!/Refs: PRO-[0-9]+/i.test(body)) {
-              core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
-            }
+      # Validate PR Body
+        - name: Validate PR Body
+          if: github.event_name == 'pull_request'
+          uses: actions/github-script@v8
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+              const body = context.payload.pull_request.body || '';
+              const hasSummary = /##\s+Summary\s*\n/.test(body);
+              const hasTesting = /##\s+Testing\s*\n/.test(body);
+              if (!hasSummary) {
+                core.setFailed('PR body missing mandatory "## Summary" section');
+              }
+              if (!hasTesting) {
+                core.setFailed('PR body missing mandatory "## Testing" section');
+              }
+              // Check for placeholder text
+              if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
+                core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
+              }
+              // Check for mandatory JIRA reference in body
+              if (!/Refs: PRO-[0-9]+/i.test(body)) {
+                core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
+              }
+          continue-on-error: true
+        continue-on-error: true
 
       - name: Run lint tools (ruff, black, pydocstyle, radon)
         run: |

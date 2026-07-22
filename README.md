@@ -231,4 +231,4 @@ TimeSheet/
 └── pyproject.toml          # Project metadata, deps, and all tool config (pytest, coverage, black, ruff)
 ```
 
-See [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details.
+See [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details. 

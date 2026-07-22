@@ -534,6 +534,6 @@ All PRs must meet these requirements:
 
 - **Branch Protection Settings**: GitHub Repository Settings → Branches → Branch Protection Rules
 - **GitHub Actions Workflow**: `.github/workflows/python-ci.yml`
-- **Conventional Commits**: https://www.conventionalcommits.org/
+- **Conventional Commits**: https://www.conventionalcommits.org/en/v1.0.0/
 - **Semantic Versioning**: https://semver.org/
 

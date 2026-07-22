@@ -14,24 +14,15 @@
         "style",
         "perf",
         "ci",
-        "build"
-      ]
+        "build",
+      ],
     ],
-    "type-case": [0],
     "type-empty": [2, "never"],
     "scope-empty": [2, "never"],
-    "scope-case": [0],
-    "subject-full-stop": [2, "never", "."],
-    "subject-case": [0],
     "subject-empty": [2, "never"],
+    "subject-full-stop": [2, "never", "."],
     "subject-max-length": [2, "always", 50],
     "header-max-length": [2, "always", 72],
-    "footer-empty": [0],
-    "footer-leading-blank": [1, "always"],
-    "header-match": [
-      2,
-      "always",
-      "(Refs: PRO-\\d{4,5})"
-    ]
+    "footer-leading-blank": [1, "always"]
   }
 }

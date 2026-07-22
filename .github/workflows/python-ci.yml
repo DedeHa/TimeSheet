@@ -79,14 +79,21 @@ jobs:
           python -m pip install --upgrade build setuptools wheel
           pip install -e .[dev]
 
-      # Add commit message validation
-      - name: Validate commit messages
-        if: github.event_name == 'pull_request'
-        uses: wagoid/commitlint-github-action@v6
-        with:
-          configuration-file: .commitlintrc.json
+# Add commit message validation
+       - name: Validate commit messages
+         if: github.event_name == 'pull_request'
+         uses: wagoid/commitlint-github-action@v6
+         with:
+           configuration-file: .commitlintrc.json
 
-      # Add PR title validation
+       # Add JIRA reference validation in commit messages
+       - name: Validate Jira reference in commits
+         if: github.event_name == 'pull_request'
+         run: |
+           git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
+           awk 'BEGIN{RS="\n\n"} { if ($0 !~ /Refs: PRO-[0-9]+/) { print "Missing or invalid Jira reference:\n" $0; exit 1 } }'
+
+       # Add PR title validation
       - name: Validate PR Title
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
@@ -101,26 +108,30 @@ jobs:
               core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
             }
 
-      # Add PR body validation
-      - name: Validate PR Body
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const body = context.payload.pull_request.body || '';
-            const hasSummary = /##\s+Summary\s*\n/.test(body);
-            const hasTesting = /##\s+Testing\s*\n/.test(body);
-            if (!hasSummary) {
-              core.setFailed('PR body missing mandatory "## Summary" section');
-            }
-            if (!hasTesting) {
-              core.setFailed('PR body missing mandatory "## Testing" section');
-            }
-            // Check for placeholder text
-            if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
-              core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
-            }
+# Add PR body validation
+       - name: Validate PR Body
+         if: github.event_name == 'pull_request'
+         uses: actions/github-script@v8
+         with:
+           github-token: ${{ secrets.GITHUB_TOKEN }}
+           script: |
+             const body = context.payload.pull_request.body || '';
+             const hasSummary = /##\s+Summary\s*\n/.test(body);
+             const hasTesting = /##\s+Testing\s*\n/.test(body);
+             if (!hasSummary) {
+               core.setFailed('PR body missing mandatory "## Summary" section');
+             }
+             if (!hasTesting) {
+               core.setFailed('PR body missing mandatory "## Testing" section');
+             }
+             // Check for placeholder text
+             if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
+               core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
+             }
+             // Check for mandatory JIRA reference in body
+             if (!/Refs: PRO-[0-9]+/i.test(body)) {
+               core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
+             }
 
       - name: Run lint tools (ruff, black, pydocstyle, radon)
         run: |

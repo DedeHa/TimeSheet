@@ -14,15 +14,12 @@
         "style",
         "perf",
         "ci",
-        "build",
-      ],
+        "build"
+      ]
     ],
     "type-empty": [2, "never"],
     "scope-empty": [2, "never"],
     "subject-empty": [2, "never"],
-    "subject-full-stop": [2, "never", "."],
-    "subject-max-length": [2, "always", 50],
-    "header-max-length": [2, "always", 72],
-    "footer-leading-blank": [1, "always"]
+    "subject-full-stop": [2, "never", "."]
   }
 }

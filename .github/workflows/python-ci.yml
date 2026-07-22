@@ -56,6 +56,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+              with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -80,12 +82,9 @@ jobs:
       # Add commit message validation
       - name: Validate commit messages
         if: github.event_name == 'pull_request'
-        uses: commitlint/commitlint-action@v2
+        uses: wagoid/commitlint-github-action@v6
         with:
           configuration-file: .commitlintrc.json
-        # Add debugging if needed
-        # env:
-        #   DEBUG: true
 
       # Add PR title validation
       - name: Validate PR Title

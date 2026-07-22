@@ -41,17 +41,14 @@ jobs:
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
-    environment:
-      ${{
-        (
-          contains(github.ref, 'feature/') ||
-          contains(github.ref, 'bugfix/') ||
-          contains(github.ref, 'hotfix/') ||
-          contains(github.ref, 'refactor/') ||
-          contains(github.ref, 'docs/') ||
-          contains(github.ref, 'test/')
-        ) && 'development'
-      }}
+    environment: ${{ (
+        contains(github.ref, 'feature/') ||
+        contains(github.ref, 'bugfix/') ||
+        contains(github.ref, 'hotfix/') ||
+        contains(github.ref, 'refactor/') ||
+        contains(github.ref, 'docs/') ||
+        contains(github.ref, 'test/')
+      ) && 'development' || '' }}
     steps:
       - uses: actions/checkout@v4
         with:

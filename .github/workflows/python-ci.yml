@@ -80,7 +80,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: wagoid/commitlint-github-action@v6
         with:
-          configuration-file: .commitlintrc.json
+          config-file: .commitlintrc.json
         continue-on-error: true
 
       # Add JIRA reference validation in commit messages

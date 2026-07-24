@@ -3,7 +3,7 @@
 This module validates that the project's testing environment is correctly
 configured after the CI workflow and naming-convention changes:
 
-- Unit tests live under ``tests/@tests/unit/``
+- Unit tests live under ``tests/unit/``
 - Integration tests live under ``tests/integration/``
 - System tests live under ``tests/system/``
 - CI support scripts live under ``.github/workflows/`` with hyphenated names
@@ -15,12 +15,11 @@ Run with::
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_DIRS = [
-    REPO_ROOT / "tests" / "@tests" / "unit",
+    REPO_ROOT / "tests" / "unit",
     REPO_ROOT / "tests" / "integration",
     REPO_ROOT / "tests" / "system",
 ]
@@ -34,7 +33,7 @@ EXPECTED_WORKFLOW_FILES = [
 
 
 def test_unit_dir_exists():
-    assert EXPECTED_DIRS[0].is_dir(), "tests/@tests/unit directory is missing"
+    assert EXPECTED_DIRS[0].is_dir(), "tests/unit directory is missing"
 
 
 def test_integration_dir_exists():

@@ -86,10 +86,20 @@ Examples:
 - `fix(vpn): resolve connection timeout issue`
 - `docs(api): update authentication guide`
 
-## 4. Pull Request Naming
-- **Format:** `[Type][PRO-123] Clear description of changes`
+### Scope Guidelines:
+- **Optional:** Scope improves clarity
+- **Use scope** when the change affects a specific module/component (e.g., `auth`, `vpn`, `api`)
+- **Omit scope** for cross-cutting changes or when scope is not clear (e.g., `feat: update dependencies`)
+
+## 4. Pull Request Requirements
+- **Title Format:** `[type][PRO-XXX] Clear description of changes` where `PRO-XXX` can have multiple digits (e.g., `PRO-123`, `PRO-123456`)
 - **Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
 - **Description:** What is being changed? (max. 72 characters)
+- **Body Requirements:**
+  - Must include `## Summary` section
+  - Must include `## Testing` section
+  - **Must include JIRA reference:** `Refs: PRO-123`
+  - No placeholder text (TODO, TBD, etc.)
 - **Template:** Use PR templates for consistent structure
 
 Examples:
@@ -409,9 +419,32 @@ remote: error: You have insufficient permissions to push to this branch on this 
 
 ---
 
-## 8. GitHub Actions Workflow Enforcement
+### GitHub Actions Workflow Enforcement
 
-The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these protections:
+The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming validations:
+
+#### Commit Message Validation
+- ✅ **Conventional Commits standard**: `type(scope): description`
+- ✅ **Required JIRA reference**: `Refs: PRO-XXX` for commits with JIRA tickets
+- ✅ **Allowed types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
+- ✅ **Validation**: Performed via `commitlint` action using `.commitlintrc.json` at the start of the `lint` job
+
+#### Pull Request Title Validation
+- ✅ **Format**: `[type][PRO-XXX] Description`
+- ✅ **Allowed types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
+- ✅ **Validation**: Regex-based validation via `actions/github-script` in the `lint` job
+
+#### Pull Request Description Validation
+- ✅ **Mandatory sections**: `## Summary` and `## Testing`
+- ✅ **Optional section**: `## Notes` (recommended for rollout context)
+- ✅ **Placeholder check**: Automatically fails if TODO, TBD, etc. are present
+- ✅ **Validation**: Performed via `actions/github-script` in the `lint` job
+
+#### Workflow Behavior
+- ✅ **Order**: Naming validation runs **before** dependency installation
+- ✅ **Timing**: Validation runs for every relevant PR event
+- ✅ **Failure**: Invalid names fail the workflow immediately, blocking linting and testing
+- ✅ **Blocks**: Merging through the existing **Python CI** status check
 
 ### Testing Strategy:
 - ➖ **Development Branches** (push): No CI on branch pushes — checks run on the pull request, so a branch with an open PR is validated once instead of twice
@@ -501,5 +534,6 @@ All PRs must meet these requirements:
 
 - **Branch Protection Settings**: GitHub Repository Settings → Branches → Branch Protection Rules
 - **GitHub Actions Workflow**: `.github/workflows/python-ci.yml`
-- **Conventional Commits**: https://www.conventionalcommits.org/
+- **Conventional Commits**: https://www.conventionalcommits.org/en/v1.0.0/
 - **Semantic Versioning**: https://semver.org/
+

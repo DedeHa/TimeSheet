@@ -19,7 +19,7 @@ Automate enforcement of commit messages, pull request titles, and PR description
 
 ### 2. PR Title Validation
 - **Action**: `actions/github-script` with regex validation.
-- **Rule**: Must match `[type][PRO-\d+] Description` format (type lowercase).
+- **Rule**: Must match `[type][PRO-XXX] Description` format (type lowercase) where `PRO-XXX` can have multiple digits (e.g., `PRO-123`, `PRO-123456`).
 - **Allowed types**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
 - **Failure**: Fail CI job immediately.
 

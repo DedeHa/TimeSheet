@@ -92,7 +92,7 @@ Examples:
 - **Omit scope** for cross-cutting changes or when scope is not clear (e.g., `feat: update dependencies`)
 
 ## 4. Pull Request Requirements
-- **Title Format:** `[Type][PRO-123] Clear description of changes`
+- **Title Format:** `[type][PRO-XXX] Clear description of changes` where `PRO-XXX` can have multiple digits (e.g., `PRO-123`, `PRO-123456`)
 - **Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
 - **Description:** What is being changed? (max. 72 characters)
 - **Body Requirements:**

@@ -1,3 +1,16 @@
+"""Traceability validator for the PRO-368 requirements.
+
+Scans ``doc/REQUIREMENTS.md``, ``doc/ARCHITECTURE.md`` and
+``src_timesheetalgo/TimeSheetAlgo.py`` for matching requirement identifiers
+(FR-XX / QR-XX) and asserts that every requirement is referenced in all three
+sources. The resulting matrix is written to ``tests/reports/`` and printed to
+the GitHub Actions step summary when ``GITHUB_STEP_SUMMARY`` is set.
+
+Run with::
+
+    pytest -q .github/tests/test_docs_traceability.py
+"""
+
 import os
 import re
 from pathlib import Path
@@ -146,6 +159,7 @@ def _publish_report(report: str) -> None:
 
 
 def test_traceability_matrix_is_complete_and_published():
+    """Verify every requirement is referenced in architecture and code."""
     requirement_ids = _extract_requirement_ids(_read_text(REQUIREMENTS))
     architecture_ids = set(_extract_requirement_ids(_read_text(ARCHITECTURE)))
     code_ids = set(_extract_requirement_ids(_read_text(SOURCE)))

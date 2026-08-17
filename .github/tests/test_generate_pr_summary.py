@@ -1,12 +1,12 @@
 """Unit tests for the PR quality-gate summary generator (PRO-337).
 
-These validate the parsing and rendering logic of ``pr-test-summary.py`` in
-isolation. Like ``test_docs_traceability.py`` this file lives next to the
-workflow and is *not* part of the ``tests/`` suite (``testpaths = ["tests"]``),
-so it does not change the 103-test application suite or the coverage gate. It is
-executed explicitly by the CI ``test`` job and can be run locally with::
+These validate the parsing and rendering logic of ``generate_pr_summary.py`` in
+isolation. Like ``validate_docs_traceability.py`` this file lives under
+``.github/tests/`` (not in ``tests/``), so it does not change the 103-test
+application suite or the coverage gate. It is executed explicitly by the CI
+``test`` job and can be run locally with::
 
-    pytest -q .github/workflows/test_pr-test-summary.py
+    pytest -q .github/tests/test_generate_pr_summary.py
 """
 
 from __future__ import annotations
@@ -16,12 +16,14 @@ import json
 import sys
 from pathlib import Path
 
-_MODULE_PATH = Path(__file__).with_name("pr-test-summary.py")
-_spec = importlib.util.spec_from_file_location("pr_test_summary", _MODULE_PATH)
+_MODULE_PATH = (
+    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "generate_pr_summary.py"
+)
+_spec = importlib.util.spec_from_file_location("generate_pr_summary", _MODULE_PATH)
 mod = importlib.util.module_from_spec(_spec)
 assert _spec and _spec.loader
 # Register before executing so dataclass type resolution can find the module.
-sys.modules["pr_test_summary"] = mod
+sys.modules["generate_pr_summary"] = mod
 _spec.loader.exec_module(mod)
 
 
@@ -55,6 +57,7 @@ def _all_green_reports(tmp_path: Path):
 
 
 def test_parse_junit_counts(tmp_path):
+    """Verify JUnit XML parsing sums tests, failures, errors and skipped."""
     _write_junit(
         tmp_path / "unit-results.xml", tests=79, failures=2, errors=1, skipped=1
     )
@@ -67,10 +70,12 @@ def test_parse_junit_counts(tmp_path):
 
 
 def test_parse_junit_missing_file(tmp_path):
+    """A missing JUnit file yields ``None`` instead of raising."""
     assert mod.parse_junit(tmp_path / "nope.xml") is None
 
 
 def test_level_skipped_when_all_skipped(tmp_path):
+    """A level where every test is skipped reports the skip status."""
     _write_junit(
         tmp_path / "system-results.xml", tests=7, failures=0, errors=0, skipped=7
     )
@@ -79,12 +84,14 @@ def test_level_skipped_when_all_skipped(tmp_path):
 
 
 def test_read_coverage(tmp_path):
+    """Coverage is read from coverage.json and missing files return ``None``."""
     _write_coverage(tmp_path / "coverage.json", 91.5)
     assert mod.read_coverage(tmp_path) == 91.5
     assert mod.read_coverage(tmp_path / "empty") is None
 
 
 def test_overall_pass(tmp_path):
+    """All-green inputs produce an overall pass with correct totals."""
     _all_green_reports(tmp_path)
     data = mod.build_summary(
         tmp_path, {"LINT_RESULT": "success", "TEST_RESULT": "success"}
@@ -98,6 +105,7 @@ def test_overall_pass(tmp_path):
 
 
 def test_coverage_below_gate_fails_overall(tmp_path):
+    """Coverage below the 90% gate fails the overall result."""
     _all_green_reports(tmp_path)
     _write_coverage(tmp_path / "coverage.json", 88.0)
     data = mod.build_summary(
@@ -109,6 +117,7 @@ def test_coverage_below_gate_fails_overall(tmp_path):
 
 
 def test_failed_lint_still_renders(tmp_path):
+    """A failed lint job still renders a degraded report with notes."""
     # test job skipped -> no artifacts at all
     data = mod.build_summary(
         tmp_path, {"LINT_RESULT": "failure", "TEST_RESULT": "skipped"}
@@ -123,6 +132,7 @@ def test_failed_lint_still_renders(tmp_path):
 
 
 def test_failing_test_level_marks_failure(tmp_path):
+    """A failing test level marks the overall result as failed."""
     _all_green_reports(tmp_path)
     _write_junit(
         tmp_path / "integration-results.xml", tests=17, failures=1, errors=0, skipped=0

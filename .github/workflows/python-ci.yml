@@ -10,7 +10,7 @@
 # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 #
 # PRO-368: All Python jobs use the reusable composite action
-# .github/workflows/action.yml (FR-17, QR-09) which centralises checkout,
+# .github/actions/setup-python-deps (FR-17, QR-09) which centralises checkout,
 # Python setup, pip caching (FR-16) and dependency installation. Node.js is no
 # longer installed unconditionally (AC3) - the lint job is pure Python, so the
 # setup-node step was removed entirely. Only JavaScript actions (commitlint,

@@ -107,11 +107,14 @@ def test_node_actions_only_run_under_node24_runtime():
 
 
 # ---------------------------------------------------------------------------
-# AC5: Parallel validation steps.
+# AC5: Independent, separately-attributable validation steps.
+# (Steps within a job run sequentially on GitHub Actions; "independent" here
+# means each validator is its own step so a failure points at the exact check,
+# not that they execute in parallel.)
 # ---------------------------------------------------------------------------
 
 
-def test_validation_steps_are_independent_and_parallel():
+def test_validation_steps_are_independent():
     """AC5: the commit / PR-title / PR-body validators are separate steps."""
     steps = _job_steps("check")
     names = [s.get("name", "") for s in steps]

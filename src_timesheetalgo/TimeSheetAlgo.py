@@ -36,7 +36,7 @@ YEAR_CHECK_CELL = "B3"
 
 # Traceability anchors for documentation: FR-01, FR-02, FR-03, FR-04, FR-05,
 # FR-06, FR-07, FR-08, FR-09, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15,
-# QR-01, QR-02, QR-03, QR-04, QR-05, QR-06, QR-07.
+# FR-16, FR-17, QR-01, QR-02, QR-03, QR-04, QR-05, QR-06, QR-07, QR-08, QR-09.
 
 
 # ---------------------------------------------------------------------------

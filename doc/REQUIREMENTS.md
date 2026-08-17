@@ -242,6 +242,26 @@ All important processing steps and detected errors shall be logged.
 
 ---
 
+## FR-16 CI Dependency Caching
+
+The CI pipeline shall cache pip dependencies and the Python virtual environment between jobs so that dependency installation is skipped when the dependency set is unchanged.
+
+## FR-17 CI Reusable Environment Setup
+
+The CI pipeline shall use a single reusable composite action for repository checkout, Python setup, and dependency installation across all jobs.
+
+---
+
+## QR-08 CI Performance
+
+The CI pipeline shall complete in at least 30% less time than the baseline by eliminating redundant dependency installation and removing unnecessary runtime setup.
+
+## QR-09 CI Maintainability
+
+The CI pipeline shall centralise common setup logic in a single reusable action so that environment changes require a single point of modification.
+
+---
+
 # 6. Business Rules
 
 **BR-01**

@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Print GitHub Context Information and setup environment
         run: |
@@ -165,7 +165,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Prepare report directory
         run: mkdir -p tests/reports
@@ -310,7 +310,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Install packaging tools
         run: |

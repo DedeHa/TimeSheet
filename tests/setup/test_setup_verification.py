@@ -25,10 +25,14 @@ EXPECTED_DIRS = [
 ]
 EXPECTED_WORKFLOW_FILES = [
     REPO_ROOT / ".github" / "workflows" / "python-ci.yml",
-    REPO_ROOT / ".github" / "workflows" / "pr-test-summary.py",
-    REPO_ROOT / ".github" / "workflows" / "test-docs-traceability.py",
-    REPO_ROOT / ".github" / "workflows" / "test-pr-test-summary.py",
-    REPO_ROOT / ".github" / "workflows" / "naming-validation.py",
+    REPO_ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml",
+    REPO_ROOT / ".github" / "workflows" / "generate_pr_summary.py",
+    REPO_ROOT / ".github" / "workflows" / "validate_docs_traceability.py",
+    REPO_ROOT / ".github" / "workflows" / "validate_naming.py",
+    REPO_ROOT / ".github" / "tests" / "test_generate_pr_summary.py",
+    REPO_ROOT / ".github" / "tests" / "test_regression_ci.py",
+    REPO_ROOT / ".github" / "tests" / "test_workflow_optimization.py",
+    REPO_ROOT / ".github" / "scripts" / "performance_validation.py",
 ]
 
 
@@ -54,6 +58,13 @@ def test_no_underscore_workflow_files():
     bad = [
         f.name
         for f in workflow_dir.glob("*.py")
-        if "_" in f.name and f.name not in {"naming_validation.py"}
+        if "_" in f.name
+        and f.name
+        not in {
+            "naming_validation.py",
+            "validate_naming.py",
+            "generate_pr_summary.py",
+            "validate_docs_traceability.py",
+        }
     ]
     assert not bad, f"Workflow files still use underscores: {bad}"

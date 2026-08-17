@@ -6,7 +6,8 @@ configured after the CI workflow and naming-convention changes:
 - Unit tests live under ``tests/unit/``
 - Integration tests live under ``tests/integration/``
 - System tests live under ``tests/system/``
-- CI support scripts live under ``.github/workflows/`` with hyphenated names
+- CI helper scripts live under ``.github/workflows/`` with underscore names
+  (``validate_*``/``generate_*``); workflow tests live under ``.github/tests/``
 
 Run with::
 
@@ -28,11 +29,9 @@ EXPECTED_WORKFLOW_FILES = [
     REPO_ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml",
     REPO_ROOT / ".github" / "workflows" / "generate_pr_summary.py",
     REPO_ROOT / ".github" / "workflows" / "validate_docs_traceability.py",
-    REPO_ROOT / ".github" / "workflows" / "validate_naming.py",
     REPO_ROOT / ".github" / "tests" / "test_generate_pr_summary.py",
     REPO_ROOT / ".github" / "tests" / "test_regression_ci.py",
     REPO_ROOT / ".github" / "tests" / "test_workflow_optimization.py",
-    REPO_ROOT / ".github" / "scripts" / "performance_validation.py",
 ]
 
 
@@ -61,8 +60,6 @@ def test_no_underscore_workflow_files():
         if "_" in f.name
         and f.name
         not in {
-            "naming_validation.py",
-            "validate_naming.py",
             "generate_pr_summary.py",
             "validate_docs_traceability.py",
         }

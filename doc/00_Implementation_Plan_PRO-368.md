@@ -1,22 +1,28 @@
 # Implementation Plan: PRO-368 — Optimize Python CI Workflow Performance and Maintainability
 
+> **Status note:** This is the original planning document. For the *actual*
+> delivered state (which ACs are done, partial, or deferred), see
+> [PRO-368_IMPLEMENTATION_STATUS.md](../PRO-368_IMPLEMENTATION_STATUS.md).
+> The final pipeline has **3 jobs** (`check → test → deploy`), not the 4-job
+> structure sketched below, and the 30–50% runtime figure was a planning target,
+> not a measured result.
+
 ## Feature Summary
 
-This implementation optimizes the GitHub Actions CI workflow for the Python TimeSheet project to eliminate redundant work, reuse dependencies, and execute independent tasks more efficiently. The goal is to achieve a **30–50% reduction in CI runtime** while maintaining all existing quality gates, branch strategy, and deployment patterns.
+This implementation optimizes the GitHub Actions CI workflow for the Python TimeSheet project to eliminate redundant work and reuse dependencies while maintaining all existing quality gates, branch strategy, and deployment patterns. The original planning target was a 30–50% reduction in CI runtime (not independently measured).
 
 ## Traceability to Requirements
 
-### Functional Requirements (FR-XX)
-- **FR-??** Configuration and workflow optimization (implementation details)
-- **FR-??** Dependency management improvements (implementation details)
-- **FR-??** Performance enhancements (implementation details)
+These IDs were added to `doc/REQUIREMENTS.md` and `doc/ARCHITECTURE.md` and are
+anchored in `src_timesheetalgo/TimeSheetAlgo.py`.
 
-### Quality Requirements (QR-XX)
-- **QR-??** Maintainability improvements (implementation details)
-- **QR-??** Performance optimization (implementation details)
-- **QR-??** Dependency management (implementation details)
+### Functional Requirements
+- **FR-16** CI dependency caching (pip download cache keyed on `pyproject.toml`)
+- **FR-17** CI reusable environment setup (single composite action)
 
-**Note:** New FR/QR IDs would be added as part of this implementation to maintain traceability with the requirements matrix in `doc/REQUIREMENTS.md` and `doc/ARCHITECTURE.md`.
+### Quality Requirements
+- **QR-08** CI performance (avoid redundant work: caching, one setup action, no unconditional Node.js)
+- **QR-09** CI maintainability (single point of change for environment setup)
 
 ## Architecture Analysis
 
@@ -310,13 +316,13 @@ class TestOptimizedWorkflow:
 
 | AC | Description | Status |
 |----|-------------|--------|
-| AC1 | Enable dependency caching via `actions/setup-python` | Planned |
-| AC2 | Reuse common environment setup via composite action | Planned |
-| AC3 | Remove unnecessary `actions/setup-node` step | Planned |
-| AC4 | Cache Python virtual environment across jobs | Planned |
-| AC5 | Parallelize independent validation steps | Planned |
-| AC6 | Reuse previously built artifacts in deployment job | Planned |
-| AC7 | Extract common workflow logic for maintainability | Planned |
+| AC1 | Enable dependency caching via `actions/setup-python` | ✅ Done (pip download cache) |
+| AC2 | Reuse common environment setup via composite action | ✅ Done |
+| AC3 | Remove unnecessary `actions/setup-node` step | ✅ Done |
+| AC4 | Cache Python virtual environment across jobs | ⚠️ Partial (pip cache only; no cross-job venv reuse) |
+| AC5 | Parallelize independent validation steps | ⚠️ Partial (separate but sequential steps; no matrix/consolidated script) |
+| AC6 | Reuse previously built artifacts in deployment job | ❌ Not implemented (deploy is a stub) |
+| AC7 | Extract common workflow logic for maintainability | ✅ Done (composite action) |
 
 ## Non-Functional Requirements
 

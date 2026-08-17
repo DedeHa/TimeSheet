@@ -42,9 +42,9 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | QR-06 | Maintainability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_config()` and `configure_logging()` |
 | QR-07 | Traceability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - this module and the traceability comments in each function |
 | FR-16 | CI dependency caching | [python-ci.yml](../.github/workflows/python-ci.yml) - `actions/setup-python` `cache: pip` / `cache-dependency-path: pyproject.toml` in check, test and deploy jobs |
-| FR-17 | CI reusable environment setup | [action.yml](../.github/workflows/action.yml) - composite action used by check, test and deploy jobs |
-| QR-08 | CI performance | [python-ci.yml](../.github/workflows/python-ci.yml) - pip + venv caching, removed `actions/setup-node`, parallel validation steps |
-| QR-09 | CI maintainability | [action.yml](../.github/workflows/action.yml) - single composite action for checkout, Python setup and dependency install |
+| FR-17 | CI reusable environment setup | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - composite action used by check, test and deploy jobs |
+| QR-08 | CI performance | [python-ci.yml](../.github/workflows/python-ci.yml) - pip download caching (keyed on `pyproject.toml`), removed `actions/setup-node`, single reusable composite action (no duplicated setup) |
+| QR-09 | CI maintainability | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - single composite action for checkout, Python setup and dependency install |
 
 ## System-Level Diagrams
 

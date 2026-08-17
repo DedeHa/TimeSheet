@@ -235,7 +235,7 @@ When the change affects documentation traceability or CI behaviour, also update 
 ```bash
 ruff check src_timesheetalgo tests
 black --check src_timesheetalgo tests
-pytest -q .github/workflows/test_docs_traceability.py
+pytest -q .github/workflows/validate_docs_traceability.py
 ```
 
 1. **Create feature branch** (always from `master`):
@@ -441,7 +441,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Validation**: Performed via `actions/github-script` in the `lint` job
 
 #### Workflow Behavior
-- ✅ **Order**: Naming validation runs **before** dependency installation
+- ✅ **Order**: The `check` job checks out and sets up Python via the reusable composite action, then runs the naming/metadata validators, then the lint tools
 - ✅ **Timing**: Validation runs for every relevant PR event
 - ✅ **Failure**: Invalid names fail the workflow immediately, blocking linting and testing
 - ✅ **Blocks**: Merging through the existing **Python CI** status check

@@ -87,9 +87,9 @@ Examples:
 - `docs(api): update authentication guide`
 
 ### Scope Guidelines:
-- **Optional:** Scope improves clarity
+- **Mandatory:** Scope improves clarity
 - **Use scope** when the change affects a specific module/component (e.g., `auth`, `vpn`, `api`)
-- **Omit scope** for cross-cutting changes or when scope is not clear (e.g., `feat: update dependencies`)
+- **Cross scope** for cross-cutting changes (e.g., `arch`, `workflow`, `doc`)
 
 ## 4. Pull Request Requirements
 - **Title Format:** `[type][PRO-XXX] Clear description of changes` where `PRO-XXX` can have multiple digits (e.g., `PRO-123`, `PRO-123456`)

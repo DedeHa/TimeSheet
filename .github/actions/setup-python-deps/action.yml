@@ -1,0 +1,23 @@
+name: Setup Python Dependencies
+description: Composite action to checkout repo, setup Python, cache pip and install dev dependencies
+inputs:
+  python-version:
+    description: 'Python version'
+    default: '3.12'
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Install dependencies and setup environment
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade build setuptools wheel
+        pip install -e .[dev]

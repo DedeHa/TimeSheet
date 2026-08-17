@@ -54,7 +54,6 @@ pytest -q .github/tests/test_generate_pr_summary.py
 - **Main package**: `src_timesheetalgo/`
   - `TimeSheetAlgo.py` - entrypoint
   - `config.yaml` - configuration file
-  - `naming-validation.py` - naming convention rules (note hyphen, not underscore)
 
 - **Test structure**:
   - `tests/unit/` - Unit tests (79 tests)
@@ -304,19 +303,20 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   JavaScript actions (commitlint, github-script) run on the Node 24 runtime
   provided by `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`. Do not re-add
   `setup-node` unless a step actually needs a Node tool.
-- **Validation steps are separate, parallel steps** (AC5): `Validate commit
+- **Validation steps are separate, independent steps** (AC5): `Validate commit
   messages`, `Validate Jira reference in commits`, `Validate PR Title`,
-  `Validate PR Body`. The first uses `continue-on-error: true` (third-party
-  action); the other three must keep `continue-on-error: false` or the gate
-  silently degrades.
-- **Workflow tests live under `.github/`** (not in `tests/`), so they do
+  `Validate PR Body`. Steps within a job run **sequentially** (GitHub Actions);
+  "independent" means each is its own step so a failure is individually
+  attributable — not that they run in parallel. The first uses
+  `continue-on-error: true` (third-party action); the other three must keep
+  `continue-on-error: false` or the gate silently degrades.
+- **Workflow tests live under `.github/tests/`** (not in `tests/`), so they do
   not count toward the 103-test suite or the 90% coverage gate:
   - `.github/tests/test_workflow_optimization.py`
   - `.github/tests/test_regression_ci.py`
   - `.github/tests/test_generate_pr_summary.py`
   - `.github/workflows/validate_docs_traceability.py`
-  - `.github/scripts/performance_validation.py`
-  - Run them with: `pytest -q .github/tests/ .github/workflows/ .github/scripts/`
+  - Run them with: `pytest -q .github/tests/ .github/workflows/`
 - **Traceability**: PRO-368 added `FR-16`, `FR-17`, `QR-08`, `QR-09` to
   `doc/REQUIREMENTS.md`, `doc/ARCHITECTURE.md`, and the anchor comment in
   `src_timesheetalgo/TimeSheetAlgo.py`. The traceability validator

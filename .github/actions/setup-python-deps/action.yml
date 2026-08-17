@@ -3,7 +3,7 @@ description: Composite action to checkout repo, setup Python, cache pip and inst
 inputs:
   python-version:
     description: 'Python version'
-    default: '3.12'
+    default: '3.13'
 runs:
   using: composite
   steps:

@@ -146,6 +146,11 @@ def test_overall_pass(tmp_path):
     report = mod.render_markdown(data)
     assert mod.MARKER in report
     assert "Overall workflow result:** ✅ Passed" in report
+    # Status overview at the top covers linting and all four steps.
+    assert "| Lint & Formatting | ✅ Passed | — |" in report
+    assert "| 1. Traceability | ✅ Passed | 100.0% |" in report
+    assert "| 2. Testing | ✅ Passed | 99.0% (102/103 passed) |" in report
+    assert "| 3. Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
     # Sections appear in the required order: Traceability, Testing, Coverage,
     # Artifacts.
     order = [
@@ -188,7 +193,8 @@ def test_failed_lint_still_renders(tmp_path):
     )
     report = mod.render_markdown(data)
     assert data.overall_passed is False
-    assert "**Lint & formatting:** ❌ Failed" in report
+    # Lint failure shows in the status overview.
+    assert "| Lint & Formatting | ❌ Failed | — |" in report
     # With no reports, the testing status degrades to skipped and each level
     # shows placeholder statistics.
     assert "- Status: ⚠️ Skipped" in report

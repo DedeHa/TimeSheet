@@ -61,7 +61,11 @@ jobs:
       github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-    environment: ${{ (contains(github.head_ref, 'feature/') || contains(github.head_ref, 'bugfix/') || contains(github.head_ref, 'hotfix/') || contains(github.head_ref, 'refactor/') || contains(github.head_ref, 'docs/') || contains(github.head_ref, 'test/')) && 'development' || '' }}
+    # Static environment. The previous dynamic expression coerced to the boolean
+    # `false` when no branch prefix matched, which made GitHub auto-create a junk
+    # environment literally named "false" (plus "dev"/"develope" typos). A fixed
+    # value keeps the deployment label readable and avoids that failure mode.
+    environment: development
     steps:
       # Checkout must run before the local composite action: a local action
       # cannot be resolved until the repository is present on the runner.
@@ -155,19 +159,17 @@ jobs:
     needs: [check]
     # Full test suite runs on all PRs (master and release/**), on release tags
     # (so the quality gate is enforced before deploy), and on manual dispatch.
-    # The PR-only sticky-summary step self-guards on the event / issue number,
-    # so it no-ops cleanly on tag pushes.
+    # The PR summary comment is published by the separate `summary` job, so this
+    # job only needs to run the tests and upload the reports as an artifact.
     if: >-
       github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     environment: staging
-    # Least-privilege token: read the repo (checkout) and write the PR comment
-    # (the PRO-337 sticky quality-gate summary, with traceability folded in).
+    # Least-privilege token: only read the repo (checkout). Commenting on the PR
+    # happens in the `summary` job, which requests the write scopes it needs.
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
 
     steps:
       # Checkout must run before the local composite action: a local action
@@ -231,25 +233,41 @@ jobs:
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html
 
-      # PRO-337: publish a single consolidated quality-gate summary from within
-      # the test job (no separate job, so the pipeline graph stays
-      # check -> test -> deploy). The generator folds the traceability summary
-      # into the same comment (from tests/reports/traceability-matrix.md), so the
-      # PR carries one combined sticky comment instead of two. Both steps use
-      # if: always() so the summary is still published when a test level or the
-      # coverage gate fails. TEST_RESULT is taken from job.status, which reflects
-      # whether the earlier steps in this job passed. The JUnit, coverage.json
-      # and traceability matrix files already sit in tests/reports, so no
-      # download is needed.
+  # PRO-337: publish the consolidated quality-gate summary as its own job so it
+  # runs even when `check` or `test` fail or are skipped (if: always()). This is
+  # what guarantees a PR comment on *every* run - previously the summary lived in
+  # the `test` job, so a `check` (lint/naming) failure skipped `test` and no
+  # comment was ever posted. The job downloads the reports the `test` job
+  # uploaded (absent when `test` was skipped, in which case the summary degrades
+  # gracefully) and passes the upstream job results into the generator.
+  summary:
+    name: Publish quality-gate summary
+    runs-on: ubuntu-latest
+    needs: [check, test]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download test reports
+        if: needs.test.result != 'skipped'
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: test-results
+          path: tests/reports
+
       - name: Generate PR quality-gate summary
-        if: always()
         env:
           LINT_RESULT: ${{ needs.check.result }}
-          TEST_RESULT: ${{ job.status }}
-        run: python .github/scripts/generate_pr_summary.py
+          TEST_RESULT: ${{ needs.test.result }}
+        run: python3 .github/scripts/generate_pr_summary.py
 
       - name: Publish or update sticky PR comment
-        if: always()
         uses: actions/github-script@v8
         with:
           script: |

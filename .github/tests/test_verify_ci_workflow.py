@@ -286,12 +286,20 @@ def test_test_job_runs_on_prs_tags_and_dispatch():
 # ---------------------------------------------------------------------------
 
 
-def test_pipeline_graph_is_unchanged():
-    """The job dependency graph must remain check -> test -> deploy."""
+def test_pipeline_graph():
+    """The job graph is check -> test -> {summary, deploy}."""
     workflow = _workflow()
-    assert set(workflow["jobs"]) == {"check", "test", "deploy"}
+    assert set(workflow["jobs"]) == {"check", "test", "summary", "deploy"}
     assert workflow["jobs"]["test"]["needs"] == ["check"]
+    assert workflow["jobs"]["summary"]["needs"] == ["check", "test"]
     assert workflow["jobs"]["deploy"]["needs"] == ["check", "test"]
+
+
+def test_summary_job_always_runs_on_prs():
+    """The summary job publishes the PR comment even when check/test fail."""
+    summary = _workflow()["jobs"]["summary"]
+    assert "always()" in summary["if"]
+    assert "pull_request" in summary["if"]
 
 
 def test_concurrency_grouping_unchanged():

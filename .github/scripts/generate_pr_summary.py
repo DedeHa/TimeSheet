@@ -222,6 +222,17 @@ def _tests_status(levels: list[LevelStats]) -> str:
     return SKIP
 
 
+def _traceability_status(coverage: Optional[float]) -> str:
+    """Derive a traceability status from the requirement->code coverage.
+
+    Fully traced (100%) passes; a known lower value fails (the generator gate
+    would also have failed the run); an unknown value is reported as skipped.
+    """
+    if coverage is None:
+        return SKIP
+    return PASS if coverage >= 100.0 else FAIL
+
+
 def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
     """Render the combined CI/CD quality-gate report.
 
@@ -243,16 +254,33 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
         coverage_status = FAIL
 
     tests_status = _tests_status(data.levels)
+    lint_status = _result_indicator(data.lint_result)
+    trace_status = _traceability_status(data.traceability_coverage)
     executed = totals["executed"]
     pass_rate = (100.0 * totals["passed"] / executed) if executed else None
 
-    # Header: overall gate + lint (the check job) so neither is lost.
+    trace_pct = _fmt_percent(data.traceability_coverage)
+    cov_pct = _fmt_percent(data.coverage_percent)
+    cov_cell = f"{cov_pct} (gate {COVERAGE_GATE:.0f}%)"
+    test_pct = _fmt_percent(pass_rate)
+    passed_of = f"{totals['passed']}/{executed} passed"
+
+    # Header + status overview: the overall result plus a one-line-per-aspect
+    # table covering linting and all four steps, so the whole gate is readable at
+    # a glance before the detailed sections below.
     lines: list[str] = [
         MARKER,
         "## CI/CD Quality Gate Summary",
         "",
         f"**Overall workflow result:** {overall}",
-        f"**Lint & formatting:** {_result_indicator(data.lint_result)}",
+        "",
+        "| Step | Status | Summary |",
+        "| --- | --- | --- |",
+        f"| Lint & Formatting | {lint_status} | — |",
+        f"| 1. Traceability | {trace_status} | {trace_pct} |",
+        f"| 2. Testing | {tests_status} | {test_pct} ({passed_of}) |",
+        f"| 3. Code Coverage | {coverage_status} | {cov_cell} |",
+        "| 4. Artifacts | — | see section 4 |",
     ]
 
     # 1 - Traceability
@@ -260,7 +288,8 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
         "",
         "### 1. Traceability",
         "",
-        f"- Traceability summary: **{_fmt_percent(data.traceability_coverage)}**",
+        f"- Traceability summary: **{trace_pct}**",
+        f"- Status: {trace_status}",
     ]
     if matrix_md:
         body = re.sub(r"^\s*#\s+Traceability Matrix\s*", "", matrix_md.strip()).strip()

@@ -155,15 +155,15 @@ jobs:
     needs: [check]
     # Full test suite runs on all PRs (master and release/**), on release tags
     # (so the quality gate is enforced before deploy), and on manual dispatch.
-    # PR-only steps (traceability comment, sticky summary) self-guard on the
-    # event / issue number, so they no-op cleanly on tag pushes.
+    # The PR-only sticky-summary step self-guards on the event / issue number,
+    # so it no-ops cleanly on tag pushes.
     if: >-
       github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     environment: staging
-    # Least-privilege token: read the repo (checkout) and write PR comments
-    # (traceability comment + PRO-337 sticky quality-gate summary).
+    # Least-privilege token: read the repo (checkout) and write the PR comment
+    # (the PRO-337 sticky quality-gate summary, with traceability folded in).
     permissions:
       contents: read
       pull-requests: write
@@ -231,44 +231,16 @@ jobs:
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html
 
-      - name: Comment traceability report on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const mdPath = 'tests/reports/traceability-matrix.md';
-            let md = '';
-            try {
-              md = fs.readFileSync(mdPath, 'utf8');
-            } catch (e) {
-              console.warn('Could not read traceability markdown: ' + e.message);
-            }
-            const codeMatch = md.match(/Code coverage:\s*([0-9.]+)%/i);
-            const codeCov = codeMatch ? codeMatch[1] : null;
-            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            const urlEncodedRun = encodeURIComponent(runUrl);
-
-            let body = '### Traceability Summary\n\n';
-            if (codeCov !== null) {
-              body += `**Code Coverage:** ${codeCov}%\n\n`;
-            }
-            body += `[Complete traceability matrix →](${urlEncodedRun}?artifact=traceability-matrix.md)`;
-
-            const issue_number = context.issue.number;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              body,
-            });
-
-      # PRO-337: publish a consolidated quality-gate summary from within the test
-      # job (no separate job, so the pipeline graph stays check -> test -> deploy).
-      # Both steps use if: always() so the summary is still published when a test
-      # level or the coverage gate fails. TEST_RESULT is taken from job.status,
-      # which reflects whether the earlier steps in this job passed. The JUnit and
-      # coverage.json files already sit in tests/reports, so no download is needed.
+      # PRO-337: publish a single consolidated quality-gate summary from within
+      # the test job (no separate job, so the pipeline graph stays
+      # check -> test -> deploy). The generator folds the traceability summary
+      # into the same comment (from tests/reports/traceability-matrix.md), so the
+      # PR carries one combined sticky comment instead of two. Both steps use
+      # if: always() so the summary is still published when a test level or the
+      # coverage gate fails. TEST_RESULT is taken from job.status, which reflects
+      # whether the earlier steps in this job passed. The JUnit, coverage.json
+      # and traceability matrix files already sit in tests/reports, so no
+      # download is needed.
       - name: Generate PR quality-gate summary
         if: always()
         env:

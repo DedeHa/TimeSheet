@@ -23,6 +23,7 @@ find and update the previous comment instead of creating a duplicate.
 from __future__ import annotations
 
 import os
+import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -32,6 +33,9 @@ ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = ROOT / "tests" / "reports"
 SUMMARY_PATH = REPORTS_DIR / "test-summary.md"
 COVERAGE_JSON = "coverage.json"
+#: Traceability matrix produced by generate_traceability_matrix.py; its
+#: requirement->code coverage line is folded into the combined summary.
+TRACEABILITY_MD = "traceability-matrix.md"
 
 #: Combined-coverage quality gate, kept in sync with ``fail_under`` in pyproject.
 COVERAGE_GATE = 90.0
@@ -84,6 +88,7 @@ class SummaryData:
     levels: list[LevelStats]
     coverage_percent: Optional[float]
     run_url: Optional[str] = None
+    traceability_coverage: Optional[float] = None
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -181,6 +186,22 @@ def read_coverage(reports_dir: Path) -> Optional[float]:
         return None
 
 
+def read_traceability_coverage(reports_dir: Path) -> Optional[float]:
+    """Return the requirement->code coverage % from the traceability matrix.
+
+    Parses the ``- Code coverage: N%`` line written by
+    ``generate_traceability_matrix.py``. Returns ``None`` when the matrix is
+    missing or the line cannot be found.
+    """
+    path = reports_dir / TRACEABILITY_MD
+    if not path.exists():
+        return None
+    match = re.search(
+        r"Code coverage:\s*([0-9.]+)%", path.read_text(encoding="utf-8"), re.IGNORECASE
+    )
+    return float(match.group(1)) if match else None
+
+
 def _fmt_percent(value: Optional[float]) -> str:
     """Format a percentage to one decimal place, or ``n/a`` when unknown."""
     return "n/a" if value is None else f"{value:.1f}%"
@@ -250,16 +271,28 @@ def render_markdown(data: SummaryData) -> str:
         "- HTML coverage report: `htmlcov/index.html` inside the "
         "`test-results` artifact"
     )
+    lines.append(
+        "- Traceability matrix: `traceability-matrix.md` / "
+        "`traceability-matrix.html` inside the `test-results` artifact"
+    )
 
     if data.notes:
         lines += ["", "### Notes"]
         lines += [f"- {note}" for note in data.notes]
 
+    # Traceability summary, folded in from the traceability matrix so the PR
+    # carries a single combined comment instead of two separate ones.
     lines += [
         "",
-        "<sub>Published automatically by the CI/CD workflow and updated on every "
-        "re-run. (PRO-337)</sub>",
+        "---",
+        "",
+        "## Traceability Summary",
+        "",
+        f"**Code Coverage:** {_fmt_percent(data.traceability_coverage)}",
     ]
+    if data.run_url:
+        lines += ["", f"[Complete traceability matrix →]({data.run_url})"]
+
     return "\n".join(lines) + "\n"
 
 
@@ -277,6 +310,7 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
     """Assemble :class:`SummaryData` from the reports directory and environment."""
     levels = collect_levels(reports_dir)
     coverage = read_coverage(reports_dir)
+    traceability_coverage = read_traceability_coverage(reports_dir)
 
     run_url = None
     server = env.get("GITHUB_SERVER_URL")
@@ -302,6 +336,7 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
         levels=levels,
         coverage_percent=coverage,
         run_url=run_url,
+        traceability_coverage=traceability_coverage,
         notes=notes,
     )
 

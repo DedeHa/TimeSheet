@@ -46,6 +46,15 @@ def _write_coverage(path: Path, percent: float):
     )
 
 
+def _write_traceability(path: Path, code_coverage: float):
+    path.write_text(
+        "# Traceability Matrix\n"
+        "- Architecture coverage: 100.0%\n"
+        f"- Code coverage: {code_coverage}%\n",
+        encoding="utf-8",
+    )
+
+
 def _all_green_reports(tmp_path: Path):
     _write_junit(
         tmp_path / "unit-results.xml", tests=79, failures=0, errors=0, skipped=1
@@ -57,6 +66,7 @@ def _all_green_reports(tmp_path: Path):
         tmp_path / "system-results.xml", tests=7, failures=0, errors=0, skipped=0
     )
     _write_coverage(tmp_path / "coverage.json", 99.1)
+    _write_traceability(tmp_path / "traceability-matrix.md", 100.0)
 
 
 def test_parse_junit_counts(tmp_path):
@@ -93,6 +103,13 @@ def test_read_coverage(tmp_path):
     assert mod.read_coverage(tmp_path / "empty") is None
 
 
+def test_read_traceability_coverage(tmp_path):
+    """Traceability code coverage is parsed from the matrix, or ``None``."""
+    _write_traceability(tmp_path / "traceability-matrix.md", 100.0)
+    assert mod.read_traceability_coverage(tmp_path) == 100.0
+    assert mod.read_traceability_coverage(tmp_path / "empty") is None
+
+
 def test_overall_pass(tmp_path):
     """All-green inputs produce an overall pass with correct totals."""
     _all_green_reports(tmp_path)
@@ -105,6 +122,11 @@ def test_overall_pass(tmp_path):
     assert "Overall workflow result:** ✅ Passed" in report
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report
     assert "99.1%" in report
+    # The traceability summary is folded into the same combined comment.
+    assert "## Traceability Summary" in report
+    assert "**Code Coverage:** 100.0%" in report
+    # The obsolete PRO-337 footer is no longer emitted.
+    assert "PRO-337" not in report
 
 
 def test_coverage_below_gate_fails_overall(tmp_path):

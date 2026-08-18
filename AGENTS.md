@@ -223,14 +223,14 @@ Three-level hierarchy matching runtime boundaries:
 - Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
 
 **Pull Request Quality-Gate Summary** (PRO-337):
-- Consolidated report with ✅ / ❌ / ⚠️ indicators
-- Published in PR comment (updated in place) and job summary
-- Includes: Overall result, lint/format status, test results, coverage vs 90% gate, artifact links
+- Single consolidated report with ✅ / ❌ / ⚠️ indicators, regenerated every run
+- Published as one sticky PR comment (updated in place) and in the job summary
+- Includes: Overall result, lint/format status, test results, coverage vs 90% gate, artifact links, and a folded-in **Traceability Summary** (requirement→code coverage + matrix link) — one combined comment, not two
 
 **Traceability Validation**:
 - `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture
 - The script is the gate: it exits non-zero if any requirement is untraced
-- Publishes matrix in GitHub Actions job summary and artifacts
+- Publishes the matrix as an artifact; its summary is folded into the PR quality-gate comment above (rendered by `generate_pr_summary.py`)
 
 ## Development Workflow
 

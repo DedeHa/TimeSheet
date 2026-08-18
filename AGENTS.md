@@ -44,10 +44,19 @@ radon cc src_timesheetalgo -a
 
 # Documentation traceability (generates the matrix; exits non-zero if incomplete)
 python .github/scripts/generate_traceability_matrix.py
-
-# PR quality-gate summary validator
-pytest -q .github/tests/test_generate_pr_summary.py
 ```
+
+**Run the CI-pipeline tests locally BEFORE committing changes under `.github/`**
+(scripts, tests, actions, or the workflow YAML). The CI pipeline does **not**
+run these tests — local verification is the only gate that catches a broken
+support script or workflow regression:
+```bash
+pytest -q .github/tests/
+```
+- Covers `test_verify_ci_workflow.py` (workflow structure/regression),
+  `test_generate_pr_summary.py`, and `test_generate_traceability_matrix.py`
+- All must pass before you commit; treat a failure here exactly like a failing
+  application test
 
 ## Critical Project Structure (Agents often miss these paths)
 
@@ -318,7 +327,9 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   - `.github/tests/test_verify_ci_workflow.py`
   - `.github/tests/test_generate_pr_summary.py`
   - `.github/tests/test_generate_traceability_matrix.py`
-  - Run them with: `pytest -q .github/tests/`
+  - **Run and check `pytest -q .github/tests/` locally before committing any
+    change under `.github/`** — since CI does not run them, this is the only
+    place a broken support script or workflow regression is caught.
 - **CI support scripts live under `.github/scripts/`** (verb_subject naming):
   `generate_pr_summary.py`, `generate_traceability_matrix.py`. `.github/workflows/`
   holds workflow definitions only (no `.py`).

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -203,9 +204,32 @@ def write_reports(data: TraceabilityData) -> Path:
 
 
 def main() -> None:
-    """Generate the traceability matrix artifacts and print the Markdown."""
+    """Generate the traceability matrix artifacts and enforce completeness.
+
+    Writes the Markdown + HTML matrices (so the artifact is available even on
+    failure), then exits with a non-zero status when any requirement is missing
+    from the architecture document or the implementation references. This makes
+    the script the CI quality gate - the workflow invokes it directly and needs
+    no separate pytest step.
+    """
     data = collect_ids()
     write_reports(data)
+
+    problems: list[str] = []
+    if not data.requirement_ids:
+        problems.append("No requirement identifiers were discovered")
+    if data.missing_in_architecture:
+        problems.append(f"Missing from architecture: {data.missing_in_architecture}")
+    if data.missing_in_code:
+        problems.append(
+            f"Missing from implementation references: {data.missing_in_code}"
+        )
+
+    if problems:
+        for problem in problems:
+            print(f"ERROR: {problem}", file=sys.stderr)
+        sys.exit(1)
+
     print(build_markdown(data))
 
 

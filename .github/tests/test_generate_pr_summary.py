@@ -110,6 +110,32 @@ def test_read_traceability_coverage(tmp_path):
     assert mod.read_traceability_coverage(tmp_path / "empty") is None
 
 
+def test_comment_and_job_summary_variants():
+    """The comment links to the matrix; the job summary embeds the full table."""
+    data = mod.SummaryData(
+        lint_result="success",
+        test_result="success",
+        levels=[],
+        coverage_percent=99.1,
+        run_url="https://example/run/1",
+        traceability_coverage=100.0,
+    )
+    matrix = (
+        "# Traceability Matrix\n\n## Functional Requirements\n"
+        "| Requirement | Type |\n| --- | --- |\n| FR-01 | Functional |\n"
+        "- Code coverage: 100.0%\n"
+    )
+
+    comment = mod.render_markdown(data)
+    assert "[Traceability matrix →](https://example/run/1)" in comment
+    assert "## Functional Requirements" not in comment  # not embedded in comment
+
+    job = mod.render_markdown(data, matrix_md=matrix)
+    assert "## Functional Requirements" in job  # full matrix embedded
+    assert "| FR-01 | Functional |" in job
+    assert "# Traceability Matrix" not in job  # duplicate H1 stripped
+
+
 def test_overall_pass(tmp_path):
     """All-green inputs produce an overall pass with correct totals."""
     _all_green_reports(tmp_path)
@@ -120,11 +146,24 @@ def test_overall_pass(tmp_path):
     report = mod.render_markdown(data)
     assert mod.MARKER in report
     assert "Overall workflow result:** ✅ Passed" in report
+    # Sections appear in the required order: Traceability, Testing, Coverage,
+    # Artifacts.
+    order = [
+        "### 1. Traceability",
+        "### 2. Testing",
+        "### 3. Code Coverage",
+        "### 4. Artifacts",
+    ]
+    positions = [report.index(section) for section in order]
+    assert positions == sorted(positions), "sections out of order"
+    # 1 Traceability - summary percentage + matrix link (comment variant).
+    assert "Traceability summary: **100.0%**" in report
+    # 2 Testing - pass-rate summary, status, and per-level table.
+    assert "Test summary: **99.0%** (102/103 passed)" in report
+    assert "- Status: ✅ Passed" in report
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report
-    assert "99.1%" in report
-    # The traceability summary is folded into the same combined comment.
-    assert "## Traceability Summary" in report
-    assert "**Code Coverage:** 100.0%" in report
+    # 3 Code Coverage - percentage + gate status.
+    assert "Combined line + branch coverage: **99.1%**" in report
     # The obsolete PRO-337 footer is no longer emitted.
     assert "PRO-337" not in report
 
@@ -149,9 +188,10 @@ def test_failed_lint_still_renders(tmp_path):
     )
     report = mod.render_markdown(data)
     assert data.overall_passed is False
-    assert "| Lint & Formatting | ❌ Failed |" in report
-    # Every level degrades to skipped with placeholder statistics.
-    assert "| Unit Tests | ⚠️ Skipped |" in report
+    assert "**Lint & formatting:** ❌ Failed" in report
+    # With no reports, the testing status degrades to skipped and each level
+    # shows placeholder statistics.
+    assert "- Status: ⚠️ Skipped" in report
     assert "| Unit Tests | - | - | - | - |" in report
     assert "did not produce results" in report
 
@@ -167,7 +207,9 @@ def test_failing_test_level_marks_failure(tmp_path):
     )
     assert data.overall_passed is False
     report = mod.render_markdown(data)
-    assert "| Integration Tests | ❌ Failed |" in report
+    # Testing status reflects the failure and the per-level row shows the count.
+    assert "- Status: ❌ Failed" in report
+    assert "| Integration Tests | 17 | 16 | 1 | 0 |" in report
 
 
 if __name__ == "__main__":

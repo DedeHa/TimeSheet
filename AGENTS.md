@@ -43,7 +43,7 @@ pydocstyle src_timesheetalgo tests
 radon cc src_timesheetalgo -a
 
 # Documentation traceability
-pytest -q .github/workflows/validate_docs_traceability.py
+pytest -q .github/tests/test_docs_traceability.py
 
 # PR quality-gate summary validator
 pytest -q .github/tests/test_generate_pr_summary.py
@@ -219,7 +219,7 @@ Three-level hierarchy matching runtime boundaries:
 - Includes: Overall result, lint/format status, test results, coverage vs 90% gate, artifact links
 
 **Traceability Validation**:
-- `.github/workflows/validate_docs_traceability.py` scans requirements and architecture
+- `.github/tests/test_docs_traceability.py` scans requirements and architecture
 - Publishes matrix in GitHub Actions job summary and artifacts
 
 ## Development Workflow
@@ -262,7 +262,7 @@ git checkout -b release/vX.Y.Z master
 Complete validation on PRs to master:
 1. **Dependencies**: `pip install -e .[dev]`
 2. **Lint**: `ruff check src_timesheetalgo tests`, `black --check src_timesheetalgo tests`, etc.
-3. **Documentation traceability**: `pytest -q .github/workflows/validate_docs_traceability.py`
+3. **Documentation traceability**: `pytest -q .github/tests/test_docs_traceability.py`
 4. **Test suite**: `pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing`
 5. **Quality-gate summary**: Generated automatically
 
@@ -315,12 +315,12 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   - `.github/tests/test_workflow_optimization.py`
   - `.github/tests/test_regression_ci.py`
   - `.github/tests/test_generate_pr_summary.py`
-  - `.github/workflows/validate_docs_traceability.py`
-  - Run them with: `pytest -q .github/tests/ .github/workflows/`
+  - `.github/tests/test_docs_traceability.py`
+  - Run them with: `pytest -q .github/tests/`
 - **Traceability**: PRO-368 added `FR-16`, `FR-17`, `QR-08`, `QR-09` to
   `doc/REQUIREMENTS.md`, `doc/ARCHITECTURE.md`, and the anchor comment in
   `src_timesheetalgo/TimeSheetAlgo.py`. The traceability validator
-  (`pytest -q .github/workflows/validate_docs_traceability.py`) requires all three
+  (`pytest -q .github/tests/test_docs_traceability.py`) requires all three
   sources to list the same IDs — update all three together.
 - **Composite setup action location**: The reusable setup action lives at
   `.github/actions/setup-python-deps/action.yml` and is referenced as

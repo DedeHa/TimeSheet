@@ -185,7 +185,7 @@ Based on `doc/TESTING.md`:
 ### CI Workflow Validation Tests
 
 **Existing Tests (from `python-ci.yml`):**
-- **Documentation traceability validation** (`.github/workflows/test_docs_traceability.py`)
+- **Documentation traceability validation** (`.github/tests/test_docs_traceability.py`)
 - **PR quality-gate summary generation** (`.github/workflows/pr_test_summary.py`)
 
 **Additional Tests Needed:**

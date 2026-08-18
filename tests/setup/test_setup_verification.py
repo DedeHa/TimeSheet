@@ -28,7 +28,7 @@ EXPECTED_WORKFLOW_FILES = [
     REPO_ROOT / ".github" / "workflows" / "python-ci.yml",
     REPO_ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml",
     REPO_ROOT / ".github" / "workflows" / "generate_pr_summary.py",
-    REPO_ROOT / ".github" / "workflows" / "validate_docs_traceability.py",
+    REPO_ROOT / ".github" / "tests" / "test_docs_traceability.py",
     REPO_ROOT / ".github" / "tests" / "test_generate_pr_summary.py",
     REPO_ROOT / ".github" / "tests" / "test_regression_ci.py",
     REPO_ROOT / ".github" / "tests" / "test_workflow_optimization.py",
@@ -60,8 +60,10 @@ def test_no_underscore_workflow_files():
         if "_" in f.name
         and f.name
         not in {
+            # generate_pr_summary.py is a production generator script (not a
+            # test) and legitimately lives in the workflows dir. The
+            # traceability test moved to .github/tests/test_docs_traceability.py.
             "generate_pr_summary.py",
-            "validate_docs_traceability.py",
         }
     ]
     assert not bad, f"Workflow files still use underscores: {bad}"

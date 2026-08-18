@@ -28,23 +28,23 @@ Three jobs: `check` → `test` → `deploy`.
 | File | Purpose |
 |------|---------|
 | `.github/actions/setup-python-deps/action.yml` | Composite action: checkout + Python setup + pip cache + `pip install -e .[dev]` |
-| `.github/tests/test_workflow_optimization.py` | Structural workflow assertions |
-| `.github/tests/test_regression_ci.py` | Quality-gate / branch / deploy regression assertions |
+| `.github/tests/test_verify_ci_workflow.py` | Structural + regression workflow assertions (merged) |
 | `.github/tests/test_generate_pr_summary.py` | Tests for the PR quality-gate summary generator |
-| `.github/tests/test_docs_traceability.py` | Traceability validator (run as a pytest file) |
-| `.github/workflows/generate_pr_summary.py` | PRO-337 sticky quality-gate summary generator |
+| `.github/tests/test_generate_traceability_matrix.py` | Traceability completeness gate |
+| `.github/scripts/generate_pr_summary.py` | PRO-337 sticky quality-gate summary generator |
+| `.github/scripts/generate_traceability_matrix.py` | Traceability matrix generator |
 
 **Removed as dead/ineffective:** `.github/workflows/validate_naming.py` (never
 invoked by the workflow — validation is inline) and
 `.github/scripts/performance_validation.py` (always skipped in CI; its structural
-assertions duplicated `test_workflow_optimization.py`).
+assertions duplicated `test_verify_ci_workflow.py`).
 
 ## Traceability
 
 FR-16, FR-17, QR-08, QR-09 are recorded in `doc/REQUIREMENTS.md`,
 `doc/ARCHITECTURE.md`, and the anchor comment in
 `src_timesheetalgo/TimeSheetAlgo.py`. Keep all three in sync (validator:
-`pytest -q .github/tests/test_docs_traceability.py`).
+`pytest -q .github/tests/test_generate_traceability_matrix.py`).
 
 ## Not implemented (deferred)
 

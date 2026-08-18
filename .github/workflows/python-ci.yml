@@ -182,8 +182,11 @@ jobs:
       - name: Prepare report directory
         run: mkdir -p tests/reports
 
+      - name: Generate traceability matrix
+        run: python .github/scripts/generate_traceability_matrix.py
+
       - name: Validate documentation traceability
-        run: pytest -q .github/tests/test_docs_traceability.py
+        run: pytest -q .github/tests/test_generate_traceability_matrix.py
 
       - name: Validate PR quality-gate summary generator
         run: pytest -q .github/tests/test_generate_pr_summary.py
@@ -273,7 +276,7 @@ jobs:
         env:
           LINT_RESULT: ${{ needs.check.result }}
           TEST_RESULT: ${{ job.status }}
-        run: python .github/workflows/generate_pr_summary.py
+        run: python .github/scripts/generate_pr_summary.py
 
       - name: Publish or update sticky PR comment
         if: always()

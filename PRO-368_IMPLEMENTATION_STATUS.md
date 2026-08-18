@@ -31,7 +31,7 @@ Three jobs: `check` → `test` → `deploy`.
 | `.github/tests/test_workflow_optimization.py` | Structural workflow assertions |
 | `.github/tests/test_regression_ci.py` | Quality-gate / branch / deploy regression assertions |
 | `.github/tests/test_generate_pr_summary.py` | Tests for the PR quality-gate summary generator |
-| `.github/workflows/validate_docs_traceability.py` | Traceability validator (run as a pytest file) |
+| `.github/tests/test_docs_traceability.py` | Traceability validator (run as a pytest file) |
 | `.github/workflows/generate_pr_summary.py` | PRO-337 sticky quality-gate summary generator |
 
 **Removed as dead/ineffective:** `.github/workflows/validate_naming.py` (never
@@ -44,7 +44,7 @@ assertions duplicated `test_workflow_optimization.py`).
 FR-16, FR-17, QR-08, QR-09 are recorded in `doc/REQUIREMENTS.md`,
 `doc/ARCHITECTURE.md`, and the anchor comment in
 `src_timesheetalgo/TimeSheetAlgo.py`. Keep all three in sync (validator:
-`pytest -q .github/workflows/validate_docs_traceability.py`).
+`pytest -q .github/tests/test_docs_traceability.py`).
 
 ## Not implemented (deferred)
 

@@ -235,7 +235,7 @@ When the change affects documentation traceability or CI behaviour, also update 
 ```bash
 ruff check src_timesheetalgo tests
 black --check src_timesheetalgo tests
-pytest -q .github/workflows/validate_docs_traceability.py
+pytest -q .github/tests/test_docs_traceability.py
 ```
 
 1. **Create feature branch** (always from `master`):

@@ -1,7 +1,7 @@
 """Unit tests for the PR quality-gate summary generator (PRO-337).
 
 These validate the parsing and rendering logic of ``generate_pr_summary.py`` in
-isolation. Like ``validate_docs_traceability.py`` this file lives under
+isolation. Like ``test_docs_traceability.py`` this file lives under
 ``.github/tests/`` (not in ``tests/``), so it does not change the 103-test
 application suite or the coverage gate. It is executed explicitly by the CI
 ``test`` job and can be run locally with::

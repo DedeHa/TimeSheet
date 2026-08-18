@@ -183,7 +183,7 @@ jobs:
         run: mkdir -p tests/reports
 
       - name: Validate documentation traceability
-        run: pytest -q .github/workflows/validate_docs_traceability.py
+        run: pytest -q .github/tests/test_docs_traceability.py
 
       - name: Validate PR quality-gate summary generator
         run: pytest -q .github/tests/test_generate_pr_summary.py

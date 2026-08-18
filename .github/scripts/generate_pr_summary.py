@@ -10,7 +10,7 @@ the environment, and renders a single Markdown report that a downstream
 Design notes
 ------------
 * Standard library only - this mirrors the lightweight, tooling-free approach of
-  ``test_docs_traceability.py`` so it stays local-runnable and dependency-free.
+  ``generate_traceability_matrix.py`` so it stays local-runnable and dependency-free.
 * Every input is optional. When the ``test`` job is skipped (e.g. because
   ``lint`` failed) the artifacts are absent; the report degrades gracefully and
   still reports the gates it knows about, satisfying the "failed workflows still

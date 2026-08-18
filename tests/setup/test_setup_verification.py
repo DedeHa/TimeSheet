@@ -6,8 +6,10 @@ configured after the CI workflow and naming-convention changes:
 - Unit tests live under ``tests/unit/``
 - Integration tests live under ``tests/integration/``
 - System tests live under ``tests/system/``
-- CI helper scripts live under ``.github/workflows/`` with underscore names
-  (``validate_*``/``generate_*``); workflow tests live under ``.github/tests/``
+- ``.github/workflows/`` holds workflow definitions only (no ``.py`` scripts)
+- ``.github/scripts/`` holds CI support scripts (``verb_subject``, e.g.
+  ``generate_pr_summary``); ``.github/tests/`` holds their unit tests
+  (``test_verb_subject``)
 
 Run with::
 
@@ -24,14 +26,19 @@ EXPECTED_DIRS = [
     REPO_ROOT / "tests" / "integration",
     REPO_ROOT / "tests" / "system",
 ]
-EXPECTED_WORKFLOW_FILES = [
-    REPO_ROOT / ".github" / "workflows" / "python-ci.yml",
-    REPO_ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml",
-    REPO_ROOT / ".github" / "workflows" / "generate_pr_summary.py",
-    REPO_ROOT / ".github" / "tests" / "test_docs_traceability.py",
-    REPO_ROOT / ".github" / "tests" / "test_generate_pr_summary.py",
-    REPO_ROOT / ".github" / "tests" / "test_regression_ci.py",
-    REPO_ROOT / ".github" / "tests" / "test_workflow_optimization.py",
+GITHUB_DIR = REPO_ROOT / ".github"
+WORKFLOWS_DIR = GITHUB_DIR / "workflows"
+SCRIPTS_DIR = GITHUB_DIR / "scripts"
+TESTS_DIR = GITHUB_DIR / "tests"
+
+EXPECTED_CI_FILES = [
+    WORKFLOWS_DIR / "python-ci.yml",
+    GITHUB_DIR / "actions" / "setup-python-deps" / "action.yml",
+    SCRIPTS_DIR / "generate_pr_summary.py",
+    SCRIPTS_DIR / "generate_traceability_matrix.py",
+    TESTS_DIR / "test_generate_pr_summary.py",
+    TESTS_DIR / "test_generate_traceability_matrix.py",
+    TESTS_DIR / "test_verify_ci_workflow.py",
 ]
 
 
@@ -47,23 +54,26 @@ def test_system_dir_exists():
     assert EXPECTED_DIRS[2].is_dir(), "tests/system directory is missing"
 
 
-def test_workflow_files_exist():
-    missing = [str(p) for p in EXPECTED_WORKFLOW_FILES if not p.is_file()]
-    assert not missing, f"Missing workflow files: {missing}"
+def test_ci_files_exist():
+    missing = [str(p) for p in EXPECTED_CI_FILES if not p.is_file()]
+    assert not missing, f"Missing CI files: {missing}"
 
 
-def test_no_underscore_workflow_files():
-    workflow_dir = REPO_ROOT / ".github" / "workflows"
-    bad = [
-        f.name
-        for f in workflow_dir.glob("*.py")
-        if "_" in f.name
-        and f.name
-        not in {
-            # generate_pr_summary.py is a production generator script (not a
-            # test) and legitimately lives in the workflows dir. The
-            # traceability test moved to .github/tests/test_docs_traceability.py.
-            "generate_pr_summary.py",
-        }
-    ]
-    assert not bad, f"Workflow files still use underscores: {bad}"
+def test_workflows_dir_has_only_definitions():
+    """.github/workflows/ holds workflow definitions only - no Python scripts."""
+    stray = [f.name for f in WORKFLOWS_DIR.glob("*.py")]
+    assert (
+        not stray
+    ), f"Python scripts must live in .github/scripts/, not workflows/: {stray}"
+
+
+def test_ci_scripts_are_not_named_as_tests():
+    """.github/scripts/ holds production scripts (verb_subject), never test_*."""
+    bad = [f.name for f in SCRIPTS_DIR.glob("*.py") if f.name.startswith("test_")]
+    assert not bad, f"Test files must live in .github/tests/, not scripts/: {bad}"
+
+
+def test_ci_tests_use_test_prefix():
+    """Every Python file in .github/tests/ is a test_* module."""
+    bad = [f.name for f in TESTS_DIR.glob("*.py") if not f.name.startswith("test_")]
+    assert not bad, f".github/tests/ must contain only test_* files: {bad}"

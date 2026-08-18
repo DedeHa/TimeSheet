@@ -1,18 +1,26 @@
-"""Traceability validator for the PRO-368 requirements.
+"""Generate the requirement-to-architecture-to-code traceability matrix (PRO-368).
 
-Scans ``doc/REQUIREMENTS.md``, ``doc/ARCHITECTURE.md`` and
-``src_timesheetalgo/TimeSheetAlgo.py`` for matching requirement identifiers
-(FR-XX / QR-XX) and asserts that every requirement is referenced in all three
-sources. The resulting matrix is written to ``tests/reports/`` and printed to
-the GitHub Actions step summary when ``GITHUB_STEP_SUMMARY`` is set.
+This is a *production* CI support script (not a test). It scans
+``doc/REQUIREMENTS.md``, ``doc/ARCHITECTURE.md`` and
+``src_timesheetalgo/TimeSheetAlgo.py`` for requirement identifiers (FR-XX /
+QR-XX) and renders a Markdown + HTML matrix under ``tests/reports/``. The CI
+``test`` job runs this to produce the artifact that the "Comment traceability
+report" step publishes on the pull request; completeness of the matrix is
+asserted separately by ``.github/tests/test_generate_traceability_matrix.py``.
+
+Standard library only, mirroring the lightweight, dependency-free approach of
+``generate_pr_summary.py``.
 
 Run with::
 
-    pytest -q .github/tests/test_docs_traceability.py
+    python .github/scripts/generate_traceability_matrix.py
 """
+
+from __future__ import annotations
 
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,12 +30,41 @@ SOURCE = ROOT / "src_timesheetalgo" / "TimeSheetAlgo.py"
 REPORT_PATH = ROOT / "tests" / "reports" / "traceability-matrix.md"
 
 
+@dataclass
+class TraceabilityData:
+    """Requirement identifiers discovered in each traceability source."""
+
+    requirement_ids: list[str]
+    architecture_ids: set[str]
+    code_ids: set[str]
+
+    @property
+    def missing_in_architecture(self) -> list[str]:
+        """Requirements absent from the architecture document."""
+        return [r for r in self.requirement_ids if r not in self.architecture_ids]
+
+    @property
+    def missing_in_code(self) -> list[str]:
+        """Requirements absent from the implementation references."""
+        return [r for r in self.requirement_ids if r not in self.code_ids]
+
+
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _extract_requirement_ids(text: str) -> list[str]:
+def extract_requirement_ids(text: str) -> list[str]:
+    """Return every FR-XX / QR-XX identifier found in ``text`` (in order)."""
     return re.findall(r"\b(FR-\d{2}|QR-\d{2})\b", text)
+
+
+def collect_ids() -> TraceabilityData:
+    """Read the three sources and collect their requirement identifiers."""
+    return TraceabilityData(
+        requirement_ids=extract_requirement_ids(_read_text(REQUIREMENTS)),
+        architecture_ids=set(extract_requirement_ids(_read_text(ARCHITECTURE))),
+        code_ids=set(extract_requirement_ids(_read_text(SOURCE))),
+    )
 
 
 def _coverage_percent(requirement_ids: list[str], present_ids: set[str]) -> float:
@@ -44,15 +81,15 @@ def _group_by_type(requirement_ids: list[str]) -> dict[str, list[str]]:
     return groups
 
 
-def _build_traceability_matrix(
-    requirement_ids: list[str], architecture_ids: set[str], code_ids: set[str]
-) -> str:
+def build_markdown(data: TraceabilityData) -> str:
+    """Render the compact Markdown traceability matrix."""
+
     def indicator(present: bool) -> str:
         return "🟢" if present else "◯"
 
     lines: list[str] = ["# Traceability Matrix", ""]
 
-    groups = _group_by_type(requirement_ids)
+    groups = _group_by_type(data.requirement_ids)
     for label, reqs in (
         ("Functional Requirements", groups["FR"]),
         ("Quality Requirements", groups["QR"]),
@@ -60,7 +97,6 @@ def _build_traceability_matrix(
         if not reqs:
             continue
         lines.append(f"## {label}")
-        # Header (compact: no spec count, no per-test columns)
         header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
         lines.append("| " + " | ".join(header_cols) + " |")
         lines.append("| " + " | ".join(["---"] * len(header_cols)) + " |")
@@ -69,25 +105,27 @@ def _build_traceability_matrix(
             row = [
                 req,
                 "Functional" if req.startswith("FR-") else "Quality",
-                indicator(req in architecture_ids),
-                indicator(req in code_ids),
+                indicator(req in data.architecture_ids),
+                indicator(req in data.code_ids),
             ]
             lines.append("| " + " | ".join(row) + " |")
 
         lines.append("")
 
     lines.append(
-        f"- Architecture coverage: {_coverage_percent(requirement_ids, architecture_ids)}%"
+        f"- Architecture coverage: "
+        f"{_coverage_percent(data.requirement_ids, data.architecture_ids)}%"
     )
-    lines.append(f"- Code coverage: {_coverage_percent(requirement_ids, code_ids)}%")
+    lines.append(
+        f"- Code coverage: {_coverage_percent(data.requirement_ids, data.code_ids)}%"
+    )
 
     return "\n".join(lines)
 
 
-def _build_traceability_html(
-    requirement_ids: list[str], architecture_ids: set[str], code_ids: set[str]
-) -> str:
-    # Compact matrix only: Requirement, Type, In Architecture, In Code.
+def build_html(data: TraceabilityData) -> str:
+    """Render the compact HTML traceability matrix for richer PR artifacts."""
+
     def cell(val: str) -> str:
         return f"<td>{val}</td>"
 
@@ -99,7 +137,8 @@ def _build_traceability_html(
         '<meta name="viewport" content="width=device-width,initial-scale=1">',
         "<title>Traceability Matrix</title>",
         "<style>",
-        "body{font-family:Arial,Helvetica,sans-serif;margin:16px;background:#0f1724;color:#e6eef8}",
+        "body{font-family:Arial,Helvetica,sans-serif;margin:16px;"
+        "background:#0f1724;color:#e6eef8}",
         "table{border-collapse:collapse;width:100%;overflow:auto}",
         "th,td{border:1px solid #2b3350;padding:8px;text-align:left}",
         "th{background:#111827;color:#9fb4ff}",
@@ -110,7 +149,7 @@ def _build_traceability_html(
         "<h1>Traceability Matrix</h1>",
     ]
 
-    groups = _group_by_type(requirement_ids)
+    groups = _group_by_type(data.requirement_ids)
     for title, reqs in (
         ("Functional Requirements", groups["FR"]),
         ("Quality Requirements", groups["QR"]),
@@ -131,15 +170,15 @@ def _build_traceability_html(
             row_cells = [
                 req,
                 ("Functional" if req.startswith("FR-") else "Quality"),
-                ("✅" if req in architecture_ids else "◯"),
-                ("✅" if req in code_ids else "◯"),
+                ("✅" if req in data.architecture_ids else "◯"),
+                ("✅" if req in data.code_ids else "◯"),
             ]
             html_lines.append("<tr>" + "".join(cell(c) for c in row_cells) + "</tr>")
 
         html_lines.append("</tbody></table>")
 
-    arch_cov = _coverage_percent(requirement_ids, architecture_ids)
-    code_cov = _coverage_percent(requirement_ids, code_ids)
+    arch_cov = _coverage_percent(data.requirement_ids, data.architecture_ids)
+    code_cov = _coverage_percent(data.requirement_ids, data.code_ids)
     html_lines.append(
         f"<p>Architecture coverage: {arch_cov}%<br/>Code coverage: {code_cov}%</p>"
     )
@@ -147,47 +186,28 @@ def _build_traceability_html(
     return "\n".join(html_lines)
 
 
-def _publish_report(report: str) -> None:
+def write_reports(data: TraceabilityData) -> Path:
+    """Write the Markdown + HTML matrices and return the Markdown path."""
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text(report, encoding="utf-8")
-
-    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary_path:
-        with open(summary_path, "a", encoding="utf-8") as handle:
-            handle.write(report)
-            handle.write("\n")
-
-
-def test_traceability_matrix_is_complete_and_published():
-    """Verify every requirement is referenced in architecture and code."""
-    requirement_ids = _extract_requirement_ids(_read_text(REQUIREMENTS))
-    architecture_ids = set(_extract_requirement_ids(_read_text(ARCHITECTURE)))
-    code_ids = set(_extract_requirement_ids(_read_text(SOURCE)))
-
-    assert requirement_ids, "No requirement identifiers were discovered"
-    missing_in_architecture = [
-        req_id for req_id in requirement_ids if req_id not in architecture_ids
-    ]
-    missing_in_code = [req_id for req_id in requirement_ids if req_id not in code_ids]
-
-    assert (
-        not missing_in_architecture
-    ), f"Requirements missing from architecture traceability: {missing_in_architecture}"
-    assert (
-        not missing_in_code
-    ), f"Requirements missing from implementation references: {missing_in_code}"
-
-    report = _build_traceability_matrix(requirement_ids, architecture_ids, code_ids)
-    _publish_report(report)
-    # also produce HTML report for richer display in PR artifacts
-    html = _build_traceability_html(requirement_ids, architecture_ids, code_ids)
+    REPORT_PATH.write_text(build_markdown(data), encoding="utf-8")
     html_path = REPORT_PATH.with_suffix(".html")
-    html_path.write_text(html, encoding="utf-8")
+    html_path.write_text(build_html(data), encoding="utf-8")
 
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_path:
         with open(summary_path, "a", encoding="utf-8") as handle:
+            handle.write(build_markdown(data))
             handle.write("\n---\n")
             handle.write(f"Generated traceability HTML: {html_path}\n")
+    return REPORT_PATH
 
-    print(report)
+
+def main() -> None:
+    """Generate the traceability matrix artifacts and print the Markdown."""
+    data = collect_ids()
+    write_reports(data)
+    print(build_markdown(data))
+
+
+if __name__ == "__main__":
+    main()

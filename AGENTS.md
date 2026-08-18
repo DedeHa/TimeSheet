@@ -42,8 +42,9 @@ black --check src_timesheetalgo tests
 pydocstyle src_timesheetalgo tests
 radon cc src_timesheetalgo -a
 
-# Documentation traceability
-pytest -q .github/tests/test_docs_traceability.py
+# Documentation traceability (generate matrix, then validate completeness)
+python .github/scripts/generate_traceability_matrix.py
+pytest -q .github/tests/test_generate_traceability_matrix.py
 
 # PR quality-gate summary validator
 pytest -q .github/tests/test_generate_pr_summary.py
@@ -219,7 +220,8 @@ Three-level hierarchy matching runtime boundaries:
 - Includes: Overall result, lint/format status, test results, coverage vs 90% gate, artifact links
 
 **Traceability Validation**:
-- `.github/tests/test_docs_traceability.py` scans requirements and architecture
+- `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture
+- Completeness is gated by `.github/tests/test_generate_traceability_matrix.py`
 - Publishes matrix in GitHub Actions job summary and artifacts
 
 ## Development Workflow
@@ -262,7 +264,7 @@ git checkout -b release/vX.Y.Z master
 Complete validation on PRs to master:
 1. **Dependencies**: `pip install -e .[dev]`
 2. **Lint**: `ruff check src_timesheetalgo tests`, `black --check src_timesheetalgo tests`, etc.
-3. **Documentation traceability**: `pytest -q .github/tests/test_docs_traceability.py`
+3. **Documentation traceability**: `python .github/scripts/generate_traceability_matrix.py` then `pytest -q .github/tests/test_generate_traceability_matrix.py`
 4. **Test suite**: `pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing`
 5. **Quality-gate summary**: Generated automatically
 
@@ -312,16 +314,18 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   `continue-on-error: false` or the gate silently degrades.
 - **Workflow tests live under `.github/tests/`** (not in `tests/`), so they do
   not count toward the 103-test suite or the 90% coverage gate:
-  - `.github/tests/test_workflow_optimization.py`
-  - `.github/tests/test_regression_ci.py`
+  - `.github/tests/test_verify_ci_workflow.py`
   - `.github/tests/test_generate_pr_summary.py`
-  - `.github/tests/test_docs_traceability.py`
+  - `.github/tests/test_generate_traceability_matrix.py`
   - Run them with: `pytest -q .github/tests/`
+- **CI support scripts live under `.github/scripts/`** (verb_subject naming):
+  `generate_pr_summary.py`, `generate_traceability_matrix.py`. `.github/workflows/`
+  holds workflow definitions only (no `.py`).
 - **Traceability**: PRO-368 added `FR-16`, `FR-17`, `QR-08`, `QR-09` to
   `doc/REQUIREMENTS.md`, `doc/ARCHITECTURE.md`, and the anchor comment in
   `src_timesheetalgo/TimeSheetAlgo.py`. The traceability validator
-  (`pytest -q .github/tests/test_docs_traceability.py`) requires all three
-  sources to list the same IDs — update all three together.
+  (`pytest -q .github/tests/test_generate_traceability_matrix.py`) requires all
+  three sources to list the same IDs — update all three together.
 - **Composite setup action location**: The reusable setup action lives at
   `.github/actions/setup-python-deps/action.yml` and is referenced as
   `uses: ./.github/actions/setup-python-deps`. A local composite action must be

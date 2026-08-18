@@ -1,7 +1,7 @@
 """Unit tests for the PR quality-gate summary generator (PRO-337).
 
 These validate the parsing and rendering logic of ``generate_pr_summary.py`` in
-isolation. Like ``test_docs_traceability.py`` this file lives under
+isolation. Like ``test_generate_traceability_matrix.py`` this file lives under
 ``.github/tests/`` (not in ``tests/``), so it does not change the 103-test
 application suite or the coverage gate. It is executed explicitly by the CI
 ``test`` job and can be run locally with::
@@ -17,7 +17,10 @@ import sys
 from pathlib import Path
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "generate_pr_summary.py"
+    Path(__file__).resolve().parents[2]
+    / ".github"
+    / "scripts"
+    / "generate_pr_summary.py"
 )
 _spec = importlib.util.spec_from_file_location("generate_pr_summary", _MODULE_PATH)
 mod = importlib.util.module_from_spec(_spec)

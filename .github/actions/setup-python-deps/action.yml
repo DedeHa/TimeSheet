@@ -1,5 +1,8 @@
 name: Setup Python Dependencies
-description: Composite action to checkout repo, setup Python, cache pip and install dev dependencies
+description: Composite action to setup Python, cache pip and install dev dependencies
+# Note: the repository must already be checked out by the calling job before
+# this action runs. A local (./) action cannot resolve its own action.yml until
+# the repo is on the runner, so checkout cannot live here.
 inputs:
   python-version:
     description: 'Python version'
@@ -7,9 +10,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python-version }}

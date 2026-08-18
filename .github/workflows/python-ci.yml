@@ -10,8 +10,10 @@
 # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 #
 # PRO-368: All Python jobs use the reusable composite action
-# .github/actions/setup-python-deps (FR-17, QR-09) which centralises checkout,
-# Python setup, pip caching (FR-16) and dependency installation. Node.js is no
+# .github/actions/setup-python-deps (FR-17, QR-09) which centralises Python
+# setup, pip caching (FR-16) and dependency installation. Each job runs
+# actions/checkout first, because a local (./) composite action can only be
+# resolved once the repository is present on the runner. Node.js is no
 # longer installed unconditionally (AC3) - the lint job is pure Python, so the
 # setup-node step was removed entirely. Only JavaScript actions (commitlint,
 # github-script) need the Node 24 runtime, which the runner provides via
@@ -61,6 +63,11 @@ jobs:
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     environment: ${{ (contains(github.head_ref, 'feature/') || contains(github.head_ref, 'bugfix/') || contains(github.head_ref, 'hotfix/') || contains(github.head_ref, 'refactor/') || contains(github.head_ref, 'docs/') || contains(github.head_ref, 'test/')) && 'development' || '' }}
     steps:
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
         with:
           python-version: '3.13'
@@ -163,6 +170,11 @@ jobs:
       issues: write
 
     steps:
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
         with:
           python-version: '3.13'
@@ -308,6 +320,11 @@ jobs:
     environment: production
 
     steps:
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
         with:
           python-version: '3.13'

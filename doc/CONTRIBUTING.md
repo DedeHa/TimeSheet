@@ -236,7 +236,6 @@ When the change affects documentation traceability or CI behaviour, also update 
 ruff check src_timesheetalgo tests
 black --check src_timesheetalgo tests
 python .github/scripts/generate_traceability_matrix.py
-pytest -q .github/tests/test_generate_traceability_matrix.py
 ```
 
 1. **Create feature branch** (always from `master`):

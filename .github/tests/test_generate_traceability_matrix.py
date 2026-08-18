@@ -4,8 +4,10 @@ These validate the completeness gate and the rendering of
 ``.github/scripts/generate_traceability_matrix.py`` in isolation. Like
 ``test_generate_pr_summary.py`` this file lives under ``.github/tests/`` (not in
 ``tests/``), so it does not change the 103-test application suite or the
-coverage gate. It is executed explicitly by the CI ``test`` job and can be run
-locally with::
+coverage gate. The CI pipeline enforces the completeness gate inside the script
+itself (``generate_traceability_matrix.py`` exits non-zero on an untraced
+requirement); this developer unit test covers the same logic and can be run
+with::
 
     pytest -q .github/tests/test_generate_traceability_matrix.py
 """

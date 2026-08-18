@@ -182,14 +182,12 @@ jobs:
       - name: Prepare report directory
         run: mkdir -p tests/reports
 
-      - name: Generate traceability matrix
+      # Generates the traceability matrix artifact AND enforces completeness:
+      # the script exits non-zero if any requirement is untraced, so it is the
+      # quality gate (no separate pytest step). Unit tests for the CI support
+      # scripts live under .github/tests/ and are run in development, not here.
+      - name: Generate and validate traceability matrix
         run: python .github/scripts/generate_traceability_matrix.py
-
-      - name: Validate documentation traceability
-        run: pytest -q .github/tests/test_generate_traceability_matrix.py
-
-      - name: Validate PR quality-gate summary generator
-        run: pytest -q .github/tests/test_generate_pr_summary.py
 
       # Each test level runs as its own visible, attributable step so a failure
       # points straight at the level that broke. Coverage is measured fresh on

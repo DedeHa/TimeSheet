@@ -2,7 +2,7 @@
 
 These tests validate the structural behaviour of ``python-ci.yml`` and the
 reusable composite action ``setup-python-deps``. Like
-``validate_docs_traceability.py`` and ``test_generate_pr_summary.py`` this file lives
+``test_docs_traceability.py`` and ``test_generate_pr_summary.py`` this file lives
 under ``.github/tests/`` (not in ``tests/``), so it does not change the
 103-test application suite or the coverage gate. It is executed explicitly
 by the CI ``test`` job and can be run locally with::
@@ -79,14 +79,45 @@ def test_composite_action_enables_pip_cache():
     assert setup_step["with"]["cache-dependency-path"] == "pyproject.toml"
 
 
-def test_composite_action_centralises_checkout_setup_and_install():
-    """AC2: the composite action covers checkout, Python setup and install."""
+def test_composite_action_centralises_setup_and_install():
+    """AC2: the composite action covers Python setup and dependency install.
+
+    Checkout is intentionally NOT part of the composite action: a local (``./``)
+    action cannot be resolved until the repository is already on the runner, so
+    each job runs ``actions/checkout`` first (see
+    :func:`test_job_checks_out_before_composite_action`).
+    """
     action = _action()
     assert action["runs"]["using"] == "composite"
     uses = [_uses(s) for s in action["runs"]["steps"]]
-    assert "actions/checkout@v5" in uses
+    assert not any(
+        u.startswith("actions/checkout") for u in uses
+    ), "checkout must live in each job, not in the composite action"
     assert any(u.startswith("actions/setup-python") for u in uses)
     assert any("pip install -e .[dev]" in s.get("run", "") for s in action["runs"]["steps"])
+
+
+@pytest.mark.parametrize("job", ["check", "test", "deploy"])
+def test_job_checks_out_before_composite_action(job: str):
+    """Each job runs actions/checkout before the local composite action."""
+    steps = _job_steps(job)
+    checkout_idx = next(
+        (i for i, s in enumerate(steps) if _uses(s).startswith("actions/checkout")),
+        None,
+    )
+    composite_idx = next(
+        (
+            i
+            for i, s in enumerate(steps)
+            if _uses(s) == "./.github/actions/setup-python-deps"
+        ),
+        None,
+    )
+    assert checkout_idx is not None, f"{job} job is missing actions/checkout"
+    assert composite_idx is not None, f"{job} job is missing the composite action"
+    assert (
+        checkout_idx < composite_idx
+    ), f"{job} job must checkout before the local composite action"
 
 
 # ---------------------------------------------------------------------------

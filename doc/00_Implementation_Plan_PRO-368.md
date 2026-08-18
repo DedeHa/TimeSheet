@@ -423,6 +423,75 @@ The implementation complies with all quality gates:
 - **Coverage gate** — Combined line + branch coverage ≥90%
 - **Quality-gate summary** — Published with pass/fail status per level
 
+## Post-Implementation Addendum: CI Fix & Setup Benchmark (PR #95)
+
+This section documents work carried out on the open PR #95
+(`feature/PRO-368-optimize-ci`) after the initial refactor, in response to a
+failing GitHub Actions run.
+
+### A. Composite-action checkout fix (Option A)
+
+**Detected issue.** Every CI run on the branch failed within ~15–30 s at the
+first step of the `check` job with:
+
+> Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under
+> `.../.github/actions/setup-python-deps`. Did you forget to run
+> actions/checkout before running your local action?
+
+**Root cause.** A *local* (`./`) composite action can only be resolved once the
+repository is present on the runner. The refactor placed `actions/checkout`
+*inside* the composite action, so the runner tried to load
+`./.github/actions/setup-python-deps/action.yml` from an empty workspace — the
+file that would perform the checkout was the very file that could not yet be
+found (a bootstrapping / chicken-and-egg problem).
+
+**Solution (Option A).** Move `actions/checkout@v5` (with `fetch-depth: 0`) back
+into each of the three jobs (`check`, `test`, `deploy`) as the first step, before
+`uses: ./.github/actions/setup-python-deps`, and remove the now-redundant
+checkout from the composite action. The composite action retains its real value:
+centralising Python setup, pip caching (FR-16) and dependency installation.
+`fetch-depth: 0` is preserved because later steps use full git history
+(e.g. the Jira-reference commit-range check `base.sha..head.sha`).
+
+| File | Change |
+|------|--------|
+| `.github/workflows/python-ci.yml` | Add `actions/checkout@v5` (`fetch-depth: 0`) as first step of `check`, `test`, `deploy`; update PRO-368 header comment |
+| `.github/actions/setup-python-deps/action.yml` | Remove internal `actions/checkout`; update description/notes |
+
+This does **not** change AC2/AC7 status — the composite action is still the
+single source of truth for environment setup; only the un-hoistable checkout
+step lives in the caller.
+
+### B. Planned: composite-vs-inline setup benchmark
+
+To validate (rather than assume) that the composite action carries no runtime
+penalty over inlining the same steps, a dedicated benchmark workflow is planned.
+
+**Expectation.** The composite action and inlined steps perform identical work
+(`setup-python` + pip cache restore + `pip install -e .[dev]`); the only real
+difference is a few milliseconds to fetch/parse `action.yml`. On GitHub-hosted
+runners this is expected to be **within run-to-run noise**. The benchmark's goal
+is therefore to *demonstrate statistical equivalence* — confirming the
+maintainability win of the composite action (QR-09) is effectively free — not to
+pick a faster variant.
+
+**Design decisions (agreed):**
+
+| Dimension | Decision |
+|-----------|----------|
+| Metric | Warm-cache setup time (realistic day-to-day CI cost) |
+| Timing capture | In-workflow timestamps aggregated into a job summary (no GitHub API) |
+| Location | Separate `.github/workflows/benchmark.yml`, `workflow_dispatch` only |
+
+**Approach.** A `warmup` job primes the shared pip cache (both variants use an
+identical cache key, so both then hit a warm cache — a fair comparison). Two
+matrix jobs (`composite`, `inline`), each repeated N times, measure the wall
+clock from just after checkout to just after dependency install using
+`date +%s.%N`, and write one CSV line per run as an artifact. A final `summary`
+job downloads all artifacts and reports mean / median / stddev per variant to
+`$GITHUB_STEP_SUMMARY`. Caches are isolated from the real CI, and the workflow
+is manual-dispatch only so it never runs on normal PRs.
+
 ## Monitoring & Maintenance
 
 ### Performance Monitoring

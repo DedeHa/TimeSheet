@@ -452,7 +452,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Release Branches** (inherited): Tests already run on Master
 
 ### Quality-Gate Result Publication:
-- ✅ **Master PRs**: at the end of the `test` job, a consolidated **quality-gate summary** is published as a sticky PR comment and in the job summary — Lint, Unit/Integration/System test status with executed/passed/failed/skipped counts, combined coverage vs. the 90% gate, and artifact links.
+- ✅ **Master PRs**: at the end of the `test` job, a single consolidated **quality-gate summary** is published as a sticky PR comment and in the job summary — Lint, Unit/Integration/System test status with executed/passed/failed/skipped counts, combined coverage vs. the 90% gate, artifact links, and a folded-in **Traceability Summary** (requirement→code coverage + matrix link). It is one combined comment per PR, not two.
 - ✅ The comment is **updated in place** on re-runs (no duplicates) and is still published when a test level or the coverage gate fails, so a failing PR clearly shows which level broke.
 - ℹ️ Publication runs as `if: always()` steps inside the `test` job and is **non-gating** — it only reports results; the merge is still gated by the `lint` and `test` steps. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
 

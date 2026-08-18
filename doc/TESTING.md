@@ -62,12 +62,13 @@ Every Pull Request targeting `master` publishes a consolidated quality-gate summ
 - Unit / Integration / System test status
 - Executed, passed, failed and skipped counts per level (from the JUnit reports)
 - Combined line + branch coverage and the 90% gate result
-- A link to the workflow run and its downloadable artifacts (including `htmlcov/index.html`)
+- A link to the workflow run and its downloadable artifacts (including `htmlcov/index.html` and the traceability matrix)
+- A **Traceability Summary** section folded into the same comment (requirement→code coverage and a link to the traceability matrix), so a PR carries one combined comment rather than two
 
 How it is produced (all inside the `test` job, so the pipeline graph stays `lint -> test -> deploy`):
 
-1. Each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); both are also uploaded in the `test-results` artifact.
-2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, the `check` job result (`needs.check.result`) and the test outcome so far (`job.status`).
+1. Each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step; all are uploaded in the `test-results` artifact.
+2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, the traceability matrix, the `check` job result (`needs.check.result`) and the test outcome so far (`job.status`).
 3. A `Publish or update sticky PR comment` step (`if: always()`) uses `actions/github-script` to find the previous summary by a hidden marker and update it, or create it on the first run.
 
 Both publishing steps use `if: always()`, so the summary is still published when a test level or the 90% coverage gate fails, and publication never gates the merge — the quality gates themselves are still enforced by the preceding steps. (One edge case: because the `test` job `needs: lint`, a `lint` failure skips the whole job and therefore skips publication; lint failures remain visible directly in the PR checks.)

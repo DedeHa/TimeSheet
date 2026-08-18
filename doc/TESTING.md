@@ -55,20 +55,21 @@ Requirement-to-architecture-to-code traceability is generated and validated by [
 
 ## Pull Request Quality-Gate Summary
 
-Every Pull Request targeting `master` publishes a consolidated quality-gate summary as a **sticky** comment (updated in place on re-runs, never duplicated) and in the GitHub Actions job summary. The summary reports, with ✅ / ❌ / ⚠️ indicators:
+Every Pull Request targeting `master` publishes one consolidated quality-gate summary, regenerated on every run, in two places: the GitHub Actions **job summary** (the "PR Run" page) and a **sticky PR comment** (updated in place on re-runs, never duplicated). Both use the same fixed four-section structure with ✅ / ❌ / ⚠️ indicators:
 
-- Overall workflow result
-- Lint & formatting status
-- Unit / Integration / System test status
-- Executed, passed, failed and skipped counts per level (from the JUnit reports)
-- Combined line + branch coverage and the 90% gate result
-- A link to the workflow run and its downloadable artifacts (including `htmlcov/index.html` and the traceability matrix)
-- A **Traceability Summary** section folded into the same comment (requirement→code coverage and a link to the traceability matrix), so a PR carries one combined comment rather than two
+1. **Traceability** — requirement→code traceability summary (0–100%). The **PR Run** embeds the full traceability matrix table; the **PR comment** shows the percentage plus a link to the matrix artifact.
+2. **Testing** — test summary (pass rate 0–100%), overall test status (Passed / Failed / Skipped), and the per-level table (executed / passed / failed / skipped for Unit, Integration, System, plus Total).
+3. **Code Coverage** — combined line + branch coverage (0–100%) and the 90% quality-gate status.
+4. **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
+
+A header line above the sections carries the **overall workflow result** and the **lint & formatting** status (the `check` job), so neither gate is lost.
+
+The only difference between the two renderings: the PR Run embeds the full matrix under section 1, while the PR comment keeps section 1 compact (percentage + link) to stay readable in the PR thread.
 
 How it is produced (all inside the `test` job, so the pipeline graph stays `lint -> test -> deploy`):
 
 1. Each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step; all are uploaded in the `test-results` artifact.
-2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, the traceability matrix, the `check` job result (`needs.check.result`) and the test outcome so far (`job.status`).
+2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py). It renders the four-section report from the JUnit files, the coverage JSON, the traceability matrix, the `check` job result (`needs.check.result`) and the test outcome so far (`job.status`). It writes the compact **comment** variant to `tests/reports/test-summary.md` and appends the **job-summary** variant (with the matrix embedded) to `$GITHUB_STEP_SUMMARY`.
 3. A `Publish or update sticky PR comment` step (`if: always()`) uses `actions/github-script` to find the previous summary by a hidden marker and update it, or create it on the first run.
 
 Both publishing steps use `if: always()`, so the summary is still published when a test level or the 90% coverage gate fails, and publication never gates the merge — the quality gates themselves are still enforced by the preceding steps. (One edge case: because the `test` job `needs: lint`, a `lint` failure skips the whole job and therefore skips publication; lint failures remain visible directly in the PR checks.)

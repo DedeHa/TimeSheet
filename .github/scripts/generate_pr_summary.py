@@ -202,13 +202,36 @@ def read_traceability_coverage(reports_dir: Path) -> Optional[float]:
     return float(match.group(1)) if match else None
 
 
+def read_traceability_matrix_md(reports_dir: Path) -> Optional[str]:
+    """Return the full traceability matrix Markdown, or ``None`` when missing."""
+    path = reports_dir / TRACEABILITY_MD
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
 def _fmt_percent(value: Optional[float]) -> str:
     """Format a percentage to one decimal place, or ``n/a`` when unknown."""
     return "n/a" if value is None else f"{value:.1f}%"
 
 
-def render_markdown(data: SummaryData) -> str:
-    """Render the full Markdown report (including the sticky-comment marker)."""
+def _tests_status(levels: list[LevelStats]) -> str:
+    """Derive an overall test status indicator from the per-level results."""
+    if any(level.status == FAIL for level in levels):
+        return FAIL
+    if any(level.found and level.status == PASS for level in levels):
+        return PASS
+    return SKIP
+
+
+def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
+    """Render the combined CI/CD quality-gate report.
+
+    Sections are emitted in a fixed order: 1 Traceability, 2 Testing,
+    3 Code Coverage, 4 Artifacts. When ``matrix_md`` is provided (the job-summary
+    variant for the "PR Run"), the full traceability matrix table is embedded
+    under section 1; the PR-comment variant omits it and links to the artifact
+    instead. The leading :data:`MARKER` lets the publishing step update the
+    sticky comment in place.
+    """
     overall = PASS if data.overall_passed else FAIL
     totals = _totals(data.levels)
 
@@ -219,26 +242,40 @@ def render_markdown(data: SummaryData) -> str:
     else:
         coverage_status = FAIL
 
+    tests_status = _tests_status(data.levels)
+    executed = totals["executed"]
+    pass_rate = (100.0 * totals["passed"] / executed) if executed else None
+
+    # Header: overall gate + lint (the check job) so neither is lost.
     lines: list[str] = [
         MARKER,
         "## CI/CD Quality Gate Summary",
         "",
         f"**Overall workflow result:** {overall}",
-        "",
-        "| Quality Gate | Status |",
-        "| --- | --- |",
-        f"| Lint & Formatting | {_result_indicator(data.lint_result)} |",
+        f"**Lint & formatting:** {_result_indicator(data.lint_result)}",
     ]
-    for level in data.levels:
-        lines.append(f"| {level.name} | {level.status} |")
-    lines.append(
-        f"| Code Coverage (>= {COVERAGE_GATE:.0f}%) | "
-        f"{coverage_status} ({_fmt_percent(data.coverage_percent)}) |"
-    )
 
+    # 1 - Traceability
     lines += [
         "",
-        "### Test statistics",
+        "### 1. Traceability",
+        "",
+        f"- Traceability summary: **{_fmt_percent(data.traceability_coverage)}**",
+    ]
+    if matrix_md:
+        body = re.sub(r"^\s*#\s+Traceability Matrix\s*", "", matrix_md.strip()).strip()
+        lines += ["", body]
+    elif data.run_url:
+        lines.append(f"- [Traceability matrix →]({data.run_url})")
+
+    # 2 - Testing
+    lines += [
+        "",
+        "### 2. Testing",
+        "",
+        f"- Test summary: **{_fmt_percent(pass_rate)}** "
+        f"({totals['passed']}/{executed} passed)",
+        f"- Status: {tests_status}",
         "",
         "| Level | Executed | Passed | Failed | Skipped |",
         "| --- | ---: | ---: | ---: | ---: |",
@@ -256,42 +293,32 @@ def render_markdown(data: SummaryData) -> str:
         f"| {totals['failed']} | {totals['skipped']} |"
     )
 
+    # 3 - Code Coverage
     lines += [
         "",
-        "### Code coverage",
+        "### 3. Code Coverage",
         "",
-        f"Combined line + branch coverage: **{_fmt_percent(data.coverage_percent)}** "
-        f"- quality gate (>= {COVERAGE_GATE:.0f}%): {coverage_status}",
+        f"- Combined line + branch coverage: **{_fmt_percent(data.coverage_percent)}**",
+        f"- Quality gate (>= {COVERAGE_GATE:.0f}%): {coverage_status}",
     ]
 
-    lines += ["", "### Artifacts"]
+    # 4 - Artifacts (for all aspects)
+    lines += ["", "### 4. Artifacts"]
     if data.run_url:
         lines.append(f"- [Workflow run & downloadable artifacts]({data.run_url})")
     lines.append(
-        "- HTML coverage report: `htmlcov/index.html` inside the "
-        "`test-results` artifact"
+        "- Traceability matrix: `traceability-matrix.md` / "
+        "`traceability-matrix.html` (in `test-results`)"
     )
     lines.append(
-        "- Traceability matrix: `traceability-matrix.md` / "
-        "`traceability-matrix.html` inside the `test-results` artifact"
+        "- Test results (JUnit): `*-results.xml` and `coverage.json` "
+        "(in `test-results`)"
     )
+    lines.append("- HTML coverage report: `htmlcov/index.html` (in `test-results`)")
 
     if data.notes:
         lines += ["", "### Notes"]
         lines += [f"- {note}" for note in data.notes]
-
-    # Traceability summary, folded in from the traceability matrix so the PR
-    # carries a single combined comment instead of two separate ones.
-    lines += [
-        "",
-        "---",
-        "",
-        "## Traceability Summary",
-        "",
-        f"**Code Coverage:** {_fmt_percent(data.traceability_coverage)}",
-    ]
-    if data.run_url:
-        lines += ["", f"[Complete traceability matrix →]({data.run_url})"]
 
     return "\n".join(lines) + "\n"
 
@@ -342,20 +369,29 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
 
 
 def main() -> None:
-    """Generate the report and write it to disk and the job step summary."""
+    """Render the report for the PR comment and the job step summary.
+
+    Two variants are produced: the PR-comment version (written to
+    ``test-summary.md`` and posted as the sticky comment) shows the traceability
+    summary as a percentage with a link; the job-summary version (written to
+    ``$GITHUB_STEP_SUMMARY``, i.e. the "PR Run") embeds the full traceability
+    matrix under section 1.
+    """
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     data = build_summary(REPORTS_DIR, dict(os.environ))
-    report = render_markdown(data)
 
-    SUMMARY_PATH.write_text(report, encoding="utf-8")
+    comment_report = render_markdown(data)
+    SUMMARY_PATH.write_text(comment_report, encoding="utf-8")
 
     step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if step_summary:
+        matrix_md = read_traceability_matrix_md(REPORTS_DIR)
+        job_report = render_markdown(data, matrix_md=matrix_md)
         with open(step_summary, "a", encoding="utf-8") as handle:
-            handle.write(report)
+            handle.write(job_report)
             handle.write("\n")
 
-    print(report)
+    print(comment_report)
 
 
 if __name__ == "__main__":

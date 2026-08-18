@@ -18,7 +18,6 @@ Run with::
 
 from __future__ import annotations
 
-import os
 import re
 import sys
 from dataclasses import dataclass
@@ -188,18 +187,17 @@ def build_html(data: TraceabilityData) -> str:
 
 
 def write_reports(data: TraceabilityData) -> Path:
-    """Write the Markdown + HTML matrices and return the Markdown path."""
+    """Write the Markdown + HTML matrices and return the Markdown path.
+
+    Only files are written here. The GitHub Actions job summary ("PR Run") is
+    rendered by generate_pr_summary.py, which reads this Markdown and embeds the
+    matrix under its Traceability section - so the matrix is not appended to
+    ``$GITHUB_STEP_SUMMARY`` here (that would duplicate it).
+    """
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(build_markdown(data), encoding="utf-8")
     html_path = REPORT_PATH.with_suffix(".html")
     html_path.write_text(build_html(data), encoding="utf-8")
-
-    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary_path:
-        with open(summary_path, "a", encoding="utf-8") as handle:
-            handle.write(build_markdown(data))
-            handle.write("\n---\n")
-            handle.write(f"Generated traceability HTML: {html_path}\n")
     return REPORT_PATH
 
 

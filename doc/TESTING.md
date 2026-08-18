@@ -62,17 +62,17 @@ Every Pull Request targeting `master` publishes one consolidated quality-gate su
 3. **Code Coverage** — combined line + branch coverage (0–100%) and the 90% quality-gate status.
 4. **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
 
-A header line above the sections carries the **overall workflow result** and the **lint & formatting** status (the `check` job), so neither gate is lost.
+Above the four sections, the report opens with the **overall workflow result** and a **status overview table** — one row each for Lint & Formatting and the four steps, with status and a one-line summary — so the whole gate is readable at a glance before the detailed sections.
 
 The only difference between the two renderings: the PR Run embeds the full matrix under section 1, while the PR comment keeps section 1 compact (percentage + link) to stay readable in the PR thread.
 
-How it is produced (all inside the `test` job, so the pipeline graph stays `lint -> test -> deploy`):
+How it is produced:
 
-1. Each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step; all are uploaded in the `test-results` artifact.
-2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py). It renders the four-section report from the JUnit files, the coverage JSON, the traceability matrix, the `check` job result (`needs.check.result`) and the test outcome so far (`job.status`). It writes the compact **comment** variant to `tests/reports/test-summary.md` and appends the **job-summary** variant (with the matrix embedded) to `$GITHUB_STEP_SUMMARY`.
-3. A `Publish or update sticky PR comment` step (`if: always()`) uses `actions/github-script` to find the previous summary by a hidden marker and update it, or create it on the first run.
+1. In the `test` job, each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step. All are uploaded as the `test-results` artifact.
+2. A dedicated `summary` job (`needs: [check, test]`, `if: always()`) downloads that artifact and runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py) with the upstream results (`LINT_RESULT=needs.check.result`, `TEST_RESULT=needs.test.result`). It writes the compact **comment** variant to `tests/reports/test-summary.md` and appends the **job-summary** variant (with the matrix embedded) to `$GITHUB_STEP_SUMMARY`.
+3. The same job then publishes the report as a sticky comment via `actions/github-script`, finding the previous summary by a hidden marker and updating it in place (or creating it on the first run).
 
-Both publishing steps use `if: always()`, so the summary is still published when a test level or the 90% coverage gate fails, and publication never gates the merge — the quality gates themselves are still enforced by the preceding steps. (One edge case: because the `test` job `needs: lint`, a `lint` failure skips the whole job and therefore skips publication; lint failures remain visible directly in the PR checks.)
+Because the `summary` job runs with `if: always()` in its own job — **not** inside `test` — a PR receives an up-to-date comment on **every** run, including when `check` (lint/naming) fails and the `test` job is skipped (the summary then degrades gracefully, showing lint failed and tests skipped). Publication is non-gating: it only reports results; the merge is still gated by the `check` and `test` jobs.
 
 The generator uses the standard library only and is covered by [.github/tests/test_generate_pr_summary.py](../.github/tests/test_generate_pr_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
 

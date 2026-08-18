@@ -217,15 +217,16 @@ Three-level hierarchy matching runtime boundaries:
 
 ## Quality Gate & CI
 
-**GitHub Actions** (`.github/workflows/python-ci.yml`):
+**GitHub Actions** (`.github/workflows/python-ci.yml`) — job graph `check → test → {summary, deploy}`:
 - PRs to `master`: Full CI (Lint + Unit + Integration + System + Coverage)
 - PRs to `release/**`: Full CI (same quality gate as master)
 - Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
+- **Environments** (GitHub deployment labels) are static: `check` → `development`, `test` → `staging`, `deploy` → `production`. Do **not** reintroduce a dynamic `environment:` expression — a previous one coerced to the boolean `false` and auto-created a junk environment named "false".
 
 **Pull Request Quality-Gate Summary** (PRO-337):
-- Single consolidated report, regenerated every run, with ✅ / ❌ / ⚠️ indicators
-- Published in two places from the same renderer: the **job summary** ("PR Run") and one **sticky PR comment** (updated in place, never duplicated)
-- Fixed four-section structure: **1 Traceability** (0–100% summary; matrix embedded in the PR Run, linked in the comment) → **2 Testing** (pass-rate %, status, per-level table) → **3 Code Coverage** (% + 90%-gate status) → **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov). A header line carries the overall result + lint status.
+- A dedicated `summary` job (`needs: [check, test]`, `if: always()`) publishes it, so a comment is posted on **every** run — even when `check` fails and `test` is skipped (the summary degrades gracefully). It is non-gating.
+- Single consolidated report, regenerated every run, with ✅ / ❌ / ⚠️ indicators, in the **job summary** ("PR Run") and one **sticky PR comment** (updated in place, never duplicated)
+- Opens with the overall result + a **status-overview table** (Lint + the four steps), then a fixed four-section structure: **1 Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **2 Testing** (pass-rate %, status, per-level table) → **3 Code Coverage** (% + 90%-gate status) → **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov)
 
 **Traceability Validation**:
 - `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture

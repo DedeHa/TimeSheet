@@ -452,9 +452,9 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Release Branches** (inherited): Tests already run on Master
 
 ### Quality-Gate Result Publication:
-- ✅ **Master PRs**: at the end of the `test` job, a single consolidated **quality-gate summary** (regenerated every run) is published in the job summary and as a sticky PR comment, in four sections — **1 Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **2 Testing** (pass-rate %, status, per-level executed/passed/failed/skipped), **3 Code Coverage** (% vs. the 90% gate), **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov). A header line carries the overall result and lint status. One combined comment per PR, not two.
-- ✅ The comment is **updated in place** on re-runs (no duplicates) and is still published when a test level or the coverage gate fails, so a failing PR clearly shows which level broke.
-- ℹ️ Publication runs as `if: always()` steps inside the `test` job and is **non-gating** — it only reports results; the merge is still gated by the `lint` and `test` steps. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
+- ✅ **Master PRs**: a dedicated `summary` job (`needs: [check, test]`, `if: always()`) publishes a single consolidated **quality-gate summary** (regenerated every run) in the job summary and as a sticky PR comment. It opens with the overall result and a status-overview table (Lint + the four steps), then details in four sections — **1 Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **2 Testing** (pass-rate %, status, per-level executed/passed/failed/skipped), **3 Code Coverage** (% vs. the 90% gate), **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov). One combined comment per PR, not two.
+- ✅ The comment is **updated in place** on re-runs (no duplicates). Because the `summary` job is separate and `if: always()`, the comment is posted on **every** run — including when `check` (lint/naming) fails and `test` is skipped (the summary then shows lint failed / tests skipped).
+- ℹ️ The `summary` job is **non-gating** — it only reports results; the merge is still gated by the `check` and `test` jobs. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
 
 ### Deployment Strategy:
 - ❌ **Development Branches**: No deployment

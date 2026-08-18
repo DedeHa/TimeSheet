@@ -29,12 +29,6 @@ on:
         description: 'Python version to benchmark'
         default: '3.13'
         type: string
-  # TEMPORARY: one-shot trigger to obtain a real run on this branch, because
-  # workflow_dispatch is only available once the file is on the default branch.
-  # Reverted immediately after the benchmarking run.
-  push:
-    branches:
-      - 'feature/PRO-368-optimize-ci'
 
 # Serialise dispatches so concurrent runs do not race on the shared pip cache.
 concurrency:

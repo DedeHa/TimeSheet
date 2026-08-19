@@ -233,25 +233,46 @@ jobs:
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html
 
-  # PRO-337: publish the consolidated quality-gate summary as its own job so it
-  # runs even when `check` or `test` fail or are skipped (if: always()). This is
-  # what guarantees a PR comment on *every* run - previously the summary lived in
-  # the `test` job, so a `check` (lint/naming) failure skipped `test` and no
-  # comment was ever posted. The job downloads the reports the `test` job
-  # uploaded (absent when `test` was skipped, in which case the summary degrades
-  # gracefully) and passes the upstream job results into the generator.
-  summary:
-    name: Publish quality-gate summary
+  deploy:
+    name: Build & Deploy to Production
     runs-on: ubuntu-latest
     needs: [check, test]
-    if: always() && github.event_name == 'pull_request'
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    environment: production
+
+    steps:
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python-deps
+        with:
+          python-version: '3.13'
+
+      - name: Install packaging tools
+        run: |
+          pip install build
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: [check, test]
+    if: always()
     permissions:
       contents: read
       pull-requests: write
       issues: write
-
     steps:
       - uses: actions/checkout@v5
+
+      - name: Show build information
+        run: |
+          echo "Build hash: ${{ github.sha }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Artifacts available:"
+          ls -R
 
       - name: Download test reports
         if: needs.test.result != 'skipped'
@@ -303,23 +324,5 @@ jobs:
               core.info('Created new summary comment');
             }
 
-  deploy:
-    name: Build & Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [check, test]
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
-    environment: production
-
-    steps:
-      # Checkout must run before the local composite action: a local action
-      # cannot be resolved until the repository is present on the runner.
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup-python-deps
-        with:
-          python-version: '3.13'
-
-      - name: Install packaging tools
-        run: |
-          pip install build
+      - name: Publish artifacts
+        

@@ -110,8 +110,21 @@ def test_read_traceability_coverage(tmp_path):
     assert mod.read_traceability_coverage(tmp_path / "empty") is None
 
 
-def test_status_line_is_compact_and_marked():
-    """The per-run status line carries its marker, result and a run link."""
+def test_ci_self_tests_level_included(tmp_path):
+    """The CI self-tests (.github/tests) appear as their own test level."""
+    _all_green_reports(tmp_path)
+    _write_junit(tmp_path / "ci-results.xml", tests=44, failures=0, errors=0, skipped=0)
+    data = mod.build_summary(
+        tmp_path, {"LINT_RESULT": "success", "TEST_RESULT": "success"}
+    )
+    report = mod.render_markdown(data)
+    assert "| CI Self-Tests | 44 | 44 | 0 | 0 |" in report
+    # The CI self-tests are counted in the testing totals (103 app + 44 CI).
+    assert "| **Total** | 147 | 146 | 0 | 1 |" in report
+
+
+def test_short_comment_has_overview_table_and_timestamp():
+    """The per-run short comment is the overall result + overview table."""
     data = mod.SummaryData(
         lint_result="success",
         test_result="success",
@@ -121,13 +134,18 @@ def test_status_line_is_compact_and_marked():
         coverage_percent=99.6,
         run_url="https://example/run/9",
         traceability_coverage=100.0,
+        generated_at="2026-08-19 20:14 UTC",
+        run_number="42",
     )
-    line = mod.render_status_line(data)
-    assert mod.LINE_MARKER in line
-    assert "**CI Run:**" in line
-    assert "Traceability 100.0%" in line
-    assert "Coverage 99.6%" in line
-    assert "[details](https://example/run/9)" in line
+    short = mod.render_short_comment(data)
+    assert mod.LINE_MARKER in short
+    assert "**Overall workflow result:** ✅ Passed" in short
+    assert "| Step | Status | Summary |" in short
+    assert "| Traceability | ✅ Passed | 100.0% |" in short
+    # No numbering on the step rows.
+    assert "1. Traceability" not in short
+    # Update timestamp + run reference are present.
+    assert "_Updated: 2026-08-19 20:14 UTC · [run #42](https://example/run/9)_" in short
 
 
 def test_comment_and_job_summary_variants():
@@ -166,18 +184,18 @@ def test_overall_pass(tmp_path):
     report = mod.render_markdown(data)
     assert mod.MARKER in report
     assert "Overall workflow result:** ✅ Passed" in report
-    # Status overview at the top covers linting and all four steps.
+    # Status overview at the top covers linting and all steps, without numbering.
     assert "| Lint & Formatting | ✅ Passed | — |" in report
-    assert "| 1. Traceability | ✅ Passed | 100.0% |" in report
-    assert "| 2. Testing | ✅ Passed | 99.0% (102/103 passed) |" in report
-    assert "| 3. Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
-    # Sections appear in the required order: Traceability, Testing, Coverage,
-    # Artifacts.
+    assert "| Traceability | ✅ Passed | 100.0% |" in report
+    assert "| Testing | ✅ Passed | 99.0% (102/103 passed) |" in report
+    assert "| Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
+    assert "1. Traceability" not in report  # numbering removed everywhere
+    # Sections appear in the required order, un-numbered.
     order = [
-        "### 1. Traceability",
-        "### 2. Testing",
-        "### 3. Code Coverage",
-        "### 4. Artifacts",
+        "### Traceability",
+        "### Testing",
+        "### Code Coverage",
+        "### Artifacts",
     ]
     positions = [report.index(section) for section in order]
     assert positions == sorted(positions), "sections out of order"

@@ -19,10 +19,10 @@ week-by-week plan in `doc/00_Implementation_Plan_PRO-368.md`.
 ## Pipeline (actual)
 
 Four jobs. `check` and `test` run **in parallel** (no `needs` between them); `deploy` and `publish` depend on both.
-- `check`: composite setup → PR/commit/Jira validators (PR events only, exempt for `dependabot[bot]`) → lint (ruff, black, pydocstyle, radon) → CI self-tests (`pytest -q .github/tests/`). Environment: `development` (static).
-- `test`: composite setup → traceability generate+gate → unit/integration/system with accumulated branch coverage → 90% gate → artifacts. Environment: `staging` (static).
+- `check`: composite setup → PR/commit/Jira validators (PR events only, exempt for `dependabot[bot]`) → lint (ruff, black, pydocstyle, radon). Environment: `development` (static).
+- `test`: composite setup → traceability generate+gate → unit/integration/system → CI self-tests (`.github/tests`, reported as a **CI Self-Tests** level) with accumulated branch coverage → 90% gate → artifacts. Environment: `staging` (static).
 - `deploy`: release tags only, gated on `check` + `test`; installs the `build` frontend (stub — packaging/deploy not yet implemented, see AC6). Environment: `production`.
-- `publish`: `if: always()`, depends on the gating jobs — downloads the reports artifact and publishes the consolidated quality-gate summary (sticky comment updated in place + a compact per-run status line, Option C), so a comment appears on every run even when `check`/`test` fail or skip.
+- `publish`: `if: always()`, depends on the gating jobs — downloads the reports artifact and publishes the consolidated quality-gate summary. Two comments per run (Option C): a sticky full report updated in place (with an update timestamp) + a compact per-run comment (overall result + overview table), so a comment appears on every run even when `check`/`test` fail or skip. Summary sections are un-numbered.
 
 CI maintenance: `.github/dependabot.yml` bumps GitHub Actions weekly.
 

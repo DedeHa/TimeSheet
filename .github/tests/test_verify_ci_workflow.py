@@ -303,12 +303,12 @@ def test_publish_job_always_runs():
     assert "always()" in publish["if"]
 
 
-def test_check_job_runs_ci_self_tests():
-    """O5: the check job runs the .github/tests suite as a gate."""
-    steps = _job_steps("check")
+def test_test_job_runs_ci_self_tests():
+    """O5: the test job runs the .github/tests suite (as the CI Self-Tests level)."""
+    steps = _job_steps("test")
     assert any(
         ".github/tests" in s.get("run", "") for s in steps
-    ), "check job does not run the .github/tests self-tests"
+    ), "test job does not run the .github/tests self-tests"
 
 
 def test_concurrency_grouping_unchanged():

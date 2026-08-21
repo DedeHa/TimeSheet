@@ -221,14 +221,14 @@ Three-level hierarchy matching runtime boundaries:
 - PRs to `master`: Full CI (Lint + Unit + Integration + System + Coverage)
 - PRs to `release/**`: Full CI (same quality gate as master)
 - Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
-- `check` also runs the **CI self-tests** (`pytest -q .github/tests/`), so workflow/script regressions are a CI gate.
+- The **CI self-tests** (`pytest -q .github/tests/`) run in the `test` job and appear as a **CI Self-Tests** level in the summary; workflow/script regressions are a CI gate.
 - **Environments** (GitHub deployment labels) are static: `check` → `development`, `test` → `staging`, `deploy` → `production`. Do **not** reintroduce a dynamic `environment:` expression — a previous one coerced to the boolean `false` and auto-created a junk environment named "false".
 - **Dependabot** (`.github/dependabot.yml`) bumps action versions weekly; its PRs are exempt from the `PRO-XXX` naming validators via `github.actor != 'dependabot[bot]'` guards.
 
 **Pull Request Quality-Gate Summary** (PRO-337):
 - A dedicated `publish` job (`if: always()`, depends on the gating jobs) publishes it, so a comment is posted on **every** run — even when `check` fails and `test` is skipped (the summary degrades gracefully). It is non-gating.
-- **Two comments per run (Option C):** one **sticky** comment (updated in place) carrying the full report, plus a compact **per-run status line** (`<!-- pro-337-ci-run-line -->`) posted fresh each run for a per-run trail.
-- The full report opens with the overall result + a **status-overview table** (Lint + the four steps), then a fixed four-section structure: **1 Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **2 Testing** (pass-rate %, status, per-level table) → **3 Code Coverage** (% + 90%-gate status) → **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov)
+- **Two comments per run (Option C):** one **sticky** comment (updated in place, carrying an "_Updated: … UTC_" timestamp) with the full report, plus a compact **per-run comment** (`<!-- pro-337-ci-run-line -->`) — the overall result + the status-overview table — posted fresh each run for a per-run trail.
+- The full report opens with the overall result + a **status-overview table** (Lint + the steps, **un-numbered**), then sections: **Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **Testing** (pass-rate %, status, per-level table incl. Unit/Integration/System/**CI Self-Tests**) → **Code Coverage** (% + 90%-gate status) → **Artifacts** (run, matrix, JUnit/coverage, htmlcov)
 
 **Traceability Validation**:
 - `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture

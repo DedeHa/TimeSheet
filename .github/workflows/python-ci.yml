@@ -153,13 +153,6 @@ jobs:
           pydocstyle src_timesheetalgo tests
           radon cc src_timesheetalgo -a
 
-      # CI self-tests: validate the workflow structure and the CI support
-      # scripts themselves (generate_pr_summary / generate_traceability_matrix).
-      # These live under .github/tests/ and are otherwise developer-only; running
-      # them here makes workflow/script regressions a CI gate.
-      - name: Run CI self-tests (.github/tests)
-        run: pytest -q .github/tests/
-
   test:
     name: Run all test levels (unit + integration + system)
     runs-on: ubuntu-latest
@@ -216,6 +209,12 @@ jobs:
       - name: Run system tests
         run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
+      # CI self-tests: the .github/tests suite (workflow structure + support
+      # scripts). Reported as its own "CI Self-Tests" level in the summary. Run
+      # without coverage - it validates CI code, not src_timesheetalgo.
+      - name: Run CI self-tests (.github/tests)
+        run: pytest -q .github/tests/ --junitxml=tests/reports/ci-results.xml
+
       # Additive (PRO-337): export machine-readable coverage for the PR summary.
       # Runs even if an earlier level failed so the summary always has coverage
       # data; --fail-under=0 keeps this step green - the real 90% quality gate is
@@ -238,6 +237,7 @@ jobs:
             tests/reports/unit-results.xml
             tests/reports/integration-results.xml
             tests/reports/system-results.xml
+            tests/reports/ci-results.xml
             tests/reports/coverage.json
             tests/reports/htmlcov
             tests/reports/traceability-matrix.md

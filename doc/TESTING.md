@@ -55,22 +55,20 @@ Requirement-to-architecture-to-code traceability is generated and validated by [
 
 ## Pull Request Quality-Gate Summary
 
-Every Pull Request targeting `master` publishes one consolidated quality-gate summary, regenerated on every run, in the GitHub Actions **job summary** (the "PR Run" page) and as a **sticky PR comment** (updated in place, never duplicated). A compact **per-run status line** is also posted as a fresh comment on every run (Option C), giving a per-run trail alongside the always-current sticky report. The full report uses a fixed four-section structure with ✅ / ❌ / ⚠️ indicators:
+Every Pull Request targeting `master` publishes one consolidated quality-gate summary, regenerated on every run, in the GitHub Actions **job summary** (the "PR Run" page) and as a **sticky PR comment** (updated in place, never duplicated, carrying an `_Updated: … UTC_` timestamp). A compact **per-run comment** is also posted fresh on every run (Option C) — the overall result plus the status-overview table — giving a per-run trail alongside the always-current sticky report.
 
-1. **Traceability** — requirement→code traceability summary (0–100%). The **PR Run** embeds the full traceability matrix table; the **PR comment** shows the percentage plus a link to the matrix artifact.
-2. **Testing** — test summary (pass rate 0–100%), overall test status (Passed / Failed / Skipped), and the per-level table (executed / passed / failed / skipped for Unit, Integration, System, plus Total).
-3. **Code Coverage** — combined line + branch coverage (0–100%) and the 90% quality-gate status.
-4. **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
+The report opens with the **overall workflow result** and a **status-overview table** — one row each for Lint & Formatting and the steps (un-numbered), with status and a one-line summary — so the whole gate is readable at a glance. It then details each step (headings are un-numbered):
 
-Above the four sections, the report opens with the **overall workflow result** and a **status overview table** — one row each for Lint & Formatting and the four steps, with status and a one-line summary — so the whole gate is readable at a glance before the detailed sections.
-
-The only difference between the two renderings: the PR Run embeds the full matrix under section 1, while the PR comment keeps section 1 compact (percentage + link) to stay readable in the PR thread.
+- **Traceability** — requirement→code traceability summary (0–100%) + status. The **PR Run** embeds the full traceability matrix table; the **PR comment** shows the percentage plus a link to the matrix artifact.
+- **Testing** — test summary (pass rate 0–100%), overall status, and the per-level table (executed / passed / failed / skipped for Unit, Integration, System, and **CI Self-Tests** — the `.github/tests` suite — plus Total).
+- **Code Coverage** — combined line + branch coverage (0–100%) and the 90% quality-gate status.
+- **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports (incl. `ci-results.xml`) and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
 
 How it is produced:
 
-1. In the `test` job, each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step. All are uploaded as the `test-results` artifact.
-2. A dedicated `publish` job (`if: always()`, depends on the gating jobs) downloads that artifact and runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py) with the upstream results (`LINT_RESULT=needs.check.result`, `TEST_RESULT=needs.test.result`). It writes the compact **comment** variant to `tests/reports/test-summary.md`, a one-line per-run status to `tests/reports/test-summary-line.md`, and appends the **job-summary** variant (with the matrix embedded) to `$GITHUB_STEP_SUMMARY`.
-3. The same job publishes two comments via `actions/github-script`: it updates the **sticky** full report in place (found by a hidden marker), and posts a compact **per-run status line** fresh on every run (Option C) so the PR keeps a per-run trail.
+1. In the `test` job, each level writes a JUnit report (`tests/reports/*-results.xml`, including `ci-results.xml` for the CI self-tests) and `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step. All are uploaded as the `test-results` artifact.
+2. A dedicated `publish` job (`if: always()`, depends on the gating jobs) downloads that artifact and runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py) with the upstream results (`LINT_RESULT=needs.check.result`, `TEST_RESULT=needs.test.result`). It writes the full **sticky** report to `tests/reports/test-summary.md`, the compact **per-run comment** (overview table) to `tests/reports/test-summary-line.md`, and appends the **job-summary** variant (with the matrix embedded) to `$GITHUB_STEP_SUMMARY`.
+3. The same job publishes two comments via `actions/github-script`: it updates the **sticky** full report in place (found by a hidden marker), and posts the compact **per-run comment** fresh on every run (Option C) so the PR keeps a per-run trail.
 
 Because the `publish` job runs with `if: always()` in its own job — **not** inside `test` — a PR receives an up-to-date comment on **every** run, including when `check` (lint/naming) fails and the `test` job is skipped (the summary then degrades gracefully, showing lint failed and tests skipped). Publication is non-gating: it only reports results; the merge is still gated by the `check` and `test` jobs.
 

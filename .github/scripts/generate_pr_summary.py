@@ -43,6 +43,13 @@ COVERAGE_GATE = 90.0
 #: Hidden HTML marker used to locate and update the sticky PR comment on re-runs.
 MARKER = "<!-- pro-337-ci-quality-gate-summary -->"
 
+#: Marker for the compact, one-per-run status-line comment (Option C). Distinct
+#: from MARKER so the two comment kinds are individually identifiable.
+LINE_MARKER = "<!-- pro-337-ci-run-line -->"
+
+#: Compact status line written for the per-run comment.
+LINE_PATH = REPORTS_DIR / "test-summary-line.md"
+
 #: Ordered test levels and the JUnit file each level writes.
 TEST_LEVELS: list[tuple[str, str]] = [
     ("Unit Tests", "unit-results.xml"),
@@ -233,6 +240,33 @@ def _traceability_status(coverage: Optional[float]) -> str:
     return PASS if coverage >= 100.0 else FAIL
 
 
+def render_status_line(data: SummaryData) -> str:
+    """Render the compact one-line status posted fresh on every run (Option C).
+
+    A short per-run trail that complements the detailed sticky comment: overall
+    result plus a symbol/percentage per aspect and a link to the run.
+    """
+
+    def symbol(indicator: str) -> str:
+        return indicator.split()[0]  # the emoji, without the word
+
+    overall = PASS if data.overall_passed else FAIL
+    totals = _totals(data.levels)
+    executed = totals["executed"]
+    pass_rate = (100.0 * totals["passed"] / executed) if executed else None
+
+    parts = [
+        f"Lint {symbol(_result_indicator(data.lint_result))}",
+        f"Traceability {_fmt_percent(data.traceability_coverage)}",
+        f"Tests {_fmt_percent(pass_rate)} ({totals['passed']}/{executed})",
+        f"Coverage {_fmt_percent(data.coverage_percent)}",
+    ]
+    line = f"{LINE_MARKER}\n**CI Run:** {overall} — " + " · ".join(parts)
+    if data.run_url:
+        line += f" — [details]({data.run_url})"
+    return line + "\n"
+
+
 def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
     """Render the combined CI/CD quality-gate report.
 
@@ -411,6 +445,7 @@ def main() -> None:
 
     comment_report = render_markdown(data)
     SUMMARY_PATH.write_text(comment_report, encoding="utf-8")
+    LINE_PATH.write_text(render_status_line(data), encoding="utf-8")
 
     step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if step_summary:

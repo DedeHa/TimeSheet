@@ -287,19 +287,28 @@ def test_test_job_runs_on_prs_tags_and_dispatch():
 
 
 def test_pipeline_graph():
-    """The job graph is check -> test -> {summary, deploy}."""
+    """Jobs are check, test, deploy, publish; check and test run in parallel."""
     workflow = _workflow()
-    assert set(workflow["jobs"]) == {"check", "test", "summary", "deploy"}
-    assert workflow["jobs"]["test"]["needs"] == ["check"]
-    assert workflow["jobs"]["summary"]["needs"] == ["check", "test"]
+    assert set(workflow["jobs"]) == {"check", "test", "deploy", "publish"}
+    # O1: the test job no longer depends on check, so they run in parallel.
+    assert "needs" not in workflow["jobs"]["test"]
     assert workflow["jobs"]["deploy"]["needs"] == ["check", "test"]
+    # The publish job depends on the gating jobs and reports their results.
+    assert set(workflow["jobs"]["publish"]["needs"]) >= {"check", "test"}
 
 
-def test_summary_job_always_runs_on_prs():
-    """The summary job publishes the PR comment even when check/test fail."""
-    summary = _workflow()["jobs"]["summary"]
-    assert "always()" in summary["if"]
-    assert "pull_request" in summary["if"]
+def test_publish_job_always_runs():
+    """The publish job posts the PR comment even when check/test fail."""
+    publish = _workflow()["jobs"]["publish"]
+    assert "always()" in publish["if"]
+
+
+def test_check_job_runs_ci_self_tests():
+    """O5: the check job runs the .github/tests suite as a gate."""
+    steps = _job_steps("check")
+    assert any(
+        ".github/tests" in s.get("run", "") for s in steps
+    ), "check job does not run the .github/tests self-tests"
 
 
 def test_concurrency_grouping_unchanged():

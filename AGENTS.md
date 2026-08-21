@@ -46,10 +46,10 @@ radon cc src_timesheetalgo -a
 python .github/scripts/generate_traceability_matrix.py
 ```
 
-**Run the CI-pipeline tests locally BEFORE committing changes under `.github/`**
-(scripts, tests, actions, or the workflow YAML). The CI pipeline does **not**
-run these tests — local verification is the only gate that catches a broken
-support script or workflow regression:
+**Run the CI-pipeline tests before committing changes under `.github/`**
+(scripts, tests, actions, or the workflow YAML). The `check` job runs these in
+CI (`Run CI self-tests (.github/tests)`), so they now gate the pipeline —
+running them locally first just avoids a red CI run:
 ```bash
 pytest -q .github/tests/
 ```
@@ -217,16 +217,18 @@ Three-level hierarchy matching runtime boundaries:
 
 ## Quality Gate & CI
 
-**GitHub Actions** (`.github/workflows/python-ci.yml`) — job graph `check → test → {summary, deploy}`:
+**GitHub Actions** (`.github/workflows/python-ci.yml`) — `check` and `test` run **in parallel** (no `needs` between them); `deploy` and `publish` depend on both:
 - PRs to `master`: Full CI (Lint + Unit + Integration + System + Coverage)
 - PRs to `release/**`: Full CI (same quality gate as master)
 - Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
+- `check` also runs the **CI self-tests** (`pytest -q .github/tests/`), so workflow/script regressions are a CI gate.
 - **Environments** (GitHub deployment labels) are static: `check` → `development`, `test` → `staging`, `deploy` → `production`. Do **not** reintroduce a dynamic `environment:` expression — a previous one coerced to the boolean `false` and auto-created a junk environment named "false".
+- **Dependabot** (`.github/dependabot.yml`) bumps action versions weekly; its PRs are exempt from the `PRO-XXX` naming validators via `github.actor != 'dependabot[bot]'` guards.
 
 **Pull Request Quality-Gate Summary** (PRO-337):
-- A dedicated `summary` job (`needs: [check, test]`, `if: always()`) publishes it, so a comment is posted on **every** run — even when `check` fails and `test` is skipped (the summary degrades gracefully). It is non-gating.
-- Single consolidated report, regenerated every run, with ✅ / ❌ / ⚠️ indicators, in the **job summary** ("PR Run") and one **sticky PR comment** (updated in place, never duplicated)
-- Opens with the overall result + a **status-overview table** (Lint + the four steps), then a fixed four-section structure: **1 Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **2 Testing** (pass-rate %, status, per-level table) → **3 Code Coverage** (% + 90%-gate status) → **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov)
+- A dedicated `publish` job (`if: always()`, depends on the gating jobs) publishes it, so a comment is posted on **every** run — even when `check` fails and `test` is skipped (the summary degrades gracefully). It is non-gating.
+- **Two comments per run (Option C):** one **sticky** comment (updated in place) carrying the full report, plus a compact **per-run status line** (`<!-- pro-337-ci-run-line -->`) posted fresh each run for a per-run trail.
+- The full report opens with the overall result + a **status-overview table** (Lint + the four steps), then a fixed four-section structure: **1 Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **2 Testing** (pass-rate %, status, per-level table) → **3 Code Coverage** (% + 90%-gate status) → **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov)
 
 **Traceability Validation**:
 - `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture
@@ -322,15 +324,13 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   `continue-on-error: true` (third-party action); the other three must keep
   `continue-on-error: false` or the gate silently degrades.
 - **CI support-script tests live under `.github/tests/`** (not in `tests/`), so
-  they do not count toward the 103-test suite or the 90% coverage gate. They are
-  developer tests - the CI pipeline does not run them (the gates live in the
-  scripts and the workflow YAML itself):
+  they do not count toward the 103-test suite or the 90% coverage gate. The
+  `check` job runs them (`Run CI self-tests`), so they **gate** the pipeline:
   - `.github/tests/test_verify_ci_workflow.py`
   - `.github/tests/test_generate_pr_summary.py`
   - `.github/tests/test_generate_traceability_matrix.py`
-  - **Run and check `pytest -q .github/tests/` locally before committing any
-    change under `.github/`** — since CI does not run them, this is the only
-    place a broken support script or workflow regression is caught.
+  - **Run `pytest -q .github/tests/` locally before committing any change under
+    `.github/`** so CI does not fail on a workflow/script regression.
 - **CI support scripts live under `.github/scripts/`** (verb_subject naming):
   `generate_pr_summary.py`, `generate_traceability_matrix.py`. `.github/workflows/`
   holds workflow definitions only (no `.py`).

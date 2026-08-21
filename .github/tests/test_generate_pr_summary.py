@@ -110,6 +110,26 @@ def test_read_traceability_coverage(tmp_path):
     assert mod.read_traceability_coverage(tmp_path / "empty") is None
 
 
+def test_status_line_is_compact_and_marked():
+    """The per-run status line carries its marker, result and a run link."""
+    data = mod.SummaryData(
+        lint_result="success",
+        test_result="success",
+        levels=[
+            mod.LevelStats("Unit Tests", "u.xml", 79, 78, 0, 1, True),
+        ],
+        coverage_percent=99.6,
+        run_url="https://example/run/9",
+        traceability_coverage=100.0,
+    )
+    line = mod.render_status_line(data)
+    assert mod.LINE_MARKER in line
+    assert "**CI Run:**" in line
+    assert "Traceability 100.0%" in line
+    assert "Coverage 99.6%" in line
+    assert "[details](https://example/run/9)" in line
+
+
 def test_comment_and_job_summary_variants():
     """The comment links to the matrix; the job summary embeds the full table."""
     data = mod.SummaryData(

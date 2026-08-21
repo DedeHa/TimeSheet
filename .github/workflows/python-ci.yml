@@ -83,7 +83,7 @@ jobs:
           echo "GitHub Event Name: ${{ github.event_name }}"
 
       - name: Validate commit messages
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: wagoid/commitlint-github-action@v6
         with:
           configFile: .commitlintrc.json
@@ -92,7 +92,7 @@ jobs:
 
       # Add JIRA reference validation in commit messages
       - name: Validate Jira reference in commits
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         run: |
           git log --format=%H ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
           while read hash; do
@@ -105,7 +105,7 @@ jobs:
 
       # Validate PR Title
       - name: Validate PR Title
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -122,7 +122,7 @@ jobs:
 
       # Validate PR Body
       - name: Validate PR Body
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -153,10 +153,20 @@ jobs:
           pydocstyle src_timesheetalgo tests
           radon cc src_timesheetalgo -a
 
+      # CI self-tests: validate the workflow structure and the CI support
+      # scripts themselves (generate_pr_summary / generate_traceability_matrix).
+      # These live under .github/tests/ and are otherwise developer-only; running
+      # them here makes workflow/script regressions a CI gate.
+      - name: Run CI self-tests (.github/tests)
+        run: pytest -q .github/tests/
+
   test:
     name: Run all test levels (unit + integration + system)
     runs-on: ubuntu-latest
-    needs: [check]
+    # No `needs: [check]` - lint (check) and the test suite are independent, so
+    # they run in parallel to cut wall-clock time. Both are still required
+    # checks, and `deploy`/`summary` depend on both, so nothing merges or deploys
+    # unless each passes.
     # Full test suite runs on all PRs (master and release/**), on release tags
     # (so the quality gate is enforced before deploy), and on manual dispatch.
     # The PR summary comment is published by the separate `summary` job, so this
@@ -323,4 +333,33 @@ jobs:
               });
               core.info('Created new summary comment');
             }
+
+      # Option C: in addition to the sticky summary above, post a compact
+      # one-line status comment fresh on *every* run, so the PR thread keeps a
+      # per-run trail (each linking back to its run) without duplicating the full
+      # summary each time.
+      - name: Post per-run status line
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            let body;
+            try {
+              body = fs.readFileSync('tests/reports/test-summary-line.md', 'utf8');
+            } catch (e) {
+              core.warning('Status line file not found: ' + e.message);
+              return;
+            }
+            const issue_number = context.issue.number;
+            if (!issue_number) {
+              core.warning('No pull request number in context; skipping comment.');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body,
+            });
+            core.info('Posted per-run status line');
         

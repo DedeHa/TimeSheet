@@ -1,0 +1,149 @@
+"""Unit tests for collect_ci_timings.py (PRO-368 CI-timing benchmark).
+
+Validates the run / job / step exclusion rules, duration parsing, the per-job
+total row and latest-attempt de-duplication against sample API JSON. Runs in the
+``.github/tests`` CI self-test group. Standard-library only.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+_SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+
+import collect_ci_timings as mod  # noqa: E402
+
+
+def _run_meta(conclusion="success"):
+    return {
+        "conclusion": conclusion,
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+    }
+
+
+def _jobs():
+    return [
+        {
+            "name": "check",
+            "conclusion": "success",
+            "started_at": "2026-08-21T10:00:00Z",
+            "completed_at": "2026-08-21T10:00:30Z",
+            "steps": [
+                {
+                    "name": "Set up job",
+                    "conclusion": "success",
+                    "number": 1,
+                    "started_at": "2026-08-21T10:00:00Z",
+                    "completed_at": "2026-08-21T10:00:02Z",
+                },
+                {
+                    "name": "Run lint tools",
+                    "conclusion": "success",
+                    "number": 2,
+                    "started_at": "2026-08-21T10:00:05Z",
+                    "completed_at": "2026-08-21T10:00:20Z",
+                },
+                {
+                    "name": "Flaky step",
+                    "conclusion": "skipped",
+                    "number": 3,
+                    "started_at": None,
+                    "completed_at": None,
+                },
+                {
+                    "name": "Post Run actions/checkout",
+                    "conclusion": "success",
+                    "number": 4,
+                    "started_at": "2026-08-21T10:00:28Z",
+                    "completed_at": "2026-08-21T10:00:30Z",
+                },
+            ],
+        },
+        {
+            "name": "test",
+            "conclusion": "success",
+            "started_at": "2026-08-21T10:00:00Z",
+            "completed_at": "2026-08-21T10:00:40Z",
+            "steps": [
+                {
+                    "name": "Run unit tests",
+                    "conclusion": "success",
+                    "number": 2,
+                    "started_at": "2026-08-21T10:00:05Z",
+                    "completed_at": "2026-08-21T10:00:35Z",
+                },
+            ],
+        },
+        {"name": "deploy", "conclusion": "skipped", "steps": []},
+    ]
+
+
+def test_duration_and_parse_edge_cases():
+    assert mod.duration_s("2026-08-21T10:00:00Z", "2026-08-21T10:00:30Z") == 30.0
+    assert mod.duration_s(None, "2026-08-21T10:00:30Z") is None
+    assert mod.duration_s("2026-08-21T10:00:30Z", "2026-08-21T10:00:00Z") is None
+    assert mod.parse_iso("not-a-date") is None
+
+
+def test_extract_rows_applies_exclusions():
+    rows = mod.extract_rows(_run_meta(), _jobs())
+    names = {(r["job_name"], r["step_name"]) for r in rows}
+    # Housekeeping (Set up job / Post ...) and skipped step excluded.
+    assert ("check", "Set up job") not in names
+    assert ("check", "Post Run actions/checkout") not in names
+    assert ("check", "Flaky step") not in names
+    # Skipped deploy job contributes nothing.
+    assert not any(r["job_name"] == "deploy" for r in rows)
+    # Real steps + per-job totals kept, with correct durations.
+    by_key = {(r["job_name"], r["step_name"]): r["duration_s"] for r in rows}
+    assert by_key[("check", mod.JOB_TOTAL)] == 30.0
+    assert by_key[("check", "Run lint tools")] == 15.0
+    assert by_key[("test", mod.JOB_TOTAL)] == 40.0
+    assert by_key[("test", "Run unit tests")] == 30.0
+    assert len(rows) == 4
+
+
+def test_failed_run_yields_no_rows():
+    assert mod.extract_rows(_run_meta(conclusion="failure"), _jobs()) == []
+
+
+def test_include_housekeeping_flag():
+    rows = mod.extract_rows(_run_meta(), _jobs(), include_housekeeping=True)
+    names = {(r["job_name"], r["step_name"]) for r in rows}
+    assert ("check", "Set up job") in names
+    assert ("check", "Post Run actions/checkout") in names
+
+
+def test_dedup_keeps_latest_attempt():
+    a1 = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "job_name": "check",
+        "step_number": 2,
+        "duration_s": 15.0,
+    }
+    a2 = {
+        "run_id": 100,
+        "run_attempt": 2,
+        "job_name": "check",
+        "step_number": 2,
+        "duration_s": 12.0,
+    }
+    out = mod.dedup_latest_attempt([a1, a2])
+    assert len(out) == 1
+    assert out[0]["duration_s"] == 12.0
+    assert out[0]["run_attempt"] == 2
+
+
+if __name__ == "__main__":
+    import pytest
+
+    sys.exit(pytest.main([__file__, "-q"]))

@@ -51,15 +51,24 @@ LINE_MARKER = "<!-- pro-337-ci-run-line -->"
 #: Compact status line written for the per-run comment.
 LINE_PATH = REPORTS_DIR / "test-summary-line.md"
 
-#: Ordered test levels and the JUnit file each level writes. "CI Self-Tests"
-#: are the .github/tests suite (workflow + support-script tests) run in the
-#: pipeline; they are reported alongside the application levels.
-TEST_LEVELS: list[tuple[str, str]] = [
+#: Application test levels (the TimeSheet script) and the JUnit file each writes.
+APP_TEST_LEVELS: list[tuple[str, str]] = [
     ("Unit Tests", "unit-results.xml"),
     ("Integration Tests", "integration-results.xml"),
     ("System Tests", "system-results.xml"),
+]
+
+#: CI-pipeline test levels: the .github/tests suite (workflow + support-script
+#: tests). Reported separately from the application tests.
+CI_TEST_LEVELS: list[tuple[str, str]] = [
     ("CI Self-Tests", "ci-results.xml"),
 ]
+
+#: All levels, in display order (application first, then CI pipeline).
+TEST_LEVELS: list[tuple[str, str]] = APP_TEST_LEVELS + CI_TEST_LEVELS
+
+#: Names that belong to the CI-pipeline group (used to split the levels list).
+CI_LEVEL_NAMES = {name for name, _ in CI_TEST_LEVELS}
 
 PASS = "✅ Passed"
 FAIL = "❌ Failed"
@@ -246,23 +255,43 @@ def _traceability_status(coverage: Optional[float]) -> str:
     return PASS if coverage >= 100.0 else FAIL
 
 
-def _status_overview(data: SummaryData) -> list[str]:
-    """Return the Step / Status / Summary overview table (no numbering)."""
-    totals = _totals(data.levels)
-    executed = totals["executed"]
-    pass_rate = (100.0 * totals["passed"] / executed) if executed else None
-    if data.coverage_gate_passed is None:
-        coverage_status = SKIP
-    elif data.coverage_gate_passed:
-        coverage_status = PASS
-    else:
-        coverage_status = FAIL
+def _app_levels(levels: list[LevelStats]) -> list[LevelStats]:
+    """Application (script) test levels: unit / integration / system."""
+    return [level for level in levels if level.name not in CI_LEVEL_NAMES]
 
+
+def _ci_levels(levels: list[LevelStats]) -> list[LevelStats]:
+    """CI-pipeline test levels: the .github/tests suite."""
+    return [level for level in levels if level.name in CI_LEVEL_NAMES]
+
+
+def _group_summary(levels: list[LevelStats]) -> tuple[str, str]:
+    """Return (status, "N% (passed/executed passed)") for a group of levels."""
+    totals = _totals(levels)
+    executed = totals["executed"]
+    rate = (100.0 * totals["passed"] / executed) if executed else None
+    cell = f"{_fmt_percent(rate)} ({totals['passed']}/{executed} passed)"
+    return _tests_status(levels), cell
+
+
+def _coverage_status(data: SummaryData) -> str:
+    """Map the coverage-gate result to a status indicator."""
+    if data.coverage_gate_passed is None:
+        return SKIP
+    return PASS if data.coverage_gate_passed else FAIL
+
+
+def _status_overview(data: SummaryData) -> list[str]:
+    """Return the Step / Status / Summary overview table (no numbering).
+
+    Testing is split into two rows: the application (script) tests and the
+    CI-pipeline tests (`.github/tests`).
+    """
     lint_status = _result_indicator(data.lint_result)
     trace_status = _traceability_status(data.traceability_coverage)
-    tests_status = _tests_status(data.levels)
     trace_cell = _fmt_percent(data.traceability_coverage)
-    test_cell = f"{_fmt_percent(pass_rate)} ({totals['passed']}/{executed} passed)"
+    app_status, app_cell = _group_summary(_app_levels(data.levels))
+    ci_status, ci_cell = _group_summary(_ci_levels(data.levels))
     cov_cell = f"{_fmt_percent(data.coverage_percent)} (gate {COVERAGE_GATE:.0f}%)"
 
     return [
@@ -270,10 +299,33 @@ def _status_overview(data: SummaryData) -> list[str]:
         "| --- | --- | --- |",
         f"| Lint & Formatting | {lint_status} | — |",
         f"| Traceability | {trace_status} | {trace_cell} |",
-        f"| Testing | {tests_status} | {test_cell} |",
-        f"| Code Coverage | {coverage_status} | {cov_cell} |",
+        f"| Application Tests | {app_status} | {app_cell} |",
+        f"| CI-Pipeline Tests | {ci_status} | {ci_cell} |",
+        f"| Code Coverage | {_coverage_status(data)} | {cov_cell} |",
         "| Artifacts | — | see Artifacts section |",
     ]
+
+
+def _level_table(levels: list[LevelStats]) -> list[str]:
+    """Render a per-level table (with a Total row) for a group of levels."""
+    lines = [
+        "| Level | Executed | Passed | Failed | Skipped |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    for level in levels:
+        if level.found:
+            lines.append(
+                f"| {level.name} | {level.executed} | {level.passed} "
+                f"| {level.failed} | {level.skipped} |"
+            )
+        else:
+            lines.append(f"| {level.name} | - | - | - | - |")
+    t = _totals(levels)
+    lines.append(
+        f"| **Total** | {t['executed']} | {t['passed']} "
+        f"| {t['failed']} | {t['skipped']} |"
+    )
+    return lines
 
 
 def _footer(data: SummaryData) -> list[str]:
@@ -314,21 +366,11 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
     sticky comment in place.
     """
     overall = PASS if data.overall_passed else FAIL
-    totals = _totals(data.levels)
-
-    if data.coverage_gate_passed is None:
-        coverage_status = SKIP
-    elif data.coverage_gate_passed:
-        coverage_status = PASS
-    else:
-        coverage_status = FAIL
-
-    tests_status = _tests_status(data.levels)
+    coverage_status = _coverage_status(data)
     trace_status = _traceability_status(data.traceability_coverage)
-    executed = totals["executed"]
-    pass_rate = (100.0 * totals["passed"] / executed) if executed else None
-
     trace_pct = _fmt_percent(data.traceability_coverage)
+    app_status, app_cell = _group_summary(_app_levels(data.levels))
+    ci_status, ci_cell = _group_summary(_ci_levels(data.levels))
 
     # Header + status overview: the overall result plus a one-line-per-aspect
     # table covering linting and all steps, so the whole gate is readable at a
@@ -356,30 +398,23 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
     elif data.run_url:
         lines.append(f"- [Traceability matrix →]({data.run_url})")
 
-    # Testing
+    # Testing - split into application (script) tests and CI-pipeline tests.
     lines += [
         "",
         "### Testing",
         "",
-        f"- Test summary: **{_fmt_percent(pass_rate)}** "
-        f"({totals['passed']}/{executed} passed)",
-        f"- Status: {tests_status}",
+        "#### Application (unit + integration + system)",
         "",
-        "| Level | Executed | Passed | Failed | Skipped |",
-        "| --- | ---: | ---: | ---: | ---: |",
+        f"- Summary: **{app_cell}** · Status: {app_status}",
+        "",
+        *_level_table(_app_levels(data.levels)),
+        "",
+        "#### CI Pipeline (`.github/tests`)",
+        "",
+        f"- Summary: **{ci_cell}** · Status: {ci_status}",
+        "",
+        *_level_table(_ci_levels(data.levels)),
     ]
-    for level in data.levels:
-        if level.found:
-            lines.append(
-                f"| {level.name} | {level.executed} | {level.passed} "
-                f"| {level.failed} | {level.skipped} |"
-            )
-        else:
-            lines.append(f"| {level.name} | - | - | - | - |")
-    lines.append(
-        f"| **Total** | {totals['executed']} | {totals['passed']} "
-        f"| {totals['failed']} | {totals['skipped']} |"
-    )
 
     # Code Coverage
     lines += [

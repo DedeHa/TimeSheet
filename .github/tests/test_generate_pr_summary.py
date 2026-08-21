@@ -110,17 +110,23 @@ def test_read_traceability_coverage(tmp_path):
     assert mod.read_traceability_coverage(tmp_path / "empty") is None
 
 
-def test_ci_self_tests_level_included(tmp_path):
-    """The CI self-tests (.github/tests) appear as their own test level."""
+def test_ci_pipeline_tests_reported_separately(tmp_path):
+    """CI self-tests are a separate group from the application tests."""
     _all_green_reports(tmp_path)
     _write_junit(tmp_path / "ci-results.xml", tests=44, failures=0, errors=0, skipped=0)
     data = mod.build_summary(
         tmp_path, {"LINT_RESULT": "success", "TEST_RESULT": "success"}
     )
     report = mod.render_markdown(data)
+    # Two overview rows, application and CI pipeline, reported independently.
+    assert "| Application Tests | ✅ Passed | 99.0% (102/103 passed) |" in report
+    assert "| CI-Pipeline Tests | ✅ Passed | 100.0% (44/44 passed) |" in report
+    # Separate subsections, each with its own Total (not a single blended total).
+    assert "#### Application (unit + integration + system)" in report
+    assert "#### CI Pipeline (`.github/tests`)" in report
     assert "| CI Self-Tests | 44 | 44 | 0 | 0 |" in report
-    # The CI self-tests are counted in the testing totals (103 app + 44 CI).
-    assert "| **Total** | 147 | 146 | 0 | 1 |" in report
+    assert "| **Total** | 103 | 102 | 0 | 1 |" in report  # application total
+    assert "| **Total** | 44 | 44 | 0 | 0 |" in report  # CI total
 
 
 def test_short_comment_has_overview_table_and_timestamp():
@@ -187,7 +193,9 @@ def test_overall_pass(tmp_path):
     # Status overview at the top covers linting and all steps, without numbering.
     assert "| Lint & Formatting | ✅ Passed | — |" in report
     assert "| Traceability | ✅ Passed | 100.0% |" in report
-    assert "| Testing | ✅ Passed | 99.0% (102/103 passed) |" in report
+    # Testing is split into application and CI-pipeline rows.
+    assert "| Application Tests | ✅ Passed | 99.0% (102/103 passed) |" in report
+    assert "| CI-Pipeline Tests |" in report
     assert "| Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
     assert "1. Traceability" not in report  # numbering removed everywhere
     # Sections appear in the required order, un-numbered.
@@ -199,13 +207,13 @@ def test_overall_pass(tmp_path):
     ]
     positions = [report.index(section) for section in order]
     assert positions == sorted(positions), "sections out of order"
-    # 1 Traceability - summary percentage + matrix link (comment variant).
+    # Traceability - summary percentage + matrix link (comment variant).
     assert "Traceability summary: **100.0%**" in report
-    # 2 Testing - pass-rate summary, status, and per-level table.
-    assert "Test summary: **99.0%** (102/103 passed)" in report
-    assert "- Status: ✅ Passed" in report
+    # Testing - separate application / CI subsections; application total row.
+    assert "#### Application (unit + integration + system)" in report
+    assert "#### CI Pipeline (`.github/tests`)" in report
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report
-    # 3 Code Coverage - percentage + gate status.
+    # Code Coverage - percentage + gate status.
     assert "Combined line + branch coverage: **99.1%**" in report
     # The obsolete PRO-337 footer is no longer emitted.
     assert "PRO-337" not in report
@@ -235,7 +243,7 @@ def test_failed_lint_still_renders(tmp_path):
     assert "| Lint & Formatting | ❌ Failed | — |" in report
     # With no reports, the testing status degrades to skipped and each level
     # shows placeholder statistics.
-    assert "- Status: ⚠️ Skipped" in report
+    assert "· Status: ⚠️ Skipped" in report
     assert "| Unit Tests | - | - | - | - |" in report
     assert "did not produce results" in report
 
@@ -251,8 +259,8 @@ def test_failing_test_level_marks_failure(tmp_path):
     )
     assert data.overall_passed is False
     report = mod.render_markdown(data)
-    # Testing status reflects the failure and the per-level row shows the count.
-    assert "- Status: ❌ Failed" in report
+    # Application testing status reflects the failure; the per-level row shows it.
+    assert "· Status: ❌ Failed" in report
     assert "| Integration Tests | 17 | 16 | 1 | 0 |" in report
 
 

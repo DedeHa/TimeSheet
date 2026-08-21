@@ -60,7 +60,7 @@ Every Pull Request targeting `master` publishes one consolidated quality-gate su
 The report opens with the **overall workflow result** and a **status-overview table** — one row each for Lint & Formatting and the steps (un-numbered), with status and a one-line summary — so the whole gate is readable at a glance. It then details each step (headings are un-numbered):
 
 - **Traceability** — requirement→code traceability summary (0–100%) + status. The **PR Run** embeds the full traceability matrix table; the **PR comment** shows the percentage plus a link to the matrix artifact.
-- **Testing** — test summary (pass rate 0–100%), overall status, and the per-level table (executed / passed / failed / skipped for Unit, Integration, System, and **CI Self-Tests** — the `.github/tests` suite — plus Total).
+- **Testing** — split into two independent groups, each with its own pass rate, status and per-level table (executed / passed / failed / skipped + Total): **Application** (the script: Unit / Integration / System) and **CI Pipeline** (the `.github/tests` suite). The status overview shows them as separate **Application Tests** and **CI-Pipeline Tests** rows.
 - **Code Coverage** — combined line + branch coverage (0–100%) and the 90% quality-gate status.
 - **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports (incl. `ci-results.xml`) and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
 

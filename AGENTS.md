@@ -228,7 +228,7 @@ Three-level hierarchy matching runtime boundaries:
 **Pull Request Quality-Gate Summary** (PRO-337):
 - A dedicated `publish` job (`if: always()`, depends on the gating jobs) publishes it, so a comment is posted on **every** run — even when `check` fails and `test` is skipped (the summary degrades gracefully). It is non-gating.
 - **Two comments per run (Option C):** one **sticky** comment (updated in place, carrying an "_Updated: … UTC_" timestamp) with the full report, plus a compact **per-run comment** (`<!-- pro-337-ci-run-line -->`) — the overall result + the status-overview table — posted fresh each run for a per-run trail.
-- The full report opens with the overall result + a **status-overview table** (Lint + the steps, **un-numbered**), then sections: **Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **Testing** (pass-rate %, status, per-level table incl. Unit/Integration/System/**CI Self-Tests**) → **Code Coverage** (% + 90%-gate status) → **Artifacts** (run, matrix, JUnit/coverage, htmlcov)
+- The full report opens with the overall result + a **status-overview table** (Lint + the steps, **un-numbered**), then sections: **Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **Testing** (split into **Application Tests** (unit/integration/system) and **CI-Pipeline Tests** (`.github/tests`), each with its own pass-rate %, status and per-level table) → **Code Coverage** (% + 90%-gate status) → **Artifacts** (run, matrix, JUnit/coverage, htmlcov)
 
 **Traceability Validation**:
 - `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture

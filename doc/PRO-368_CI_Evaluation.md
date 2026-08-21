@@ -67,11 +67,13 @@ right and should be a separate ticket.
 - **Job graph:** `check` ∥ `test` → `deploy`, `publish`.
 - **`publish` job** (`if: always()`) posts on **every** run, even when `check`
   fails and `test` is skipped.
-- **Two comments per run (Option C):** a **sticky** full report updated in place,
-  plus a compact **per-run status line** (`<!-- pro-337-ci-run-line -->`) for a
-  per-run trail. The full report opens with an overall result + status-overview
-  table, then the four sections (Traceability → Testing → Code Coverage →
-  Artifacts).
+- **Two comments per run (Option C):** a **sticky** full report updated in place
+  (with an `_Updated: … UTC_` timestamp), plus a compact **per-run comment**
+  (`<!-- pro-337-ci-run-line -->`) — overall result + the overview table — for a
+  per-run trail. The full report opens with the overall result + an (un-numbered)
+  status-overview table, then the sections Traceability → Testing → Code Coverage
+  → Artifacts. The **Testing** section includes a **CI Self-Tests** level
+  (`.github/tests`), so the CI self-tests are counted in the test totals.
 - **Steps overview:** the GitHub Actions run page relies on the job-summary
   render (same content as the comment) for the human-readable overview; per-level
   test steps stay separate for attributable failures.

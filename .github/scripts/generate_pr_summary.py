@@ -22,6 +22,7 @@ find and update the previous comment instead of creating a duplicate.
 
 from __future__ import annotations
 
+import datetime
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -50,11 +51,14 @@ LINE_MARKER = "<!-- pro-337-ci-run-line -->"
 #: Compact status line written for the per-run comment.
 LINE_PATH = REPORTS_DIR / "test-summary-line.md"
 
-#: Ordered test levels and the JUnit file each level writes.
+#: Ordered test levels and the JUnit file each level writes. "CI Self-Tests"
+#: are the .github/tests suite (workflow + support-script tests) run in the
+#: pipeline; they are reported alongside the application levels.
 TEST_LEVELS: list[tuple[str, str]] = [
     ("Unit Tests", "unit-results.xml"),
     ("Integration Tests", "integration-results.xml"),
     ("System Tests", "system-results.xml"),
+    ("CI Self-Tests", "ci-results.xml"),
 ]
 
 PASS = "✅ Passed"
@@ -96,6 +100,8 @@ class SummaryData:
     coverage_percent: Optional[float]
     run_url: Optional[str] = None
     traceability_coverage: Optional[float] = None
+    generated_at: Optional[str] = None
+    run_number: Optional[str] = None
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -240,31 +246,61 @@ def _traceability_status(coverage: Optional[float]) -> str:
     return PASS if coverage >= 100.0 else FAIL
 
 
-def render_status_line(data: SummaryData) -> str:
-    """Render the compact one-line status posted fresh on every run (Option C).
-
-    A short per-run trail that complements the detailed sticky comment: overall
-    result plus a symbol/percentage per aspect and a link to the run.
-    """
-
-    def symbol(indicator: str) -> str:
-        return indicator.split()[0]  # the emoji, without the word
-
-    overall = PASS if data.overall_passed else FAIL
+def _status_overview(data: SummaryData) -> list[str]:
+    """Return the Step / Status / Summary overview table (no numbering)."""
     totals = _totals(data.levels)
     executed = totals["executed"]
     pass_rate = (100.0 * totals["passed"] / executed) if executed else None
+    if data.coverage_gate_passed is None:
+        coverage_status = SKIP
+    elif data.coverage_gate_passed:
+        coverage_status = PASS
+    else:
+        coverage_status = FAIL
 
-    parts = [
-        f"Lint {symbol(_result_indicator(data.lint_result))}",
-        f"Traceability {_fmt_percent(data.traceability_coverage)}",
-        f"Tests {_fmt_percent(pass_rate)} ({totals['passed']}/{executed})",
-        f"Coverage {_fmt_percent(data.coverage_percent)}",
+    lint_status = _result_indicator(data.lint_result)
+    trace_status = _traceability_status(data.traceability_coverage)
+    tests_status = _tests_status(data.levels)
+    trace_cell = _fmt_percent(data.traceability_coverage)
+    test_cell = f"{_fmt_percent(pass_rate)} ({totals['passed']}/{executed} passed)"
+    cov_cell = f"{_fmt_percent(data.coverage_percent)} (gate {COVERAGE_GATE:.0f}%)"
+
+    return [
+        "| Step | Status | Summary |",
+        "| --- | --- | --- |",
+        f"| Lint & Formatting | {lint_status} | — |",
+        f"| Traceability | {trace_status} | {trace_cell} |",
+        f"| Testing | {tests_status} | {test_cell} |",
+        f"| Code Coverage | {coverage_status} | {cov_cell} |",
+        "| Artifacts | — | see Artifacts section |",
     ]
-    line = f"{LINE_MARKER}\n**CI Run:** {overall} — " + " · ".join(parts)
+
+
+def _footer(data: SummaryData) -> list[str]:
+    """Return the update-timestamp / run-reference footer (empty if no time)."""
+    if not data.generated_at:
+        return []
+    ref = f"run #{data.run_number}" if data.run_number else "run"
     if data.run_url:
-        line += f" — [details]({data.run_url})"
-    return line + "\n"
+        ref = f"[{ref}]({data.run_url})"
+    return ["", f"_Updated: {data.generated_at} · {ref}_"]
+
+
+def render_short_comment(data: SummaryData) -> str:
+    """Render the compact per-run comment: overall result + overview table.
+
+    Posted fresh on every run (Option C) as a lightweight per-run trail that
+    complements the detailed sticky comment, and carries the update timestamp.
+    """
+    overall = PASS if data.overall_passed else FAIL
+    lines = [
+        LINE_MARKER,
+        f"**Overall workflow result:** {overall}",
+        "",
+        *_status_overview(data),
+        *_footer(data),
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
@@ -288,39 +324,28 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
         coverage_status = FAIL
 
     tests_status = _tests_status(data.levels)
-    lint_status = _result_indicator(data.lint_result)
     trace_status = _traceability_status(data.traceability_coverage)
     executed = totals["executed"]
     pass_rate = (100.0 * totals["passed"] / executed) if executed else None
 
     trace_pct = _fmt_percent(data.traceability_coverage)
-    cov_pct = _fmt_percent(data.coverage_percent)
-    cov_cell = f"{cov_pct} (gate {COVERAGE_GATE:.0f}%)"
-    test_pct = _fmt_percent(pass_rate)
-    passed_of = f"{totals['passed']}/{executed} passed"
 
     # Header + status overview: the overall result plus a one-line-per-aspect
-    # table covering linting and all four steps, so the whole gate is readable at
-    # a glance before the detailed sections below.
+    # table covering linting and all steps, so the whole gate is readable at a
+    # glance before the detailed sections below.
     lines: list[str] = [
         MARKER,
         "## CI/CD Quality Gate Summary",
         "",
         f"**Overall workflow result:** {overall}",
         "",
-        "| Step | Status | Summary |",
-        "| --- | --- | --- |",
-        f"| Lint & Formatting | {lint_status} | — |",
-        f"| 1. Traceability | {trace_status} | {trace_pct} |",
-        f"| 2. Testing | {tests_status} | {test_pct} ({passed_of}) |",
-        f"| 3. Code Coverage | {coverage_status} | {cov_cell} |",
-        "| 4. Artifacts | — | see section 4 |",
+        *_status_overview(data),
     ]
 
-    # 1 - Traceability
+    # Traceability
     lines += [
         "",
-        "### 1. Traceability",
+        "### Traceability",
         "",
         f"- Traceability summary: **{trace_pct}**",
         f"- Status: {trace_status}",
@@ -331,10 +356,10 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
     elif data.run_url:
         lines.append(f"- [Traceability matrix →]({data.run_url})")
 
-    # 2 - Testing
+    # Testing
     lines += [
         "",
-        "### 2. Testing",
+        "### Testing",
         "",
         f"- Test summary: **{_fmt_percent(pass_rate)}** "
         f"({totals['passed']}/{executed} passed)",
@@ -356,17 +381,17 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
         f"| {totals['failed']} | {totals['skipped']} |"
     )
 
-    # 3 - Code Coverage
+    # Code Coverage
     lines += [
         "",
-        "### 3. Code Coverage",
+        "### Code Coverage",
         "",
         f"- Combined line + branch coverage: **{_fmt_percent(data.coverage_percent)}**",
         f"- Quality gate (>= {COVERAGE_GATE:.0f}%): {coverage_status}",
     ]
 
-    # 4 - Artifacts (for all aspects)
-    lines += ["", "### 4. Artifacts"]
+    # Artifacts (for all aspects)
+    lines += ["", "### Artifacts"]
     if data.run_url:
         lines.append(f"- [Workflow run & downloadable artifacts]({data.run_url})")
     lines.append(
@@ -382,6 +407,8 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
     if data.notes:
         lines += ["", "### Notes"]
         lines += [f"- {note}" for note in data.notes]
+
+    lines += _footer(data)
 
     return "\n".join(lines) + "\n"
 
@@ -409,6 +436,10 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
     if server and repo and run_id:
         run_url = f"{server}/{repo}/actions/runs/{run_id}"
 
+    generated_at = datetime.datetime.now(datetime.timezone.utc).strftime(
+        "%Y-%m-%d %H:%M UTC"
+    )
+
     notes: list[str] = []
     if _result_indicator(env.get("TEST_RESULT", "")) != PASS and not any(
         level.found for level in levels
@@ -427,6 +458,8 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
         coverage_percent=coverage,
         run_url=run_url,
         traceability_coverage=traceability_coverage,
+        generated_at=generated_at,
+        run_number=env.get("GITHUB_RUN_NUMBER"),
         notes=notes,
     )
 
@@ -434,18 +467,18 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
 def main() -> None:
     """Render the report for the PR comment and the job step summary.
 
-    Two variants are produced: the PR-comment version (written to
-    ``test-summary.md`` and posted as the sticky comment) shows the traceability
-    summary as a percentage with a link; the job-summary version (written to
-    ``$GITHUB_STEP_SUMMARY``, i.e. the "PR Run") embeds the full traceability
-    matrix under section 1.
+    Three artifacts are produced: the sticky full report (``test-summary.md``,
+    traceability as a percentage + link); the compact per-run short comment
+    (``test-summary-line.md``, overall result + overview table); and the
+    job-summary variant (appended to ``$GITHUB_STEP_SUMMARY``, i.e. the "PR Run")
+    which embeds the full traceability matrix.
     """
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     data = build_summary(REPORTS_DIR, dict(os.environ))
 
     comment_report = render_markdown(data)
     SUMMARY_PATH.write_text(comment_report, encoding="utf-8")
-    LINE_PATH.write_text(render_status_line(data), encoding="utf-8")
+    LINE_PATH.write_text(render_short_comment(data), encoding="utf-8")
 
     step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if step_summary:

@@ -93,7 +93,7 @@ Examples:
 
 ## 4. Pull Request Requirements
 - **Title Format:** `[type][PRO-XXX] Clear description of changes` where `PRO-XXX` can have multiple digits (e.g., `PRO-123`, `PRO-123456`)
-- **Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`
+- **Types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `hotfix`, `release`
 - **Description:** What is being changed? (max. 72 characters)
 - **Body Requirements:**
   - Must include `## Summary` section

@@ -77,6 +77,20 @@ class ConsistencyError(Exception):
     """Raised when configuration and timesheet data are inconsistent."""
 
 
+class TimelogFormatError(Exception):
+    """Raised when a timelog CSV row violates the expected column structure.
+
+    Traceability: FR-05, QR-05.
+    """
+
+
+class TimesheetFormatError(Exception):
+    """Raised when the Excel timesheet violates the expected template.
+
+    Traceability: FR-05, QR-05.
+    """
+
+
 def detect_environment(base_path: str) -> str:
     """Detect environment based on folder structure.
 
@@ -278,6 +292,70 @@ def map_entry_to_cell(entry, row_offset=ROW_OFFSET):
     )
 
 
+def validate_timelog_entry(entry):
+    """Validate a single timelog CSV row.
+
+    Pure function: no I/O, no side effects.
+
+    Args:
+        entry: CSV row (list of strings).
+
+    Raises:
+        TimelogFormatError: if the row does not have exactly three columns or
+            the date column does not parse as ``DD.MM.YYYY``.
+
+    Traceability: FR-05, QR-05.
+    """
+    if not isinstance(entry, (list, tuple)) or len(entry) < 3:
+        raise TimelogFormatError(
+            f"Timelog row must have at least 3 columns (date, start, end), "
+            f"got: {entry!r}"
+        )
+    try:
+        dt.strptime(entry[0], DATE_FORMAT)
+    except (ValueError, TypeError) as e:
+        raise TimelogFormatError(
+            f"Invalid date in timelog row {entry!r}: {e}"
+        ) from e
+
+
+def validate_timesheet_structure(timesheet):
+    """Validate the Excel timesheet template structure.
+
+    Pure function: reads the workbook but performs no I/O.
+
+    Args:
+        timesheet: openpyxl Workbook.
+
+    Raises:
+        TimesheetFormatError: if the workbook has fewer than
+            ``TIMESHEET_SHEETS`` worksheets or the year cell is unusable
+            (when the expected year-check sheet is present).
+
+    Traceability: FR-05, QR-05.
+    """
+    if timesheet is None:
+        raise TimesheetFormatError("Timesheet workbook is None")
+    if len(timesheet.worksheets) < TIMESHEET_SHEETS:
+        raise TimesheetFormatError(
+            f"Timesheet must have at least {TIMESHEET_SHEETS} worksheets, "
+            f"got {len(timesheet.worksheets)}"
+        )
+    # The year cell lives on a named sheet; only validate it when that sheet
+    # exists (test fixtures may use different sheet names).
+    if YEAR_CHECK_SHEET in timesheet.sheetnames:
+        cell = timesheet[YEAR_CHECK_SHEET][YEAR_CHECK_CELL].value
+        if cell is None:
+            raise TimesheetFormatError(
+                f"Year cell {YEAR_CHECK_SHEET}!{YEAR_CHECK_CELL} is empty"
+            )
+        if not (hasattr(cell, "year") or str(cell).strip().isdigit()):
+            raise TimesheetFormatError(
+                f"Year cell {YEAR_CHECK_SHEET}!{YEAR_CHECK_CELL} "
+                f"holds no usable year: {cell!r}"
+            )
+
+
 def check_file_existence(filepath, filetype):
     """Check and load files.
 
@@ -344,10 +422,16 @@ class TimeSheetProcessor:
         self._clock = clock
 
     def load_files(self):
-        """Load timelog and timesheet files."""
+        """Load timelog and timesheet files.
+
+        Validates the timesheet structure after loading (FR-05, QR-05).
+
+        Traceability: FR-04.
+        """
         logging.info("Loading files...")
         self.timelog = check_file_existence(self.timelog_path, "csv")
         self.timesheet = check_file_existence(self.timesheet_path, "excel")
+        validate_timesheet_structure(self.timesheet)
 
     def check_year_consistency(self):
         """Abort if the configured year differs from the timesheet year.

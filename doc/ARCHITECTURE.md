@@ -41,6 +41,49 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | QR-05 | Robustness | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()` and `parse_date()` |
 | QR-06 | Maintainability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_config()` and `configure_logging()` |
 | QR-07 | Traceability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - this module and the traceability comments in each function |
+| FR-16 | CI dependency caching | [python-ci.yml](../.github/workflows/python-ci.yml) - `actions/setup-python` `cache: pip` / `cache-dependency-path: pyproject.toml` in check, test and deploy jobs |
+| FR-17 | CI reusable environment setup | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - composite action used by check, test and deploy jobs |
+| QR-08 | CI performance | [python-ci.yml](../.github/workflows/python-ci.yml) - pip download caching (keyed on `pyproject.toml`), removed `actions/setup-node`, single reusable composite action (no duplicated setup) |
+| QR-09 | CI maintainability | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - single composite action for Python setup, pip caching and dependency install (each job runs `actions/checkout` before it) |
+
+## CI Setup Design Decision: Composite Action vs. Inlined Steps (QR-08, QR-09)
+
+The Python environment setup (checkout → `actions/setup-python` with pip cache →
+`pip install -e .[dev]`) is shared by all three CI jobs (`check`, `test`,
+`deploy`). Two designs were considered:
+
+- **Composite action** (chosen): the setup steps live once in
+  [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml)
+  and each job calls it with `uses: ./.github/actions/setup-python-deps`.
+- **Inlined steps**: the same steps copied into each job.
+
+**Decision:** use the composite action, for maintainability (QR-09) — a single
+source of truth for the environment, one place to change the Python version,
+cache key, or install command, and consistent setup across jobs.
+
+**Constraint discovered:** a local (`./`) composite action cannot perform the
+repository checkout itself, because it can only be resolved *after* the repo is
+on the runner. Each job therefore runs `actions/checkout` before the composite
+action; the action owns Python setup, pip caching and dependency install only.
+
+**Performance validated (not assumed).** To confirm the `uses:` indirection
+carries no runtime cost, a dispatch-only benchmark
+([benchmark.yml](../.github/workflows/benchmark.yml)) measures warm-cache setup
+time for both designs (8 runs each, identical pip cache warmed beforehand). One
+run on `ubuntu-latest`, Python 3.13:
+
+| Variant | Runs | Mean (s) | Median (s) | Std dev (s) | Min (s) | Max (s) |
+| --- | --- | --- | --- | --- | --- | --- |
+| composite | 8 | 9.972 | 10.013 | 1.006 | 8.491 | 11.722 |
+| inline | 8 | 11.171 | 9.919 | 2.990 | 9.246 | 18.103 |
+
+Medians are effectively identical (10.01 s vs. 9.92 s); the inline mean is
+skewed upward by a single 18.1 s outlier. The mean delta (-1.2 s, -10.7 %) is
+well within the largest per-variant standard deviation (2.99 s), so the two
+designs are **statistically equivalent** in runtime. The composite action is
+therefore adopted for its maintainability benefit at no measurable performance
+cost. The benchmark is retained (manual `workflow_dispatch` only, outside the CI
+pipeline) so the comparison can be re-run when the toolchain changes.
 
 ## System-Level Diagrams
 

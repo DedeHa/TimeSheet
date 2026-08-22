@@ -1,0 +1,198 @@
+---
+# PRO-368: Composite-vs-inline setup benchmark.
+#
+# Compares the reusable composite action (./.github/actions/setup-python-deps)
+# against the same steps inlined directly in a job, to verify the composite
+# action carries no meaningful runtime penalty (QR-09 maintainability win is
+# effectively free).
+#
+# Both variants do identical work (setup-python + pip cache restore +
+# `pip install -e .[dev]`), so any difference is expected to be within
+# run-to-run noise. The goal is to *demonstrate statistical equivalence*, not
+# to pick a winner.
+#
+# Design (see doc/00_Implementation_Plan_PRO-368.md, Post-Implementation
+# Addendum B):
+# - Metric: warm-cache setup time (a `warmup` job primes the shared pip cache;
+#   both variants use an identical cache key, so both then hit a warm cache).
+# - Timing: in-workflow `date +%s.%N` around the setup window, one CSV row per
+#   run uploaded as an artifact; a final `summary` job aggregates to
+#   $GITHUB_STEP_SUMMARY (no GitHub API needed).
+# - Trigger: workflow_dispatch only - never runs on normal PRs.
+
+name: Setup Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: 'Python version to benchmark'
+        default: '3.13'
+        type: string
+
+# Serialise dispatches so concurrent runs do not race on the shared pip cache.
+concurrency:
+  group: setup-benchmark
+  cancel-in-progress: false
+
+jobs:
+  # Prime the pip cache once. Both variants use the identical setup-python cache
+  # key (os + python-version + hash(pyproject.toml)), so after this job both hit
+  # a warm cache - the fair, like-for-like comparison we want to measure.
+  warmup:
+    name: Warm pip cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python-deps
+        with:
+          python-version: ${{ inputs.python-version || '3.13' }}
+
+  composite:
+    name: Composite setup (run ${{ matrix.run }})
+    needs: warmup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        run: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: start
+        run: echo "ts=$(date +%s.%N)" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/setup-python-deps
+        with:
+          python-version: ${{ inputs.python-version || '3.13' }}
+      - name: Record timing
+        run: |
+          end=$(date +%s.%N)
+          dur=$(awk -v a="${{ steps.start.outputs.ts }}" -v b="$end" 'BEGIN { printf "%.3f", b - a }')
+          mkdir -p bench
+          echo "composite,${{ matrix.run }},$dur" > bench/result.csv
+          echo "composite run ${{ matrix.run }}: ${dur}s"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-composite-${{ matrix.run }}
+          path: bench/result.csv
+
+  inline:
+    name: Inline setup (run ${{ matrix.run }})
+    needs: warmup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        run: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: start
+        run: echo "ts=$(date +%s.%N)" >> "$GITHUB_OUTPUT"
+      # Mirror of .github/actions/setup-python-deps - kept byte-for-byte
+      # equivalent so the only difference under test is composite vs inline.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ inputs.python-version || '3.13' }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies and setup environment
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+      - name: Record timing
+        run: |
+          end=$(date +%s.%N)
+          dur=$(awk -v a="${{ steps.start.outputs.ts }}" -v b="$end" 'BEGIN { printf "%.3f", b - a }')
+          mkdir -p bench
+          echo "inline,${{ matrix.run }},$dur" > bench/result.csv
+          echo "inline run ${{ matrix.run }}: ${dur}s"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-inline-${{ matrix.run }}
+          path: bench/result.csv
+
+  summary:
+    name: Aggregate results
+    needs: [composite, inline]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bench-*
+          path: bench-results
+      - name: Compute statistics
+        shell: bash
+        run: |
+          python3 - "$GITHUB_STEP_SUMMARY" <<'PY'
+          import csv, glob, statistics, sys
+
+          summary_path = sys.argv[1]
+          rows = []
+          for path in glob.glob("bench-results/**/result.csv", recursive=True):
+              with open(path, newline="") as fh:
+                  for variant, run, seconds in csv.reader(fh):
+                      rows.append((variant, int(run), float(seconds)))
+
+          variants = {}
+          for variant, _run, seconds in rows:
+              variants.setdefault(variant, []).append(seconds)
+
+          def stats(xs):
+              xs = sorted(xs)
+              return {
+                  "n": len(xs),
+                  "mean": statistics.mean(xs),
+                  "median": statistics.median(xs),
+                  "stdev": statistics.stdev(xs) if len(xs) > 1 else 0.0,
+                  "min": xs[0],
+                  "max": xs[-1],
+              }
+
+          lines = ["# Setup Benchmark: composite vs inline", ""]
+          if not rows:
+              lines.append("No timing results were collected.")
+          else:
+              lines += [
+                  "Warm-cache setup time (seconds), lower is better.",
+                  "",
+                  "| Variant | Runs | Mean | Median | Std dev | Min | Max |",
+                  "|---------|------|------|--------|---------|-----|-----|",
+              ]
+              for name in ("composite", "inline"):
+                  if name not in variants:
+                      continue
+                  s = stats(variants[name])
+                  lines.append(
+                      f"| {name} | {s['n']} | {s['mean']:.3f} | {s['median']:.3f} "
+                      f"| {s['stdev']:.3f} | {s['min']:.3f} | {s['max']:.3f} |"
+                  )
+              lines.append("")
+              if "composite" in variants and "inline" in variants:
+                  c, i = stats(variants["composite"]), stats(variants["inline"])
+                  delta = c["mean"] - i["mean"]
+                  pct = (delta / i["mean"] * 100) if i["mean"] else 0.0
+                  noise = max(c["stdev"], i["stdev"])
+                  verdict = (
+                      "within run-to-run noise (statistically equivalent)"
+                      if abs(delta) <= noise
+                      else "outside the noise band - investigate"
+                  )
+                  lines += [
+                      f"**Mean delta (composite - inline):** {delta:+.3f}s ({pct:+.1f}%)",
+                      "",
+                      f"**Verdict:** {verdict}. "
+                      f"Largest per-variant std dev is {noise:.3f}s.",
+                  ]
+
+          report = "\n".join(lines) + "\n"
+          print(report)
+          with open(summary_path, "a") as fh:
+              fh.write(report)
+          PY

@@ -242,6 +242,26 @@ All important processing steps and detected errors shall be logged.
 
 ---
 
+## FR-16 CI Dependency Caching
+
+The CI pipeline shall cache pip downloads, keyed on `pyproject.toml`, so that unchanged dependencies are restored from cache instead of re-downloaded; the cache is invalidated automatically when `pyproject.toml` changes.
+
+## FR-17 CI Reusable Environment Setup
+
+The CI pipeline shall use a single reusable composite action for repository checkout, Python setup, and dependency installation across all jobs.
+
+---
+
+## QR-08 CI Performance
+
+The CI pipeline shall avoid redundant work by caching pip downloads, centralising environment setup in one action, and removing unnecessary runtime setup (no unconditional Node.js installation).
+
+## QR-09 CI Maintainability
+
+The CI pipeline shall centralise common setup logic in a single reusable action so that environment changes require a single point of modification.
+
+---
+
 # 6. Business Rules
 
 **BR-01**

@@ -87,9 +87,9 @@ Examples:
 - `docs(api): update authentication guide`
 
 ### Scope Guidelines:
-- **Optional:** Scope improves clarity
+- **Mandatory:** Scope improves clarity
 - **Use scope** when the change affects a specific module/component (e.g., `auth`, `vpn`, `api`)
-- **Omit scope** for cross-cutting changes or when scope is not clear (e.g., `feat: update dependencies`)
+- **Cross scope** for cross-cutting changes (e.g., `arch`, `workflow`, `doc`)
 
 ## 4. Pull Request Requirements
 - **Title Format:** `[type][PRO-XXX] Clear description of changes` where `PRO-XXX` can have multiple digits (e.g., `PRO-123`, `PRO-123456`)
@@ -235,7 +235,7 @@ When the change affects documentation traceability or CI behaviour, also update 
 ```bash
 ruff check src_timesheetalgo tests
 black --check src_timesheetalgo tests
-pytest -q .github/workflows/test_docs_traceability.py
+python .github/scripts/generate_traceability_matrix.py
 ```
 
 1. **Create feature branch** (always from `master`):
@@ -441,7 +441,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Validation**: Performed via `actions/github-script` in the `lint` job
 
 #### Workflow Behavior
-- ✅ **Order**: Naming validation runs **before** dependency installation
+- ✅ **Order**: The `check` job checks out and sets up Python via the reusable composite action, then runs the naming/metadata validators, then the lint tools
 - ✅ **Timing**: Validation runs for every relevant PR event
 - ✅ **Failure**: Invalid names fail the workflow immediately, blocking linting and testing
 - ✅ **Blocks**: Merging through the existing **Python CI** status check
@@ -452,9 +452,9 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Release Branches** (inherited): Tests already run on Master
 
 ### Quality-Gate Result Publication:
-- ✅ **Master PRs**: at the end of the `test` job, a consolidated **quality-gate summary** is published as a sticky PR comment and in the job summary — Lint, Unit/Integration/System test status with executed/passed/failed/skipped counts, combined coverage vs. the 90% gate, and artifact links.
-- ✅ The comment is **updated in place** on re-runs (no duplicates) and is still published when a test level or the coverage gate fails, so a failing PR clearly shows which level broke.
-- ℹ️ Publication runs as `if: always()` steps inside the `test` job and is **non-gating** — it only reports results; the merge is still gated by the `lint` and `test` steps. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
+- ✅ **Master PRs**: a dedicated `publish` job (`if: always()`) publishes a consolidated **quality-gate summary** (regenerated every run) in the job summary and as a sticky PR comment. It opens with the overall result and a status-overview table (Lint + the steps, un-numbered), then sections — **Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **Testing** (split into **Application Tests** (unit/integration/system) and **CI-Pipeline Tests** (`.github/tests`), each with its own pass-rate %, status and per-level table), **Code Coverage** (% vs. the 90% gate), **Artifacts** (run, matrix, JUnit/coverage, htmlcov).
+- ✅ Two comments per run (Option C): the full report as a **sticky** comment updated in place (with an `_Updated: … UTC_` timestamp), plus a compact **per-run comment** (overall result + overview table) posted fresh each run for a per-run trail. Because `publish` is separate and `if: always()`, a comment is posted on **every** run — including when `check` (lint/naming) fails and `test` is skipped.
+- ℹ️ The `publish` job is **non-gating** — it only reports results; the merge is still gated by the `check` and `test` jobs. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
 
 ### Deployment Strategy:
 - ❌ **Development Branches**: No deployment

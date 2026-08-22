@@ -73,6 +73,25 @@ def test_empty_commit_messages():
     assert errors == []
 
 
+def test_commit_with_multiline_body_and_jira_ref():
+    """A commit with a multi-line body containing the JIRA ref is valid.
+
+    Regression test: the old blank-line splitting incorrectly treated body
+    paragraphs as separate commits, causing false failures.
+    """
+    messages = [
+        "feat(ci): implement O2 venv caching and O4 consolidated PR validators\n"
+        "\n"
+        "- O2 (AC-4): Cache virtual environment in setup-python-deps composite action\n"
+        "  using actions/cache@v4 keyed on pyproject.toml\n"
+        "- O4 (AC-5): Replace four sequential validation steps with single script\n"
+        "\n"
+        "Refs: PRO-368"
+    ]
+    errors = mod.validate_commit_messages(messages)
+    assert errors == [], f"Expected no errors, got: {errors}"
+
+
 # ---------------------------------------------------------------------------
 # PR title validation
 # ---------------------------------------------------------------------------

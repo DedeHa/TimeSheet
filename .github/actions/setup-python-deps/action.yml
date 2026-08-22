@@ -44,3 +44,7 @@ runs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
         fi
+        # Make the venv available to subsequent job steps (composite actions
+        # run each step in its own shell, so `source activate` alone is not
+        # enough — PATH must be exported via GITHUB_ENV).
+        echo "PATH=$PWD/.venv/bin:$PATH" >> "$GITHUB_ENV"

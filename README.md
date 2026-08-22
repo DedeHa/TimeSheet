@@ -37,7 +37,7 @@ python src_timesheetalgo/TimeSheetAlgo.py
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.14+
 - pip (Python package manager)
 
 ### Setup

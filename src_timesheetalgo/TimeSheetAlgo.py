@@ -268,7 +268,7 @@ class TimeSheetProcessor:
                 logging.info(f"Start date: {self.obj_date_startpoint.date()}")
             else:
                 self.obj_date_startpoint = self.set_default_start_date()
-        except (ValueError, EOFError):
+        except (ValueError, EOFError):  # fmt: skip
             logging.info("Using default start date...")
             self.obj_date_startpoint = self.set_default_start_date()
 

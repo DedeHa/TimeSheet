@@ -164,9 +164,7 @@ def test_validation_steps_are_independent():
     # O4: Four separate steps replaced by one consolidated "Validate PR" step
     assert "Validate PR" in names
     # The consolidated script must call validate_pr.py
-    validate_pr_step = next(
-        (s for s in steps if s.get("name") == "Validate PR"), None
-    )
+    validate_pr_step = next((s for s in steps if s.get("name") == "Validate PR"), None)
     assert validate_pr_step is not None, "Validate PR step not found"
     assert "validate_pr.py" in validate_pr_step.get("run", "")
 
@@ -174,11 +172,7 @@ def test_validation_steps_are_independent():
 def test_validation_steps_fail_the_job_on_error():
     """AC5: the consolidated PR validator hard-fails the job."""
     steps = _job_steps("check")
-    validators = [
-        s
-        for s in steps
-        if s.get("name") == "Validate PR"
-    ]
+    validators = [s for s in steps if s.get("name") == "Validate PR"]
     assert validators, "validation step not found"
     for step in validators:
         assert (
@@ -229,10 +223,7 @@ def test_pr_title_regex_unchanged():
     """The PR title validator still accepts [type][PRO-XXX] Description."""
     # O4: Validation rules moved to validate_pr.py
     script_path = (
-        Path(__file__).resolve().parents[2]
-        / ".github"
-        / "scripts"
-        / "validate_pr.py"
+        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
     )
     script = script_path.read_text(encoding="utf-8")
     assert r"PRO-\d+" in script
@@ -245,10 +236,7 @@ def test_pr_body_sections_required():
     """The PR body validator still requires ## Summary and ## Testing."""
     # O4: Validation rules moved to validate_pr.py
     script_path = (
-        Path(__file__).resolve().parents[2]
-        / ".github"
-        / "scripts"
-        / "validate_pr.py"
+        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
     )
     script = script_path.read_text(encoding="utf-8")
     assert "## Summary" in script

@@ -111,7 +111,10 @@ def get_commit_messages() -> List[str]:
 
     # %x00 = null byte separator between commits; %H = hash, %B = full body
     cmd = [
-        "git", "log", "--format=%H%x00%B", f"{base}..{head}",
+        "git",
+        "log",
+        "--format=%H%x00%B",
+        f"{base}..{head}",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if result.returncode != 0:

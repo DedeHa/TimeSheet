@@ -98,21 +98,33 @@ def get_pr_metadata() -> dict:
 
 
 def get_commit_messages() -> List[str]:
-    """Return commit messages between base and head SHA."""
+    """Return commit messages between base and head SHA.
+
+    Uses a null-byte separator to reliably split individual commit messages,
+    since commit bodies may contain blank lines.
+    """
     base = os.environ.get("GITHUB_BASE_SHA", "")
     head = os.environ.get("GITHUB_HEAD_SHA", "")
     if not (base and head):
         print("ERROR: Missing GITHUB_BASE_SHA or GITHUB_HEAD_SHA")
         sys.exit(1)
 
-    cmd = ["git", "log", "--format=%B", f"{base}..{head}"]
+    # %x00 = null byte separator between commits; %H = hash, %B = full body
+    cmd = [
+        "git", "log", "--format=%H%x00%B", f"{base}..{head}",
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         print(f"ERROR: Failed to get commit messages: {result.stderr}")
         sys.exit(1)
 
-    # Split on blank lines to get individual commit messages
-    messages = [m.strip() for m in result.stdout.split("\n\n") if m.strip()]
+    # Split on null bytes, then pair hash + message
+    parts = result.stdout.split("\x00")
+    messages: List[str] = []
+    for i in range(0, len(parts) - 1, 2):
+        msg = parts[i + 1].strip() if i + 1 < len(parts) else ""
+        if msg:
+            messages.append(msg)
     return messages
 
 

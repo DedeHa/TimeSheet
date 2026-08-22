@@ -19,6 +19,12 @@ tests/
     test_config.py               # load_config, _read_yaml, detect_environment, ConfigError
     test_logging.py              # configure_logging
     test_dates.py                # parse_date (incl. calendar/leap-day BVA), _get_date, set_default_start/end_date
+    test_input_provider.py       # PRO-339: InputProvider injection (no builtins.input mock)
+    test_clock.py                # PRO-339: injected Clock (no freezegun required)
+    test_pure_functions.py       # PRO-339: filter_timelog_entries, calculate_default_start_date, map_entry_to_cell
+    test_store_result.py         # PRO-339: StoreResult enum + store_data return value
+    test_validation.py           # PRO-339: validate_timelog_entry, validate_timesheet_structure
+    test_builder.py              # PRO-339: TimeSheetProcessor.for_testing()
     test_files.py                # check_file_existence (csv/excel/lock/permission/not-found, remark column)
     test_processor_methods.py    # load_files, request_date_input, select_timelog_data (range BVA), save_timesheet
     test_overwrite.py            # confirm_overwrite, _prompt_overwrite_decision, _check_and_confirm_overwrite

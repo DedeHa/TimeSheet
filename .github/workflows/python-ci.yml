@@ -74,7 +74,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       - name: Print GitHub Context Information and setup environment
         run: |
@@ -82,68 +82,18 @@ jobs:
           echo "GitHub Base Ref: ${{ github.base_ref }}"
           echo "GitHub Event Name: ${{ github.event_name }}"
 
-      - name: Validate commit messages
+      # O4 (AC-5): Consolidated PR validation - replaces four separate
+      # steps (commit messages, Jira ref, PR title, PR body) with a single
+      # Python script that produces a unified, actionable error report.
+      - name: Validate PR
         if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        uses: wagoid/commitlint-github-action@v6
-        with:
-          configFile: .commitlintrc.json
-          commitDepth: 1
-        continue-on-error: true
-
-      # Add JIRA reference validation in commit messages
-      - name: Validate Jira reference in commits
-        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        run: |
-          git log --format=%H ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
-          while read hash; do
-            if ! git log -1 --format=%B "$hash" | grep -qE "Refs: PRO-[0-9]+"; then
-              echo "Missing or invalid Jira reference in commit $hash"
-              exit 1
-            fi
-          done
-        continue-on-error: false
-
-      # Validate PR Title
-      - name: Validate PR Title
-        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prTitle = context.payload.pull_request.title;
-            // Format: [type][PRO-123] Description
-            // Types from CONTRIBUTING.md: feat, fix, docs, refactor, test, chore, hotfix
-            const prType = 'feat|fix|docs|refactor|test|chore|hotfix';
-            const regex = new RegExp('^\\[(?:' + prType + ')\\]\\[PRO-\\d+\\]\\s+.+$', 'i');
-            if (!regex.test(prTitle)) {
-              core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
-            }
-        continue-on-error: false
-
-      # Validate PR Body
-      - name: Validate PR Body
-        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const body = context.payload.pull_request.body || '';
-            const hasSummary = /##\s+Summary\s*\n/.test(body);
-            const hasTesting = /##\s+Testing\s*\n/.test(body);
-            if (!hasSummary) {
-              core.setFailed('PR body missing mandatory "## Summary" section');
-            }
-            if (!hasTesting) {
-              core.setFailed('PR body missing mandatory "## Testing" section');
-            }
-            // Check for placeholder text
-            if (/TODO|TBD|Describe your changes\.\.\./i.test(body)) {
-              core.setFailed('PR body contains placeholder text (TODO, TBD, etc.)');
-            }
-            // Check for mandatory JIRA reference in body
-            if (!/Refs: PRO-[0-9]+/i.test(body)) {
-              core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
-            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python .github/scripts/validate_pr.py
         continue-on-error: false
 
       - name: Run lint tools (ruff, black, pydocstyle, radon)
@@ -182,7 +132,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       - name: Prepare report directory
         run: mkdir -p tests/reports
@@ -258,7 +208,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       - name: Install packaging tools
         run: |

@@ -27,7 +27,7 @@ on:
     inputs:
       python-version:
         description: 'Python version to benchmark'
-        default: '3.13'
+        default: '3.14'
         type: string
 
 # Serialise dispatches so concurrent runs do not race on the shared pip cache.

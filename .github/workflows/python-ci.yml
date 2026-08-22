@@ -69,7 +69,7 @@ jobs:
     steps:
       # Checkout must run before the local composite action: a local action
       # cannot be resolved until the repository is present on the runner.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
@@ -177,7 +177,7 @@ jobs:
     steps:
       # Checkout must run before the local composite action: a local action
       # cannot be resolved until the repository is present on the runner.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
@@ -253,7 +253,7 @@ jobs:
     steps:
       # Checkout must run before the local composite action: a local action
       # cannot be resolved until the repository is present on the runner.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python-deps
@@ -274,7 +274,7 @@ jobs:
       pull-requests: write
       issues: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Show build information
         run: |

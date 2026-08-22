@@ -106,7 +106,7 @@ jobs:
       # Validate PR Title
       - name: Validate PR Title
         if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -123,7 +123,7 @@ jobs:
       # Validate PR Body
       - name: Validate PR Body
         if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -299,7 +299,7 @@ jobs:
         run: python3 .github/scripts/generate_pr_summary.py
 
       - name: Publish or update sticky PR comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -339,7 +339,7 @@ jobs:
       # per-run trail (each linking back to its run) without duplicating the full
       # summary each time.
       - name: Post per-run status line
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

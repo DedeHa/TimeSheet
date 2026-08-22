@@ -132,14 +132,12 @@ def test_parse_date_leap_day_non_leap_year_rejected(monkeypatch):
         parse_date("Enter date: ", retries=1)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BVA gap (PRO-262): set_default_start_date scans rows ROW_OFFSET+30..+1, "
-    "so a worked day on the 31st is never detected. See "
-    "tests/boundary_equivalence_analysis.md.",
-)
 def test_set_default_start_date_day_31_boundary(mock_processor):
-    """A worked day on the 31st should become the default start date."""
+    """A worked day on the 31st should become the default start date.
+
+    PRO-262: set_default_start_date scans rows ROW_OFFSET+31..+1, so a worked
+    day on the 31st is detected. See tests/boundary_equivalence_analysis.md.
+    """
     mock_processor.timesheet.worksheets[0].cell(
         row=ROW_OFFSET + 31, column=5, value="09:00"
     )

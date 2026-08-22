@@ -297,7 +297,7 @@ class TimeSheetProcessor:
         # Iterate through timesheet months in reverse order
         for sheet in reversed(self.timesheet.worksheets[:12]):
             # Look for the last entry with time data (indicating a worked day)
-            for i in range(ROW_OFFSET + 30, ROW_OFFSET, -1):
+            for i in range(ROW_OFFSET + 31, ROW_OFFSET, -1):
                 # Check if there's time data in column E (start time)
                 time_cell = sheet.cell(row=i, column=5).value
 

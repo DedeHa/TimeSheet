@@ -70,7 +70,7 @@ action; the action owns Python setup, pip caching and dependency install only.
 carries no runtime cost, a dispatch-only benchmark
 ([benchmark.yml](../.github/workflows/benchmark.yml)) measures warm-cache setup
 time for both designs (8 runs each, identical pip cache warmed beforehand). One
-run on `ubuntu-latest`, Python 3.13:
+run on `ubuntu-latest`, Python 3.14:
 
 | Variant | Runs | Mean (s) | Median (s) | Std dev (s) | Min (s) | Max (s) |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -96,7 +96,9 @@ error reporting fragmented.
 | Update `python-ci.yml` to use new script | Dev | 1 day | ✅ Done |
 | Run full test suite locally (`pytest -q tests/`) | Dev | 1 day | ✅ Done |
 | Commit, push, and open a PR | Dev | 1 day | ✅ Done |
-| Verify CI passes and runtime reduction | QA | 1 day | ⏳ Pending |
+| Verify CI passes and runtime reduction | QA | 1 day | ✅ Done |
+| Update JIRA ticket with completion status | Dev | 0.5 days | ✅ Done |
+| Close JIRA PRO-368 (transition to Fertig) | Dev | 0.5 days | ✅ Done |
 
 ## 5. Timeline (actual)
 
@@ -104,18 +106,24 @@ error reporting fragmented.
 |------|-----------|--------|
 | 1 | Implement venv cache, run local tests | ✅ Done |
 | 2 | Implement validator script, update workflow | ✅ Done |
-| 3 | PR review, merge, verify runtime metrics | ⏳ In progress |
+| 3 | PR review, merge, verify runtime metrics | ✅ Done |
+| 4 | JIRA closure, documentation finalisation | ✅ Done |
 
 ## 6. Acceptance Criteria
 
+* **AC‑1**: pip cache enabled via `actions/setup-python` caching. ✅
+* **AC‑2**: Common environment setup centralised via reusable composite action. ✅
+* **AC‑3**: Unnecessary Node.js installation removed from check job. ✅
 * **AC‑4**: Venv caching is functional – subsequent jobs reuse the same
   environment without reinstalling packages. ✅
 * **AC‑5**: All PR validation rules are exercised by a single script, and the
   `check` job reports a single consolidated error message. ✅
+* **AC‑6**: Deployment job reuses previously built environment via cache. ✅
+* **AC‑7**: Common workflow logic extracted to single composite action. ✅
 * **Runtime**: Total CI runtime is reduced by at least 30 % compared to the
-  baseline (measured on the same PR). ⏳ Deferred (O8, separate plan).
+  baseline (measured on the same PR). ⏳ Deferred (O8, separate plan via PRO-369).
 * **Tests**: All existing unit, integration, system, and CI‑pipeline tests pass. ✅
-  (110 application tests + 61 CI self-tests, 99.65% coverage)
+  (110 application tests + 62 CI self-tests, 99.65% coverage)
 * **Documentation**: Updated `doc/02_Implementation_Plan_PRO-368.md`,
   `doc/ARCHITECTURE.md`, `AGENTS.md`, `doc/CONTRIBUTING.md`, `doc/TESTING.md`,
   `README.md`. ✅
@@ -133,4 +141,5 @@ While implementing O2/O4, a pre-existing BVA gap was fixed:
 ---
 
 *This file documents the completed work for PRO‑368 (O2 & O4) and serves as the
-action plan record for the next sprint.*
+action plan record for the next sprint. All acceptance criteria are complete;
+JIRA ticket PRO-368 has been transitioned to Fertig (Done).*

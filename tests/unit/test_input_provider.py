@@ -10,8 +10,6 @@ from datetime import datetime
 import pytest
 
 from src_timesheetalgo.TimeSheetAlgo import (
-    DATE_FORMAT,
-    InputProvider,
     _default_input_provider,
     parse_date,
 )
@@ -61,9 +59,7 @@ def test_default_input_provider_delegates_to_builtin(monkeypatch):
 def test_parse_date_valid_via_provider():
     """A valid date string is parsed when supplied via the provider."""
     provider = _make_provider(["15.03.2025"])
-    assert parse_date("Enter date: ", input_provider=provider) == datetime(
-        2025, 3, 15
-    )
+    assert parse_date("Enter date: ", input_provider=provider) == datetime(2025, 3, 15)
 
 
 def test_parse_date_retries_exhausted_via_provider():
@@ -90,6 +86,7 @@ def test_parse_date_invalid_then_valid_via_provider():
 
 def test_parse_date_eof_propagates_via_provider():
     """An EOFError from the provider propagates (only ValueError is caught)."""
+
     def _provider(prompt):
         raise EOFError("no input")
 

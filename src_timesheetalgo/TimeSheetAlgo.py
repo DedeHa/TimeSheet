@@ -15,6 +15,7 @@ REMARK: Refactored and optimized with ChatGPT and review/updated
 """
 
 import csv
+import enum
 import logging
 import os
 from datetime import datetime as dt
@@ -189,6 +190,21 @@ def parse_date(
                 f"Invalid date format. Attempts left: {retries - attempt - 1}"
             )
     raise ValueError("Maximum retries reached. Exiting...")
+
+
+class StoreResult(enum.Enum):
+    """Outcome of a ``store_data`` run.
+
+    Replaces the implicit ``break`` / ``continue`` control flow so that
+    callers can assert on the returned status instead of inspecting log
+    output.
+
+    Traceability: FR-12.
+    """
+
+    STORED = "stored"
+    SKIPPED = "skipped"
+    ABORTED = "abort"
 
 
 def filter_timelog_entries(entries, start, end):
@@ -442,24 +458,18 @@ class TimeSheetProcessor:
     def store_data(self):
         """Store selected timelog data into the timesheet.
 
+        Returns a :class:`StoreResult` so callers can assert on the outcome
+        instead of inspecting log output.
+
         Traceability: FR-09, FR-10, FR-11, FR-12.
         """
         logging.info("Storing timelog data into timesheet...")
 
-        # Check if any existing data will be overwritten and ask once upfront
         overwrite_decision = self._check_and_confirm_overwrite()
 
+        result = StoreResult.STORED
         for entry in self.timedata:
-            # Define index for storing data
-            date, start_time, end_time = (
-                dt.strptime(entry[0], DATE_FORMAT),
-                entry[1],
-                entry[2],
-            )
-
-            # row: startindex = Timesheet Header + Day of the Month
-            # month: selected_month(index_0) = selected_date.month(index_1) - 1
-            row, month_idx = ROW_OFFSET + date.day, date.month - 1
+            row, month_idx, start_time, end_time = map_entry_to_cell(entry)
             sheet = self.timesheet.worksheets[month_idx]
 
             start_cell, end_cell = sheet.cell(row=row, column=5), sheet.cell(
@@ -468,14 +478,18 @@ class TimeSheetProcessor:
 
             if start_cell.value:
                 if overwrite_decision == "skip_all":
-                    logging.info(f"Skipping existing data for {date.date()}.")
+                    logging.info(f"Skipping existing data for {entry[0]}.")
+                    result = StoreResult.SKIPPED
                     continue
                 elif overwrite_decision == "abort":
                     logging.info("Aborting due to user request.")
+                    result = StoreResult.ABORTED
                     break
                 # overwrite_decision == "overwrite_all" -> proceed to overwrite
 
             start_cell.value, end_cell.value = start_time, end_time
+
+        return result
 
     def _check_and_confirm_overwrite(self):
         """Check for existing data and ask user once for overwrite decision.
@@ -483,15 +497,13 @@ class TimeSheetProcessor:
         Returns:
             str: "overwrite_all", "skip_all", or "abort"
         """
-        # Count entries with existing data
         entries_with_data = []
         for entry in self.timedata:
-            date = dt.strptime(entry[0], DATE_FORMAT)
-            row, month_idx = ROW_OFFSET + date.day, date.month - 1
+            row, month_idx, _, _ = map_entry_to_cell(entry)
             sheet = self.timesheet.worksheets[month_idx]
             start_cell = sheet.cell(row=row, column=5)
             if start_cell.value:
-                entries_with_data.append(date.date())
+                entries_with_data.append(entry[0])
 
         if not entries_with_data:
             return "overwrite_all"  # No conflicts, proceed normally

@@ -95,7 +95,7 @@ jobs:
         run: echo "ts=$(date +%s.%N)" >> "$GITHUB_OUTPUT"
       # Mirror of .github/actions/setup-python-deps - kept byte-for-byte
       # equivalent so the only difference under test is composite vs inline.
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version || '3.13' }}
           cache: pip

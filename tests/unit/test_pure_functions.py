@@ -10,7 +10,6 @@ from datetime import datetime
 import pytest
 
 from src_timesheetalgo.TimeSheetAlgo import (
-    DATE_FORMAT,
     ROW_OFFSET,
     TIMESHEET_SHEETS,
     calculate_default_start_date,
@@ -38,21 +37,23 @@ def test_filter_inclusive_both_ends():
         _row("16.03.2025"),
         _row("17.03.2025"),
     ]
-    result = filter_timelog_entries(
-        rows, datetime(2025, 3, 15), datetime(2025, 3, 16)
-    )
+    result = filter_timelog_entries(rows, datetime(2025, 3, 15), datetime(2025, 3, 16))
     assert result == [_row("15.03.2025"), _row("16.03.2025")]
 
 
 def test_filter_empty_input():
     """An empty input yields an empty output."""
-    assert filter_timelog_entries([], datetime(2025, 1, 1), datetime(2025, 12, 31)) == []
+    assert (
+        filter_timelog_entries([], datetime(2025, 1, 1), datetime(2025, 12, 31)) == []
+    )
 
 
 def test_filter_no_matches():
     """Entries outside the range are excluded."""
     rows = [_row("01.01.2025"), _row("31.12.2025")]
-    assert filter_timelog_entries(rows, datetime(2025, 6, 1), datetime(2025, 6, 30)) == []
+    assert (
+        filter_timelog_entries(rows, datetime(2025, 6, 1), datetime(2025, 6, 30)) == []
+    )
 
 
 def test_filter_single_day_range():

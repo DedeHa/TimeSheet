@@ -20,7 +20,7 @@ import logging
 import os
 from datetime import datetime as dt
 from datetime import timedelta as td
-from typing import Callable, Optional, Union
+from typing import Callable, Optional
 
 import openpyxl
 import yaml
@@ -48,6 +48,7 @@ Clock = Callable[[], dt]
 def _default_clock() -> dt:
     """Default Clock: returns the current wall-clock time."""
     return dt.now()
+
 
 # Constants
 DATE_FORMAT = "%d.%m.%Y"
@@ -237,9 +238,7 @@ def filter_timelog_entries(entries, start, end):
     Traceability: FR-08, QR-02.
     """
     return [
-        entry
-        for entry in entries
-        if start <= dt.strptime(entry[0], DATE_FORMAT) <= end
+        entry for entry in entries if start <= dt.strptime(entry[0], DATE_FORMAT) <= end
     ]
 
 
@@ -314,9 +313,7 @@ def validate_timelog_entry(entry):
     try:
         dt.strptime(entry[0], DATE_FORMAT)
     except (ValueError, TypeError) as e:
-        raise TimelogFormatError(
-            f"Invalid date in timelog row {entry!r}: {e}"
-        ) from e
+        raise TimelogFormatError(f"Invalid date in timelog row {entry!r}: {e}") from e
 
 
 def validate_timesheet_structure(timesheet):
@@ -400,13 +397,20 @@ def check_file_existence(filepath, filetype):
 class TimeSheetProcessor:
     """Process and manage timelog and timesheet data."""
 
-    def __init__(self, config, input_provider: InputProvider = _default_input_provider, clock: Clock = _default_clock):
+    def __init__(
+        self,
+        config,
+        input_provider: InputProvider = _default_input_provider,
+        clock: Clock = _default_clock,
+    ):
         """Initialize the TimeSheetProcessor with configuration.
 
         Args:
-            config (dict): Dictionary containing file paths, year, and logging settings.
-            input_provider (InputProvider): User-input function (default: builtins.input).
-            clock (Clock): Time provider (default: datetime.now).
+            config (dict): Dictionary containing file paths, year, and
+                logging settings.
+            input_provider: User-input function
+                (default: ``builtins.input``).
+            clock: Time provider (default: ``datetime.now``).
 
         Traceability: FR-07, QR-04.
         """

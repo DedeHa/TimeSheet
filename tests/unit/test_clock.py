@@ -5,14 +5,12 @@
 ``freezegun``.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
 from src_timesheetalgo.TimeSheetAlgo import (
-    Clock,
     _default_clock,
-    TimeSheetProcessor,
 )
 
 pytestmark = pytest.mark.unit

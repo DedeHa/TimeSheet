@@ -40,12 +40,8 @@ def test_store_data_returns_stored_on_overwrite(make_processor, caplog):
         timelog=[["15.03.2025", "09:00", "17:00"]],
         timesheet_cells=[(2, 15, "08:00", "16:00")],  # existing data -> conflict
     )
-    processor.obj_date_startpoint = __import__(
-        "datetime"
-    ).datetime(2025, 3, 1)
-    processor.obj_date_endpoint = __import__(
-        "datetime"
-    ).datetime(2025, 3, 31)
+    processor.obj_date_startpoint = __import__("datetime").datetime(2025, 3, 1)
+    processor.obj_date_endpoint = __import__("datetime").datetime(2025, 3, 31)
     processor.select_timelog_data()
 
     # Force overwrite_all by injecting a provider that answers "y"

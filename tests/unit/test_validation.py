@@ -8,7 +8,6 @@ import openpyxl
 import pytest
 
 from src_timesheetalgo.TimeSheetAlgo import (
-    ROW_OFFSET,
     TIMESHEET_SHEETS,
     TimelogFormatError,
     TimesheetFormatError,

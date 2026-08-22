@@ -9,7 +9,7 @@
 > manually-dispatched **setup** micro-benchmark (composite vs. inline). Here we
 > measure the **whole pipeline over time**.
 >
-> **JIRA:** PRO-368 (optimization O8) · **Status:** PLAN (not yet implemented)
+> **JIRA:** PRO-369 (child of PRO-368, optimization O8; parent epic PRO-259) · **Status:** New (JIRA "Zu erledigen") — not yet implemented
 
 This document has three parts, as requested: **Part A — Preanalysis**,
 **Part B — Implementation Plan** (derived from the preanalysis), and
@@ -52,7 +52,9 @@ Consequences:
   PR" is resolved from the branch (`gh pr view --json number,headRefName`) or, in a
   `workflow_run` trigger, from the triggering run's `pull_requests[]`.
 - Tag/`workflow_dispatch` runs are **out of scope** for the PR benchmark (different
-  event profile); they may be captured separately later.
+  event profile); they may be captured separately later. (The `workflow_dispatch`
+  **backfill** input is a separate, explicit, opt-in mechanism — see A.7 — and is
+  not part of the continuous PR capture.)
 
 ### A.4 Exclusion rules (failed / edge-case runs) — precise definition
 
@@ -218,7 +220,9 @@ job_name, step_number)`.
 
 Not a quality gate (never fails a PR); does not change `python-ci.yml`'s timing;
 does not measure queue time; does not compare against `master`/baseline in v1
-(possible later); no external dashboards.
+(possible later); no external dashboards or databases; does **not** replace
+`.github/workflows/benchmark.yml`; does **not** perform application performance
+benchmarking.
 
 ---
 

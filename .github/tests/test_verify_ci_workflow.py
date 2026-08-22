@@ -158,31 +158,22 @@ def test_node24_migration_env_var_set():
 
 
 def test_validation_steps_are_independent():
-    """AC5: the commit / PR-title / PR-body validators are separate steps."""
+    """AC5: the consolidated PR validator is a single Python script step."""
     steps = _job_steps("check")
     names = [s.get("name", "") for s in steps]
-    assert "Validate commit messages" in names
-    assert "Validate Jira reference in commits" in names
-    assert "Validate PR Title" in names
-    assert "Validate PR Body" in names
-    # They must not be nested inside a single script step.
-    assert not any("validate_pr" in s.get("run", "") for s in steps)
+    # O4: Four separate steps replaced by one consolidated "Validate PR" step
+    assert "Validate PR" in names
+    # The consolidated script must call validate_pr.py
+    validate_pr_step = next((s for s in steps if s.get("name") == "Validate PR"), None)
+    assert validate_pr_step is not None, "Validate PR step not found"
+    assert "validate_pr.py" in validate_pr_step.get("run", "")
 
 
 def test_validation_steps_fail_the_job_on_error():
-    """AC5: the PRO-368 validators (Jira ref, PR title, PR body) hard-fail."""
+    """AC5: the consolidated PR validator hard-fails the job."""
     steps = _job_steps("check")
-    validators = [
-        s
-        for s in steps
-        if s.get("name", "")
-        in {
-            "Validate Jira reference in commits",
-            "Validate PR Title",
-            "Validate PR Body",
-        }
-    ]
-    assert validators, "validation steps not found"
+    validators = [s for s in steps if s.get("name") == "Validate PR"]
+    assert validators, "validation step not found"
     for step in validators:
         assert (
             step.get("continue-on-error") is False
@@ -230,18 +221,24 @@ def test_commitlint_header_length_unchanged():
 
 def test_pr_title_regex_unchanged():
     """The PR title validator still accepts [type][PRO-XXX] Description."""
-    steps = _job_steps("check")
-    title_step = next(s for s in steps if s.get("name") == "Validate PR Title")
-    script = title_step["with"]["script"]
-    assert r"PRO-\\d+" in script
-    assert "feat|fix|docs|refactor|test|chore|hotfix" in script
+    # O4: Validation rules moved to validate_pr.py
+    script_path = (
+        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
+    )
+    script = script_path.read_text(encoding="utf-8")
+    assert r"PRO-\d+" in script
+    # The valid PR types must include all the standard Conventional Commit types
+    for valid_type in ("feat", "fix", "docs", "refactor", "test", "chore", "hotfix"):
+        assert valid_type in script, f"PR type '{valid_type}' missing from validator"
 
 
 def test_pr_body_sections_required():
     """The PR body validator still requires ## Summary and ## Testing."""
-    steps = _job_steps("check")
-    body_step = next(s for s in steps if s.get("name") == "Validate PR Body")
-    script = body_step["with"]["script"]
+    # O4: Validation rules moved to validate_pr.py
+    script_path = (
+        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
+    )
+    script = script_path.read_text(encoding="utf-8")
     assert "## Summary" in script
     assert "## Testing" in script
     assert "Refs: PRO-" in script

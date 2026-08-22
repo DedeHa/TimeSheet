@@ -36,8 +36,10 @@ EXPECTED_CI_FILES = [
     GITHUB_DIR / "actions" / "setup-python-deps" / "action.yml",
     SCRIPTS_DIR / "generate_pr_summary.py",
     SCRIPTS_DIR / "generate_traceability_matrix.py",
+    SCRIPTS_DIR / "validate_pr.py",
     TESTS_DIR / "test_generate_pr_summary.py",
     TESTS_DIR / "test_generate_traceability_matrix.py",
+    TESTS_DIR / "test_validate_pr.py",
     TESTS_DIR / "test_verify_ci_workflow.py",
 ]
 

@@ -107,6 +107,7 @@ def test_valid_pr_titles():
         "[test][PRO-200] Add unit tests",
         "[chore][PRO-300] Bump dependency",
         "[hotfix][PRO-400] Critical fix",
+        "[release][PRO-500] v4.2.0",
     ]
     for title in valid_titles:
         errors = mod.validate_pr_title(title)

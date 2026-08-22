@@ -51,28 +51,28 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 
 ## Traceability Validation
 
-Requirement-to-architecture-to-code traceability is validated by [.github/workflows/test_docs_traceability.py](../.github/workflows/test_docs_traceability.py). The test scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and fails the build when any requirement is missing a mapping. The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
+Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by [.github/tests/test_generate_traceability_matrix.py](../.github/tests/test_generate_traceability_matrix.py), which the `check` job runs as part of the CI self-tests (`pytest -q .github/tests/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
 
 ## Pull Request Quality-Gate Summary
 
-Every Pull Request targeting `master` publishes a consolidated quality-gate summary as a **sticky** comment (updated in place on re-runs, never duplicated) and in the GitHub Actions job summary. The summary reports, with ✅ / ❌ / ⚠️ indicators:
+Every Pull Request targeting `master` publishes one consolidated quality-gate summary, regenerated on every run, in the GitHub Actions **job summary** (the "PR Run" page) and as a **sticky PR comment** (updated in place, never duplicated, carrying an `_Updated: … UTC_` timestamp). A compact **per-run comment** is also posted fresh on every run (Option C) — the overall result plus the status-overview table — giving a per-run trail alongside the always-current sticky report.
 
-- Overall workflow result
-- Lint & formatting status
-- Unit / Integration / System test status
-- Executed, passed, failed and skipped counts per level (from the JUnit reports)
-- Combined line + branch coverage and the 90% gate result
-- A link to the workflow run and its downloadable artifacts (including `htmlcov/index.html`)
+The report opens with the **overall workflow result** and a **status-overview table** — one row each for Lint & Formatting and the steps (un-numbered), with status and a one-line summary — so the whole gate is readable at a glance. It then details each step (headings are un-numbered):
 
-How it is produced (all inside the `test` job, so the pipeline graph stays `lint -> test -> deploy`):
+- **Traceability** — requirement→code traceability summary (0–100%) + status. The **PR Run** embeds the full traceability matrix table; the **PR comment** shows the percentage plus a link to the matrix artifact.
+- **Testing** — split into two independent groups, each with its own pass rate, status and per-level table (executed / passed / failed / skipped + Total): **Application** (the script: Unit / Integration / System) and **CI Pipeline** (the `.github/tests` suite). The status overview shows them as separate **Application Tests** and **CI-Pipeline Tests** rows.
+- **Code Coverage** — combined line + branch coverage (0–100%) and the 90% quality-gate status.
+- **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports (incl. `ci-results.xml`) and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
 
-1. Each level writes a JUnit report (`tests/reports/*-results.xml`) and a machine-readable `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); both are also uploaded in the `test-results` artifact.
-2. A `Generate PR quality-gate summary` step (`if: always()`) runs [.github/workflows/pr_test_summary.py](../.github/workflows/pr_test_summary.py), which renders `tests/reports/test-summary.md` from the JUnit files, the coverage JSON, the `lint` job result (`needs.lint.result`) and the test outcome so far (`job.status`).
-3. A `Publish or update sticky PR comment` step (`if: always()`) uses `actions/github-script` to find the previous summary by a hidden marker and update it, or create it on the first run.
+How it is produced:
 
-Both publishing steps use `if: always()`, so the summary is still published when a test level or the 90% coverage gate fails, and publication never gates the merge — the quality gates themselves are still enforced by the preceding steps. (One edge case: because the `test` job `needs: lint`, a `lint` failure skips the whole job and therefore skips publication; lint failures remain visible directly in the PR checks.)
+1. In the `test` job, each level writes a JUnit report (`tests/reports/*-results.xml`, including `ci-results.xml` for the CI self-tests) and `tests/reports/coverage.json` is exported (`coverage json --fail-under=0`); the traceability matrix (`tests/reports/traceability-matrix.md` / `.html`) is written by the earlier traceability step. All are uploaded as the `test-results` artifact.
+2. A dedicated `publish` job (`if: always()`, depends on the gating jobs) downloads that artifact and runs [.github/scripts/generate_pr_summary.py](../.github/scripts/generate_pr_summary.py) with the upstream results (`LINT_RESULT=needs.check.result`, `TEST_RESULT=needs.test.result`). It writes the full **sticky** report to `tests/reports/test-summary.md`, the compact **per-run comment** (overview table) to `tests/reports/test-summary-line.md`, and appends the **job-summary** variant (with the matrix embedded) to `$GITHUB_STEP_SUMMARY`.
+3. The same job publishes two comments via `actions/github-script`: it updates the **sticky** full report in place (found by a hidden marker), and posts the compact **per-run comment** fresh on every run (Option C) so the PR keeps a per-run trail.
 
-The generator uses the standard library only and is covered by [.github/workflows/test_pr_test_summary.py](../.github/workflows/test_pr_test_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
+Because the `publish` job runs with `if: always()` in its own job — **not** inside `test` — a PR receives an up-to-date comment on **every** run, including when `check` (lint/naming) fails and the `test` job is skipped (the summary then degrades gracefully, showing lint failed and tests skipped). Publication is non-gating: it only reports results; the merge is still gated by the `check` and `test` jobs.
+
+The generator uses the standard library only and is covered by [.github/tests/test_generate_pr_summary.py](../.github/tests/test_generate_pr_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
 
 ## Test levels and their intent
 

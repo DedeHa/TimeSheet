@@ -1,16 +1,27 @@
 ---
 # This workflow implements the Feature → Master → Release → Deployment strategy
-# - Pull requests to master: Full checks (Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
-# - Pull requests to release/*: Lint checks
-# - Release tags (vX.Y.Z): Deployment to production only (tests already passed on master)
+# - Pull requests to master: Full checks (Naming + Lint + Unit + Integration + System Tests + Code Coverage) - QUALITY GATE
+# - Pull requests to release/*: Full checks (same quality gate as master)
+# - Release tags (vX.Y.Z): Full checks (Naming + Lint + Tests + Coverage) run again as
+#   a release gate, then Deployment to production only if check + test pass.
 # Branch pushes do not trigger CI; a branch with an open PR is validated once (by the PR).
 #
 # Node.js version: Prepared for Node.js 24 migration (June 2, 2026)
 # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 #
+# PRO-368: All Python jobs use the reusable composite action
+# .github/actions/setup-python-deps (FR-17, QR-09) which centralises Python
+# setup, pip caching (FR-16) and dependency installation. Each job runs
+# actions/checkout first, because a local (./) composite action can only be
+# resolved once the repository is present on the runner. Node.js is no
+# longer installed unconditionally (AC3) - the lint job is pure Python, so the
+# setup-node step was removed entirely. Only JavaScript actions (commitlint,
+# github-script) need the Node 24 runtime, which the runner provides via
+# FORCE_JAVASCRIPT_ACTIONS_TO_NODE24.
+#
 # For more information see:
 # - https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-# - sup/naming_conventions.md (Development Workflow section)
+# - doc/CONTRIBUTING.md (Development Workflow section)
 
 name: Python CI
 
@@ -39,24 +50,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint and Format Check
+  check:
+    name: Naming Conventions & Linting Check
     runs-on: ubuntu-latest
-    environment: ${{ (
-        contains(github.ref, 'feature/') ||
-        contains(github.ref, 'bugfix/') ||
-        contains(github.ref, 'hotfix/') ||
-        contains(github.ref, 'refactor/') ||
-        contains(github.ref, 'docs/') ||
-        contains(github.ref, 'test/')
-      ) && 'development' || '' }}
+    # Run on every PR (to master or release/**), on release tags before deploy,
+    # and on manual dispatch. The commit/PR-metadata validation steps below stay
+    # guarded by `if: github.event_name == 'pull_request'`, so on a tag push this
+    # job runs the lint tools only.
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    # Static environment. The previous dynamic expression coerced to the boolean
+    # `false` when no branch prefix matched, which made GitHub auto-create a junk
+    # environment literally named "false" (plus "dev"/"develope" typos). A fixed
+    # value keeps the deployment label readable and avoids that failure mode.
+    environment: development
     steps:
-      - uses: actions/checkout@v4
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python-deps
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Print GitHub Context Information and setup environment
         run: |
@@ -64,20 +82,8 @@ jobs:
           echo "GitHub Base Ref: ${{ github.base_ref }}"
           echo "GitHub Event Name: ${{ github.event_name }}"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade build setuptools wheel
-          pip install -e .[dev]
-
-# Add commit message validation
       - name: Validate commit messages
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: wagoid/commitlint-github-action@v6
         with:
           configFile: .commitlintrc.json
@@ -86,15 +92,20 @@ jobs:
 
       # Add JIRA reference validation in commit messages
       - name: Validate Jira reference in commits
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         run: |
-          git log --format=%B ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
-          awk 'BEGIN{RS="\n\n"} { if ($0 !~ /Refs: PRO-[0-9]+/) { print "Missing or invalid Jira reference:\n" $0; exit 1 } }'
-        continue-on-error: true
+          git log --format=%H ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} |
+          while read hash; do
+            if ! git log -1 --format=%B "$hash" | grep -qE "Refs: PRO-[0-9]+"; then
+              echo "Missing or invalid Jira reference in commit $hash"
+              exit 1
+            fi
+          done
+        continue-on-error: false
 
       # Validate PR Title
       - name: Validate PR Title
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -102,15 +113,16 @@ jobs:
             const prTitle = context.payload.pull_request.title;
             // Format: [type][PRO-123] Description
             // Types from CONTRIBUTING.md: feat, fix, docs, refactor, test, chore, hotfix
-            const regex = /^[\[(feat|fix|docs|refactor|test|chore|hotfix)\]]\[PRO-\d+\]\s+.+$/i;
+            const prType = 'feat|fix|docs|refactor|test|chore|hotfix';
+            const regex = new RegExp('^\\[(?:' + prType + ')\\]\\[PRO-\\d+\\]\\s+.+$', 'i');
             if (!regex.test(prTitle)) {
               core.setFailed('PR title format invalid. Expected: [type][PRO-XXX] Description');
             }
-        continue-on-error: true
+        continue-on-error: false
 
       # Validate PR Body
       - name: Validate PR Body
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -132,7 +144,7 @@ jobs:
             if (!/Refs: PRO-[0-9]+/i.test(body)) {
               core.setFailed('PR body must include JIRA reference (Refs: PRO-XXX)');
             }
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Run lint tools (ruff, black, pydocstyle, radon)
         run: |
@@ -144,36 +156,43 @@ jobs:
   test:
     name: Run all test levels (unit + integration + system)
     runs-on: ubuntu-latest
-    needs: [lint]
-    if: github.event_name == 'pull_request' && github.base_ref == 'master'
+    # No `needs: [check]` - lint (check) and the test suite are independent, so
+    # they run in parallel to cut wall-clock time. Both are still required
+    # checks, and `deploy`/`summary` depend on both, so nothing merges or deploys
+    # unless each passes.
+    # Full test suite runs on all PRs (master and release/**), on release tags
+    # (so the quality gate is enforced before deploy), and on manual dispatch.
+    # The PR summary comment is published by the separate `summary` job, so this
+    # job only needs to run the tests and upload the reports as an artifact.
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     environment: staging
-    # Least-privilege token: read the repo (checkout) and write PR comments
-    # (traceability comment + PRO-337 sticky quality-gate summary).
+    # Least-privilege token: only read the repo (checkout). Commenting on the PR
+    # happens in the `summary` job, which requests the write scopes it needs.
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
         with:
-          python-version: '3.12'
-
-      - name: Install dependencies and setup environment
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade build setuptools wheel
-          pip install -e .[dev]
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python-deps
+        with:
+          python-version: '3.13'
 
       - name: Prepare report directory
         run: mkdir -p tests/reports
 
-      - name: Validate documentation traceability
-        run: pytest -q .github/workflows/test-docs-traceability.py
-
-      - name: Validate PR quality-gate summary generator
-        run: pytest -q .github/workflows/test-pr-test-summary.py
+      # Generates the traceability matrix artifact AND enforces completeness:
+      # the script exits non-zero if any requirement is untraced, so it is the
+      # quality gate (no separate pytest step). Unit tests for the CI support
+      # scripts live under .github/tests/ and are run in development, not here.
+      - name: Generate and validate traceability matrix
+        run: python .github/scripts/generate_traceability_matrix.py
 
       # Each test level runs as its own visible, attributable step so a failure
       # points straight at the level that broke. Coverage is measured fresh on
@@ -189,6 +208,12 @@ jobs:
 
       - name: Run system tests
         run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
+
+      # CI self-tests: the .github/tests suite (workflow structure + support
+      # scripts). Reported as its own "CI Self-Tests" level in the summary. Run
+      # without coverage - it validates CI code, not src_timesheetalgo.
+      - name: Run CI self-tests (.github/tests)
+        run: pytest -q .github/tests/ --junitxml=tests/reports/ci-results.xml
 
       # Additive (PRO-337): export machine-readable coverage for the PR summary.
       # Runs even if an earlier level failed so the summary always has coverage
@@ -212,58 +237,68 @@ jobs:
             tests/reports/unit-results.xml
             tests/reports/integration-results.xml
             tests/reports/system-results.xml
+            tests/reports/ci-results.xml
             tests/reports/coverage.json
             tests/reports/htmlcov
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html
 
-      - name: Comment traceability report on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const mdPath = 'tests/reports/traceability-matrix.md';
-            let md = '';
-            try {
-              md = fs.readFileSync(mdPath, 'utf8');
-            } catch (e) {
-              console.warn('Could not read traceability markdown: ' + e.message);
-            }
-            // Extract coverage numbers from the markdown if present
-            const archMatch = md.match(/Architecture coverage:\s*([0-9.]+)%/i);
-            const codeMatch = md.match(/Code coverage:\s*([0-9.]+)%/i);
-            const archCov = archMatch ? archMatch[1] + '%' : 'n/a';
-            const codeCov = codeMatch ? codeMatch[1] + '%' : 'n/a';
-            // Evaluation: simple pass/fail hint based on 100% coverage (customize as needed)
-            const evaluation = (archMatch && codeMatch && parseFloat(archMatch[1]) >= 100 && parseFloat(codeMatch[1]) >= 100) ? '✅ Fully covered' : '⚠️ Coverage gaps or missing links';
-            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            const compact = `**Status:** ✅ Completed\n**Evaluation:** ${evaluation}\n**Architecture coverage:** ${archCov}\n**Code coverage:** ${codeCov}\n\nArtifacts and full report: ${runUrl}`;
-            // Post compact summary with a collapsible full report
-            const body = `### Traceability Summary\n\n${compact}\n\n<details><summary>Full traceability report (click to expand)</summary>\n\n\n\n\`\`\`markdown\n${md || 'Traceability report not available.'}\n\`\`\`\n\n</details>`;
-            const issue_number = context.issue.number;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              body,
-            });
+  deploy:
+    name: Build & Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [check, test]
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    environment: production
 
-      # PRO-337: publish a consolidated quality-gate summary from within the test
-      # job (no separate job, so the pipeline graph stays lint -> test -> deploy).
-      # Both steps use if: always() so the summary is still published when a test
-      # level or the coverage gate fails. TEST_RESULT is taken from job.status,
-      # which reflects whether the earlier steps in this job passed. The JUnit and
-      # coverage.json files already sit in tests/reports, so no download is needed.
+    steps:
+      # Checkout must run before the local composite action: a local action
+      # cannot be resolved until the repository is present on the runner.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python-deps
+        with:
+          python-version: '3.13'
+
+      - name: Install packaging tools
+        run: |
+          pip install build
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: [check, test, deploy]
+    if: always()
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show build information
+        run: |
+          echo "Build hash: ${{ github.sha }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Artifacts available:"
+          ls -R
+
+      - name: Download test reports
+        if: needs.test.result != 'skipped'
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: test-results
+          path: tests/reports
+
       - name: Generate PR quality-gate summary
-        if: always()
         env:
-          LINT_RESULT: ${{ needs.lint.result }}
-          TEST_RESULT: ${{ job.status }}
-        run: python .github/workflows/pr-test-summary.py
+          LINT_RESULT: ${{ needs.check.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: python3 .github/scripts/generate_pr_summary.py
 
       - name: Publish or update sticky PR comment
-        if: always()
         uses: actions/github-script@v8
         with:
           script: |
@@ -299,33 +334,32 @@ jobs:
               core.info('Created new summary comment');
             }
 
-  deploy:
-    name: Build & Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
-    environment: production
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v6
+      # Option C: in addition to the sticky summary above, post a compact
+      # one-line status comment fresh on *every* run, so the PR thread keeps a
+      # per-run trail (each linking back to its run) without duplicating the full
+      # summary each time.
+      - name: Post per-run status line
+        uses: actions/github-script@v8
         with:
-          python-version: '3.12'
-
-      - name: Install dependencies and setup environment
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade build setuptools wheel
-          pip install -e .[dev]
-
-      - name: Run integration tests
-        run: |
-          pytest tests/integration --junitxml=tests/reports/integration-test-results.xml
-
-      - name: Run system tests
-        run: |
-          pytest tests/system --junitxml=tests/reports/system-test-results.xml
-
-      - name: Install packaging tools
-        run: |
-          pip install build
+          script: |
+            const fs = require('fs');
+            let body;
+            try {
+              body = fs.readFileSync('tests/reports/test-summary-line.md', 'utf8');
+            } catch (e) {
+              core.warning('Status line file not found: ' + e.message);
+              return;
+            }
+            const issue_number = context.issue.number;
+            if (!issue_number) {
+              core.warning('No pull request number in context; skipping comment.');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body,
+            });
+            core.info('Posted per-run status line');
+        

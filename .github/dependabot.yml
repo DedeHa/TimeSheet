@@ -1,0 +1,16 @@
+# Dependabot keeps GitHub Actions pinned-and-current: it opens PRs that bump
+# action versions (surfacing runtime deprecations such as the Node.js 20 -> 24
+# migration) so we do not have to track them by hand. Dependabot PRs are exempt
+# from the PRO-XXX naming validators in python-ci.yml (they carry no Jira
+# ticket) via the `github.actor != 'dependabot[bot]'` guards on those steps.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"

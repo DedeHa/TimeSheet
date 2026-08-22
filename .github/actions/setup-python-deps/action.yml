@@ -1,0 +1,26 @@
+name: Setup Python Dependencies
+description: Composite action to setup Python, cache pip and install dev dependencies
+# Note: the repository must already be checked out by the calling job before
+# this action runs. A local (./) action cannot resolve its own action.yml until
+# the repo is on the runner, so checkout cannot live here.
+inputs:
+  python-version:
+    description: 'Python version'
+    default: '3.13'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Install dependencies and setup environment
+      shell: bash
+      # pip builds the editable install in an isolated PEP 517 environment using
+      # the [build-system] requires (setuptools/wheel), so build tooling does not
+      # need to be installed here. The packaging frontend `build` is installed
+      # only in the deploy job, which is the only place that runs `python -m build`.
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]

@@ -1,4 +1,4 @@
-"""Unit tests for the pure functions extracted in PRO-339.
+"""Unit tests for the extracted pure functions.
 
 ``filter_timelog_entries``, ``calculate_default_start_date`` and
 ``map_entry_to_cell`` are pure: they take plain Python data and return plain

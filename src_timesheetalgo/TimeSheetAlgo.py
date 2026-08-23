@@ -26,7 +26,7 @@ import openpyxl
 import yaml
 
 # ---------------------------------------------------------------------------
-# Dependency injection helpers (PRO-339: unit-testability refactoring)
+# Dependency injection helpers (unit-testability refactoring)
 # ---------------------------------------------------------------------------
 
 # A type alias for the user-input function. The default implementation calls
@@ -36,7 +36,7 @@ InputProvider = Callable[[str], str]
 
 
 def _default_input_provider(prompt: str) -> str:
-    """Default InputProvider: delegates to ``builtins.input``."""
+    """Delegate to ``builtins.input``."""
     return input(prompt)
 
 
@@ -46,7 +46,7 @@ Clock = Callable[[], dt]
 
 
 def _default_clock() -> dt:
-    """Default Clock: returns the current wall-clock time."""
+    """Return the current wall-clock time."""
     return dt.now()
 
 

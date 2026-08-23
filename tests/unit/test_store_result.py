@@ -1,4 +1,4 @@
-"""Unit tests for the StoreResult enum and store_data return value (PRO-339).
+"""Unit tests for the StoreResult enum and store_data return value.
 
 ``store_data`` now returns a :class:`StoreResult` instead of using implicit
 ``break`` / ``continue`` control flow, so tests can assert on the outcome.

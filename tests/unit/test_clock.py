@@ -1,4 +1,4 @@
-"""Unit tests for the injected Clock (PRO-339).
+"""Unit tests for the injected Clock.
 
 ``set_default_end_date`` now uses ``self._clock()`` instead of
 ``datetime.now()`` directly, so tests can inject a fixed clock without

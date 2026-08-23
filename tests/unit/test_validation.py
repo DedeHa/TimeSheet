@@ -1,4 +1,4 @@
-"""Unit tests for the validation functions (PRO-339).
+"""Unit tests for the validation functions.
 
 ``validate_timelog_entry`` and ``validate_timesheet_structure`` are pure
 functions that raise typed exceptions on invalid input.

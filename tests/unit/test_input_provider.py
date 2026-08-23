@@ -1,4 +1,4 @@
-"""Unit tests for the injected InputProvider (PRO-339).
+"""Unit tests for the injected InputProvider.
 
 These tests supply a pure ``Callable[[str], str]`` to the functions that
 previously called ``builtins.input`` directly — no ``monkeypatch`` on

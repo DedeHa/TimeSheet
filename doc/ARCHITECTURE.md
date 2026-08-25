@@ -23,22 +23,22 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | FR-02 | Environment detection | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `detect_environment()` |
 | FR-03 | Configuration validation | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `_read_yaml()` and `load_config()` |
 | FR-04 | Input file loading | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_files()` and `check_file_existence()` |
-| FR-05 | Input file validation | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()` |
+| FR-05 | Input file validation | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()`, `validate_timelog_entry()`, `validate_timesheet_structure()` |
 | FR-06 | Timesheet consistency check | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_year_consistency()` |
-| FR-07 | Date range determination | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `request_date_input()` |
-| FR-08 | Timelog filtering | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `select_timelog_data()` |
-| FR-09 | Mapping logic | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `store_data()` |
+| FR-07 | Date range determination | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `request_date_input()`, `parse_date()`, `set_default_start_date()`, `set_default_end_date()`, `calculate_default_start_date()` |
+| FR-08 | Timelog filtering | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `select_timelog_data()`, `filter_timelog_entries()` |
+| FR-09 | Mapping logic | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `store_data()`, `map_entry_to_cell()` |
 | FR-10 | Existing data detection | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `_check_and_confirm_overwrite()` |
 | FR-11 | Overwrite decision | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `_prompt_overwrite_decision()` |
-| FR-12 | Data transfer | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `store_data()` |
+| FR-12 | Data transfer | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `store_data()` (returns `StoreResult`) |
 | FR-13 | Saving | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `save_timesheet()` |
 | FR-14 | Error handling | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `run()` |
 | FR-15 | Logging | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `configure_logging()` and `run()` |
 | QR-01 | Reliability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_year_consistency()` and `run()` |
-| QR-02 | Data integrity | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `select_timelog_data()` and `store_data()` |
+| QR-02 | Data integrity | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `select_timelog_data()`, `filter_timelog_entries()` and `store_data()` |
 | QR-03 | Consistency | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_year_consistency()` |
-| QR-04 | Usability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `request_date_input()` |
-| QR-05 | Robustness | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()` and `parse_date()` |
+| QR-04 | Usability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `request_date_input()`, `TimeSheetProcessor.for_testing()` |
+| QR-05 | Robustness | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `check_file_existence()`, `parse_date()`, `validate_timelog_entry()`, `validate_timesheet_structure()` |
 | QR-06 | Maintainability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - `load_config()` and `configure_logging()` |
 | QR-07 | Traceability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - this module and the traceability comments in each function |
 | FR-16 | CI dependency caching | [python-ci.yml](../.github/workflows/python-ci.yml) - `actions/setup-python` `cache: pip` / `cache-dependency-path: pyproject.toml` in check, test and deploy jobs |

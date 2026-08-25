@@ -323,5 +323,59 @@ def test_contributing_branch_strategy_unchanged():
         assert prefix in text, f"CONTRIBUTING.md no longer documents {prefix}"
 
 
+# ---------------------------------------------------------------------------
+# PRO-369 / O8: CI Timing Benchmark workflow (continuous capture).
+# ---------------------------------------------------------------------------
+
+CI_TIMING = ROOT / ".github" / "workflows" / "ci-timing.yml"
+
+
+def _ci_timing() -> dict:
+    return yaml.safe_load(CI_TIMING.read_text(encoding="utf-8"))
+
+
+def test_ci_timing_workflow_exists():
+    """The PRO-369 timing workflow must be present."""
+    assert CI_TIMING.exists(), f"{CI_TIMING} is missing"
+
+
+def test_ci_timing_triggers_on_workflow_run_and_dispatch():
+    """Both continuous (workflow_run) and manual (workflow_dispatch) triggers."""
+    triggers = _ci_timing()[True]
+    assert "workflow_run" in triggers, "workflow_run trigger missing"
+    wr = triggers["workflow_run"]
+    assert wr["workflows"] == ["Python CI"], "must trigger on Python CI only"
+    assert "completed" in wr["types"]
+    assert "workflow_dispatch" in triggers, "workflow_dispatch trigger missing"
+
+
+def test_ci_timing_does_not_retrigger_python_ci():
+    """V6 invariant: python-ci.yml's triggers must NOT include push to ci-metrics."""
+    workflow_runs = _ci_timing()[True].get("workflow_run", {})
+    assert workflow_runs, "workflow_run missing"
+    # python-ci.yml must not include a `push: branches: [ci-metrics]` clause.
+    ci_triggers = _workflow()[True]
+    push = ci_triggers.get("push", {})
+    push_branches = push.get("branches", []) if isinstance(push, dict) else []
+    assert "ci-metrics" not in push_branches, (
+        "python-ci.yml triggers on push to ci-metrics - would create a CI loop"
+    )
+
+
+def test_ci_timing_only_writes_to_ci_metrics_branch():
+    """V6 invariant: the metrics workflow must only push to the ci-metrics branch."""
+    text = CI_TIMING.read_text(encoding="utf-8")
+    assert "ci-metrics" in text, "ci-metrics branch not referenced"
+    assert "METRICS_BRANCH" in text, "METRICS_BRANCH env not used"
+
+
+def test_ci_timing_permissions_minimal():
+    """A.8: actions:read + contents:write + pull-requests:write only."""
+    perms = _ci_timing()["permissions"]
+    assert perms.get("actions") == "read"
+    assert perms.get("contents") == "write"
+    assert perms.get("pull-requests") == "write"
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

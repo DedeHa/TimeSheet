@@ -347,6 +347,42 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   workflow). Every `run:` step in the composite action requires an explicit
   `shell:` line.
 
+## CI Timing Benchmark (PRO-369)
+
+A separate `ci-timing.yml` workflow continuously captures per-job / per-step
+execution times from the GitHub Actions API for every successful PR run of
+`python-ci.yml`, persists them on the orphan `ci-metrics` branch, and renders
+`CI_TIMING_REPORT.md` with running statistics.
+
+**Key facts agents must know:**
+
+- **Non-gating**: this workflow never fails a PR. It is purely observational.
+- **Location**: `ci-metrics` branch → `ci-timings.csv` (raw rows) and
+  `CI_TIMING_REPORT.md` (aggregated stats). Report link in the PR quality-gate
+  comment.
+- **No CI loop**: `python-ci.yml` does not trigger on push to `ci-metrics`,
+  so the metrics push never starts a new CI run.
+  (`test_ci_timing_does_not_retrigger_python_ci` in
+  `.github/tests/test_verify_ci_workflow.py` enforces this.)
+- **Scope**: successful `pull_request` runs of `Python CI` only. Failed,
+  cancelled, timed-out, skipped, and superseded runs are excluded automatically.
+- **Data source**: authoritative API timing (`started_at` / `completed_at`) —
+  no workflow instrumentation required.
+- **Scripts** (stdlib-only, in `.github/scripts/`):
+  `collect_ci_timings.py` (fetch + filter one run),
+  `aggregate_ci_timings.py` (render stats + report),
+  `backfill_ci_timings.py` (historical sweep).
+- **Tests** (in `.github/tests/`): `test_collect_ci_timings.py`,
+  `test_aggregate_ci_timings.py`, `test_backfill_ci_timings.py`.
+- **Runner variance caveat**: GitHub-hosted runners are noisy (±10–30%).
+  Always read stddev alongside mean; prefer median / p95 for decisions.
+- **Drift handling**: a step key is withheld from the main tables until it has
+  ≥ 3 warm, successful samples. Retired / renamed keys appear in an appendix.
+- **Backfill**: `workflow_dispatch` with `backfill: true` sweeps all historical
+  successful PR runs. The sweep is idempotent (re-running is a no-op).
+- **Do not commit timing results** to the PR branch — they belong on `ci-metrics`.
+- See `doc/01_Implementation_Plan_CI_Timing_Benchmark.md` for the full plan.
+
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches

@@ -39,7 +39,7 @@ on:
   workflow_dispatch:
     inputs:
       backfill:
-        description: 'Rebuild from history (sweep all successful PR runs of Python CI)'
+        description: 'Sweep all historical PR runs of Python CI to seed the dataset from scratch. Off = just collect the latest successful run.'
         required: false
         default: 'false'
         type: choice
@@ -47,12 +47,12 @@ on:
           - 'false'
           - 'true'
       min_samples:
-        description: 'Minimum successful samples before a key is reported in the main tables'
+        description: 'Minimum successful samples before a step appears in the main report tables (lower = more keys, noisier).'
         required: false
         default: '3'
         type: string
       include_housekeeping:
-        description: 'Include GitHub housekeeping steps (Set up job / Post ...) in the dataset'
+        description: 'Include GitHub synthetic steps (Set up job, Post ...) in the dataset. Off = real workflow steps only.'
         required: false
         default: 'false'
         type: choice

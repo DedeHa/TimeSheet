@@ -1,0 +1,205 @@
+---
+# PRO-369 / O8: Continuous CI-Pipeline Timing Benchmark.
+#
+# See doc/01_Implementation_Plan_CI_Timing_Benchmark.md for the full plan.
+#
+# Behaviour
+# ---------
+# Collects per-job / per-step execution times from the GitHub Actions REST API
+# (authoritative - no workflow instrumentation required) for successful
+# pull_request runs of the `Python CI` workflow (python-ci.yml), appends one row
+# per successful step to ci-timings.csv on the orphan `ci-metrics` branch, then
+# recomputes running statistics (mean, stddev, median, p95, n, last) and writes
+# CI_TIMING_REPORT.md to the same branch.
+#
+# Triggers
+# --------
+# Phase 1 (initial): workflow_dispatch only - `inputs.backfill` drives a sweep
+# of historical successful PR runs; an empty backfill captures only the most
+# recent successful PR run. Phase 2 adds `workflow_run` (see B.6 step 3) once
+# the seeded report is verified.
+#
+# Invariants
+# ----------
+# * Never writes to the PR branch (only `ci-metrics`).
+# * Never fails a PR (this workflow is a non-gating observer; even on internal
+#   failure it reports the problem to the run summary and exits cleanly).
+# * Never re-triggers `Python CI` - `python-ci.yml`'s `on:` does not include
+#   push to `ci-metrics`, so the metrics push cannot loop.
+
+name: CI Timing Benchmark
+
+on:
+  # Continuous capture: fires once per completed `Python CI` run. We read
+  # that run's timings via the API, append to ci-metrics, and regenerate the
+  # report. workflow_run runs in default-branch context with repo secrets.
+  workflow_run:
+    workflows: ["Python CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: 'Rebuild from history (sweep all successful PR runs of Python CI)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      min_samples:
+        description: 'Minimum successful samples before a key is reported in the main tables'
+        required: false
+        default: '3'
+        type: string
+      include_housekeeping:
+        description: 'Include GitHub housekeeping steps (Set up job / Post ...) in the dataset'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+# Avoid racing on the same orphan branch when two backfills are dispatched.
+concurrency:
+  group: ci-timing
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+env:
+  MIN_SAMPLES: ${{ inputs.min_samples || '3' }}
+  INCLUDE_HOUSEKEEPING: ${{ inputs.include_housekeeping || 'false' }}
+  METRICS_BRANCH: ci-metrics
+
+jobs:
+  collect:
+    name: Capture & aggregate CI timings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # No Python deps required: collect_ci_timings.py and
+      # aggregate_ci_timings.py are standard-library only. We use the
+      # repository's pre-installed `gh` CLI for API access.
+
+      - name: Ensure ci-metrics orphan branch exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! gh api --silent "repos/${{ github.repository }}/branches/$METRICS_BRANCH" >/dev/null 2>&1; then
+            echo "Creating orphan branch $METRICS_BRANCH"
+            git switch --orphan "$METRICS_BRANCH"
+            git rm -rf --quiet . 2>/dev/null || true
+            printf '# CI Timing Benchmark\n\nPersistent dataset for the continuous CI-pipeline timing benchmark (PRO-369).\n' > README.md
+            git add README.md
+            -c user.name=github-actions -c user.email=actions@github.com \
+              git commit --quiet -m "chore(ci-timing): initialise orphan ci-metrics branch"
+            -c user.name=github-actions -c user.email=actions@github.com \
+              git push --quiet -u origin "$METRICS_BRANCH"
+            git switch -
+          else
+            echo "Branch $METRICS_BRANCH already exists"
+          fi
+
+      - name: Checkout ci-metrics branch
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin "$METRICS_BRANCH":"$METRICS_BRANCH"
+          git worktree add --force -f metrics "$METRICS_BRANCH"
+
+      - name: Collect timings
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          INCLUDE_HOUSEKEEPING: ${{ env.INCLUDE_HOUSEKEEPING }}
+          EVENT_NAME: ${{ github.event_name }}
+          TRIGGERING_RUN_ID: ${{ github.event.workflow_run.id }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+          cd metrics
+          # workflow_run -> collect the just-completed run (if it was a
+          # successful pull_request run).
+          # workflow_dispatch with backfill=true -> sweep all history.
+          # workflow_dispatch with backfill=false -> most recent successful PR run.
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            conclusion=$(gh api \
+              --method GET \
+              -H "Accept: application/vnd.github+json" \
+              "repos/$REPO/actions/runs/$TRIGGERING_RUN_ID" \
+              --jq '.conclusion // empty')
+            event_type=$(gh api \
+              --method GET \
+              -H "Accept: application/vnd.github+json" \
+              "repos/$REPO/actions/runs/$TRIGGERING_RUN_ID" \
+              --jq '.event // empty')
+            if [ "$conclusion" != "success" ] || [ "$event_type" != "pull_request" ]; then
+              echo "Triggering run $TRIGGERING_RUN_ID is $conclusion ($event_type); skipping."
+              exit 0
+            fi
+            echo "Collecting run $TRIGGERING_RUN_ID (workflow_run)"
+            PR_NUMBER="$PR_NUMBER" \
+              python3 ../.github/scripts/collect_ci_timings.py \
+                "$REPO" "$TRIGGERING_RUN_ID" ci-timings.csv
+          elif [ "${{ inputs.backfill }}" = "true" ]; then
+            echo "Backfill mode: sweeping all successful PR runs of Python CI"
+            python3 ../.github/scripts/backfill_ci_timings.py \
+              --repo "$REPO" \
+              --csv ci-timings.csv \
+              --include-housekeeping "$INCLUDE_HOUSEKEEPING"
+          else
+            run_id=$(gh api \
+              --method GET \
+              -H "Accept: application/vnd.github+json" \
+              "repos/$REPO/actions/workflows/python-ci.yml/runs?event=pull_request&status=success&per_page=1" \
+              --jq '.workflow_runs[0].id // empty')
+            if [ -z "$run_id" ]; then
+              echo "No successful pull_request runs found for Python CI; nothing to collect."
+            else
+              echo "Collecting run $run_id (single-run dispatch)"
+              PR_NUMBER="${{ github.event.pull_request.number }}" \
+                python3 ../.github/scripts/collect_ci_timings.py \
+                  "$REPO" "$run_id" ci-timings.csv
+            fi
+          fi
+
+      - name: Aggregate timings & render report
+        env:
+          MIN_SAMPLES: ${{ env.MIN_SAMPLES }}
+        run: |
+          set -euo pipefail
+          cd metrics
+          MIN_SAMPLES="$MIN_SAMPLES" \
+            python3 ../.github/scripts/aggregate_ci_timings.py \
+              ci-timings.csv CI_TIMING_REPORT.md
+
+      - name: Commit & push if changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd metrics
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to ci-timings.csv or CI_TIMING_REPORT.md; skipping commit."
+            exit 0
+          fi
+          -c user.name=github-actions -c user.email=actions@github.com \
+            git add ci-timings.csv CI_TIMING_REPORT.md
+          -c user.name=github-actions -c user.email=actions@github.com \
+            git commit --quiet -m "chore(ci-timing): update CI timings dataset and report"
+          -c user.name=github-actions -c user.email=actions@github.com \
+            git push --quiet origin "$METRICS_BRANCH"
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-timing-report
+          path: metrics/CI_TIMING_REPORT.md

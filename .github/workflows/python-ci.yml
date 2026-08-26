@@ -288,6 +288,12 @@ jobs:
       # one-line status comment fresh on *every* run, so the PR thread keeps a
       # per-run trail (each linking back to its run) without duplicating the full
       # summary each time.
+      #
+      # Skip on the initial run: the sticky summary above is brand-new then and
+      # already carries the overall result + status table, so posting the
+      # per-run line on top of it is pure duplication. Once the sticky comment
+      # exists (every run after the first), the per-run line is the lightweight
+      # trail.
       - name: Post per-run status line
         uses: actions/github-script@v8
         with:
@@ -303,6 +309,18 @@ jobs:
             const issue_number = context.issue.number;
             if (!issue_number) {
               core.warning('No pull request number in context; skipping comment.');
+              return;
+            }
+            // The sticky summary above uses the marker below; if it is already
+            // present this is not the initial run, so post the per-run line.
+            const stickyMarker = '<!-- pro-337-ci-quality-gate-summary -->';
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner: context.repo.owner, repo: context.repo.repo, issue_number, per_page: 100 }
+            );
+            const hasSticky = comments.some(c => c.body && c.body.includes(stickyMarker));
+            if (!hasSticky) {
+              core.info('No sticky summary comment yet (initial run); skipping per-run line.');
               return;
             }
             await github.rest.issues.createComment({

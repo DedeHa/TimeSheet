@@ -93,16 +93,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # Note: `git -c key=value` must be on the same line as the git command;
+          # the YAML `run:` block is passed to bash as a single multiline string,
+          # so a backslash continuation does NOT carry -c across newlines on
+          # the GitHub-hosted runner. Putting them on one line avoids a
+          # "command not found" error from the leading -c.
           if ! gh api --silent "repos/${{ github.repository }}/branches/$METRICS_BRANCH" >/dev/null 2>&1; then
             echo "Creating orphan branch $METRICS_BRANCH"
             git switch --orphan "$METRICS_BRANCH"
             git rm -rf --quiet . 2>/dev/null || true
             printf '# CI Timing Benchmark\n\nPersistent dataset for the continuous CI-pipeline timing benchmark (PRO-369).\n' > README.md
             git add README.md
-            -c user.name=github-actions -c user.email=actions@github.com \
-              git commit --quiet -m "chore(ci-timing): initialise orphan ci-metrics branch"
-            -c user.name=github-actions -c user.email=actions@github.com \
-              git push --quiet -u origin "$METRICS_BRANCH"
+            git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): initialise orphan ci-metrics branch"
+            git -c user.name=github-actions -c user.email=actions@github.com push --quiet -u origin "$METRICS_BRANCH"
             git switch -
           else
             echo "Branch $METRICS_BRANCH already exists"
@@ -190,12 +193,11 @@ jobs:
             echo "No changes to ci-timings.csv or CI_TIMING_REPORT.md; skipping commit."
             exit 0
           fi
-          -c user.name=github-actions -c user.email=actions@github.com \
-            git add ci-timings.csv CI_TIMING_REPORT.md
-          -c user.name=github-actions -c user.email=actions@github.com \
-            git commit --quiet -m "chore(ci-timing): update CI timings dataset and report"
-          -c user.name=github-actions -c user.email=actions@github.com \
-            git push --quiet origin "$METRICS_BRANCH"
+          # See the orphan-branch step above: `git -c` must be on the same line
+          # as the git command, or the runner treats -c as a standalone command.
+          git -c user.name=github-actions -c user.email=actions@github.com add ci-timings.csv CI_TIMING_REPORT.md
+          git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update CI timings dataset and report"
+          git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin "$METRICS_BRANCH"
 
       - name: Upload report artifact
         if: always()

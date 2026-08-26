@@ -56,6 +56,32 @@ Consequences:
   **backfill** input is a separate, explicit, opt-in mechanism — see A.7 — and is
   not part of the continuous PR capture.)
 
+#### Backfill starting point
+
+The benchmark should be seeded from the point where the **complete naming-validation
+pipeline** is in place on `master`. The relevant cut-off is:
+
+| | |
+|---|---|
+| **Commit** | `92991ed` — `feat(ci): implement O2 venv caching and O4 consolidated PR validators` |
+| **Merged via** | PR #101 (`feature/PRO-368-optimize-ci` → `master`) |
+| **Merged at** | 2026-08-22T13:05:16Z |
+| **Branches** | `master` + `release/**` |
+
+This is the commit where all four naming checks (commit messages, JIRA reference,
+PR title, PR body) were **consolidated from four separate `run:`/`uses:` steps into
+the single `Validate PR` step** that calls `.github/scripts/validate_pr.py`. Before
+this commit the `check` job had four separate steps (`Validate commit messages`
+using `commitlint`, `Validate PR Title`, `Validate PR Body`, `Validate Jira
+reference in commits`). The step names changed, so mixing runs from before and after
+`92991ed` would trigger the workflow-drift rule (A.6) and produce misleading
+comparisons.
+
+The backfill sweep should start from **2026-08-22T13:05:16Z** (the merge time of
+`92991ed`) to avoid capturing pre-consolidation step names that are no longer in the
+workflow. The first `pull_request` run of `Python CI` on `master` after the merge
+was run `32575534224` (branch `release/v4.2.0`, 2026-08-22T13:21:25Z).
+
 ### A.4 Exclusion rules (failed / edge-case runs) — precise definition
 
 Applied at three levels:
@@ -211,6 +237,16 @@ job_name, step_number)`.
    gate) — no workflow yet, so zero CI-behaviour change.
 2. Add `ci-timing.yml` (initially `workflow_dispatch` only) and create the orphan
    `ci-metrics` branch; run `backfill` once to seed from history.
+   - The orphan `ci-metrics` branch is created by the workflow on its first run.
+     On GitHub it does not exist until the workflow runs for the first time.
+   - The backfill should be seeded from commit `92991ed` (the merge of PR #101,
+     2026-08-22T13:05:16Z — the point where the consolidated naming-validation
+     pipeline was introduced on `master`). See A.3 "Backfill starting point" for
+     the full rationale. The `workflow_dispatch` backfill sweeps all successful
+     `pull_request` runs; the `workflow_run` continuous capture handles runs
+     from this point forward automatically.
+   - The `ci-metrics` orphan branch, once created, holds `ci-timings.csv`,
+     `CI_TIMING_REPORT.md` and a `README.md` with usage instructions.
 3. Verify the seeded report; then enable the `workflow_run` trigger for continuous
    capture.
 4. Document in `AGENTS.md` / `doc/CONTRIBUTING.md` (where to find the report; that

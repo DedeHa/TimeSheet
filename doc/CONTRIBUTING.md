@@ -461,6 +461,15 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ❌ **Master Branch**: No deployment
 - ✅ **Release Tags** (vX.Y.Z): **Production deployment only**
 
+### CI Timing Benchmark:
+- A separate `ci-timing.yml` workflow continuously captures per-job / per-step execution
+  times from successful `python-ci.yml` runs and persists them on the orphan
+  `ci-metrics` branch (see `doc/01_Implementation_Plan_CI_Timing_Benchmark.md`).
+- **Non-gating**: it never fails a PR. Results are purely observational.
+- **No CI loop**: `python-ci.yml` does not trigger on push to `ci-metrics`.
+- Data source: GitHub Actions API (`started_at` / `completed_at`), no instrumentation.
+- Run `workflow_dispatch` with `backfill: true` to seed the initial dataset.
+
 ### Push Events trigger on:
 - **Tags `vX.Y.Z`** (Production deployment) — branch pushes do **not** trigger CI
 - Manual runs are available via `workflow_dispatch`

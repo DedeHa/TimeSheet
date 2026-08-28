@@ -43,8 +43,11 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | QR-07 | Traceability | [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py) - this module and the traceability comments in each function |
 | FR-16 | CI dependency caching | [python-ci.yml](../.github/workflows/python-ci.yml) - `actions/setup-python` `cache: pip` / `cache-dependency-path: pyproject.toml` in check, test and deploy jobs |
 | FR-17 | CI reusable environment setup | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - composite action used by check, test and deploy jobs |
+| FR-18 | GitHub release signing | [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml) - composite action configuring gh-gpgsign for commit/tag signing |
 | QR-08 | CI performance | [python-ci.yml](../.github/workflows/python-ci.yml) - pip download caching (keyed on `pyproject.toml`), removed `actions/setup-node`, single reusable composite action (no duplicated setup) |
 | QR-09 | CI maintainability | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - single composite action for Python setup, pip caching and dependency install (each job runs `actions/checkout` before it) |
+| QR-10 | GitHub signing verification | [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml) - verifies signing capability and validates GPG key import before deployment |
+| QR-11 | CI GPG action maintainability | [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml) - dedicated composite action for GPG signing setup, isolated from Python environment setup |
 
 ## CI Setup Design Decision: Composite Action vs. Inlined Steps (QR-08, QR-09)
 
@@ -84,6 +87,31 @@ designs are **statistically equivalent** in runtime. The composite action is
 therefore adopted for its maintainability benefit at no measurable performance
 cost. The benchmark is retained (manual `workflow_dispatch` only, outside the CI
 pipeline) so the comparison can be re-run when the toolchain changes.
+
+## GPG Signing Design Decision: Isolated Composite Action (QR-10, QR-11)
+
+GitHub releases shall display "This commit was created on GitHub.com and signed
+with GitHub's verified signature" for release tags. Two designs were considered:
+
+- **Isolated composite action** (chosen): GPG signing setup lives in
+  [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml)
+  and the `deploy` job calls it after `actions/checkout`.
+- **Integrated into existing action**: combine GPG setup with Python setup in
+  `setup-python-deps/action.yml`.
+
+**Decision:** use the isolated composite action, for maintainability (QR-11) and
+clarity (QR-10) — GPG signing is orthogonal to Python environment setup; the
+`setup-python-deps` action is used by all jobs (check, test, deploy), but only
+the deploy job needs GPG signing. Isolating it in its own action keeps the
+concerns separate and makes it clear which jobs require signing.
+
+**Constraint:** as with `setup-python-deps`, a local composite action cannot
+perform repository checkout itself. The `deploy` job therefore runs
+`actions/checkout` before the GPG signing action.
+
+**Signing verification:** the action includes a verification step that checks
+for `gh-gpgsign` availability and validates GitHub CLI authentication status
+before the job proceeds.
 
 ## System-Level Diagrams
 

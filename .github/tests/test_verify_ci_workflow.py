@@ -22,6 +22,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "python-ci.yml"
 ACTION = ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml"
+GPG_ACTION = ROOT / ".github" / "actions" / "setup-gpg-signing" / "action.yml"
 COMMITLINT = ROOT / ".commitlintrc.json"
 CONTRIBUTING = ROOT / "doc" / "CONTRIBUTING.md"
 
@@ -357,9 +358,9 @@ def test_ci_timing_does_not_retrigger_python_ci():
     ci_triggers = _workflow()[True]
     push = ci_triggers.get("push", {})
     push_branches = push.get("branches", []) if isinstance(push, dict) else []
-    assert "ci-metrics" not in push_branches, (
-        "python-ci.yml triggers on push to ci-metrics - would create a CI loop"
-    )
+    assert (
+        "ci-metrics" not in push_branches
+    ), "python-ci.yml triggers on push to ci-metrics - would create a CI loop"
 
 
 def test_ci_timing_only_writes_to_ci_metrics_branch():
@@ -375,6 +376,45 @@ def test_ci_timing_permissions_minimal():
     assert perms.get("actions") == "read"
     assert perms.get("contents") == "write"
     assert perms.get("pull-requests") == "write"
+
+
+# ---------------------------------------------------------------------------
+# PRO-370: GPG signing composite action (release integrity).
+# ---------------------------------------------------------------------------
+
+
+def test_gpg_signing_action_exists():
+    """PRO-370: the setup-gpg-signing composite action must be present."""
+    assert GPG_ACTION.exists(), f"{GPG_ACTION} is missing"
+
+
+def test_gpg_signing_action_configures_git():
+    """PRO-370: the action configures git commit/tag signing."""
+    action = yaml.safe_load(GPG_ACTION.read_text(encoding="utf-8"))
+    steps = action["runs"]["steps"]
+    run_steps = [s for s in steps if "run" in s]
+    config_step = next((s for s in run_steps if "git config" in s.get("run", "")), None)
+    assert config_step is not None, "git config step missing in GPG action"
+    run_text = config_step["run"]
+    assert "commit.gpgsign" in run_text
+    assert "tag.gpgsign" in run_text
+    assert "gpg.program gh-gpgsign" in run_text
+
+
+def test_gpg_signing_action_defines_inputs():
+    """PRO-370: the action defines gpg-key-id, signing-key and github-token inputs."""
+    action = yaml.safe_load(GPG_ACTION.read_text(encoding="utf-8"))
+    inputs = action.get("inputs", {})
+    assert "gpg-key-id" in inputs
+    assert "signing-key" in inputs
+    assert "github-token" in inputs
+
+
+def test_deploy_job_uses_gpg_signing_action():
+    """PRO-370: the deploy job must use the GPG signing composite action."""
+    steps = _job_steps("deploy")
+    gpg_steps = [s for s in steps if _uses(s) == "./.github/actions/setup-gpg-signing"]
+    assert gpg_steps, "deploy job does not use the setup-gpg-signing composite action"
 
 
 if __name__ == "__main__":

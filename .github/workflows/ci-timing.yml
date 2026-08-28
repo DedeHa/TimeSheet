@@ -163,10 +163,17 @@ jobs:
                 "$REPO" "$TRIGGERING_RUN_ID" ci-timings.csv
           elif [ "${{ inputs.backfill }}" = "true" ]; then
             echo "Backfill mode: sweeping all successful PR runs of Python CI"
+            # --include-housekeeping is a store_true flag (no value).
+            # Only pass it when the input is true; omitting it when false
+            # avoids 'unrecognized arguments: false' from argparse.
+            HK_FLAG=""
+            if [ "$INCLUDE_HOUSEKEEPING" = "true" ]; then
+              HK_FLAG="--include-housekeeping"
+            fi
             python3 ../.github/scripts/backfill_ci_timings.py \
               --repo "$REPO" \
               --csv ci-timings.csv \
-              --include-housekeeping "$INCLUDE_HOUSEKEEPING"
+              $HK_FLAG
           else
             run_id=$(gh api \
               --method GET \

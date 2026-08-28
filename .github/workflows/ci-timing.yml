@@ -206,7 +206,11 @@ jobs:
         run: |
           set -euo pipefail
           cd metrics
-          if git diff --quiet && git diff --staged --quiet; then
+          # Use --porcelain: unlike `git diff --quiet` it also sees untracked
+          # files. On the first backfill run ci-timings.csv and
+          # CI_TIMING_REPORT.md are brand-new, so `git diff` alone would
+          # silently skip the commit even though data was collected.
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes to ci-timings.csv or CI_TIMING_REPORT.md; skipping commit."
             exit 0
           fi

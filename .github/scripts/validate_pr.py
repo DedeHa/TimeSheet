@@ -40,7 +40,16 @@ from typing import List
 # ---------------------------------------------------------------------------
 
 # Conventional Commits types accepted for PR titles
-VALID_PR_TYPES = ("feat", "fix", "docs", "refactor", "test", "chore", "hotfix", "release")
+VALID_PR_TYPES = (
+    "feat",
+    "fix",
+    "docs",
+    "refactor",
+    "test",
+    "chore",
+    "hotfix",
+    "release",
+)
 
 # PR title regex: [type][PRO-XXX] Description (case-insensitive)
 PR_TITLE_RE = re.compile(

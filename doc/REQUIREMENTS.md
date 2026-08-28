@@ -250,6 +250,10 @@ The CI pipeline shall cache pip downloads, keyed on `pyproject.toml`, so that un
 
 The CI pipeline shall use a single reusable composite action for repository checkout, Python setup, and dependency installation across all jobs.
 
+## FR-18 GitHub Release Signing
+
+The CI pipeline shall configure GPG signing so that all release commits and tags are signed with GitHub's verified signature, displaying "This commit was created on GitHub.com and signed with GitHub's verified signature".
+
 ---
 
 ## QR-08 CI Performance
@@ -259,6 +263,14 @@ The CI pipeline shall avoid redundant work by caching pip downloads, centralisin
 ## QR-09 CI Maintainability
 
 The CI pipeline shall centralise common setup logic in a single reusable action so that environment changes require a single point of modification.
+
+## QR-10 GitHub Signing Verification
+
+The CI pipeline shall verify that release tags are signed with the configured GPG program (gh-gpgsign) and that signing capability is validated before deployment.
+
+## QR-11 CI GPG Action Maintainability
+
+The CI pipeline shall isolate GPG signing setup in a dedicated reusable composite action so that signing configuration changes require a single point of modification, consistent with the pattern established by FR-17 and QR-09.
 
 ---
 

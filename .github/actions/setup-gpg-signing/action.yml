@@ -1,0 +1,55 @@
+name: Setup GPG Signing
+description: Configure GPG signing for GitHub releases with GitHub CLI
+inputs:
+  gpg-key-id:
+    description: 'GPG key ID (fingerprint or key ID)'
+    default: ''
+  signing-key:
+    description: 'GPG signing key (base64 encoded)'
+    default: ''
+  github-token:
+    description: 'GitHub token for gh CLI authentication'
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Install GitHub CLI and GPG tools
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq gnupg2 pinentry-curses
+        echo "GPG tools installed"
+
+    - name: Configure GPG signing in git
+      shell: bash
+      run: |
+        git config --global commit.gpgsign true
+        git config --global tag.gpgsign true
+        git config --global gpg.program gh-gpgsign
+        echo "GPG signing configured in git"
+
+    - name: Authenticate GitHub CLI
+      shell: bash
+      if: inputs.github-token != ''
+      run: |
+        echo "${{ inputs.github-token }}" | gh auth login --with-token --scopes write,repo
+        gh auth status
+
+    - name: Import GPG signing key
+      shell: bash
+      if: inputs.signing-key != ''
+      run: |
+        echo "${{ inputs.signing-key }}" | base64 -d | gpg --batch --import --yes
+        gpg --list-secret-keys --keyid-format LONG
+
+    - name: Verify signing capability
+      shell: bash
+      run: |
+        if command -v gh-gpgsign &>/dev/null; then
+          echo "gh-gpgsign is available"
+        else
+          echo "gh-gpgsign not found, checking alternatives..."
+          which gpg || true
+        fi
+        echo "Git signing config:"
+        git config --global --list | grep -E "commit.gpgsign|tag.gpgsign|gpg.program"

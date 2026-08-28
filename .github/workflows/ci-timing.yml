@@ -83,6 +83,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: master
 
       # No Python deps required: collect_ci_timings.py and
       # aggregate_ci_timings.py are standard-library only. We use the
@@ -106,6 +107,15 @@ jobs:
             git add README.md
             git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): initialise orphan ci-metrics branch"
             git -c user.name=github-actions -c user.email=actions@github.com push --quiet -u origin "$METRICS_BRANCH"
+            # Verify the push actually landed on origin. Without this the step
+            # can silently report success while the orphan branch is still
+            # absent from the remote, and every later step then operates on
+            # a phantom branch.
+            if ! gh api --silent "repos/${{ github.repository }}/branches/$METRICS_BRANCH" >/dev/null 2>&1; then
+              echo "FATAL: push did not create branch $METRICS_BRANCH on origin"
+              exit 1
+            fi
+            echo "Created orphan branch $METRICS_BRANCH on origin"
             git switch -
           else
             echo "Branch $METRICS_BRANCH already exists"

@@ -31,6 +31,20 @@ handoffs:
       - Ensure git commits reference PRO ticket
       
       When complete, provide your implementation output for review.
+
+skills:
+  - name: feature-development
+    path: .opencode/skills/feature-development/SKILL.md
+    description: >
+      Use when implementing a feature tracked in JIRA. Start with the JIRA
+      ticket, adopt or draft the Implementation Plan, then execute in
+      verifiable rollout steps.
+      Load this skill for Phase 2 (adopt/draft plan) and to reference
+      the Part A/B/C plan structure.
+    invoke: always
+    phases:
+      - adopt-plan
+      - draft-plan
 ---
 
 # Architect Agent
@@ -56,6 +70,10 @@ Translate validated user stories and requirements into detailed technical design
    - Identify files to create/modify
    - Define test strategy per TESTING.md
    - Specify dependencies between implementation steps
+   - Follow the `feature-development` skill's Part B format:
+     - Part A: Preanalysis (data source, scope, feasibility)
+     - Part B: Implementation Plan (files, schema, workflow, rollout)
+     - Part C: Verification Definition (unit/integration, AC/DoD)
 
 4. **Ensure Documentation Alignment**
    - Verify design follows ARCHITECTURE.md patterns

@@ -383,6 +383,55 @@ execution times from the GitHub Actions API for every successful PR run of
 - **Do not commit timing results** to the PR branch — they belong on `ci-metrics`.
 - See `doc/01_Implementation_Plan_CI_Timing_Benchmark.md` for the full plan.
 
+## JIRA Workflow Skills
+
+Two skills support the end-to-end JIRA ticket lifecycle:
+
+- **`.opencode/skills/product-discovery-planning/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
+- **`.opencode/skills/feature-complete/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
+
+## Agent-Team Workflow
+
+The four agent definitions in `.github/agents/` form a coordinated pipeline. Each agent loads the relevant `.opencode/skills/` skill at its step.
+
+### Pipeline
+
+```
+Product Owner → Architect → Developer → Tester → [feature-complete] → JIRA Close
+```
+
+| Step | Agent | Skill Invoked | What It Does |
+|------|-------|---------------|--------------|
+| 1 | **Product Owner** | `product-discovery-planning` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
+| 2 | **Architect** | `feature-development` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
+| 3 | **Developer** | `feature-development` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
+| 4 | **Tester** | `feature-complete` | Validate AC, run tests, verify coverage ≥90% CI gate |
+| 5 | **Tester → feature-complete** | `feature-complete` | Assign story points, update JIRA description, transition to Fertig, update PR |
+| 6 | *(release)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
+
+### Skill Invocation Rules
+
+- Each agent **must** load its listed skill before executing its workflow
+- Skills are loaded from `.opencode/skills/<skill-name>/SKILL.md`
+- The `invoke` field controls when the skill loads: `always` (before any work), `after-testing` (after test approval), `after-approval` (after tester approves)
+- The `phases` field lists the skill phases applicable to that agent step
+
+### Handoff Protocol
+
+1. **PO → Architect**: Pass complete User Story output with acceptance criteria
+2. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
+3. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics; load `feature-complete` skill for tester
+4. **Tester → feature-complete**: After PASSED decision, load `feature-complete` skill for JIRA closure; do NOT handoff to Product Owner for sign-off
+5. **Release**: Trigger `release-project` skill manually when ready to publish
+
+### Quality Gates (CI)
+
+- **Coverage**: ≥90% branch+line (`AGENTS.md` CI gate)
+- **Lint**: `ruff check`, `black --check`, `pydocstyle`, `radon cc`
+- **Tests**: Unit + Integration + System (system tests skip when real data absent)
+- **Traceability**: `python .github/scripts/generate_traceability_matrix.py` — exits non-zero if any requirement untraced
+- **CI self-tests**: `pytest -q .github/tests/` — gates the pipeline
+
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches

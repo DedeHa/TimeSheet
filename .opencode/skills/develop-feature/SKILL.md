@@ -1,6 +1,6 @@
 ---
 name: develop-feature
-description: Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to "start feature", "implement ticket", "work on PRO-XXX", "draft implementation plan", "begin work on JIRA ticket", or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner.
+description: "Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to 'start feature', 'implement ticket', 'work on PRO-XXX', 'draft implementation plan', 'begin work on JIRA ticket', or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
 ---
 
 # Feature Development Skill

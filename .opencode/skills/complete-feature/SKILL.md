@@ -249,3 +249,55 @@ atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "
 | Stage all | `git add -A` |
 | Commit | `git commit -m "docs(ci): finalise PRO-XXX...\n\nRefs: PRO-XXX"` |
 | Push | `git push origin <branch>` |
+
+## Cycle Tracking and Escalation
+
+This skill is invoked by the tester agent under the Product Owner dispatcher.
+Each invocation is a **cycle**. The agent must track the current cycle and
+escalate when the limit is reached.
+
+### Cycle Limits
+
+- **Max cycles per dispatch:** 3
+- **If cycle = 1, 2:** Continue verification — the agent is on schedule
+- **If cycle = 3:** Stop, prepare handoff to Product Owner with summary
+- **If cycle > 3:** STOP — agent must NOT continue, escalate immediately
+
+### When to Escalate
+
+Escalate to Product Owner when:
+1. **Blocker encountered** — verification cannot proceed (broken CI, missing artifacts, conflicting results, etc.)
+2. **Cycle 3 reached** — maximum allowed cycles have been used
+3. **Process loops** — repeated failures without progress (e.g., tests fail after 3 fix attempts, coverage regresses)
+
+### Escalation Handoff
+
+When escalating, provide:
+
+```markdown
+## Escalation: Feature Completion — [Brief Description]
+
+### Cycle Information
+- Current cycle: [N] of max 3
+- Started: [approximate time]
+- Last action: [what was just done]
+
+### Blocked On
+- [Specific question, missing info, or issue]
+
+### What's Done
+- [Summary of completed checks]
+
+### What's Remaining
+- [Checks that could not be completed]
+```
+
+### Common Escalation Triggers
+
+| Trigger | Example | Escalate? |
+|---------|---------|-----------|
+| Coverage < 90% | Tests added but threshold not met after 3 attempts | Yes |
+| Lint error | Cannot resolve ruff/black issue | Yes |
+| JIRA update fails | Description update returns error | Yes — ask PO |
+| Test fails | Same test fails after 3 fix attempts | Yes |
+| Out of scope | Required changes not in original ACs | Yes — ask PO |

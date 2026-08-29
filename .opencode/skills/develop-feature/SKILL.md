@@ -287,3 +287,56 @@ Benchmark) work. Useful as a reference for shape, not as a template:
 - **Test-driven bug catch**: the backfill driver's first draft was
   neither idempotent nor attempt-aware. Unit tests caught both bugs
   before the workflow was wired up.
+
+## Cycle Tracking and Escalation
+
+This skill is invoked by an agent under the Product Owner dispatcher. Each
+invocation is a **cycle**. The agent must track the current cycle and
+escalate when the limit is reached.
+
+### Cycle Limits
+
+- **Max cycles per dispatch:** 3
+- **If cycle = 1, 2:** Continue working — the agent is on schedule
+- **If cycle = 3:** Stop, prepare handoff to Product Owner with summary
+- **If cycle > 3:** STOP — agent must NOT continue, escalate immediately
+
+### When to Escalate
+
+Escalate to Product Owner when:
+1. **Blocker encountered** — the agent cannot resolve an issue (questions, missing data, conflicting requirements, etc.)
+2. **Cycle 3 reached** — maximum allowed cycles have been used
+3. **Process loops** — repeating the same step without progress (e.g., same test failing after 3 attempts, same lint error recurring)
+
+### Escalation Handoff
+
+When escalating, provide:
+
+```markdown
+## Escalation: [Skill Name] — [Brief Description]
+
+### Cycle Information
+- Current cycle: [N] of max 3
+- Started: [approximate time]
+- Last action: [what was just done]
+
+### Blocked On
+- [Specific question, missing info, or issue]
+
+### What's Done
+- [Summary of completed steps]
+
+### What's Remaining
+- [Steps that could not be completed]
+```
+
+### Common Escalation Triggers
+
+| Trigger | Example | Escalate? |
+|---------|---------|-----------|
+| Test fails 3+ times | Same test failure after 3 fix attempts | Yes |
+| Lint error recurs | Same ruff/black error after 3 fix attempts | Yes |
+| JIRA field missing | Cannot determine acceptance criteria | Yes — ask PO |
+| Plan ambiguous | Two valid interpretations of requirement | Yes — ask PO |
+| Out of scope | Implementation requires changes not in plan | Yes — ask PO |
+| External dependency | Waiting on third-party or upstream PR | Yes — pause and notify |

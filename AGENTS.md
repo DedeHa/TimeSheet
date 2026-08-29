@@ -383,6 +383,13 @@ execution times from the GitHub Actions API for every successful PR run of
 - **Do not commit timing results** to the PR branch — they belong on `ci-metrics`.
 - See `doc/01_Implementation_Plan_CI_Timing_Benchmark.md` for the full plan.
 
+## JIRA Workflow Skills
+
+Two skills support the end-to-end JIRA ticket lifecycle:
+
+- **`.opencode/skills/product-discovery-planning/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
+- **`.opencode/skills/feature-complete/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
+
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches

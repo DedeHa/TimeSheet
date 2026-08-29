@@ -54,7 +54,7 @@ python .github/scripts/generate_traceability_matrix.py
 1. Read the implementation plan document (e.g. `doc/02_Implementation_Plan_PRO-XXX.md`).
 2. Read the JIRA ticket description via Atlassian MCP:
    ```
-   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "fixVersions"])
+   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "fixVersions", "resolution"])
    ```
 3. Cross-reference each acceptance criterion (AC-1, AC-2, ...) against:
    - The implementation plan's status table
@@ -98,11 +98,52 @@ All work for PRO-XXX is complete. Here is the final status:
 Refs: PRO-XXX
 ```
 
-### 3b. Checkmark Acceptance Criteria in Description
+### 3b. Assign Story Points
 
-Update the JIRA ticket description using `atlassian_editJiraIssue` to add ✅ markers next to each completed AC and check off the DoD checklist items.
+**Critical:** The project uses story points in `customfield_10028`. Before closing, check if story points are assigned and assign them if missing.
 
-### 3c. Transition to Done
+1. Query recent Stories to identify the story points field and comparable estimates:
+   ```
+   atlassian_searchJiraIssuesUsingJql(jql='project = PRO AND issuetype = Story ORDER BY created DESC', maxResults=20)
+   ```
+   Look for `customfield_10028` values in the results.
+2. If PRO-XXX has `customfield_10028: null`, assign a value using:
+   ```
+   atlassian_editJiraIssue(issueIdOrKey="PRO-XXX", fields={"customfield_10028": N})
+   ```
+   Use comparable tickets as reference:
+   - 1-2 pts: Minor fix, documentation update
+   - 3-5 pts: Moderate feature, CI/workflow change
+   - 5-8 pts: Significant feature with tests
+   - 8+ pts: Large refactor or complex feature
+
+### 3c. Checkmark Acceptance Criteria and Definition of Done in Description
+
+Update the JIRA ticket description using `atlassian_editJiraIssue` to:
+1. Add `- [x]` markers next to each completed AC (format: `- [x] AC-N: description — implementation detail`)
+2. Add a **Definition of Done** section with all items checkmarked
+3. Add a **Story Points** line with the assigned value
+4. Add Story Points to the Definition of Done checklist
+
+**Required description format:**
+```
+**Acceptance Criteria:**
+
+- [x] AC-1: Description — implementation detail
+- [x] AC-2: Description — implementation detail
+...
+
+**Definition of Done:**
+
+- [x] PR #NNN merged to master
+- [x] JIRA ticket closed (Fertig)
+- [x] All ACs checkmarked
+- [x] Story Points: N assigned
+- [x] Traceability: FR-XX, QR-XX added to docs
+- [x] CI self-tests: N passed
+```
+
+### 3d. Transition to Done
 
 Get available transitions and close the ticket:
 ```
@@ -112,7 +153,7 @@ atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
 - Transition ID `31` = "Fertig" (Done) for this JIRA instance
 - Verify the ticket is closed:
   ```
-  atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution"])
+  atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "customfield_10028"])
   ```
 
 ## Step 4 — Update PR Description
@@ -169,7 +210,7 @@ git log --oneline -3
 gh pr view <PR_NUMBER> --json title,state,mergeable
 
 # JIRA ticket is closed
-atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution"])
+atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "customfield_10028"])
 ```
 
 ## Reference: Quick Command Cheatsheet
@@ -181,6 +222,9 @@ atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution"])
 | Run lint | `ruff check src_timesheetalgo tests .github` |
 | Check traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
+| Get JIRA issue | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["*all"])` |
+| Search JIRA stories | `atlassian_searchJiraIssuesUsingJql(jql="project = PRO AND issuetype = Story ORDER BY created DESC", maxResults=20)` |
+| Assign story points | `atlassian_editJiraIssue(issueIdOrKey="PRO-XXX", fields={"customfield_10028": N})` |
 | Update JIRA description | `atlassian_editJiraIssue(issueIdOrKey="PRO-XXX", fields={"description": "..."})` |
 | Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
 | Update PR description | `gh pr edit <N> --body '...'` |

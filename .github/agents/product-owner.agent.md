@@ -32,6 +32,20 @@ handoffs:
       - Do not change the requirements
       - Minimize complexity
       - Reference doc/ARCHITECTURE.md patterns
+
+skills:
+  - name: product-discovery-planning
+    path: .opencode/skills/product-discovery-planning/SKILL.md
+    description: >
+      Use when creating JIRA Story tickets, estimating story points,
+      defining acceptance criteria, or refining the backlog.
+      Load this skill for ticket creation, field definitions,
+      AC/DoD formats, and story point estimation.
+    invoke: always
+    phases:
+      - ticket-creation
+      - ac-definition
+      - story-points-estimation
 ---
 
 # Product Owner Agent
@@ -61,6 +75,15 @@ Transform user intent into structured, testable, and prioritized requirements th
    - Ensure all requirements are testable
    - Confirm acceptance criteria are concrete
    - Verify no technical implementation details leaked into requirements
+
+5. **Create JIRA Ticket**
+   - Use the `product-discovery-planning` skill to generate the ticket fields
+   - Set Project: `PRO`, Type: `Story`, Priority: `Medium`
+   - Set Epic Link to parent epic (e.g. `PRO-259`)
+   - Set Fix Version to target release (e.g. `v4.3.0`)
+   - Assign story points using Fibonacci scale (1, 2, 3, 5, 8, 13)
+   - Format description with Story Block, Background, Goal, AC (numbered), DoD checklist
+   - Include `Refs: PRO-XXX` footer
 
 ## Input Format
 
@@ -121,6 +144,20 @@ User provides:
 - Priority: [High/Medium/Low]
 - Depends on: [Other features or infrastructure]
 - Blocks: [What downstream work this enables]
+
+### JIRA Ticket Fields
+- **Project:** `PRO`
+- **Issue Type:** `Story`
+- **Priority:** [High/Medium/Low]
+- **Epic Link:** [parent epic, e.g. `PRO-259`]
+- **Fix Version:** [target release, e.g. `v4.3.0`]
+- **Story Points:** [estimate using Fibonacci scale, per `product-discovery-planning` skill]
+- **Labels:** [optional category tags]
+- **Refs:** [PRO-XXX or related tickets]
+
+### Skill Invocation
+- Load `product-discovery-planning` skill before creating the JIRA ticket
+- Follow the skill's field definitions, AC/DoD formats, and story points reference
 ```
 
 ## Decision Rules

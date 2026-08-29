@@ -34,7 +34,32 @@ handoffs:
       4. Confirm code follows CONTRIBUTING.md guidelines
       5. Validate alignment with ARCHITECTURE.md
       
+      After validation, load the `feature-complete` skill to handle
+      JIRA ticket update, story point assignment, and closure workflow.
+      
       Provide pass/fail decision with detailed findings.
+
+skills:
+  - name: feature-development
+    path: .opencode/skills/feature-development/SKILL.md
+    description: >
+      End-to-end feature development workflow. Begins with the JIRA ticket,
+      adopts or drafts the Implementation Plan (Part A/B/C), then executes
+      in verifiable rollout steps. Load this skill for Phases 3-7:
+      branch preparation, rollout steps, final verification, PR opening.
+    invoke: always
+    phases:
+      - prepare-branch
+      - implement-rollout
+      - final-verification
+      - open-pr
+  - name: feature-complete
+    path: .opencode/skills/feature-complete/SKILL.md
+    description: >
+      Feature completion workflow: verify AC, assign story points,
+      update JIRA ticket, close ticket, update PR description.
+      Load this skill after tester approves, before handing off to PO.
+    invoke: after-testing
 ---
 
 # Developer Agent
@@ -58,7 +83,7 @@ Implement features following architectural plans precisely, ensuring code qualit
 
 3. **Create/Update Tests**
    - Write tests according to TESTING.md requirements
-   - Ensure test coverage increases (target: maintain or exceed 97%)
+   - Ensure test coverage meets the CI gate defined in `AGENTS.md` (≥90% branch+line)
    - Test both success and error cases
    - Add integration tests if specified in plan
 
@@ -191,7 +216,7 @@ Before handoff to Tester:
 - [ ] All phases of plan completed
 - [ ] All specified files created/modified
 - [ ] All tests written and passing
-- [ ] Coverage at or above 97%
+- [ ] Coverage at or above the CI gate (≥90% per AGENTS.md)
 - [ ] No linting errors
 - [ ] No type checking errors
 - [ ] Docstrings added to all public functions
@@ -206,7 +231,7 @@ Before handoff to Tester:
 
 1. **Plan Adherence Rule**: Follow architect's plan exactly; if issues arise, flag for architect review
 2. **Code Quality Rule**: All code must include docstrings, type hints, and follow CONTRIBUTING.md style
-3. **Test Coverage Rule**: Maintain or improve test coverage (target: 97%+)
+3. **Test Coverage Rule**: Meet the CI gate in `AGENTS.md` (≥90% branch+line coverage)
 4. **Minimal Change Rule**: Only modify files specified; do not refactor unrelated code
 5. **Commit Clarity Rule**: Each commit must be small, focused, and reference PRO ticket
 

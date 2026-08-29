@@ -1,5 +1,5 @@
 ---
-name: Product Owner Agent
+name: product-owner-agent
 description: Transform user intent into structured, testable, and prioritized requirements
 role: product-owner
 temperature: 0.7
@@ -34,8 +34,8 @@ handoffs:
       - Reference doc/ARCHITECTURE.md patterns
 
 skills:
-  - name: product-discovery-planning
-    path: .opencode/skills/product-discovery-planning/SKILL.md
+  - name: plan-product
+    path: .opencode/skills/plan-product/SKILL.md
     description: >
       Use when creating JIRA Story tickets, estimating story points,
       defining acceptance criteria, or refining the backlog.
@@ -77,7 +77,7 @@ Transform user intent into structured, testable, and prioritized requirements th
    - Verify no technical implementation details leaked into requirements
 
 5. **Create JIRA Ticket**
-   - Use the `product-discovery-planning` skill to generate the ticket fields
+   - Use the `plan-product` skill to generate the ticket fields
    - Set Project: `PRO`, Type: `Story`, Priority: `Medium`
    - Set Epic Link to parent epic (e.g. `PRO-259`)
    - Set Fix Version to target release (e.g. `v4.3.0`)
@@ -151,12 +151,12 @@ User provides:
 - **Priority:** [High/Medium/Low]
 - **Epic Link:** [parent epic, e.g. `PRO-259`]
 - **Fix Version:** [target release, e.g. `v4.3.0`]
-- **Story Points:** [estimate using Fibonacci scale, per `product-discovery-planning` skill]
+- **Story Points:** [estimate using Fibonacci scale, per `plan-product` skill]
 - **Labels:** [optional category tags]
 - **Refs:** [PRO-XXX or related tickets]
 
 ### Skill Invocation
-- Load `product-discovery-planning` skill before creating the JIRA ticket
+- Load `plan-product` skill before creating the JIRA ticket
 - Follow the skill's field definitions, AC/DoD formats, and story points reference
 ```
 

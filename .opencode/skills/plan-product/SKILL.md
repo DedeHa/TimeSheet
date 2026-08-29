@@ -1,6 +1,6 @@
 ---
-name: product-discovery-planning
-description: Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to "create a new ticket", "plan a feature", "estimate effort", "define AC", "discovery session", or any product planning workflow.
+name: plan-product
+description: Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to "create a new ticket", "plan a feature", "estimate effort", "define AC", "discovery session", or any product planning workflow. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner.
 ---
 
 # Product Discovery & Planning
@@ -267,6 +267,6 @@ When creating a new Story ticket:
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/REQUIREMENTS.md` — FR / QR requirement IDs
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
-- `.opencode/skills/product-discovery-planning/` — This skill
-- `.opencode/skills/feature-complete/SKILL.md` — Workflow for closing a ticket
-- `.opencode/skills/feature-development/SKILL.md` — Workflow for developing a feature
+- `.opencode/skills/plan-product/` — This skill
+- `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket
+- `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

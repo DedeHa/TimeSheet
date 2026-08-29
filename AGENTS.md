@@ -426,20 +426,30 @@ wording.
 
 The four agent definitions in `.github/agents/` form a coordinated pipeline. Each agent loads the relevant `.opencode/skills/` skill at its step.
 
+### Key-Request → Agent → Skill Mapping
+
+| Key-Request | Trigger | Agent Team Member | Skill Invoked |
+|-------------|---------|-------------------|---------------|
+| "plan a new feature" | User intent | **Product Owner** (`product-owner-agent`) | `plan-feature` |
+| "plan a bug fix" | Bug report | **Product Owner** (`product-owner-agent`) | `plan-feature` |
+| "start feature PRO-XXX" / "implement ticket PRO-XXX" / "work on PRO-XXX" | Existing JIRA ticket | **Architect** (`architect-agent`) → **Developer** (`developer-agent`) | `develop-feature` |
+| "complete feature" / "finalise implementation" | PR ready | **Tester** (`tester-agent`) → `complete-feature` skill | `complete-feature` |
+| "release" / "create a release vX.Y.Z" / "tag vX.Y.Z" | Release ready | **Release** (manual trigger) | `release-project` |
+
 ### Pipeline
 
 ```
-Product Owner → Architect → Developer → Tester → [complete-feature] → JIRA Close
+Key-Request → Agent Team Member → Uses Skills
 ```
 
-| Step | Agent | Skill Invoked | What It Does |
-|------|-------|---------------|--------------|
-| 1 | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
-| 2 | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
-| 3 | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
-| 4 | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
-| 5 | **Tester → complete-feature** | `complete-feature` | Assign story points, update JIRA description, transition to Fertig, update PR |
-| 6 | *(release)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
+| Step | Key-Request | Agent | Skill | What It Does |
+|------|-------------|-------|-------|--------------|
+| 1 | "plan a new feature" | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
+| 2 | "start feature PRO-XXX" | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
+| 3 | "start feature PRO-XXX" | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
+| 4 | "complete feature" | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
+| 5 | "complete feature" | **Tester → complete-feature** | `complete-feature` | Assign story points, update JIRA description, checkmark ACs/DoD, update PR |
+| 6 | *(release)* | *(manual)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
 
 ### Skill Invocation Rules
 
@@ -456,6 +466,18 @@ Product Owner → Architect → Developer → Tester → [complete-feature] → 
 4. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
 5. **complete-feature → User/PO**: Hand off the prepared ticket. The user / Product-Owner calls `atlassian_transitionJiraIssue` and `gh pr merge` — the agent-team must not
 6. **Release**: Trigger `release-project` skill manually when ready to publish
+
+### How to Trigger the Agent Team
+
+The agent team is triggered by **natural language key-requests**:
+
+- **"plan a new feature"** → Product Owner → `plan-feature` skill → creates JIRA ticket
+- **"plan a bug fix"** → Product Owner → `plan-feature` skill → creates JIRA ticket
+- **"start feature PRO-XXX"** or **"implement ticket PRO-XXX"** → Architect → Developer → `develop-feature` skill → implements feature
+- **"complete feature"** or **"finalise implementation"** → Tester → `complete-feature` skill → validates and prepares closure
+- **"release vX.Y.Z"** → Manual trigger → `release-project` skill → publishes release
+
+Each key-request maps to a specific agent team member who loads the matching skill. The user provides the key-request; the agent team executes the steps.
 
 ### Quality Gates (CI)
 

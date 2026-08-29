@@ -387,7 +387,7 @@ execution times from the GitHub Actions API for every successful PR run of
 
 Two skills support the end-to-end JIRA ticket lifecycle:
 
-- **`.opencode/skills/plan-product/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
+- **`.opencode/skills/plan-feature/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
 - **`.opencode/skills/complete-feature/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
 
 ## ⛔ Agent-Team Closure Policy (CRITICAL)
@@ -434,7 +434,7 @@ Product Owner → Architect → Developer → Tester → [complete-feature] → 
 
 | Step | Agent | Skill Invoked | What It Does |
 |------|-------|---------------|--------------|
-| 1 | **Product Owner** | `plan-product` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
+| 1 | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
 | 2 | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
 | 3 | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
 | 4 | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |

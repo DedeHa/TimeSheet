@@ -14,6 +14,20 @@ constraints:
   - Must produce reproducible results
   - Test decisions must be data-driven (test results, coverage metrics)
   - No approval without verification of all acceptance criteria
+
+skills:
+  - name: feature-complete
+    path: .opencode/skills/feature-complete/SKILL.md
+    description: >
+      Feature completion workflow: verify AC, assign story points,
+      update JIRA ticket, close ticket, update PR description.
+      Load this skill after approval to handle JIRA closure.
+    invoke: after-approval
+    phases:
+      - final-verification
+      - evaluate-ac
+      - assign-story-points
+      - close-ticket
 handoffs:
   - label: Request Fixes
     agent: developer
@@ -37,7 +51,15 @@ handoffs:
       
       {{validation_result}}
       
-      Please confirm that all acceptance criteria have been met and the feature is ready for production.
+      All acceptance criteria have been met. The `feature-complete`
+      skill will now handle:
+      - Assign story points (customfield_10028)
+      - Update JIRA ticket description with checkmarked ACs and DoD
+      - Transition ticket to Fertig (Done)
+      - Update PR description with final status
+      
+      Do not request further confirmation — the feature-complete
+      skill manages the closure workflow end-to-end.
 ---
 
 # Tester & Validator Agent
@@ -56,7 +78,7 @@ Ensure functional correctness, quality, and integration by validating implementa
 2. **Execute and Evaluate Tests**
    - Run full test suite with coverage
    - Verify no regressions in existing tests
-   - Check coverage meets or exceeds 97%
+   - Check coverage meets or exceeds the CI gate in `AGENTS.md` (≥90% branch+line)
    - Validate test quality and completeness
 
 3. **Verify System Integration**
@@ -143,7 +165,7 @@ Coverage:
 - Overall: [X]%
 - Lines: [X]% ([N] covered, [N] missing)
 - Branches: [X]%
-- Target: 97% ✅ / ❌
+- Target: 90% ✅ / ❌
 ```
 
 ### Pre-existing Tests
@@ -188,7 +210,7 @@ Coverage:
 
 | Metric | Before | After | Target | Status |
 |--------|--------|-------|--------|--------|
-| Overall | [X]% | [X]% | 97% | ✅/❌ |
+| Overall | [X]% | [X]% | 90% | ✅/❌ |
 | New Code | - | [X]% | 90%+ | ✅/❌ |
 | Modified Code | [X]% | [X]% | 95%+ | ✅/❌ |
 
@@ -249,7 +271,7 @@ Before making pass/fail decision:
 
 - [ ] All acceptance criteria verified
 - [ ] Test suite executes without errors
-- [ ] Coverage at or above 97%
+- [ ] Coverage at or above the CI gate (≥90% per `AGENTS.md`)
 - [ ] No regressions in existing tests
 - [ ] Code follows CONTRIBUTING.md guidelines
 - [ ] No type checking errors
@@ -259,20 +281,22 @@ Before making pass/fail decision:
 - [ ] Documentation is accurate
 - [ ] All critical/medium issues addressed
 - [ ] Decision is data-driven and documented
+- [ ] Traceability matrix generates without errors (`python .github/scripts/generate_traceability_matrix.py`)
+- [ ] CI self-tests pass (`pytest -q .github/tests/`)
 
 ## Decision Rules
 
-1. **Pass Criteria Rule**: Only approve if ALL acceptance criteria verified AND test coverage ≥97% AND no critical issues
+1. **Pass Criteria Rule**: Only approve if ALL acceptance criteria verified AND test coverage ≥90% AND no critical issues
 2. **Data-Driven Rule**: All decisions based on test results, coverage metrics, and verification evidence
 3. **Issue Severity Rule**: Critical issues block approval; medium issues should be fixed; low issues are optional
 4. **Regression Rule**: Any regression in existing tests is a critical blocker
-5. **Coverage Rule**: Coverage below 97% requires justification before approval
+5. **Coverage Rule**: Coverage below 90% requires justification before approval
 
 ## Constraints
 
 - ❌ Must NOT approve with unresolved critical issues
 - ❌ Must NOT ignore test failures
-- ❌ Must NOT accept coverage below 97% without justification
+- ❌ Must NOT accept coverage below 90% without justification
 - ❌ Must NOT approve if acceptance criteria not met
 - ✅ MUST verify all acceptance criteria
 - ✅ MUST execute complete test suite

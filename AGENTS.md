@@ -391,6 +391,9 @@ Two skills support the end-to-end JIRA ticket lifecycle:
 - **`.opencode/skills/feature-complete/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> a70971c (docs: add agent-team workflow documentation to AGENTS.md)
 ## Agent-Team Workflow
 
 The four agent definitions in `.github/agents/` form a coordinated pipeline. Each agent loads the relevant `.opencode/skills/` skill at its step.
@@ -433,8 +436,11 @@ Product Owner → Architect → Developer → Tester → [feature-complete] → 
 - **Traceability**: `python .github/scripts/generate_traceability_matrix.py` — exits non-zero if any requirement untraced
 - **CI self-tests**: `pytest -q .github/tests/` — gates the pipeline
 
+<<<<<<< HEAD
 =======
 >>>>>>> 441e55a (docs: add JIRA workflow skills section and story point assignment)
+=======
+>>>>>>> a70971c (docs: add agent-team workflow documentation to AGENTS.md)
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches

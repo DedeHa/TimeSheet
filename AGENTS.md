@@ -390,6 +390,7 @@ Two skills support the end-to-end JIRA ticket lifecycle:
 - **`.opencode/skills/product-discovery-planning/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
 - **`.opencode/skills/feature-complete/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
 
+<<<<<<< HEAD
 ## Agent-Team Workflow
 
 The four agent definitions in `.github/agents/` form a coordinated pipeline. Each agent loads the relevant `.opencode/skills/` skill at its step.
@@ -432,6 +433,8 @@ Product Owner → Architect → Developer → Tester → [feature-complete] → 
 - **Traceability**: `python .github/scripts/generate_traceability_matrix.py` — exits non-zero if any requirement untraced
 - **CI self-tests**: `pytest -q .github/tests/` — gates the pipeline
 
+=======
+>>>>>>> 441e55a (docs: add JIRA workflow skills section and story point assignment)
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches

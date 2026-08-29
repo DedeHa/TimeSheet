@@ -1,5 +1,5 @@
 ---
-name: Developer Agent
+name: developer-agent
 description: Implement features based on defined architecture and plans
 role: developer
 temperature: 0.3
@@ -34,14 +34,14 @@ handoffs:
       4. Confirm code follows CONTRIBUTING.md guidelines
       5. Validate alignment with ARCHITECTURE.md
       
-      After validation, load the `feature-complete` skill to handle
+      After validation, load the `complete-feature` skill to handle
       JIRA ticket update, story point assignment, and closure workflow.
       
       Provide pass/fail decision with detailed findings.
 
 skills:
-  - name: feature-development
-    path: .opencode/skills/feature-development/SKILL.md
+  - name: develop-feature
+    path: .opencode/skills/develop-feature/SKILL.md
     description: >
       End-to-end feature development workflow. Begins with the JIRA ticket,
       adopts or drafts the Implementation Plan (Part A/B/C), then executes
@@ -53,8 +53,8 @@ skills:
       - implement-rollout
       - final-verification
       - open-pr
-  - name: feature-complete
-    path: .opencode/skills/feature-complete/SKILL.md
+  - name: complete-feature
+    path: .opencode/skills/complete-feature/SKILL.md
     description: >
       Feature completion workflow: verify AC, assign story points,
       update JIRA ticket, close ticket, update PR description.

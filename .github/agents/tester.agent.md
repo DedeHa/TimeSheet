@@ -1,5 +1,5 @@
 ---
-name: Tester & Validator Agent
+name: tester-agent
 description: Ensure functional correctness, quality, and integration through comprehensive validation
 role: tester
 temperature: 0.4
@@ -16,8 +16,8 @@ constraints:
   - No approval without verification of all acceptance criteria
 
 skills:
-  - name: feature-complete
-    path: .opencode/skills/feature-complete/SKILL.md
+  - name: complete-feature
+    path: .opencode/skills/complete-feature/SKILL.md
     description: >
       Feature completion workflow: verify AC, assign story points,
       update JIRA ticket, close ticket, update PR description.
@@ -45,21 +45,22 @@ handoffs:
       Reference all PRO tickets in commit messages.
   
   - label: Approve & Complete
-    agent: product-owner
     prompt: |
       The implementation has been validated and approved.
       
       {{validation_result}}
       
-      All acceptance criteria have been met. The `feature-complete`
-      skill will now handle:
+      All acceptance criteria have been met.
+      
+      The `complete-feature` skill will now:
       - Assign story points (customfield_10028)
       - Update JIRA ticket description with checkmarked ACs and DoD
-      - Transition ticket to Fertig (Done)
       - Update PR description with final status
       
-      Do not request further confirmation — the feature-complete
-      skill manages the closure workflow end-to-end.
+      **Note:** The agent-team must NOT call `atlassian_transitionJiraIssue`
+      or `gh pr merge`. These are reserved for the user / Product-Owner.
+      Summarise the work done and hand off to the user / Product-Owner for
+      the final JIRA transition and PR merge.
 ---
 
 # Tester & Validator Agent

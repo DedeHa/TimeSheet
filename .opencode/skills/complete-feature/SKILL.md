@@ -1,6 +1,6 @@
 ---
-name: feature-complete
-description: Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, close the ticket, update PR description, and commit/push changes. Triggers on requests to "complete feature", "close JIRA ticket", "finalise implementation", "verify feature completeness", "check off acceptance criteria", or any JIRA ticket closure workflow.
+name: complete-feature
+description: Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to "complete feature", "finalise implementation", "verify feature completeness", "check off acceptance criteria", or "prepare JIRA closure". NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner.
 ---
 
 # Feature Complete Skill
@@ -145,16 +145,30 @@ Update the JIRA ticket description using `atlassian_editJiraIssue` to:
 
 ### 3d. Transition to Done
 
-Get available transitions and close the ticket:
-```
-atlassian_getTransitionsForJiraIssue(issueIdOrKey="PRO-XXX")
-atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
-```
-- Transition ID `31` = "Fertig" (Done) for this JIRA instance
-- Verify the ticket is closed:
-  ```
-  atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "customfield_10028"])
-  ```
+> **⛔ BLOCKED — Requires User / Product-Owner Approval**
+> The agent-team must NOT call `atlassian_transitionJiraIssue`.
+> Transition to Fertig is reserved for the user or Product-Owner.
+>
+> **What the agent-team DOES:**
+> 1. Step 3a: Post the implementation status comment
+> 2. Step 3b: Assign story points
+> 3. Step 3c: Update JIRA description with `- [x]` AC and DoD checkmarks
+> 4. Step 4: Update PR description with final status
+>
+> **After these steps, hand off to the user / Product-Owner:**
+> - Summarise what was prepared (ACs, DoD, PR description, story points)
+> - Ask the user / Product-Owner to call:
+>   ```
+>   atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+>   ```
+> - Ask the user / Product-Owner to merge the PR:
+>   ```
+>   gh pr merge <PR_NUMBER> --merge
+>   ```
+>
+> **Verification:** The user / Product-Owner is responsible for the final
+> `atlassian_transitionJiraIssue` and `gh pr merge` calls. The agent-team
+> **must not** execute these commands autonomously.
 
 ## Step 4 — Update PR Description
 
@@ -170,6 +184,8 @@ gh pr edit <PR_NUMBER> --body '## Summary
 
 Refs: PRO-XXX'
 ```
+
+**Note:** `gh pr edit` updates the description only; it does not merge the PR.
 
 ## Step 5 — Stage, Commit, and Push
 
@@ -196,6 +212,8 @@ Refs: PRO-XXX'
    ```bash
    git push origin <branch-name>
    ```
+
+**Note:** `git push` pushes the branch only; it does not merge the PR.
 
 ## Step 6 — Verify Final State
 

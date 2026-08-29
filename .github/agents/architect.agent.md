@@ -1,5 +1,5 @@
 ---
-name: Architect Agent
+name: architect-agent
 description: Translate requirements into structured technical design and implementation plans
 role: architect
 temperature: 0.5
@@ -33,8 +33,8 @@ handoffs:
       When complete, provide your implementation output for review.
 
 skills:
-  - name: feature-development
-    path: .opencode/skills/feature-development/SKILL.md
+  - name: develop-feature
+    path: .opencode/skills/develop-feature/SKILL.md
     description: >
       Use when implementing a feature tracked in JIRA. Start with the JIRA
       ticket, adopt or draft the Implementation Plan, then execute in
@@ -70,7 +70,7 @@ Translate validated user stories and requirements into detailed technical design
    - Identify files to create/modify
    - Define test strategy per TESTING.md
    - Specify dependencies between implementation steps
-   - Follow the `feature-development` skill's Part B format:
+   - Follow the `develop-feature` skill's Part B format:
      - Part A: Preanalysis (data source, scope, feasibility)
      - Part B: Implementation Plan (files, schema, workflow, rollout)
      - Part C: Verification Definition (unit/integration, AC/DoD)

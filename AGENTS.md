@@ -387,8 +387,36 @@ execution times from the GitHub Actions API for every successful PR run of
 
 Two skills support the end-to-end JIRA ticket lifecycle:
 
-- **`.opencode/skills/product-discovery-planning/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
-- **`.opencode/skills/feature-complete/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
+- **`.opencode/skills/plan-product/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
+- **`.opencode/skills/complete-feature/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
+
+## ⛔ Agent-Team Closure Policy (CRITICAL)
+
+> The agent-team **must NOT** autonomously close JIRA tickets or merge PRs.
+> These are reserved for the user or Product-Owner.
+
+| Operation | Agent-Team Allowed? | Who Decides |
+|-----------|--------------------|--------------------|
+| Prepare AC/DoD checkmarks in JIRA description | ✅ Yes | Agent |
+| Post JIRA status comment | ✅ Yes | Agent |
+| Assign story points (`customfield_10028`) | ✅ Yes | Agent |
+| Update PR description (`gh pr edit`) | ✅ Yes | Agent |
+| Push branch (`git push`) | ✅ Yes | Agent |
+| **Transition JIRA to Fertig (`atlassian_transitionJiraIssue`)** | ❌ **No** | **User / PO** |
+| **Merge PR (`gh pr merge`)** | ❌ **No** | **User / PO** |
+| **Delete remote branch after merge** | ❌ **No** | **User / PO** |
+
+**Rationale:** JIRA closure and PR merges are irreversible quality-gate
+decisions. They require human review of the agent-team's work to catch
+context the agent may have missed (acceptance-criteria drift, scope creep,
+business priorities). The agent-team **prepares** the close; the user
+**executes** it.
+
+When the `complete-feature` skill reaches Step 3d (Transition to Done), it
+must hand off to the user / PO instead of calling
+`atlassian_transitionJiraIssue` directly. See
+`.opencode/skills/complete-feature/SKILL.md` Step 3d for the exact
+wording.
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -401,16 +429,16 @@ The four agent definitions in `.github/agents/` form a coordinated pipeline. Eac
 ### Pipeline
 
 ```
-Product Owner → Architect → Developer → Tester → [feature-complete] → JIRA Close
+Product Owner → Architect → Developer → Tester → [complete-feature] → JIRA Close
 ```
 
 | Step | Agent | Skill Invoked | What It Does |
 |------|-------|---------------|--------------|
-| 1 | **Product Owner** | `product-discovery-planning` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
-| 2 | **Architect** | `feature-development` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
-| 3 | **Developer** | `feature-development` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
-| 4 | **Tester** | `feature-complete` | Validate AC, run tests, verify coverage ≥90% CI gate |
-| 5 | **Tester → feature-complete** | `feature-complete` | Assign story points, update JIRA description, transition to Fertig, update PR |
+| 1 | **Product Owner** | `plan-product` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
+| 2 | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
+| 3 | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
+| 4 | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
+| 5 | **Tester → complete-feature** | `complete-feature` | Assign story points, update JIRA description, transition to Fertig, update PR |
 | 6 | *(release)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
 
 ### Skill Invocation Rules
@@ -424,9 +452,10 @@ Product Owner → Architect → Developer → Tester → [feature-complete] → 
 
 1. **PO → Architect**: Pass complete User Story output with acceptance criteria
 2. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
-3. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics; load `feature-complete` skill for tester
-4. **Tester → feature-complete**: After PASSED decision, load `feature-complete` skill for JIRA closure; do NOT handoff to Product Owner for sign-off
-5. **Release**: Trigger `release-project` skill manually when ready to publish
+3. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics
+4. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
+5. **complete-feature → User/PO**: Hand off the prepared ticket. The user / Product-Owner calls `atlassian_transitionJiraIssue` and `gh pr merge` — the agent-team must not
+6. **Release**: Trigger `release-project` skill manually when ready to publish
 
 ### Quality Gates (CI)
 
@@ -444,7 +473,7 @@ Product Owner → Architect → Developer → Tester → [feature-complete] → 
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches
-- **Agent Types**: Check `.github/agents/` for specialized roles (Architect, Developer, Tester & Validator, Product Owner)
+- **Agent Types**: Check `.github/agents/` for specialized roles: `architect-agent`, `developer-agent`, `tester-agent`, `product-owner-agent`
 - **Commit Messages**: `.github/workflows/python-ci.yml` validates Conventional Commits format
 - **Documentation**: `doc/ARCHITECTURE.md` - `doc/CONTRIBUTING.md` - `doc/TESTING.md`
 

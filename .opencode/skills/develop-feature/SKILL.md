@@ -1,6 +1,6 @@
 ---
-name: feature-development
-description: Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to "start feature", "implement ticket", "work on PRO-XXX", "draft implementation plan", "begin work on JIRA ticket", or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review.
+name: develop-feature
+description: Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to "start feature", "implement ticket", "work on PRO-XXX", "draft implementation plan", "begin work on JIRA ticket", or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner.
 ---
 
 # Feature Development Skill
@@ -231,13 +231,20 @@ EOF
 
 After opening, surface the PR URL and let the user drive review.
 
-## Phase 7 — Hand off to `feature-complete`
+## Phase 7 — Hand off to `complete-feature`
 
-The `feature-complete` skill takes over from here: it verifies the PR's
-final state, posts the JIRA status comment, transitions the ticket to
-**Fertig (Done)**, and updates the PR description with the closure status.
-Do not attempt to close the ticket from this skill — the closure workflow
-lives in `feature-complete` so the two phases are independently testable.
+The `complete-feature` skill takes over from here: it verifies the PR's
+final state, posts the JIRA status comment, assigns story points,
+checkmarks the ACs and DoD in the JIRA description, and updates the
+PR description with the final status.
+
+> **⛔ BLOCKED — The agent-team must NOT call `atlassian_transitionJiraIssue`.**
+> Transition to Fertig is reserved for the user or Product-Owner.
+> `complete-feature` prepares the close; the user / Product-Owner calls
+> `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})`.
+> Do not attempt to close the ticket from this skill — the closure workflow
+> lives in `complete-feature` so the two phases are independently testable,
+> but the final transition is a human decision.
 
 ## Reference: Command Cheatsheet
 
@@ -246,7 +253,7 @@ lives in `feature-complete` so the two phases are independently testable.
 | Fetch JIRA ticket | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=[...])` |
 | Fetch ticket comments | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["comment"])` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="…")` |
-| Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
+| ⛔ Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` — **user / PO only** |
 | Adopt plan | read `doc/02_Implementation_Plan_PRO-XXX.md` |
 | Draft plan | write `doc/02_Implementation_Plan_PRO-XXX.md` with Parts A/B/C |
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |

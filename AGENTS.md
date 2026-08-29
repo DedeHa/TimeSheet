@@ -424,32 +424,48 @@ wording.
 >>>>>>> a70971c (docs: add agent-team workflow documentation to AGENTS.md)
 ## Agent-Team Workflow
 
-The four agent definitions in `.github/agents/` form a coordinated pipeline. Each agent loads the relevant `.opencode/skills/` skill at its step.
-
-### Key-Request → Agent → Skill Mapping
-
-| Key-Request | Trigger | Agent Team Member | Skill Invoked |
-|-------------|---------|-------------------|---------------|
-| "plan a new feature" | User intent | **Product Owner** (`product-owner-agent`) | `plan-feature` |
-| "plan a bug fix" | Bug report | **Product Owner** (`product-owner-agent`) | `plan-feature` |
-| "start feature PRO-XXX" / "implement ticket PRO-XXX" / "work on PRO-XXX" | Existing JIRA ticket | **Architect** (`architect-agent`) → **Developer** (`developer-agent`) | `develop-feature` |
-| "complete feature" / "finalise implementation" | PR ready | **Tester** (`tester-agent`) → `complete-feature` skill | `complete-feature` |
-| "release" / "create a release vX.Y.Z" / "tag vX.Y.Z" | Release ready | **Release** (manual trigger) | `release-project` |
+The four agent definitions in `.github/agents/` form a coordinated pipeline. The **Product Owner is the dispatcher** — every feature or bug fix flows through the Product Owner first.
 
 ### Pipeline
 
 ```
-Key-Request → Agent Team Member → Uses Skills
+User Request → Product Owner (dispatcher) → [Architect → Developer → Tester]
+                                                  ↓
+                                          Product Owner (reviewer)
+                                                  ↓
+                                          User (final agreement)
 ```
 
-| Step | Key-Request | Agent | Skill | What It Does |
-|------|-------------|-------|-------|--------------|
-| 1 | "plan a new feature" | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
-| 2 | "start feature PRO-XXX" | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
-| 3 | "start feature PRO-XXX" | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
-| 4 | "complete feature" | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
-| 5 | "complete feature" | **Tester → complete-feature** | `complete-feature` | Assign story points, update JIRA description, checkmark ACs/DoD, update PR |
+### Key-Request → Product Owner → Agent → Skill Mapping
+
+| User Says | Product Owner Routes To | Agent | Skill Invoked |
+|-----------|------------------------|-------|---------------|
+| "plan a new feature" | Product Owner | **Product Owner** (`product-owner-agent`) | `plan-feature` |
+| "plan a bug fix" | Product Owner | **Product Owner** (`product-owner-agent`) | `plan-feature` |
+| "start feature PRO-XXX" | Architect | **Architect** (`architect-agent`) | `develop-feature` |
+| "start feature PRO-XXX" | Developer | **Developer** (`developer-agent`) | `develop-feature` |
+| "complete feature" | Tester | **Tester** (`tester-agent`) | `complete-feature` |
+| "release vX.Y.Z" | Release | **Release** (manual trigger) | `release-project` |
+
+### What Each Agent Does
+
+| Step | Product Owner Dispatches To | Agent | Skill | What It Does |
+|------|------------------------------|-------|-------|--------------|
+| 1 | Product Owner | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket, assign story points |
+| 2 | Product Owner → Architect | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
+| 3 | Product Owner → Developer | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
+| 4 | Product Owner → Tester | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
+| 5 | Product Owner → complete-feature | **complete-feature** | `complete-feature` | Assign story points, update JIRA description, checkmark ACs/DoD, update PR |
 | 6 | *(release)* | *(manual)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
+
+### Product Owner Dispatch Rules
+
+- **Never bypass**: every feature or bug fix must go through the Product Owner first
+- **Sequential dispatch**: Architect must complete and be reviewed before Developer starts
+- **Developer gate**: Architect's plan must be approved before Developer is dispatched
+- **Tester gate**: Developer's PR must be ready before Tester is dispatched
+- **Review gate**: Tester's validation must be complete before Product Owner reviews
+- **Final gate**: Product Owner's review must be complete before user agrees to close
 
 ### Skill Invocation Rules
 
@@ -460,24 +476,24 @@ Key-Request → Agent Team Member → Uses Skills
 
 ### Handoff Protocol
 
-1. **PO → Architect**: Pass complete User Story output with acceptance criteria
-2. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
-3. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics
-4. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
-5. **complete-feature → User/PO**: Hand off the prepared ticket. The user / Product-Owner calls `atlassian_transitionJiraIssue` and `gh pr merge` — the agent-team must not
-6. **Release**: Trigger `release-project` skill manually when ready to publish
+1. **User → Product Owner**: User provides feature/bug request
+2. **Product Owner → Architect**: Pass complete User Story output with acceptance criteria
+3. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
+4. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics
+5. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
+6. **complete-feature → Product Owner**: Pass review summary
+7. **Product Owner → User**: Hand off for final agreement. The user calls `atlassian_transitionJiraIssue` and `gh pr merge` — the agent-team must not
+8. **Release**: Trigger `release-project` skill manually when ready to publish
 
 ### How to Trigger the Agent Team
 
-The agent team is triggered by **natural language key-requests**:
+Every interaction starts with the Product Owner as dispatcher:
 
 - **"plan a new feature"** → Product Owner → `plan-feature` skill → creates JIRA ticket
 - **"plan a bug fix"** → Product Owner → `plan-feature` skill → creates JIRA ticket
-- **"start feature PRO-XXX"** or **"implement ticket PRO-XXX"** → Architect → Developer → `develop-feature` skill → implements feature
-- **"complete feature"** or **"finalise implementation"** → Tester → `complete-feature` skill → validates and prepares closure
-- **"release vX.Y.Z"** → Manual trigger → `release-project` skill → publishes release
-
-Each key-request maps to a specific agent team member who loads the matching skill. The user provides the key-request; the agent team executes the steps.
+- **"start feature PRO-XXX"** → Product Owner → Architect → Developer → `develop-feature` skill → implements feature
+- **"complete feature"** → Product Owner → Tester → `complete-feature` skill → validates and prepares closure
+- **"release vX.Y.Z"** → Product Owner → Release → `release-project` skill → publishes release
 
 ### Quality Gates (CI)
 

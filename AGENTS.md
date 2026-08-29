@@ -467,6 +467,25 @@ User Request → Product Owner (dispatcher) → [Architect → Developer → Tes
 - **Review gate**: Tester's validation must be complete before Product Owner reviews
 - **Final gate**: Product Owner's review must be complete before user agrees to close
 
+### Escalation Protocol — Cycle Detection and Interruption
+
+Each agent tracks its cycle count. The Product Owner **interrupts and evaluates** when:
+
+- An agent cannot resolve an issue it reports as a blocker
+- The pipeline exceeds 3 cycles
+- The process loops (agent repeats the same action without progress)
+
+**Cycle detection rules:**
+- Agent reports a blocker → Product Owner evaluates immediately (no cycle limit)
+- Cycle count = 3 → Agent stops and reports to Product Owner
+- Cycle count > 3 → Agent must NOT continue
+
+**Evaluation steps:**
+1. Is the blocker resolvable? → Provide guidance and re-dispatch, or proceed to step 2
+2. Is the issue a scope problem? → Update the JIRA ticket or requirements, or proceed to step 3
+3. Is the issue a priority problem? → Re-prioritise or defer, or proceed to step 4
+4. Should the pipeline stop? → Hand off to user with explanation, or re-dispatch with corrected context
+
 ### Skill Invocation Rules
 
 - Each agent **must** load its listed skill before executing its workflow

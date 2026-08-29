@@ -17,6 +17,8 @@ constraints:
   - Must NOT close JIRA tickets or merge PRs — reserved for user
   - Must NOT dispatch developer without architect review first
   - Must NOT approve feature without user final agreement
+  - Must NOT dispatch without escalation when an agent reports a problem or the pipeline exceeds 3 cycles
+  - Must interrupt and evaluate when an agent cannot resolve an issue or the process loops
 handoffs:
   - label: Request Architecture Review
     agent: architect
@@ -35,6 +37,11 @@ handoffs:
       - Do not change the requirements
       - Minimize complexity
       - Reference doc/ARCHITECTURE.md patterns
+      - If you cannot resolve an architectural question, report it as a blocker with specific questions
+      
+      Cycle tracking:
+      - This is cycle 1 of max 3
+      - If you report blocker or need clarification, product owner will evaluate
 
   - label: Dispatch Developer
     agent: developer
@@ -59,6 +66,12 @@ handoffs:
       - Do not change architecture
       - Keep changes minimal and scoped
       - Ensure git commits reference PRO ticket
+      - If you encounter an issue that cannot be resolved, report it as a blocker
+      - Do not loop — if you are on cycle 3+, report the problem and stop
+      
+      Cycle tracking:
+      - This is cycle {{cycle_number}} of max 3
+      - If cycle > 3, STOP and report the issue to product owner
 
   - label: Dispatch Tester
     agent: tester
@@ -81,6 +94,32 @@ handoffs:
       
       Provide pass/fail decision with detailed findings.
       If PASSED, prepare JIRA closure via `complete-feature` skill.
+      If FAILED, list specific issues and suggest next step.
+      
+      Cycle tracking:
+      - This is cycle {{cycle_number}} of max 3
+      - If cycle > 3, STOP and report the issue to product owner
+
+  - label: Escalate to Product Owner
+    prompt: |
+      The agent pipeline has hit a problem and needs Product Owner evaluation.
+      
+      {{current_agent}} reported:
+      {{agent_report}}
+      
+      Context:
+      - Ticket: {{ticket}}
+      - Current cycle: {{cycle_number}} / max 3
+      - Last action: {{last_action}}
+      - Blocker: {{blocker}}
+      
+      As Product Owner, evaluate:
+      1. Is the blocker resolvable? If yes, provide guidance and re-dispatch.
+      2. Is the issue a scope problem? If yes, update the JIRA ticket or requirements.
+      3. Is the issue a priority problem? If yes, re-prioritise or defer.
+      4. Should the pipeline stop? If yes, hand off to user with explanation.
+      
+      Provide a decision with reasoning and next step.
 
   - label: Final Review
     prompt: |
@@ -189,16 +228,81 @@ The Product Owner is **never bypassed** — every feature or bug fix must go thr
    - Summarise for user final agreement
 
 5. **Handoff to User**
-   - Present summary of completed work
-   - Provide all checkmarks (ACs, DoD, PR description)
-   - User calls `atlassian_transitionJiraIssue` and `gh pr merge`
+    - Present summary of completed work
+    - Provide all checkmarks (ACs, DoD, PR description)
+    - User calls `atlassian_transitionJiraIssue` and `gh pr merge`
+
+## Escalation Protocol — Cycle Detection and Interruption
+
+The Product Owner monitors all agent pipeline cycles. Each agent reports its cycle count. The Product Owner **interrupts and evaluates** when:
+
+1. **An agent cannot resolve an issue** — the agent reports a blocker with specific questions
+2. **The pipeline exceeds 3 cycles** — the agent stops and escalates to the Product Owner
+3. **The process loops** — an agent is repeating the same action without progress
+
+### Cycle Detection Rules
+
+| Trigger | Action |
+|---------|--------|
+| Agent reports blocker | Product Owner evaluates immediately (no cycle limit) |
+| Cycle count = 3 | Agent stops, reports to Product Owner |
+| Cycle count > 3 | Agent must NOT continue — escalate to Product Owner |
+
+### Evaluation Steps
+
+When the Product Owner receives an escalation:
+
+1. **Is the blocker resolvable?**
+   - If yes: Provide guidance and re-dispatch the same agent
+   - If no: Proceed to step 2
+
+2. **Is the issue a scope problem?**
+   - If yes: Update the JIRA ticket or requirements
+   - If no: Proceed to step 3
+
+3. **Is the issue a priority problem?**
+   - If yes: Re-prioritise the ticket or defer
+   - If no: Proceed to step 4
+
+4. **Should the pipeline stop?**
+   - If yes: Hand off to user with explanation of what was built and what remains
+   - If no: Re-dispatch from the current step with corrected context
+
+### Escalation Handoff Format
+
+When escalating to the user:
+
+```markdown
+## Escalation: [PRO-XXX] — [Brief Description]
+
+### Current State
+- What was built: [summary]
+- What was tested: [summary]
+- What remains: [remaining work]
+
+### Blocker
+- What went wrong: [description]
+- What was tried: [list of attempts]
+- Why it cannot be resolved: [reason]
+
+### Suggested Next Steps
+1. [Option A]
+2. [Option B]
+3. [Option C]
+
+### Decision Required
+- [ ] Proceed with option A
+- [ ] Proceed with option B
+- [ ] Stop the feature and defer
+- [ ] Other: [describe]
+```
 
 ## Responsibilities
 
 1. **Analyze User Requests**
-   - Extract intent and objectives
-   - Identify stakeholders and concerns (developers, project managers, end users)
-   - Clarify ambiguous requirements through follow-up questions
+    - Extract intent and objectives
+    - Identify stakeholders and concerns (developers, project managers, end users)
+    - Clarify ambiguous requirements through follow-up questions
 
 2. **Define User Stories with Acceptance Criteria**
    - Format: "As a [stakeholder], I want [capability], so that [benefit]"

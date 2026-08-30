@@ -154,8 +154,10 @@ def validate_commit_messages(messages: List[str]) -> List[str]:
 
     # Conventional Commits format: type(scope): description
     # Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build
+    # Scope is REQUIRED (matches .commitlintrc.json scope-empty: [1, "never"])
     cc_re = re.compile(
-        r"^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)" r"(\([^)]+\))?: .+"
+        r"^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)"
+        r"\([^)]+\): .+"
     )
 
     for i, msg in enumerate(messages, 1):

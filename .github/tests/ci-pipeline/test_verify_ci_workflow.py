@@ -7,7 +7,7 @@ single workflow-verification suite, removing the duplicated YAML-parsing
 helpers. Like the other files under ``.github/tests/`` it does not affect the
 103-test application suite or the coverage gate, and can be run locally with::
 
-    pytest -q .github/tests/test_verify_ci_workflow.py
+    pytest -q .github/tests/ci-pipeline/test_verify_ci_workflow.py
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 WORKFLOW = ROOT / ".github" / "workflows" / "python-ci.yml"
 ACTION = ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml"
 GPG_ACTION = ROOT / ".github" / "actions" / "setup-gpg-signing" / "action.yml"
@@ -224,7 +224,7 @@ def test_pr_title_regex_unchanged():
     """The PR title validator still accepts [type][PRO-XXX] Description."""
     # O4: Validation rules moved to validate_pr.py
     script_path = (
-        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
+        Path(__file__).resolve().parents[3] / ".github" / "scripts" / "validate_pr.py"
     )
     script = script_path.read_text(encoding="utf-8")
     assert r"PRO-\d+" in script
@@ -237,7 +237,7 @@ def test_pr_body_sections_required():
     """The PR body validator still requires ## Summary and ## Testing."""
     # O4: Validation rules moved to validate_pr.py
     script_path = (
-        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
+        Path(__file__).resolve().parents[3] / ".github" / "scripts" / "validate_pr.py"
     )
     script = script_path.read_text(encoding="utf-8")
     assert "## Summary" in script

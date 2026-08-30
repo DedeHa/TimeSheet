@@ -1,6 +1,6 @@
 ---
-name: feature-complete
-description: Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, close the ticket, update PR description, and commit/push changes. Triggers on requests to "complete feature", "close JIRA ticket", "finalise implementation", "verify feature completeness", "check off acceptance criteria", or any JIRA ticket closure workflow.
+name: complete-feature
+description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
 ---
 
 # Feature Complete Skill
@@ -41,7 +41,7 @@ pydocstyle src_timesheetalgo tests .github
 python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
 
 # CI self-tests
-python -m pytest .github/tests/ -q
+python -m pytest .github/tests/ci-pipeline/ -q
 
 # Traceability
 python .github/scripts/generate_traceability_matrix.py
@@ -145,16 +145,30 @@ Update the JIRA ticket description using `atlassian_editJiraIssue` to:
 
 ### 3d. Transition to Done
 
-Get available transitions and close the ticket:
-```
-atlassian_getTransitionsForJiraIssue(issueIdOrKey="PRO-XXX")
-atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
-```
-- Transition ID `31` = "Fertig" (Done) for this JIRA instance
-- Verify the ticket is closed:
-  ```
-  atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "customfield_10028"])
-  ```
+> **⛔ BLOCKED — Requires User / Product-Owner Approval**
+> The agent-team must NOT call `atlassian_transitionJiraIssue`.
+> Transition to Fertig is reserved for the user or Product-Owner.
+>
+> **What the agent-team DOES:**
+> 1. Step 3a: Post the implementation status comment
+> 2. Step 3b: Assign story points
+> 3. Step 3c: Update JIRA description with `- [x]` AC and DoD checkmarks
+> 4. Step 4: Update PR description with final status
+>
+> **After these steps, hand off to the user / Product-Owner:**
+> - Summarise what was prepared (ACs, DoD, PR description, story points)
+> - Ask the user / Product-Owner to call:
+>   ```
+>   atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+>   ```
+> - Ask the user / Product-Owner to merge the PR:
+>   ```
+>   gh pr merge <PR_NUMBER> --merge
+>   ```
+>
+> **Verification:** The user / Product-Owner is responsible for the final
+> `atlassian_transitionJiraIssue` and `gh pr merge` calls. The agent-team
+> **must not** execute these commands autonomously.
 
 ## Step 4 — Update PR Description
 
@@ -170,6 +184,8 @@ gh pr edit <PR_NUMBER> --body '## Summary
 
 Refs: PRO-XXX'
 ```
+
+**Note:** `gh pr edit` updates the description only; it does not merge the PR.
 
 ## Step 5 — Stage, Commit, and Push
 
@@ -197,6 +213,8 @@ Refs: PRO-XXX'
    git push origin <branch-name>
    ```
 
+**Note:** `git push` pushes the branch only; it does not merge the PR.
+
 ## Step 6 — Verify Final State
 
 ```bash
@@ -218,7 +236,7 @@ atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "
 | Action | Command |
 |--------|---------|
 | Run tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
-| Run CI self-tests | `python -m pytest .github/tests/ -q` |
+| Run CI self-tests | `python -m pytest .github/tests/ci-pipeline/ -q` |
 | Run lint | `ruff check src_timesheetalgo tests .github` |
 | Check traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
@@ -231,3 +249,55 @@ atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "
 | Stage all | `git add -A` |
 | Commit | `git commit -m "docs(ci): finalise PRO-XXX...\n\nRefs: PRO-XXX"` |
 | Push | `git push origin <branch>` |
+
+## Cycle Tracking and Escalation
+
+This skill is invoked by the tester agent under the Product Owner dispatcher.
+Each invocation is a **cycle**. The agent must track the current cycle and
+escalate when the limit is reached.
+
+### Cycle Limits
+
+- **Max cycles per dispatch:** 3
+- **If cycle = 1, 2:** Continue verification — the agent is on schedule
+- **If cycle = 3:** Stop, prepare handoff to Product Owner with summary
+- **If cycle > 3:** STOP — agent must NOT continue, escalate immediately
+
+### When to Escalate
+
+Escalate to Product Owner when:
+1. **Blocker encountered** — verification cannot proceed (broken CI, missing artifacts, conflicting results, etc.)
+2. **Cycle 3 reached** — maximum allowed cycles have been used
+3. **Process loops** — repeated failures without progress (e.g., tests fail after 3 fix attempts, coverage regresses)
+
+### Escalation Handoff
+
+When escalating, provide:
+
+```markdown
+## Escalation: Feature Completion — [Brief Description]
+
+### Cycle Information
+- Current cycle: [N] of max 3
+- Started: [approximate time]
+- Last action: [what was just done]
+
+### Blocked On
+- [Specific question, missing info, or issue]
+
+### What's Done
+- [Summary of completed checks]
+
+### What's Remaining
+- [Checks that could not be completed]
+```
+
+### Common Escalation Triggers
+
+| Trigger | Example | Escalate? |
+|---------|---------|-----------|
+| Coverage < 90% | Tests added but threshold not met after 3 attempts | Yes |
+| Lint error | Cannot resolve ruff/black issue | Yes |
+| JIRA update fails | Description update returns error | Yes — ask PO |
+| Test fails | Same test fails after 3 fix attempts | Yes |
+| Out of scope | Required changes not in original ACs | Yes — ask PO |

@@ -2,11 +2,12 @@
 
 These validate the parsing and rendering logic of ``generate_pr_summary.py`` in
 isolation. Like ``test_generate_traceability_matrix.py`` this file lives under
-``.github/tests/`` (not in ``tests/``), so it does not change the 103-test
-application suite or the coverage gate. This is a developer unit test - the CI
-pipeline runs the generator script itself, not this test - and can be run with::
+``.github/tests/ci-pipeline/`` (not in ``tests/``), so it does not change the
+103-test application suite or the coverage gate. This is a developer unit test
+- the CI pipeline runs the generator script itself, not this test - and can
+be run with::
 
-    pytest -q .github/tests/test_generate_pr_summary.py
+    pytest -q .github/tests/ci-pipeline/test_generate_pr_summary.py
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ import sys
 from pathlib import Path
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[2]
+    Path(__file__).resolve().parents[3]
     / ".github"
     / "scripts"
     / "generate_pr_summary.py"

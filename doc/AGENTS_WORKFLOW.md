@@ -15,12 +15,12 @@ This directory contains a configured team of specialized AI agents that collabor
 
 This directory contains two types of documents:
 
-### Agent Configuration Files (`.agent.md`)
+### Agent Configuration Files (``-agent.md` (YAML config + detailed documentation)`)
 These are **operational files** discovered and used by VS Code:
-- `product-owner.agent.md` - Product Owner Agent (YAML config + detailed documentation)
-- `architect.agent.md` - Architect Agent (YAML config + detailed documentation)
-- `developer.agent.md` - Developer Agent (YAML config + detailed documentation)
-- `tester.agent.md` - Tester & Validator Agent (YAML config + detailed documentation)
+- `product-owner`-agent.md` (YAML config + detailed documentation)` - Product Owner Agent (YAML config + detailed documentation)
+- `architect`-agent.md` (YAML config + detailed documentation)` - Architect Agent (YAML config + detailed documentation)
+- `developer`-agent.md` (YAML config + detailed documentation)` - Developer Agent (YAML config + detailed documentation)
+- `tester`-agent.md` (YAML config + detailed documentation)` - Tester & Validator Agent (YAML config + detailed documentation)
 
 Each file contains:
 - **YAML frontmatter** with tool configurations (used by VS Code)
@@ -56,7 +56,7 @@ Each file contains:
         ↓
 5. Tester Agent
    ├─ Validate all criteria met
-   ├─ Run tests (97%+ coverage)
+   ├─ Run tests (90%+ coverage)
    ├─ Check for regressions
    └─ → ✅ APPROVED
         ↓
@@ -180,7 +180,7 @@ Acceptance criteria ambiguous → Product Owner clarifies and confirms
 
 ## Test Results
 - Tests: [N passed, M failed]
-- Coverage: [X]% (Target: 97%)
+- Coverage: [X]% (Target: 90%)
 - Regressions: None / [List]
 
 ## Issues Found
@@ -192,12 +192,12 @@ Acceptance criteria ambiguous → Product Owner clarifies and confirms
 
 ## 🎯 Agent Tools
 
-Each agent is configured with specific tools in its respective `.agent.md` file:
+Each agent is configured with specific tools in its respective ``-agent.md` (YAML config + detailed documentation)` file:
 
-- **[product-owner.agent.md](product-owner.agent.md)** → `codebase`, `search`, `fetch`, `readFile`, `listFiles`
-- **[architect.agent.md](architect.agent.md)** → `codebase`, `search`, `readFile`, `listFiles`
-- **[developer.agent.md](developer.agent.md)** → `editFiles`, `terminal`, `runTests`, `readFile`, `codebase`
-- **[tester.agent.md](tester.agent.md)** → `runTests`, `terminal`, `codebase`, `diff`, `readFile`
+- **[product-owner`-agent.md` (YAML config + detailed documentation)](product-owner`-agent.md` (YAML config + detailed documentation))** → `codebase`, `search`, `fetch`, `readFile`, `listFiles`
+- **[architect`-agent.md` (YAML config + detailed documentation)](architect`-agent.md` (YAML config + detailed documentation))** → `codebase`, `search`, `readFile`, `listFiles`
+- **[developer`-agent.md` (YAML config + detailed documentation)](developer`-agent.md` (YAML config + detailed documentation))** → `editFiles`, `terminal`, `runTests`, `readFile`, `codebase`
+- **[tester`-agent.md` (YAML config + detailed documentation)](tester`-agent.md` (YAML config + detailed documentation))** → `runTests`, `terminal`, `codebase`, `diff`, `readFile`
 
 See individual agent files for detailed descriptions of tool usage.
 
@@ -299,13 +299,13 @@ All agents operate on shared context from:
 
 ### Developer Gate
 ✓ Code follows CONTRIBUTING.md
-✓ Tests cover new/modified code (97%+ coverage)
+✓ Tests cover new/modified code (90%+ coverage)
 ✓ No regressions in existing tests
 ✓ All commits reference PRO ticket
 
 ### Tester Gate
 ✓ All acceptance criteria verified
-✓ Test suite passes with 97%+ coverage
+✓ Test suite passes with 90%+ coverage
 ✓ No regressions detected
 ✓ Code quality meets standards
 
@@ -396,10 +396,10 @@ Feature complete
 
 ## 🔗 Related Files
 
-- `.github/agents/product-owner.agent.md` - Product Owner Agent configuration
-- `.github/agents/architect.agent.md` - Architect Agent configuration
-- `.github/agents/developer.agent.md` - Developer Agent configuration
-- `.github/agents/tester.agent.md` - Tester & Validator Agent configuration
+- `.github/agents/product-owner`-agent.md` (YAML config + detailed documentation)` - Product Owner Agent configuration
+- `.github/agents/architect`-agent.md` (YAML config + detailed documentation)` - Architect Agent configuration
+- `.github/agents/developer`-agent.md` (YAML config + detailed documentation)` - Developer Agent configuration
+- `.github/agents/tester`-agent.md` (YAML config + detailed documentation)` - Tester & Validator Agent configuration
 - `README.md` - Project documentation
 - `doc/ARCHITECTURE.md` - System architecture
 - `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")

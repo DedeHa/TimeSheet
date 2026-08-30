@@ -53,8 +53,9 @@ running them locally first just avoids a red CI run:
 ```bash
 pytest -q .github/tests/
 ```
-- Covers `test_verify_ci_workflow.py` (workflow structure/regression),
-  `test_generate_pr_summary.py`, and `test_generate_traceability_matrix.py`
+- Covers `ci-pipeline/test_verify_ci_workflow.py` (workflow structure/regression),
+  `ci-pipeline/test_generate_pr_summary.py`, and `ci-pipeline/test_generate_traceability_matrix.py`,
+  plus `agents/test_orchestration.py` (orchestration skill + agent definitions).
 - All must pass before you commit; treat a failure here exactly like a failing
   application test
 
@@ -222,6 +223,7 @@ Three-level hierarchy matching runtime boundaries:
 - PRs to `release/**`: Full CI (same quality gate as master)
 - Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
 - The **CI self-tests** (`pytest -q .github/tests/`) run in the `test` job and appear as a **CI Self-Tests** level in the summary; workflow/script regressions are a CI gate.
+- The `.github/tests/` suite is split into two groups: `ci-pipeline/` (workflow structure + support scripts) and `agents/` (orchestration skill + agent definitions).
 - **Environments** (GitHub deployment labels) are static: `check` → `development`, `test` → `staging`, `deploy` → `production`. Do **not** reintroduce a dynamic `environment:` expression — a previous one coerced to the boolean `false` and auto-created a junk environment named "false".
 - **Dependabot** (`.github/dependabot.yml`) bumps action versions weekly; its PRs are exempt from the `PRO-XXX` naming validators via `github.actor != 'dependabot[bot]'` guards.
 
@@ -325,10 +327,13 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   `continue-on-error: false` or the gate silently degrades.
 - **CI support-script tests live under `.github/tests/`** (not in `tests/`), so
   they do not count toward the 103-test suite or the 90% coverage gate. The
-  `check` job runs them (`Run CI self-tests`), so they **gate** the pipeline:
-  - `.github/tests/test_verify_ci_workflow.py`
-  - `.github/tests/test_generate_pr_summary.py`
-  - `.github/tests/test_generate_traceability_matrix.py`
+  `check` job runs them (`Run CI self-tests`), so they **gate** the pipeline.
+  Tests are split into two groups:
+  - `ci-pipeline/`: `test_verify_ci_workflow.py`, `test_generate_pr_summary.py`,
+    `test_generate_traceability_matrix.py`, `test_validate_pr.py`,
+    `test_verify_gpg_signing.py`, `test_collect_ci_timings.py`,
+    `test_aggregate_ci_timings.py`, `test_backfill_ci_timings.py`
+  - `agents/`: `test_orchestration.py` (orchestration skill + agent definitions)
   - **Run `pytest -q .github/tests/` locally before committing any change under
     `.github/`** so CI does not fail on a workflow/script regression.
 - **CI support scripts live under `.github/scripts/`** (verb_subject naming):
@@ -372,8 +377,9 @@ execution times from the GitHub Actions API for every successful PR run of
   `collect_ci_timings.py` (fetch + filter one run),
   `aggregate_ci_timings.py` (render stats + report),
   `backfill_ci_timings.py` (historical sweep).
-- **Tests** (in `.github/tests/`): `test_collect_ci_timings.py`,
-  `test_aggregate_ci_timings.py`, `test_backfill_ci_timings.py`.
+- **Tests** (in `.github/tests/`): `ci-pipeline/test_collect_ci_timings.py`,
+  `ci-pipeline/test_aggregate_ci_timings.py`, `ci-pipeline/test_backfill_ci_timings.py`,
+  `agents/test_orchestration.py`.
 - **Runner variance caveat**: GitHub-hosted runners are noisy (±10–30%).
   Always read stddev alongside mean; prefer median / p95 for decisions.
 - **Drift handling**: a step key is withheld from the main tables until it has

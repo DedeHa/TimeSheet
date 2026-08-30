@@ -4,7 +4,7 @@ Validates that the setup-gpg-signing action is properly configured for GitHub
 releases to show "This commit was created on GitHub.com and signed with GitHub's
 verified signature". Can be run locally with::
 
-    pytest -q .github/tests/test_verify_gpg_signing.py
+    pytest -q .github/tests/ci-pipeline/test_verify_gpg_signing.py
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 ACTION = ROOT / ".github" / "actions" / "setup-gpg-signing" / "action.yml"
 
 

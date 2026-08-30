@@ -2,12 +2,12 @@
 
 These tests validate the parsing and rendering logic of ``validate_pr.py`` in
 isolation. Like the other CI support-script tests, this file lives under
-``.github/tests/`` (not in ``tests/``), so it does not change the 103-test
-application suite or the coverage gate.
+``.github/tests/ci-pipeline/`` (not in ``tests/``), so it does not
+change the 103-test application suite or the coverage gate.
 
 Run with::
 
-    pytest -q .github/tests/test_validate_pr.py
+    pytest -q .github/tests/ci-pipeline/test_validate_pr.py
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
+    Path(__file__).resolve().parents[3] / ".github" / "scripts" / "validate_pr.py"
 )
 _spec = importlib.util.spec_from_file_location("validate_pr", _MODULE_PATH)
 mod = importlib.util.module_from_spec(_spec)

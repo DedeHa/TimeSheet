@@ -142,7 +142,7 @@ The plan's **rollout section** (Part B step 6) is the execution order. Do
 reversible, verifiable increment that ends in a passing gate. Typical shape:
 
 1. **Land pure code first** (scripts, modules, tests). No workflow file yet,
-   so CI behaviour is unchanged. Verify with `pytest -q .github/tests/` (or
+   so CI behaviour is unchanged. Verify with `pytest -q .github/tests/ci-pipeline/` (or
    the appropriate marker) and the linters.
 2. **Land the workflow / API surface**. Initially in a manual-trigger-only
    mode (`workflow_dispatch`) so the live system is not yet affected.
@@ -258,7 +258,7 @@ PR description with the final status.
 | Draft plan | write `doc/02_Implementation_Plan_PRO-XXX.md` with Parts A/B/C |
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |
 | Create branch | `git switch -c <type>/PRO-XXX-<desc> master` |
-| Run CI self-tests | `pytest -q .github/tests/` |
+| Run CI self-tests | `pytest -q .github/tests/ci-pipeline/` |
 | Run application tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
 | Lint | `ruff check src_timesheetalgo tests .github && black --check src_timesheetalgo tests .github && pydocstyle src_timesheetalgo tests .github` |
 | Traceability | `python .github/scripts/generate_traceability_matrix.py` |

@@ -6,7 +6,8 @@ This is a *production* CI support script (not a test). It scans
 QR-XX) and renders a Markdown + HTML matrix under ``tests/reports/``. The CI
 ``test`` job runs this to produce the artifact that the "Comment traceability
 report" step publishes on the pull request; completeness of the matrix is
-asserted separately by ``.github/tests/test_generate_traceability_matrix.py``.
+asserted separately by
+``.github/tests/ci-pipeline/test_generate_traceability_matrix.py``.
 
 Standard library only, mirroring the lightweight, dependency-free approach of
 ``generate_pr_summary.py``.

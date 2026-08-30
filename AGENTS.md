@@ -436,8 +436,7 @@ User Request → Product Owner (dispatcher) → [Architect → Developer → Tes
 
 | User Says | Product Owner Routes To | Agent | Skill Invoked |
 |-----------|------------------------|-------|---------------|
-| "plan a new feature" | Product Owner | **Product Owner** (`product-owner-agent`) | `plan-feature` |
-| "plan a bug fix" | Product Owner | **Product Owner** (`product-owner-agent`) | `plan-feature` |
+| "start feature PRO-XXX" | Product Owner (orchestrator) | **Product Owner** (`product-owner-agent`) | `orchestrate-feature` → `plan-feature` |
 | "start feature PRO-XXX" | Architect | **Architect** (`architect-agent`) | `develop-feature` |
 | "start feature PRO-XXX" | Developer | **Developer** (`developer-agent`) | `develop-feature` |
 | "complete feature" | Tester | **Tester** (`tester-agent`) | `complete-feature` |

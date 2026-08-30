@@ -143,6 +143,21 @@ handoffs:
       - gh pr merge <PR_NUMBER> --merge
 
 skills:
+  - name: orchestrate-feature
+    path: .opencode/skills/orchestrate-feature/SKILL.md
+    description: >
+      Central orchestrator for the entire feature pipeline. Reads JIRA state,
+      tracks cycles per agent (max 3), dispatches to Architect/Developer/Tester,
+      handles escalations, and coordinates handoffs. This is the engine that
+      makes the agent-team actually chain. Load this skill for any new feature
+      or when the pipeline needs rebalancing.
+    invoke: always
+    phases:
+      - state-detection
+      - dispatch
+      - cycle-tracking
+      - escalation
+      - handoff-coordination
   - name: plan-feature
     path: .opencode/skills/plan-feature/SKILL.md
     description: >

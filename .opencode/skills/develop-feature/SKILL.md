@@ -1,6 +1,6 @@
 ---
-name: feature-development
-description: Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to "start feature", "implement ticket", "work on PRO-XXX", "draft implementation plan", "begin work on JIRA ticket", or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review.
+name: develop-feature
+description: "Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to 'start feature', 'implement ticket', 'work on PRO-XXX', 'draft implementation plan', 'begin work on JIRA ticket', or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
 ---
 
 # Feature Development Skill
@@ -142,7 +142,7 @@ The plan's **rollout section** (Part B step 6) is the execution order. Do
 reversible, verifiable increment that ends in a passing gate. Typical shape:
 
 1. **Land pure code first** (scripts, modules, tests). No workflow file yet,
-   so CI behaviour is unchanged. Verify with `pytest -q .github/tests/` (or
+   so CI behaviour is unchanged. Verify with `pytest -q .github/tests/ci-pipeline/` (or
    the appropriate marker) and the linters.
 2. **Land the workflow / API surface**. Initially in a manual-trigger-only
    mode (`workflow_dispatch`) so the live system is not yet affected.
@@ -231,13 +231,20 @@ EOF
 
 After opening, surface the PR URL and let the user drive review.
 
-## Phase 7 — Hand off to `feature-complete`
+## Phase 7 — Hand off to `complete-feature`
 
-The `feature-complete` skill takes over from here: it verifies the PR's
-final state, posts the JIRA status comment, transitions the ticket to
-**Fertig (Done)**, and updates the PR description with the closure status.
-Do not attempt to close the ticket from this skill — the closure workflow
-lives in `feature-complete` so the two phases are independently testable.
+The `complete-feature` skill takes over from here: it verifies the PR's
+final state, posts the JIRA status comment, assigns story points,
+checkmarks the ACs and DoD in the JIRA description, and updates the
+PR description with the final status.
+
+> **⛔ BLOCKED — The agent-team must NOT call `atlassian_transitionJiraIssue`.**
+> Transition to Fertig is reserved for the user or Product-Owner.
+> `complete-feature` prepares the close; the user / Product-Owner calls
+> `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})`.
+> Do not attempt to close the ticket from this skill — the closure workflow
+> lives in `complete-feature` so the two phases are independently testable,
+> but the final transition is a human decision.
 
 ## Reference: Command Cheatsheet
 
@@ -246,12 +253,12 @@ lives in `feature-complete` so the two phases are independently testable.
 | Fetch JIRA ticket | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=[...])` |
 | Fetch ticket comments | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["comment"])` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="…")` |
-| Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
+| ⛔ Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` — **user / PO only** |
 | Adopt plan | read `doc/02_Implementation_Plan_PRO-XXX.md` |
 | Draft plan | write `doc/02_Implementation_Plan_PRO-XXX.md` with Parts A/B/C |
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |
 | Create branch | `git switch -c <type>/PRO-XXX-<desc> master` |
-| Run CI self-tests | `pytest -q .github/tests/` |
+| Run CI self-tests | `pytest -q .github/tests/ci-pipeline/` |
 | Run application tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
 | Lint | `ruff check src_timesheetalgo tests .github && black --check src_timesheetalgo tests .github && pydocstyle src_timesheetalgo tests .github` |
 | Traceability | `python .github/scripts/generate_traceability_matrix.py` |
@@ -280,3 +287,56 @@ Benchmark) work. Useful as a reference for shape, not as a template:
 - **Test-driven bug catch**: the backfill driver's first draft was
   neither idempotent nor attempt-aware. Unit tests caught both bugs
   before the workflow was wired up.
+
+## Cycle Tracking and Escalation
+
+This skill is invoked by an agent under the Product Owner dispatcher. Each
+invocation is a **cycle**. The agent must track the current cycle and
+escalate when the limit is reached.
+
+### Cycle Limits
+
+- **Max cycles per dispatch:** 3
+- **If cycle = 1, 2:** Continue working — the agent is on schedule
+- **If cycle = 3:** Stop, prepare handoff to Product Owner with summary
+- **If cycle > 3:** STOP — agent must NOT continue, escalate immediately
+
+### When to Escalate
+
+Escalate to Product Owner when:
+1. **Blocker encountered** — the agent cannot resolve an issue (questions, missing data, conflicting requirements, etc.)
+2. **Cycle 3 reached** — maximum allowed cycles have been used
+3. **Process loops** — repeating the same step without progress (e.g., same test failing after 3 attempts, same lint error recurring)
+
+### Escalation Handoff
+
+When escalating, provide:
+
+```markdown
+## Escalation: [Skill Name] — [Brief Description]
+
+### Cycle Information
+- Current cycle: [N] of max 3
+- Started: [approximate time]
+- Last action: [what was just done]
+
+### Blocked On
+- [Specific question, missing info, or issue]
+
+### What's Done
+- [Summary of completed steps]
+
+### What's Remaining
+- [Steps that could not be completed]
+```
+
+### Common Escalation Triggers
+
+| Trigger | Example | Escalate? |
+|---------|---------|-----------|
+| Test fails 3+ times | Same test failure after 3 fix attempts | Yes |
+| Lint error recurs | Same ruff/black error after 3 fix attempts | Yes |
+| JIRA field missing | Cannot determine acceptance criteria | Yes — ask PO |
+| Plan ambiguous | Two valid interpretations of requirement | Yes — ask PO |
+| Out of scope | Implementation requires changes not in plan | Yes — ask PO |
+| External dependency | Waiting on third-party or upstream PR | Yes — pause and notify |

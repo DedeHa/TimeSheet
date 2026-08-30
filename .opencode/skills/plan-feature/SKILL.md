@@ -1,6 +1,6 @@
 ---
-name: product-discovery-planning
-description: Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to "create a new ticket", "plan a feature", "estimate effort", "define AC", "discovery session", or any product planning workflow.
+name: plan-feature
+description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
 ---
 
 # Product Discovery & Planning
@@ -17,7 +17,7 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 | **Issue Type** | `Story` (id 10003) |
 | **Reporter** | Current user |
 | **Priority** | `Medium` (default), or `High` if critical for release integrity |
-| **Epic Link** | `customfield_10014` — link to parent Epic (e.g. `PRO-259` for TimeSheet, `PRO-356` for Home-Server) |
+| **Epic Link** | `customfield_10014` — link to parent Epic (e.g. `PRO-259` for TimeSheet, `PRO-356` for Home-Server, `PRO-344` for AI-Assistant) |
 | **Sprint** | `customfield_10020` — current active sprint (e.g. `TIME Sprint 33`) |
 | **Fix Versions** | Target release version (e.g. `v4.3.0`) — must exist in project |
 | **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) |
@@ -267,6 +267,6 @@ When creating a new Story ticket:
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/REQUIREMENTS.md` — FR / QR requirement IDs
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
-- `.opencode/skills/product-discovery-planning/` — This skill
-- `.opencode/skills/feature-complete/SKILL.md` — Workflow for closing a ticket
-- `.opencode/skills/feature-development/SKILL.md` — Workflow for developing a feature
+- `.opencode/skills/plan-feature/` — This skill
+- `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket
+- `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

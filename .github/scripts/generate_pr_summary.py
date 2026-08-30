@@ -58,8 +58,8 @@ APP_TEST_LEVELS: list[tuple[str, str]] = [
     ("System Tests", "system-results.xml"),
 ]
 
-#: CI-pipeline test levels: the .github/tests suite (workflow + support-script
-#: tests). Reported separately from the application tests.
+#: CI-pipeline test levels: the .github/tests suite has two groups
+#: (ci-pipeline/ and agents/). Reported separately from the application tests.
 CI_TEST_LEVELS: list[tuple[str, str]] = [
     ("CI Self-Tests", "ci-results.xml"),
 ]
@@ -261,7 +261,7 @@ def _app_levels(levels: list[LevelStats]) -> list[LevelStats]:
 
 
 def _ci_levels(levels: list[LevelStats]) -> list[LevelStats]:
-    """CI-pipeline test levels: the .github/tests suite."""
+    """CI-pipeline test levels: the .github/tests suite (ci-pipeline/ + agents/)."""
     return [level for level in levels if level.name in CI_LEVEL_NAMES]
 
 

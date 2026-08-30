@@ -184,13 +184,13 @@ drift (mitigated by keying on step names + a retired-keys appendix).
 | `.github/workflows/ci-timing.yml` | `workflow_run` + `workflow_dispatch` trigger; orchestrates capture → aggregate → publish |
 | `.github/scripts/collect_ci_timings.py` | Fetch job/step timings for a run via the API; apply exclusion rules; emit CSV rows |
 | `.github/scripts/aggregate_ci_timings.py` | Read the full CSV, compute per-(job,step) stats, render `CI_TIMING_REPORT.md` |
-| `.github/tests/test_collect_ci_timings.py` | Unit-test exclusion rules + row extraction against sample API JSON |
-| `.github/tests/test_aggregate_ci_timings.py` | Unit-test stats (mean/stddev/median/p95), drift handling, empty/edge inputs |
+| `.github/tests/ci-pipeline/test_collect_ci_timings.py` | Unit-test exclusion rules + row extraction against sample API JSON |
+| `.github/tests/ci-pipeline/test_aggregate_ci_timings.py` | Unit-test stats (mean/stddev/median/p95), drift handling, empty/edge inputs |
 | `ci-metrics` branch → `ci-timings.csv`, `CI_TIMING_REPORT.md` | Persistent dataset + generated report |
 
 Both scripts are **standard-library only** (`json`, `csv`, `statistics`,
 `urllib`/`subprocess` for `gh api`), matching the existing CI-support scripts, and
-are added to the `.github/tests` CI self-test group.
+are added to the `.github/tests/ci-pipeline/` group.
 
 ### B.2 Data schema (`ci-timings.csv`)
 
@@ -233,8 +233,8 @@ job_name, step_number)`.
 
 ### B.6 Rollout steps
 
-1. Land the two scripts + their unit tests (green in the existing `.github/tests`
-   gate) — no workflow yet, so zero CI-behaviour change.
+1. Land the two scripts + their unit tests (green in the existing
+   `.github/tests/ci-pipeline/` gate) — no workflow yet, so zero CI-behaviour change.
 2. Add `ci-timing.yml` (initially `workflow_dispatch` only) and create the orphan
    `ci-metrics` branch; run `backfill` once to seed from history.
    - The orphan `ci-metrics` branch is created by the workflow on its first run.
@@ -266,7 +266,7 @@ benchmarking.
 
 The feature is **done and correct** when all of the following hold:
 
-### C.1 Unit-level (runs in the `.github/tests` CI gate)
+### C.1 Unit-level (runs in the `.github/tests/ci-pipeline/` CI gate)
 
 - **V1 — Exclusion rules.** `test_collect_ci_timings.py` feeds sample API JSON
   containing success/failure/cancelled/skipped runs, a skipped `deploy` job, a
@@ -304,7 +304,7 @@ The feature is **done and correct** when all of the following hold:
 - [ ] The dataset persists across runs on `ci-metrics`; the PR branch is never
       written to and CI is never re-triggered by the metrics workflow.
 - [ ] The report states the runner-variance caveat and withholds under-sampled keys.
-- [ ] Scripts are stdlib-only, unit-tested, and green in the `.github/tests` gate.
+- [ ] Scripts are stdlib-only, unit-tested, and green in the `.github/tests/ci-pipeline/` gate.
 - [ ] The mechanism is non-gating (never fails a PR).
 
 ### C.4 Definition of Done

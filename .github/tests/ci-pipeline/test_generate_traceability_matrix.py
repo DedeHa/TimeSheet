@@ -2,14 +2,15 @@
 
 These validate the completeness gate and the rendering of
 ``.github/scripts/generate_traceability_matrix.py`` in isolation. Like
-``test_generate_pr_summary.py`` this file lives under ``.github/tests/`` (not in
-``tests/``), so it does not change the 103-test application suite or the
-coverage gate. The CI pipeline enforces the completeness gate inside the script
-itself (``generate_traceability_matrix.py`` exits non-zero on an untraced
-requirement); this developer unit test covers the same logic and can be run
-with::
+``test_generate_pr_summary.py`` this file lives under
+``.github/tests/ci-pipeline/`` (not in ``tests/``), so it does not
+change the 103-test application suite or the coverage gate. The CI
+pipeline enforces the completeness gate inside the script itself
+(``generate_traceability_matrix.py`` exits non-zero on an untraced
+requirement); this developer unit test covers the same logic and can
+be run with::
 
-    pytest -q .github/tests/test_generate_traceability_matrix.py
+    pytest -q .github/tests/ci-pipeline/test_generate_traceability_matrix.py
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ import sys
 from pathlib import Path
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[2]
+    Path(__file__).resolve().parents[3]
     / ".github"
     / "scripts"
     / "generate_traceability_matrix.py"

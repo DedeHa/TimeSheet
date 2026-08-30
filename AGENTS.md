@@ -53,8 +53,9 @@ running them locally first just avoids a red CI run:
 ```bash
 pytest -q .github/tests/
 ```
-- Covers `test_verify_ci_workflow.py` (workflow structure/regression),
-  `test_generate_pr_summary.py`, and `test_generate_traceability_matrix.py`
+- Covers `ci-pipeline/test_verify_ci_workflow.py` (workflow structure/regression),
+  `ci-pipeline/test_generate_pr_summary.py`, and `ci-pipeline/test_generate_traceability_matrix.py`,
+  plus `agents/test_orchestration.py` (orchestration skill + agent definitions).
 - All must pass before you commit; treat a failure here exactly like a failing
   application test
 
@@ -222,6 +223,7 @@ Three-level hierarchy matching runtime boundaries:
 - PRs to `release/**`: Full CI (same quality gate as master)
 - Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
 - The **CI self-tests** (`pytest -q .github/tests/`) run in the `test` job and appear as a **CI Self-Tests** level in the summary; workflow/script regressions are a CI gate.
+- The `.github/tests/` suite is split into two groups: `ci-pipeline/` (workflow structure + support scripts) and `agents/` (orchestration skill + agent definitions).
 - **Environments** (GitHub deployment labels) are static: `check` → `development`, `test` → `staging`, `deploy` → `production`. Do **not** reintroduce a dynamic `environment:` expression — a previous one coerced to the boolean `false` and auto-created a junk environment named "false".
 - **Dependabot** (`.github/dependabot.yml`) bumps action versions weekly; its PRs are exempt from the `PRO-XXX` naming validators via `github.actor != 'dependabot[bot]'` guards.
 
@@ -325,10 +327,13 @@ The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workf
   `continue-on-error: false` or the gate silently degrades.
 - **CI support-script tests live under `.github/tests/`** (not in `tests/`), so
   they do not count toward the 103-test suite or the 90% coverage gate. The
-  `check` job runs them (`Run CI self-tests`), so they **gate** the pipeline:
-  - `.github/tests/test_verify_ci_workflow.py`
-  - `.github/tests/test_generate_pr_summary.py`
-  - `.github/tests/test_generate_traceability_matrix.py`
+  `check` job runs them (`Run CI self-tests`), so they **gate** the pipeline.
+  Tests are split into two groups:
+  - `ci-pipeline/`: `test_verify_ci_workflow.py`, `test_generate_pr_summary.py`,
+    `test_generate_traceability_matrix.py`, `test_validate_pr.py`,
+    `test_verify_gpg_signing.py`, `test_collect_ci_timings.py`,
+    `test_aggregate_ci_timings.py`, `test_backfill_ci_timings.py`
+  - `agents/`: `test_orchestration.py` (orchestration skill + agent definitions)
   - **Run `pytest -q .github/tests/` locally before committing any change under
     `.github/`** so CI does not fail on a workflow/script regression.
 - **CI support scripts live under `.github/scripts/`** (verb_subject naming):
@@ -372,8 +377,9 @@ execution times from the GitHub Actions API for every successful PR run of
   `collect_ci_timings.py` (fetch + filter one run),
   `aggregate_ci_timings.py` (render stats + report),
   `backfill_ci_timings.py` (historical sweep).
-- **Tests** (in `.github/tests/`): `test_collect_ci_timings.py`,
-  `test_aggregate_ci_timings.py`, `test_backfill_ci_timings.py`.
+- **Tests** (in `.github/tests/`): `ci-pipeline/test_collect_ci_timings.py`,
+  `ci-pipeline/test_aggregate_ci_timings.py`, `ci-pipeline/test_backfill_ci_timings.py`,
+  `agents/test_orchestration.py`.
 - **Runner variance caveat**: GitHub-hosted runners are noisy (±10–30%).
   Always read stddev alongside mean; prefer median / p95 for decisions.
 - **Drift handling**: a step key is withheld from the main tables until it has
@@ -387,27 +393,99 @@ execution times from the GitHub Actions API for every successful PR run of
 
 Two skills support the end-to-end JIRA ticket lifecycle:
 
-- **`.opencode/skills/product-discovery-planning/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
-- **`.opencode/skills/feature-complete/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
+- **`.opencode/skills/plan-feature/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
+- **`.opencode/skills/complete-feature/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
+
+## ⛔ Agent-Team Closure Policy (CRITICAL)
+
+> The agent-team **must NOT** autonomously close JIRA tickets or merge PRs.
+> These are reserved for the user or Product-Owner.
+
+| Operation | Agent-Team Allowed? | Who Decides |
+|-----------|--------------------|--------------------|
+| Prepare AC/DoD checkmarks in JIRA description | ✅ Yes | Agent |
+| Post JIRA status comment | ✅ Yes | Agent |
+| Assign story points (`customfield_10028`) | ✅ Yes | Agent |
+| Update PR description (`gh pr edit`) | ✅ Yes | Agent |
+| Push branch (`git push`) | ✅ Yes | Agent |
+| **Transition JIRA to Fertig (`atlassian_transitionJiraIssue`)** | ❌ **No** | **User / PO** |
+| **Merge PR (`gh pr merge`)** | ❌ **No** | **User / PO** |
+| **Delete remote branch after merge** | ❌ **No** | **User / PO** |
+
+**Rationale:** JIRA closure and PR merges are irreversible quality-gate
+decisions. They require human review of the agent-team's work to catch
+context the agent may have missed (acceptance-criteria drift, scope creep,
+business priorities). The agent-team **prepares** the close; the user
+**executes** it.
+
+When the `complete-feature` skill reaches Step 3d (Transition to Done), it
+must hand off to the user / PO instead of calling
+`atlassian_transitionJiraIssue` directly. See
+`.opencode/skills/complete-feature/SKILL.md` Step 3d for the exact
+wording.
 
 ## Agent-Team Workflow
 
-The four agent definitions in `.github/agents/` form a coordinated pipeline. Each agent loads the relevant `.opencode/skills/` skill at its step.
+The four agent definitions in `.github/agents/` form a coordinated pipeline. The **Product Owner is the dispatcher** — every feature or bug fix flows through the Product Owner first.
 
 ### Pipeline
 
 ```
-Product Owner → Architect → Developer → Tester → [feature-complete] → JIRA Close
+User Request → Product Owner (dispatcher) → [Architect → Developer → Tester]
+                                                  ↓
+                                          Product Owner (reviewer)
+                                                  ↓
+                                          User (final agreement)
 ```
 
-| Step | Agent | Skill Invoked | What It Does |
-|------|-------|---------------|--------------|
-| 1 | **Product Owner** | `product-discovery-planning` | Analyze user intent, define stories with AC, create JIRA ticket (Phase 5), assign story points |
-| 2 | **Architect** | `feature-development` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
-| 3 | **Developer** | `feature-development` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
-| 4 | **Tester** | `feature-complete` | Validate AC, run tests, verify coverage ≥90% CI gate |
-| 5 | **Tester → feature-complete** | `feature-complete` | Assign story points, update JIRA description, transition to Fertig, update PR |
-| 6 | *(release)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
+### Key-Request → Product Owner → Agent → Skill Mapping
+
+| User Says | Product Owner Routes To | Agent | Skill Invoked |
+|-----------|------------------------|-------|---------------|
+| "start feature PRO-XXX" | Product Owner (orchestrator) | **Product Owner** (`product-owner-agent`) | `orchestrate-feature` → `plan-feature` |
+| "start feature PRO-XXX" | Architect | **Architect** (`architect-agent`) | `develop-feature` |
+| "start feature PRO-XXX" | Developer | **Developer** (`developer-agent`) | `develop-feature` |
+| "complete feature" | Tester | **Tester** (`tester-agent`) | `complete-feature` |
+| "release vX.Y.Z" | Release | **Release** (manual trigger) | `release-project` |
+
+### What Each Agent Does
+
+| Step | Product Owner Dispatches To | Agent | Skill | What It Does |
+|------|------------------------------|-------|-------|--------------|
+| 1 | Product Owner | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket, assign story points |
+| 2 | Product Owner → Architect | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
+| 3 | Product Owner → Developer | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
+| 4 | Product Owner → Tester | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
+| 5 | Product Owner → complete-feature | **complete-feature** | `complete-feature` | Assign story points, update JIRA description, checkmark ACs/DoD, update PR |
+| 6 | *(release)* | *(manual)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
+
+### Product Owner Dispatch Rules
+
+- **Never bypass**: every feature or bug fix must go through the Product Owner first
+- **Sequential dispatch**: Architect must complete and be reviewed before Developer starts
+- **Developer gate**: Architect's plan must be approved before Developer is dispatched
+- **Tester gate**: Developer's PR must be ready before Tester is dispatched
+- **Review gate**: Tester's validation must be complete before Product Owner reviews
+- **Final gate**: Product Owner's review must be complete before user agrees to close
+
+### Escalation Protocol — Cycle Detection and Interruption
+
+Each agent tracks its cycle count. The Product Owner **interrupts and evaluates** when:
+
+- An agent cannot resolve an issue it reports as a blocker
+- The pipeline exceeds 3 cycles
+- The process loops (agent repeats the same action without progress)
+
+**Cycle detection rules:**
+- Agent reports a blocker → Product Owner evaluates immediately (no cycle limit)
+- Cycle count = 3 → Agent stops and reports to Product Owner
+- Cycle count > 3 → Agent must NOT continue
+
+**Evaluation steps:**
+1. Is the blocker resolvable? → Provide guidance and re-dispatch, or proceed to step 2
+2. Is the issue a scope problem? → Update the JIRA ticket or requirements, or proceed to step 3
+3. Is the issue a priority problem? → Re-prioritise or defer, or proceed to step 4
+4. Should the pipeline stop? → Hand off to user with explanation, or re-dispatch with corrected context
 
 ### Skill Invocation Rules
 
@@ -418,11 +496,24 @@ Product Owner → Architect → Developer → Tester → [feature-complete] → 
 
 ### Handoff Protocol
 
-1. **PO → Architect**: Pass complete User Story output with acceptance criteria
-2. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
-3. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics; load `feature-complete` skill for tester
-4. **Tester → feature-complete**: After PASSED decision, load `feature-complete` skill for JIRA closure; do NOT handoff to Product Owner for sign-off
-5. **Release**: Trigger `release-project` skill manually when ready to publish
+1. **User → Product Owner**: User provides feature/bug request
+2. **Product Owner → Architect**: Pass complete User Story output with acceptance criteria
+3. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
+4. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics
+5. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
+6. **complete-feature → Product Owner**: Pass review summary
+7. **Product Owner → User**: Hand off for final agreement. The user calls `atlassian_transitionJiraIssue` and `gh pr merge` — the agent-team must not
+8. **Release**: Trigger `release-project` skill manually when ready to publish
+
+### How to Trigger the Agent Team
+
+Every interaction starts with the Product Owner as dispatcher:
+
+- **"plan a new feature"** → Product Owner → `plan-feature` skill → creates JIRA ticket
+- **"plan a bug fix"** → Product Owner → `plan-feature` skill → creates JIRA ticket
+- **"start feature PRO-XXX"** → Product Owner → Architect → Developer → `develop-feature` skill → implements feature
+- **"complete feature"** → Product Owner → Tester → `complete-feature` skill → validates and prepares closure
+- **"release vX.Y.Z"** → Product Owner → Release → `release-project` skill → publishes release
 
 ### Quality Gates (CI)
 
@@ -435,7 +526,7 @@ Product Owner → Architect → Developer → Tester → [feature-complete] → 
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches
-- **Agent Types**: Check `.github/agents/` for specialized roles (Architect, Developer, Tester & Validator, Product Owner)
+- **Agent Types**: Check `.github/agents/` for specialized roles: `architect-agent`, `developer-agent`, `tester-agent`, `product-owner-agent`
 - **Commit Messages**: `.github/workflows/python-ci.yml` validates Conventional Commits format
 - **Documentation**: `doc/ARCHITECTURE.md` - `doc/CONTRIBUTING.md` - `doc/TESTING.md`
 

@@ -57,7 +57,10 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 
 ## Traceability Validation
 
-Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by [.github/tests/test_generate_traceability_matrix.py](../.github/tests/test_generate_traceability_matrix.py), which the `check` job runs as part of the CI self-tests (`pytest -q .github/tests/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
+Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by
+[.github/tests/ci-pipeline/test_generate_traceability_matrix.py](../.github/tests/ci-pipeline/test_generate_traceability_matrix.py),
+which the `check` job runs as part of the CI self-tests
+(`pytest -q .github/tests/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
 
 ## Pull Request Quality-Gate Summary
 
@@ -78,7 +81,10 @@ How it is produced:
 
 Because the `publish` job runs with `if: always()` in its own job — **not** inside `test` — a PR receives an up-to-date comment on **every** run, including when `check` (lint/naming) fails and the `test` job is skipped (the summary then degrades gracefully, showing lint failed and tests skipped). Publication is non-gating: it only reports results; the merge is still gated by the `check` and `test` jobs.
 
-The generator uses the standard library only and is covered by [.github/tests/test_generate_pr_summary.py](../.github/tests/test_generate_pr_summary.py), which the `test` job runs explicitly (it is outside `testpaths`, so it does not change the application suite or the coverage gate).
+The generator uses the standard library only and is covered by
+[.github/tests/ci-pipeline/test_generate_pr_summary.py](../.github/tests/ci-pipeline/test_generate_pr_summary.py),
+which the `test` job runs explicitly (it is outside `testpaths`, so it does
+not change the application suite or the coverage gate).
 
 ## Test levels and their intent
 

@@ -8,8 +8,9 @@ configured after the CI workflow and naming-convention changes:
 - System tests live under ``tests/system/``
 - ``.github/workflows/`` holds workflow definitions only (no ``.py`` scripts)
 - ``.github/scripts/`` holds CI support scripts (``verb_subject``, e.g.
-  ``generate_pr_summary``); ``.github/tests/`` holds their unit tests
-  (``test_verb_subject``)
+  ``generate_pr_summary``); ``.github/tests/ci-pipeline/`` holds their unit
+  tests (``test_verb_subject``), and ``.github/tests/agents/`` holds
+  agent-team tests.
 
 Run with::
 
@@ -29,7 +30,8 @@ EXPECTED_DIRS = [
 GITHUB_DIR = REPO_ROOT / ".github"
 WORKFLOWS_DIR = GITHUB_DIR / "workflows"
 SCRIPTS_DIR = GITHUB_DIR / "scripts"
-TESTS_DIR = GITHUB_DIR / "tests"
+TESTS_DIR = GITHUB_DIR / "tests" / "ci-pipeline"
+AGENTS_TESTS_DIR = GITHUB_DIR / "tests" / "agents"
 
 EXPECTED_CI_FILES = [
     WORKFLOWS_DIR / "python-ci.yml",
@@ -78,4 +80,5 @@ def test_ci_scripts_are_not_named_as_tests():
 def test_ci_tests_use_test_prefix():
     """Every Python file in .github/tests/ is a test_* module."""
     bad = [f.name for f in TESTS_DIR.glob("*.py") if not f.name.startswith("test_")]
+    bad += [f.name for f in AGENTS_TESTS_DIR.glob("*.py") if not f.name.startswith("test_")]
     assert not bad, f".github/tests/ must contain only test_* files: {bad}"

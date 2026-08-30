@@ -17,7 +17,7 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 | **Issue Type** | `Story` (id 10003) |
 | **Reporter** | Current user |
 | **Priority** | `Medium` (default), or `High` if critical for release integrity |
-| **Epic Link** | `customfield_10014` — link to parent Epic (e.g. `PRO-259` for TimeSheet, `PRO-356` for Home-Server) |
+| **Epic Link** | `customfield_10014` — link to parent Epic (e.g. `PRO-259` for TimeSheet, `PRO-356` for Home-Server, `PRO-344` for AI-Assistant) |
 | **Sprint** | `customfield_10020` — current active sprint (e.g. `TIME Sprint 33`) |
 | **Fix Versions** | Target release version (e.g. `v4.3.0`) — must exist in project |
 | **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) |

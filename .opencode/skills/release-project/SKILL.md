@@ -63,7 +63,7 @@ gh pr create --base master \
 ## Testing
 - python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
 - python .github/scripts/generate_traceability_matrix.py
-- pytest -q .github/tests/
+- pytest -q .github/tests/ci-pipeline/
 
 Refs: PRO-XXX"
 ```

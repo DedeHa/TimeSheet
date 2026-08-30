@@ -159,9 +159,11 @@ jobs:
       - name: Run system tests
         run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
-      # CI self-tests: the .github/tests suite (workflow structure + support
-      # scripts). Reported as its own "CI Self-Tests" level in the summary. Run
-      # without coverage - it validates CI code, not src_timesheetalgo.
+      # CI self-tests: the .github/tests suite has two groups:
+      #   - ci-pipeline/  (workflow structure + support scripts)
+      #   - agents/       (orchestration skill + agent definitions)
+      # Reported as its own "CI Self-Tests" level in the summary. Run without
+      # coverage - it validates CI/agent code, not src_timesheetalgo.
       - name: Run CI self-tests (.github/tests)
         run: pytest -q .github/tests/ --junitxml=tests/reports/ci-results.xml
 

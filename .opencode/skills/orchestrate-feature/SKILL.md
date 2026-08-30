@@ -1,6 +1,6 @@
 ---
 name: orchestrate-feature
-description: Orchestrates the complete feature pipeline: reads JIRA state, tracks cycles, dispatches to Architect/Developer/Tester, handles escalations, and coordinates handoffs. Use when starting a feature (PRO-xxxx) or when the pipeline needs rebalancing.
+description: "Orchestrates the complete feature pipeline: reads JIRA state, tracks cycles, dispatches to Architect/Developer/Tester, handles escalations, and coordinates handoffs. Use when starting a feature (PRO-xxxx) or when the pipeline needs rebalancing."
 ---
 
 # Orchestrate Feature Pipeline

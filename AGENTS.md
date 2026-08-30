@@ -418,10 +418,6 @@ must hand off to the user / PO instead of calling
 `.opencode/skills/complete-feature/SKILL.md` Step 3d for the exact
 wording.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> a70971c (docs: add agent-team workflow documentation to AGENTS.md)
 ## Agent-Team Workflow
 
 The four agent definitions in `.github/agents/` form a coordinated pipeline. The **Product Owner is the dispatcher** — every feature or bug fix flows through the Product Owner first.
@@ -522,11 +518,6 @@ Every interaction starts with the Product Owner as dispatcher:
 - **Traceability**: `python .github/scripts/generate_traceability_matrix.py` — exits non-zero if any requirement untraced
 - **CI self-tests**: `pytest -q .github/tests/` — gates the pipeline
 
-<<<<<<< HEAD
-=======
->>>>>>> 441e55a (docs: add JIRA workflow skills section and story point assignment)
-=======
->>>>>>> a70971c (docs: add agent-team workflow documentation to AGENTS.md)
 ## Additional Resources
 
 - **Branch Protection**: GitHub Settings → Branches

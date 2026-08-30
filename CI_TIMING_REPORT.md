@@ -1,6 +1,6 @@
 # CI Pipeline Timing Benchmark
 
-Included runs: 106
+Included runs: 107
 
 > ⚠️ GitHub-hosted runners are shared and noisy; per-step times vary run-to-run (often ±10–30%). Read **stddev alongside mean**, prefer **median / p95** for decisions, and treat these as **trend indicators**, not benchmarks of the code itself.
 
@@ -57,27 +57,27 @@ Included runs: 106
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 78 | 33.0 | 6.8 | 33.5 | 44.0 | 18.0 | 47.0 | 26.0 |
+| **Job total** | 79 | 32.9 | 6.8 | 33.0 | 44.0 | 18.0 | 47.0 | 26.0 |
 | Install dependencies and setup environment | 32 | 11.4 | 2.3 | 11.0 | 15.0 | 8.0 | 17.0 | 10.0 |
-| Run ./.github/actions/setup-python-deps | 46 | 11.1 | 6.1 | 10.5 | 22.0 | 2.0 | 24.0 | 6.0 |
-| Run system tests | 78 | 6.9 | 1.9 | 7.0 | 9.0 | 3.0 | 9.0 | 3.0 |
-| Run unit tests | 78 | 3.5 | 0.7 | 3.0 | 5.0 | 3.0 | 6.0 | 4.0 |
-| Run actions/checkout@v5 | 45 | 1.7 | 0.8 | 2.0 | 3.0 | 1.0 | 5.0 | 2.0 |
+| Run ./.github/actions/setup-python-deps | 47 | 11.0 | 6.1 | 10.0 | 22.0 | 2.0 | 24.0 | 5.0 |
+| Run system tests | 79 | 6.9 | 1.9 | 7.0 | 9.0 | 3.0 | 9.0 | 4.0 |
+| Run unit tests | 79 | 3.5 | 0.7 | 3.0 | 5.0 | 3.0 | 6.0 | 4.0 |
+| Run actions/checkout@v5 | 46 | 1.7 | 0.8 | 2.0 | 3.0 | 1.0 | 5.0 | 1.0 |
 | Run actions/checkout@v4 | 32 | 1.3 | 0.7 | 1.0 | 2.0 | 1.0 | 4.0 | 1.0 |
-| Upload test results | 78 | 1.1 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
-| Run integration tests | 78 | 1.1 | 0.3 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
+| Upload test results | 79 | 1.1 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 2.0 |
+| Run integration tests | 79 | 1.1 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 0.0 |
 | Publish or update sticky PR comment | 33 | 0.9 | 0.2 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Run CI self-tests (.github/tests) | 32 | 0.9 | 0.2 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
+| Run CI self-tests (.github/tests) | 33 | 0.9 | 0.2 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
 | Validate documentation traceability | 37 | 0.7 | 0.5 | 1.0 | 1.0 | 0.0 | 2.0 | 1.0 |
 | Comment traceability report on PR | 37 | 0.6 | 0.5 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
 | Run actions/setup-python@v5 | 16 | 0.4 | 0.5 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
-| Combined coverage report and 90% gate | 78 | 0.3 | 0.5 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Combined coverage report and 90% gate | 79 | 0.3 | 0.5 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Validate PR quality-gate summary generator | 30 | 0.3 | 0.5 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
 | Run actions/setup-python@v6 | 16 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Export machine-readable coverage | 70 | 0.1 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Generate and validate traceability matrix | 40 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Export machine-readable coverage | 71 | 0.1 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Generate and validate traceability matrix | 41 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Generate PR quality-gate summary | 33 | 0.0 | 0.2 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
-| Prepare report directory | 78 | 0.0 | 0.1 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
+| Prepare report directory | 79 | 0.0 | 0.2 | 0.0 | 0.0 | 0.0 | 1.0 | 1.0 |
 
 ## Job: Lint and Format Check
 
@@ -100,32 +100,32 @@ Included runs: 106
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 51 | 28.8 | 12.1 | 32.0 | 45.0 | 9.0 | 61.0 | 11.0 |
+| **Job total** | 52 | 28.5 | 12.2 | 32.0 | 45.0 | 9.0 | 61.0 | 11.0 |
 | Install dependencies and setup environment | 5 | 13.0 | 1.6 | 13.0 | 15.0 | 11.0 | 15.0 | 12.0 |
 | Pull wagoid/commitlint-github-action:6.2.1 | 27 | 12.2 | 3.3 | 11.0 | 20.0 | 9.0 | 22.0 | 9.0 |
-| Run ./.github/actions/setup-python-deps | 46 | 11.1 | 6.6 | 10.5 | 22.0 | 2.0 | 33.0 | 3.0 |
+| Run ./.github/actions/setup-python-deps | 47 | 10.9 | 6.7 | 10.0 | 22.0 | 2.0 | 33.0 | 2.0 |
 | Setup Node.js | 5 | 2.0 | 1.9 | 1.0 | 4.0 | 0.0 | 4.0 | 0.0 |
-| Run lint tools (ruff, black, pydocstyle, radon) | 51 | 1.9 | 0.6 | 2.0 | 3.0 | 1.0 | 4.0 | 1.0 |
-| Run actions/checkout@v5 | 45 | 1.8 | 1.2 | 2.0 | 3.0 | 1.0 | 7.0 | 1.0 |
+| Run lint tools (ruff, black, pydocstyle, radon) | 52 | 1.9 | 0.6 | 2.0 | 3.0 | 1.0 | 4.0 | 2.0 |
+| Run actions/checkout@v5 | 46 | 1.8 | 1.1 | 2.0 | 3.0 | 1.0 | 7.0 | 2.0 |
 | Validate commit messages | 22 | 1.7 | 0.6 | 2.0 | 3.0 | 1.0 | 3.0 | 2.0 |
 | Run actions/checkout@v4 | 5 | 1.6 | 0.9 | 1.0 | 3.0 | 1.0 | 3.0 | 1.0 |
-| Validate PR | 24 | 0.9 | 0.9 | 1.0 | 2.0 | 0.0 | 4.0 | 1.0 |
+| Validate PR | 25 | 0.8 | 0.9 | 1.0 | 2.0 | 0.0 | 4.0 | 0.0 |
 | Validate Jira reference in commits | 22 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Validate PR Title | 22 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Validate PR Body | 22 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Run actions/setup-python@v6 | 5 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Print GitHub Context Information and setup environment | 51 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| Print GitHub Context Information and setup environment | 52 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 
 ## Job: Publish
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 35 | 8.8 | 1.7 | 9.0 | 11.0 | 6.0 | 12.0 | 10.0 |
-| Run actions/checkout@v5 | 34 | 1.2 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
-| Publish or update sticky PR comment | 35 | 1.1 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 2.0 |
-| Download test reports | 35 | 0.7 | 0.5 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Generate PR quality-gate summary | 35 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
-| Show build information | 35 | 0.1 | 0.2 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
+| **Job total** | 36 | 8.8 | 1.7 | 9.0 | 11.0 | 6.0 | 12.0 | 7.0 |
+| Run actions/checkout@v5 | 35 | 1.2 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
+| Publish or update sticky PR comment | 36 | 1.2 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 2.0 |
+| Download test reports | 36 | 0.6 | 0.5 | 1.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Generate PR quality-gate summary | 36 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Show build information | 36 | 0.1 | 0.2 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
 
 ## Appendix: keys with < 3 samples (withheld)
 

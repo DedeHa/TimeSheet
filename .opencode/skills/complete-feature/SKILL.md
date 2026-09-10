@@ -1,6 +1,6 @@
 ---
 name: complete-feature
-description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
+description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
 ---
 
 # Feature Complete Skill
@@ -119,73 +119,183 @@ Refs: PRO-XXX
 
 ### 3c. Checkmark Acceptance Criteria and Definition of Done in Description
 
-Update the JIRA ticket description using `atlassian_editJiraIssue` to:
-1. Add `- [x]` markers next to each completed AC (format: `- [x] AC-N: description — implementation detail`)
-2. Add a **Definition of Done** section with all items checkmarked
-3. Add a **Story Points** line with the assigned value
-4. Add Story Points to the Definition of Done checklist
+Update the JIRA ticket description using `atlassian_editJiraIssue` so that
+every AC and every DoD item renders as an actual interactive checkbox in the
+JIRA UI. A comment is **not** a substitute for editing the description.
 
-**Required description format:**
-```
-**Acceptance Criteria:**
+**Required skeleton (do not skip any section; copy verbatim and fill in):**
 
-- [x] AC-1: Description — implementation detail
-- [x] AC-2: Description — implementation detail
-...
+```markdown
+## Summary
 
-**Definition of Done:**
+<one-paragraph scope summary>
+
+## Acceptance Criteria
+
+- [x] AC-1: <description> — <implementation detail>
+- [x] AC-2: <description> — <implementation detail>
+- [ ] AC-N: <description> — **Deferred:** <reason> *(only if deferred)*
+
+## DoD
+
+**Story Points:** N
 
 - [x] PR #NNN merged to master
-- [x] JIRA ticket closed (Fertig)
 - [x] All ACs checkmarked
 - [x] Story Points: N assigned
-- [x] Traceability: FR-XX, QR-XX added to docs
+- [x] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
+- [x] Architecture updated: doc/ARCHITECTURE.md lists new FR/QR
 - [x] CI self-tests: N passed
+- [x] Lint checks: ruff, black, pydocstyle, radon
+- [x] Application tests: N passed (≥90% coverage)
+- [x] Implementation plan updated: doc/02_Implementation_Plan_PRO-XXX.md
+- [x] JIRA description fully checkmarked
+
+## Dependencies
+
+<list of related tickets, modules, or external systems>
+
+## Notes
+
+<architectural context, design decisions, follow-ups>
 ```
+
+**How to send the update:**
+
+1. Read the existing description with
+   `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description"])`.
+2. Build the **full** new description as a single string, preserving all
+   existing context (Context, Current State Analysis, Key Observations, …).
+   Replace only the `## AC` and `## DoD` blocks.
+3. Send it with `atlassian_editJiraIssue(issueIdOrKey="PRO-XXX", fields={"description": "..."})`.
+4. **Verify** by re-reading the issue and confirming every AC and DoD bullet
+   starts with `- [x]` (or `- [` for any deferred AC). Re-run the edit if
+   anything is missing.
+
+**Required DoD lines (every ticket must include all 9):**
+
+| # | DoD line |
+|---|----------|
+| 1 | `PR #NNN merged to master` |
+| 2 | `All ACs checkmarked` |
+| 3 | `Story Points: N assigned` |
+| 4 | `Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md` |
+| 5 | `Architecture updated: doc/ARCHITECTURE.md lists new FR/QR` |
+| 6 | `CI self-tests: N passed` |
+| 7 | `Lint checks: ruff, black, pydocstyle, radon` |
+| 8 | `Application tests: N passed (≥90% coverage)` |
+| 9 | `Implementation plan updated: doc/02_Implementation_Plan_PRO-XXX.md` |
+| 10 | `JIRA description fully checkmarked` |
+
+**Common failure modes (avoid these):**
+
+| Failure | Why it's wrong | Fix |
+|---------|----------------|-----|
+| Leaving the original `* [ ] AC-N` bullet unedited | Stays an open checkbox in the UI | Replace every AC line with `- [x] AC-N: <desc> — <detail>` |
+| Writing only a status comment, never editing the description | Comment is not the description; the ACs stay unchecked | Always call `atlassian_editJiraIssue` with `fields.description` |
+| Using `## DoD` heading with no bullets | The DoD section is empty | Include all 10 DoD lines above |
+| Story points line placed in `## Summary` | Hides it from the description head | Place `**Story Points:** N` directly under `## DoD` |
+| PR number missing or `TBD` | DoD item stays open | Update after PR is opened: `- [x] PR #NNN merged to master` |
+| Original `## Dependencies` / `## Notes` sections dropped | Loses stakeholder context | Preserve all non-AC/DoD sections verbatim |
 
 ### 3d. Transition to Done
 
-> **⛔ BLOCKED — Requires User / Product-Owner Approval**
-> The agent-team must NOT call `atlassian_transitionJiraIssue`.
-> Transition to Fertig is reserved for the user or Product-Owner.
+After user/PO confirmation of the prepared closure, the agent-team executes the final transition:
+
+> **⚠️ Requires User / Product-Owner confirmation before execution.**
+> The agent-team MUST obtain explicit user/PO confirmation before calling
+> `atlassian_transitionJiraIssue` and `gh pr merge`.
 >
 > **What the agent-team DOES:**
 > 1. Step 3a: Post the implementation status comment
 > 2. Step 3b: Assign story points
 > 3. Step 3c: Update JIRA description with `- [x]` AC and DoD checkmarks
 > 4. Step 4: Update PR description with final status
+> 5. After user/PO confirmation: execute `atlassian_transitionJiraIssue` and `gh pr merge`
 >
-> **After these steps, hand off to the user / Product-Owner:**
-> - Summarise what was prepared (ACs, DoD, PR description, story points)
-> - Ask the user / Product-Owner to call:
->   ```
->   atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
->   ```
-> - Ask the user / Product-Owner to merge the PR:
->   ```
->   gh pr merge <PR_NUMBER> --merge
->   ```
+> **What the user / Product-Owner confirms:**
+> - All ACs checkmarked
+> - DoD complete
+> - PR description accurate
+> - Story points assigned
+> - Test results passed
 >
-> **Verification:** The user / Product-Owner is responsible for the final
-> `atlassian_transitionJiraIssue` and `gh pr merge` calls. The agent-team
-> **must not** execute these commands autonomously.
+> **After confirmation, the agent-team executes:**
+> ```
+> atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+> gh pr merge <PR_NUMBER> --merge
+> ```
+>
+> **Verification:** The agent-team verifies the JIRA ticket is in "Fertig"
+> status and the PR is merged.
 
 ## Step 4 — Update PR Description
 
-Update the PR description with final status:
-```bash
-gh pr edit <PR_NUMBER> --body '## Summary
+Update the PR description with final status. The PR body must contain **four
+mandatory sections**; `gh pr edit` only updates the description, it does not
+merge the PR.
 
-...final status with all ACs marked complete...
+**Mandatory sections (in order, do not skip any):**
+
+```markdown
+## Summary
+
+<one-paragraph scope summary>
+
+## Acceptance Criteria
+
+| AC | Description | Status |
+|----|-------------|--------|
+| AC1 | ... | ✅ Complete |
+| AC2 | ... | ⏳ Deferred — <reason> |
+
+## Definition of Done
+
+- [x] PR #NNN merged to master
+- [x] All ACs checkmarked
+- [x] Story Points: N assigned
+- [x] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
+- [x] Architecture updated: doc/ARCHITECTURE.md lists new FR/QR
+- [x] CI self-tests: N passed
+- [x] Lint checks: ruff, black, pydocstyle, radon
+- [x] Application tests: N passed (≥90% coverage)
+- [x] Implementation plan updated: doc/02_Implementation_Plan_PRO-XXX.md
+- [x] JIRA description fully checkmarked
 
 ## Testing
-- All checks passed
-...
 
-Refs: PRO-XXX'
+- All checks passed: ruff, black, pydocstyle, radon
+- Application tests: N passed
+- CI self-tests: N passed
+- Traceability: 100%
+- Code coverage: ~99% (gate: 90%)
+
+Refs: PRO-XXX
 ```
 
-**Note:** `gh pr edit` updates the description only; it does not merge the PR.
+**How to send the update:**
+
+1. Write the PR body to a temp file (avoid shell-escaping issues with `Refs: PRO-XXX`):
+   ```bash
+   cat > /tmp/opencode/pr_body.md <<'EOF'
+   ## Summary
+   ...
+   Refs: PRO-XXX
+   EOF
+   ```
+2. Run `gh pr edit <PR_NUMBER> --body-file /tmp/opencode/pr_body.md`.
+3. Verify with `gh pr view <PR_NUMBER> --json body` and confirm all four
+   mandatory sections are present.
+
+**Common failure modes (avoid these):**
+
+| Failure | Why it's wrong | Fix |
+|---------|----------------|-----|
+| Missing `## Acceptance Criteria` section | PR body is incomplete | Always include the AC table |
+| Missing `## Definition of Done` section | DoD not visible in the PR | Include the 10 DoD lines |
+| `## Testing` section present but empty | Stakeholders cannot verify | Populate with actual numbers |
+| `Refs: PRO-XXX` missing | Conventional Commits gate fails | Always include the footer |
+| Inline multi-line body passed to `gh pr edit --body` | Shell-escaping truncates the body | Use `--body-file` instead |
 
 ## Step 5 — Stage, Commit, and Push
 

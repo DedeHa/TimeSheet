@@ -1,6 +1,6 @@
 ---
 name: complete-feature
-description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
+description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
 ---
 
 # Feature Complete Skill
@@ -200,30 +200,34 @@ JIRA UI. A comment is **not** a substitute for editing the description.
 
 ### 3d. Transition to Done
 
-> **⛔ BLOCKED — Requires User / Product-Owner**
-> The agent-team must NOT call `atlassian_transitionJiraIssue`.
-> Transition to Fertig is reserved for the user or Product-Owner.
+After user/PO confirmation of the prepared closure, the agent-team executes the final transition:
+
+> **⚠️ Requires User / Product-Owner confirmation before execution.**
+> The agent-team MUST obtain explicit user/PO confirmation before calling
+> `atlassian_transitionJiraIssue` and `gh pr merge`.
 >
 > **What the agent-team DOES:**
 > 1. Step 3a: Post the implementation status comment
 > 2. Step 3b: Assign story points
 > 3. Step 3c: Update JIRA description with `- [x]` AC and DoD checkmarks
 > 4. Step 4: Update PR description with final status
+> 5. After user/PO confirmation: execute `atlassian_transitionJiraIssue` and `gh pr merge`
 >
-> **After these steps, hand off to the user / Product-Owner:**
-> - Summarise what was prepared (ACs, DoD, PR description, story points)
-> - Ask the user / Product-Owner to call:
->   ```
->   atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
->   ```
-> - Ask the user / Product-Owner to merge the PR:
->   ```
->   gh pr merge <PR_NUMBER> --merge
->   ```
+> **What the user / Product-Owner confirms:**
+> - All ACs checkmarked
+> - DoD complete
+> - PR description accurate
+> - Story points assigned
+> - Test results passed
 >
-> **Verification:** The user / Product-Owner is responsible for the final
-> `atlassian_transitionJiraIssue` and `gh pr merge` calls. The agent-team
-> **must not** execute these commands autonomously.
+> **After confirmation, the agent-team executes:**
+> ```
+> atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+> gh pr merge <PR_NUMBER> --merge
+> ```
+>
+> **Verification:** The agent-team verifies the JIRA ticket is in "Fertig"
+> status and the PR is merged.
 
 ## Step 4 — Update PR Description
 

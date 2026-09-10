@@ -1,6 +1,6 @@
 ---
 name: develop-feature
-description: "Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to 'start feature', 'implement ticket', 'work on PRO-XXX', 'draft implementation plan', 'begin work on JIRA ticket', or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team must NOT call atlassian_transitionJiraIssue or gh pr merge — those are reserved for the user / Product-Owner."
+description: "Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to 'start feature', 'implement ticket', 'work on PRO-XXX', 'draft implementation plan', 'begin work on JIRA ticket', or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
 ---
 
 # Feature Development Skill
@@ -238,13 +238,33 @@ final state, posts the JIRA status comment, assigns story points,
 checkmarks the ACs and DoD in the JIRA description, and updates the
 PR description with the final status.
 
-> **⛔ BLOCKED — The agent-team must NOT call `atlassian_transitionJiraIssue`.**
-> Transition to Fertig is reserved for the user or Product-Owner.
-> `complete-feature` prepares the close; the user / Product-Owner calls
-> `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})`.
-> Do not attempt to close the ticket from this skill — the closure workflow
-> lives in `complete-feature` so the two phases are independently testable,
-> but the final transition is a human decision.
+> **⚠️ Requires User / Product-Owner confirmation before execution.**
+> The agent-team MUST obtain explicit user/PO confirmation before calling
+> `atlassian_transitionJiraIssue` and `gh pr merge`.
+>
+> **What the agent-team DOES:**
+> 1. Verify the PR's final state
+> 2. Post the JIRA status comment
+> 3. Assign story points
+> 4. Checkmark the ACs and DoD in the JIRA description
+> 5. Update the PR description with the final status
+> 6. After user/PO confirmation: execute `atlassian_transitionJiraIssue` and `gh pr merge`
+>
+> **What the user / Product-Owner confirms:**
+> - All ACs checkmarked
+> - DoD complete
+> - PR description accurate
+> - Story points assigned
+> - Test results passed
+>
+> **After confirmation, the agent-team executes:**
+> ```
+> atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+> gh pr merge <PR_NUMBER> --merge
+> ```
+>
+> **Verification:** The agent-team verifies the JIRA ticket is in "Fertig"
+> status and the PR is merged.
 
 ## Reference: Command Cheatsheet
 
@@ -253,7 +273,7 @@ PR description with the final status.
 | Fetch JIRA ticket | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=[...])` |
 | Fetch ticket comments | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["comment"])` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="…")` |
-| ⛔ Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` — **user / PO only** |
+| Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` — **after user/PO confirmation** |
 | Adopt plan | read `doc/02_Implementation_Plan_PRO-XXX.md` |
 | Draft plan | write `doc/02_Implementation_Plan_PRO-XXX.md` with Parts A/B/C |
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |

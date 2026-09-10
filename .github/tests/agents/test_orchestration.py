@@ -203,22 +203,27 @@ def test_po_role_is_dispatcher(agent_files):
 # ---------------------------------------------------------------------------
 
 
-def test_po_must_not_close_jira(agent_files):
-    """Product Owner must NOT close JIRA tickets — reserved for user."""
+def test_po_confirmation_before_closure(agent_files):
+    """Product Owner must require confirmation before closure actions."""
     fm = _parse_agent_frontmatter(_PO_AGENT)
     constraints = [c.lower() for c in fm.get("constraints", [])]
+    # Closure actions (close JIRA, merge PR) require confirmation
     assert any(
-        "must not close jira" in c for c in constraints
-    ), "PO must have constraint: Must NOT close JIRA tickets"
+        "final agreement" in c or "confirmation" in c for c in constraints
+    ), "PO must have constraint requiring confirmation before final actions"
 
 
-def test_po_must_not_merge_pr(agent_files):
-    """Product Owner must NOT merge PRs — reserved for user."""
-    fm = _parse_agent_frontmatter(_PO_AGENT)
-    constraints = [c.lower() for c in fm.get("constraints", [])]
-    assert any(
-        "merge pr" in c for c in constraints
-    ), "PO must have constraint: Must NOT merge PRs"
+def test_complete_feature_skill_allows_closure_after_confirmation():
+    """complete-feature skill must allow agent-team closure after confirmation."""
+    skill_path = _REPO / ".opencode/skills/complete-feature/SKILL.md"
+    content = skill_path.read_text()
+    # Skill must allow closure after confirmation
+    assert (
+        "BLOCKED" not in content
+    ), "complete-feature must not have BLOCKED closure section"
+    assert (
+        "transition" in content.lower() or "close" in content.lower()
+    ), "complete-feature must reference closure"
 
 
 def test_po_dispatch_after_architect_review(agent_files):

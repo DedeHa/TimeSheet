@@ -396,10 +396,12 @@ Two skills support the end-to-end JIRA ticket lifecycle:
 - **`.opencode/skills/plan-feature/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
 - **`.opencode/skills/complete-feature/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
 
-## ⛔ Agent-Team Closure Policy (CRITICAL)
+## ⚠️ Agent-Team Closure Policy (User-Confirmed Execution)
 
-> The agent-team **must NOT** autonomously close JIRA tickets or merge PRs.
-> These are reserved for the user or Product-Owner.
+> The agent-team **prepares** the JIRA closure and PR merge, but must obtain
+> **explicit user / Product-Owner confirmation** before executing the final
+> closure actions. After confirmation, the agent-team is permitted to
+> execute them.
 
 | Operation | Agent-Team Allowed? | Who Decides |
 |-----------|--------------------|--------------------|
@@ -408,19 +410,19 @@ Two skills support the end-to-end JIRA ticket lifecycle:
 | Assign story points (`customfield_10028`) | ✅ Yes | Agent |
 | Update PR description (`gh pr edit`) | ✅ Yes | Agent |
 | Push branch (`git push`) | ✅ Yes | Agent |
-| **Transition JIRA to Fertig (`atlassian_transitionJiraIssue`)** | ❌ **No** | **User / PO** |
-| **Merge PR (`gh pr merge`)** | ❌ **No** | **User / PO** |
-| **Delete remote branch after merge** | ❌ **No** | **User / PO** |
+| **Transition JIRA to Fertig (`atlassian_transitionJiraIssue`)** | ⚠️ **Yes, after user/PO confirmation** | **User / PO confirms; agent executes** |
+| **Merge PR (`gh pr merge`)** | ⚠️ **Yes, after user/PO confirmation** | **User / PO confirms; agent executes** |
+| **Delete remote branch after merge** | ⚠️ **Yes, after user/PO confirmation** | **User / PO confirms; agent executes** |
 
 **Rationale:** JIRA closure and PR merges are irreversible quality-gate
-decisions. They require human review of the agent-team's work to catch
-context the agent may have missed (acceptance-criteria drift, scope creep,
-business priorities). The agent-team **prepares** the close; the user
-**executes** it.
+decisions. They require explicit human confirmation of the agent-team's work
+to catch context the agent may have missed (acceptance-criteria drift, scope
+creep, business priorities). The agent-team **prepares** the close; the user
+**confirms**; the agent-team **executes** it.
 
 When the `complete-feature` skill reaches Step 3d (Transition to Done), it
-must hand off to the user / PO instead of calling
-`atlassian_transitionJiraIssue` directly. See
+prepares the closure and requests explicit user/PO confirmation. After that
+confirmation, it executes `atlassian_transitionJiraIssue` directly. See
 `.opencode/skills/complete-feature/SKILL.md` Step 3d for the exact
 wording.
 
@@ -502,7 +504,7 @@ Each agent tracks its cycle count. The Product Owner **interrupts and evaluates*
 4. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics
 5. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
 6. **complete-feature → Product Owner**: Pass review summary
-7. **Product Owner → User**: Hand off for final agreement. The user calls `atlassian_transitionJiraIssue` and `gh pr merge` — the agent-team must not
+7. **Product Owner → User**: Hand off for final agreement. After user/PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`
 8. **Release**: Trigger `release-project` skill manually when ready to publish
 
 ### How to Trigger the Agent Team

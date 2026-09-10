@@ -123,9 +123,12 @@ Manages the handoff:
 ### Complete → Done
 Finalizes the pipeline:
 1. Reads Tester's validation output
-2. Updates state to "done"
-3. Creates JIRA closure tasks
-4. Triggers handoff to Product Owner for final approval
+2. Updates state to "complete"
+3. Routes to Tester agent
+4. After user/PO confirmation, the agent-team executes the final closure
+   (`atlassian_transitionJiraIssue` and `gh pr merge`) and verifies the
+   JIRA ticket is in "Fertig" status and the PR is merged
+5. Updates state to "done"
 
 ## Sample Interaction
 

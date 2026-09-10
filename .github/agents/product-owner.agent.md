@@ -14,7 +14,6 @@ constraints:
   - All requirements must be testable and unambiguous
   - Requirements must reference acceptance criteria
   - All outputs must map to project domain (TimeSheetAlgo)
-  - Must NOT close JIRA tickets or merge PRs — reserved for user
   - Must NOT dispatch developer without architect review first
   - Must NOT approve feature without user final agreement
   - Must NOT dispatch without escalation when an agent reports a problem or the pipeline exceeds 3 cycles
@@ -138,7 +137,8 @@ handoffs:
       - What was tested: {{test_summary}}
       - What remains: {{remaining}}
       
-      Hand off to the user for final agreement. The user will call:
+      Hand off to the user for final agreement. After user/PO confirmation,
+      the agent-team executes:
       - atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
       - gh pr merge <PR_NUMBER> --merge
 

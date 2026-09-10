@@ -56,11 +56,8 @@ handoffs:
       - Assign story points (customfield_10028)
       - Update JIRA ticket description with checkmarked ACs and DoD
       - Update PR description with final status
-      
-      **Note:** The agent-team must NOT call `atlassian_transitionJiraIssue`
-      or `gh pr merge`. These are reserved for the user / Product-Owner.
-      Summarise the work done and hand off to the user / Product-Owner for
-      the final JIRA transition and PR merge.
+      - After user / Product-Owner confirmation, execute the final JIRA
+        transition and PR merge
 ---
 
 # Tester & Validator Agent

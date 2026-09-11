@@ -263,6 +263,11 @@ PR description with the final status.
 > gh pr merge <PR_NUMBER> --merge
 > ```
 >
+> **Branch deletion:** The `complete-feature` skill includes a
+> **Step 5.5 — Delete Remote Branch** that the agent-team prepares
+> but the user / Product-Owner confirms and executes. See
+> `.opencode/skills/complete-feature/SKILL.md` for details.
+>
 > **Verification:** The agent-team verifies the JIRA ticket is in "Fertig"
 > status and the PR is merged.
 
@@ -284,6 +289,7 @@ PR description with the final status.
 | Traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Commit | `git commit -m "<type>(<scope>): <subject>\n\nRefs: PRO-XXX"` |
 | Push | `git push -u origin <branch>` |
+| Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** (via complete-feature Step 5.5) |
 | Open PR | `gh pr create --base master --title "[<type>][PRO-XXX] …" --body "…"` |
 
 ## Reference: Worked Example — PRO-369

@@ -1,6 +1,6 @@
 ---
 name: plan-feature
-description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
+description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: If there is an active sprint, the user/PO must actively review and confirm sprint inclusion before the ticket is created or updated. The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
 ---
 
 # Product Discovery & Planning
@@ -18,11 +18,70 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 | **Reporter** | Current user |
 | **Priority** | `Medium` (default), or `High` if critical for release integrity |
 | **Epic Link** | `customfield_10014` — link to parent Epic (e.g. `PRO-259` for TimeSheet, `PRO-356` for Home-Server, `PRO-344` for AI-Assistant) |
-| **Sprint** | `customfield_10020` — current active sprint (e.g. `TIME Sprint 33`) |
+| **Sprint** | `customfield_10020` — set to current active sprint only after user/PO confirms sprint inclusion; otherwise leave unset for backlog |
+| **Assignee** | Set to developer only after user/PO confirms who should work on it; otherwise leave unassigned |
 | **Fix Versions** | Target release version (e.g. `v4.3.0`) — must exist in project |
 | **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) |
 | **Labels** | (Optional) category tags, e.g. `KI-Agent`, `Track-A`, `Phase-5` |
 | **Components** | (Optional) `TimeSheet`, `Home-AssistantConfig` |
+
+## Sprint Inclusion Check
+
+When a feature is planned, this does **not** directly trigger development.
+The user / Product-Owner must be actively asked and the feature summary
+reviewed before any ticket is created or updated and before development
+begins. This ensures the feature is intentionally prioritized.
+
+### 1. Determine sprint context
+
+Check if there is an active sprint in the JIRA project (e.g., `TIME Sprint 33`
+or `v4.3.0`). If no active sprint exists, the ticket goes to the backlog
+and the user/PO decides when to pull it in.
+
+### 2. Present the feature summary to the user / Product-Owner
+
+Show the planned ticket content (Summary, Problem Statement, Scope,
+Acceptance Criteria, Definition of Done, Story Points) for review.
+
+### 3. Ask three questions explicitly
+
+The user/PO must answer **all three**:
+
+| # | Question | Options |
+|---|----------|---------|
+| 1 | **Keep in sprint or backlog?** | Sprint — include in current active sprint; Backlog — add to backlog for future sprint planning |
+| 2 | **Start development now?** | Yes — development team begins work immediately; No — wait for sprint planning / future prioritization |
+| 3 | **Assign to developer?** | Specific developer name, or "unassigned — team decides at sprint planning" |
+
+### 4. Update ticket fields based on user/PO decisions
+
+- **Sprint** (`customfield_10020`): Set to active sprint if "sprint", leave unset if "backlog"
+- **Assignee**: Set if developer assigned, leave unassigned otherwise
+- **Status**: Keep at "Zu erledigen" — development starts only when dev begins Phase 1 of develop-feature skill
+
+### 5. Review the intended feature ticket setup
+
+Before finalizing the ticket, walk through the complete ticket together:
+
+- Summary matches the feature description
+- Acceptance criteria are testable and complete
+- Definition of Done is realistic
+- Story points are estimated
+- Epic link is correct
+- Fix version is set
+- Sprint / backlog decision is recorded
+- Non-goals are documented (if scope is non-trivial)
+
+### 6. Proceed only after explicit user/PO confirmation
+
+The user/PO must confirm:
+- All three questions above are answered
+- The ticket setup is reviewed and approved
+- Development should begin (if "start development now" = Yes)
+
+**Gate:** Do not create or update the ticket, and do not begin development,
+without explicit user/PO confirmation of sprint inclusion and development
+readiness.
 
 ---
 
@@ -257,8 +316,11 @@ When creating a new Story ticket:
 - [ ] **Priority** set to Medium (or High for release-critical)
 - [ ] **Epic Link** set to parent epic (e.g. `PRO-259`)
 - [ ] **Fix Version** set to target release (e.g. `v4.3.0`)
-- [ ] **Sprint** set to current active sprint
-- [ ] **Story Points** to be assigned when closing the ticket
+- [ ] **Sprint / Backlog** placement decided (user/PO confirms: sprint or backlog)
+- [ ] Development start confirmed (user/PO confirms: yes, team begins now; or no, deferred)
+- [ ] Assignee set (or confirmed unassigned)
+- [ ] Ticket setup reviewed and approved by user/PO
+- [ ] Story Points to be assigned when closing the ticket
 
 ---
 

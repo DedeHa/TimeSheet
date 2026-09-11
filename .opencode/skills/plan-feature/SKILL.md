@@ -1,6 +1,6 @@
 ---
 name: plan-feature
-description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
+description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: If there is an active sprint, the user/PO must actively review and confirm sprint inclusion before the ticket is created or updated. The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
 ---
 
 # Product Discovery & Planning
@@ -23,6 +23,30 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 | **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) |
 | **Labels** | (Optional) category tags, e.g. `KI-Agent`, `Track-A`, `Phase-5` |
 | **Components** | (Optional) `TimeSheet`, `Home-AssistantConfig` |
+
+## Sprint Inclusion Check
+
+If there is an active sprint in the JIRA project, the user / Product-Owner must be
+actively asked and reviewed the feature summary before the ticket is created or
+updated. This ensures the feature is included in the current sprint rather than
+being silently deferred.
+
+1. Check if there is an active sprint (e.g., `TIME Sprint 33` or `v4.3.0`) in
+   the JIRA project.
+2. Present the feature summary to the user / Product-Owner:
+   - Summary / title of the feature
+   - Problem statement and business value
+   - Scope (in/out of scope)
+   - Acceptance Criteria
+   - Estimated story points
+3. Ask explicitly: "Should this feature be included in the current sprint, or
+   should it be deferred to the next sprint?"
+4. If the user/PO confirms inclusion, set the **Sprint** field to the current
+   active sprint (`customfield_10020`).
+5. If deferred, leave the Sprint field unset or assign the next sprint.
+
+**Gate:** Do not create or update the ticket without explicit user/PO confirmation
+of sprint inclusion when an active sprint exists.
 
 ---
 
@@ -257,8 +281,8 @@ When creating a new Story ticket:
 - [ ] **Priority** set to Medium (or High for release-critical)
 - [ ] **Epic Link** set to parent epic (e.g. `PRO-259`)
 - [ ] **Fix Version** set to target release (e.g. `v4.3.0`)
-- [ ] **Sprint** set to current active sprint
-- [ ] **Story Points** to be assigned when closing the ticket
+- [ ] **Sprint** set to current active sprint (after user/PO confirms sprint inclusion)
+- [ ] Story Points to be assigned when closing the ticket
 
 ---
 

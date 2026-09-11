@@ -1,6 +1,6 @@
 ---
 name: complete-feature
-description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
+description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`. Sprint inclusion is verified in the plan-feature skill."
 ---
 
 # Feature Complete Skill

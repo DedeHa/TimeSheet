@@ -1,535 +1,180 @@
 # AGENTS.md — TimeSheetAlgo
 
-## Critical Commands (Agents often miss these specifics)
+## Quick Setup (Critical for Ramping Up)
 
-**Install development dependencies** (required for local work):
+**Install development environment:**
 ```bash
+# Always install in development mode with dev extras
 python -m pip install -e .[dev]
 ```
 
-**Activate virtual environment when switching branches** (critical for config):
+**Virtual environment activation (non-negotiable):**
 ```bash
+# Git checkout always requires this
 git checkout <branch-name>
-source /workspaces/TimeSheet/.venv/bin/activate   # Linux/macOS
-# .venv\Scripts\activate    # Windows
+source /workspaces/TimeSheet/.venv/bin/activate
+echo "✅ venv activated: $VIRTUAL_ENV"  # Must show /.venv path
 ```
 
-**Run complete test suite with coverage verification** (required for PRs to master):
+## Testing Strategy
+
+**Run different test suites:**
 ```bash
+# Full test suite with coverage (CI requirement)
 python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
-```
-- Must achieve ≥90% branch+line coverage (CI gate)
-- Output shows missing coverage areas
 
-**Run specific test types** (use markers or folder paths):
-```bash
+# Fast CI mode (what actual PRs run)
+python -m pytest -m "not system"
+
+# Individual levels
 python -m pytest tests/unit -m unit          # Unit tests only
 python -m pytest tests/integration -m integration  # Integration tests only
-python -m pytest tests/system -m system      # System tests (requires real data files)
-python -m pytest -m "not system"             # Fast CI mode (skip system tests)
+python -m pytest tests/system -m system      # System tests (real files required)
 ```
 
-**Run full test suite locally** (verifies all checks):
+**Code quality checks (gates PRs):**
 ```bash
-python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing -q
-```
-
-**Code quality checks** (required for PRs):
-```bash
-# Linting and formatting
+# Order matters - run in sequence
 ruff check src_timesheetalgo tests
 black --check src_timesheetalgo tests
 pydocstyle src_timesheetalgo tests
 radon cc src_timesheetalgo -a
 
-# Documentation traceability (generates the matrix; exits non-zero if incomplete)
+# Traceability - CI gate, exits non-zero if incomplete
 python .github/scripts/generate_traceability_matrix.py
 ```
 
-**Run the CI-pipeline tests before committing changes under `.github/`**
-(scripts, tests, actions, or the workflow YAML). The `check` job runs these in
-CI (`Run CI self-tests (.github/tests)`), so they now gate the pipeline —
-running them locally first just avoids a red CI run:
-```bash
-pytest -q .github/tests/
-```
-- Covers `ci-pipeline/test_verify_ci_workflow.py` (workflow structure/regression),
-  `ci-pipeline/test_generate_pr_summary.py`, and `ci-pipeline/test_generate_traceability_matrix.py`,
-  plus `agents/test_orchestration.py` (orchestration skill + agent definitions).
-- All must pass before you commit; treat a failure here exactly like a failing
-  application test
+## Architecture & Configuration
 
-## Critical Project Structure (Agents often miss these paths)
+**Package structure:**
+- `src_timesheetalgo/` - Main package (tested, covered)
+  - `TimeSheetAlgo.py` - Entrypoint application
+  - `config.yaml` - Configuration file
+- `src_azesheetalgo/` - Separate package (AZE sheet functionality, NOT packaged, NOT tested)
 
-- **Main package**: `src_timesheetalgo/`
-  - `TimeSheetAlgo.py` - entrypoint
-  - `config.yaml` - configuration file
+**Critical config requirements:**
+- Year is **required** at root level in `config.yaml` - no fallback
+- Environment auto-detected by folder structure, not config parameter
+- Paths are **relative to project root**, not script location
 
-- **Test structure**:
-  - `tests/unit/` - Unit tests (79 tests)
-    - Test configuration loading, date parsing, file validation
-    - All test files use `@pytest.mark.unit` marker
-  - `tests/integration/` - Integration tests (17 tests)
-    - Tests `TimeSheetProcessor` pipeline on in-memory workbook
-    - All test files use `@pytest.mark.integration` marker
-  - `tests/system/` - System tests (7 tests, requires real data)
-    - Black-box tests against real Excel/CSV files
-    - All test files use `@pytest.mark.system` marker
-  - Shared `tests/conftest.py` with fixtures and frozen_time
+## Environment Detection Rules
 
-- **Key artifacts**:
-  - `src_timesheetalgo/TimeSheetAlgo.py` - Main application module
-  - `src_timesheetalgo/config.yaml` - YAML configuration
-  - `.github/workflows/python-ci.yml` - CI pipeline
-  - `doc/ARCHITECTURE.md` - System architecture (600 lines)
-  - `doc/TESTING.md` - Complete testing guide (222 lines)
-  - `doc/CONTRIBUTING.md` - Development standards (539 lines)
-  - `.github/agents/` - Agent definitions for different roles
+**Environment detection logic:**
+- Development: Running from `src_timesheetalgo/` directory
+- Production: Contains `Timealarm/` subfolder in path
+- Fallback: Always development
 
-## Configuration Structure (`src_timesheetalgo/config.yaml`)
-
-```yaml
-year: 2026
-
-environments:
-  development:
-    file_paths:
-      timelog_path: "FDTech_timelog.csv"
-      timesheet_path: "2026_FDTech_Dennis_Hartel.xlsm"
-    logging:
-      level: "INFO"
-      format: "%(asctime)s - %(levelname)s - %(message)s"
-
-  production:
-    file_paths:
-      timelog_path: "Timealarm/FDTech_timelog.csv"
-      timesheet_path: "2026_FDTech_Dennis_Hartel.xlsm"
-    logging:
-      level: "INFO"
-      format: "%(asctime)s - %(levelname)s - %(message)s"
-
-default_environment: "development"
-```
-- **Note**: Paths are **relative to project root**, not script location
-- Environment auto-detection based on folder structure
-- Year is required at root level - no fallback
-
-## Environment & Branch Management
-
-**Critical**: Virtual environment is `.venv/` (not `venv/`) and must be reactivated when switching branches:
-
-```bash
-# Switching branches requires venv reactivation
-git checkout feature/PRO-123-description
-source /workspaces/TimeSheet/.venv/bin/activate
-echo "✅ venv activated: $VIRTUAL_ENV"  # Should show /.venv path
+**Configuration auto-detection:**
+```python
+# From TimeSheetAlgo.py:96-110
+def detect_environment(base_path: str) -> str:
+    if os.path.basename(base_path) == "src_timesheetalgo":
+        return "development"
+    elif os.path.isdir(os.path.join(base_path, "Timealarm")):
+        return "production"
+    else:
+        return "development"
 ```
 
-**Virtual Environment Notes**:
-- `.venv/` is gitignored and works across all branches
-- You don't reinstall packages when switching branches
-- Failure to reactivate causes ModuleNotFoundError for local packages
-
-## Testing Requirements
-
-- **103 total tests** (79 unit + 17 integration + 7 system + 1 xfail)
-- **~99% branch/line coverage** (CI gate: 90%)
-- **System tests require real data**: 
-  - `sup/2025_extract.csv` - 93 sample timelog entries
-  - `src_timesheetalgo/2026_FDTech_Dennis_Hartel.xlsm` - 12-month workbook
-- All tests have markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.system`
-- `freezegun` provides frozen_time fixture for deterministic date handling
-
-## Gotchas Agents Commonly Miss
-
-1. **Virtual Environment Activation**: `.venv/` is gitignored. Must reactivate when switching branches.
-
-2. **System Test Data**: Files are committed to repo but tests skip cleanly when missing.
-
-3. **Configuration Path Resolution**: Working directory must be repository root.
-
-4. **Environment Detection**: Auto-detected by folder structure, not config parameter.
-
-5. **No Pre-tests on Development Branches**: Tests run on PRs (to master or release/**), on release tags, and via manual dispatch — not on direct branch pushes.
-
-## Critical Conventions
-
-**Git Branch Strategy** (Trunk-based Development):
-- Feature: `feature/PRO-123-description` (direct pushes allowed)
-- Bugfix: `bugfix/PRO-123-description` (direct pushes allowed)
-- Hotfix: `hotfix/PRO-123-description` (direct pushes allowed)
-- Refactor: `refactor/PRO-123-description` (direct pushes allowed)
-- Docs: `docs/PRO-123-description` (direct pushes allowed)
-- Test: `test/PRO-123-description` (direct pushes allowed)
-- Release: `release/vX.Y.Z` (protected, PR required)
-- Master: Always protected (PR + tests required)
-
-**Commit Messages** (Conventional Commits):
-- Format: `type(scope): description`
-- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `ci`, `build`
-- Footer: `Refs: PRO-123` (JIRA ticket reference)
-- Scope optional but recommended for specific modules
-
-**Pull Requests**:
-- Target: Always `master`
-- Title: `[type][PRO-XXX] Description`
-- Body: Required `## Summary` and `## Testing` sections
-- No placeholder text (TODO, TBD, etc.)
-- **CI will fail the PR** if any of these are missing — the naming validation job blocks merge
-
-**Release Process**:
-- Create `release/vX.Y.Z` from master
-- Commit version bump: `chore(release): bump version to vX.Y.Z
-  
-  Refs: PRO-123`
-- Tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
-- Deploy only from tags
-
-**Environment Management**:
-- Environment detected by folder structure (`src_timesheetalgo/` = development, contains `Timealarm/` = production)
-- `.venv/` works across branches but must be reactivated
-- Configuration paths are relative to project root
-
-## Testing Architecture
-
-Three-level hierarchy matching runtime boundaries:
-
-**Unit** (`tests/unit/`, marker `unit`):
-- Configuration subsystem
-- Date parsing logic (with calendar/leap-day BVA)
-- File I/O (tmp files, mocks)
-- Overwrite decision logic
-
-**Integration** (`tests/integration/`, marker `integration`):
-- `TimeSheetProcessor` pipeline on in-memory workbook
-- Data model mapping (`date.month - 1`, `ROW_OFFSET + day`, cols E/F)
-- Overwrite workflow
-
-**System** (`tests/system/`, marker `system`):
-- Real-file copies in `tmp_path`
-- End-to-end CLI flow
-- Skipped when real resources are absent (uses `real_resource_copy` fixture)
-
-**Fixtures**:
-- `frozen_time` - autouse, freezes to 2025-12-23 (degrades with warning if `freezegun` absent)
-- `mock_workbook` - dummy 12-sheet workbook
-- `mock_processor` - `TimeSheetProcessor` over mock files
-- `real_resource_copy` - copies from `sup/` and `src_timesheetalgo/` or `None` if missing
-
-## Quality Gate & CI
-
-**GitHub Actions** (`.github/workflows/python-ci.yml`) — `check` and `test` run **in parallel** (no `needs` between them); `deploy` and `publish` depend on both:
-- PRs to `master`: Full CI (Lint + Unit + Integration + System + Coverage)
-- PRs to `release/**`: Full CI (same quality gate as master)
-- Tags `vX.Y.Z`: Full CI (Lint + Tests + Coverage) re-run as a release gate, then Deployment — deploy only proceeds if `check` and `test` pass
-- The **CI self-tests** (`pytest -q .github/tests/`) run in the `test` job and appear as a **CI Self-Tests** level in the summary; workflow/script regressions are a CI gate.
-- The `.github/tests/` suite is split into two groups: `ci-pipeline/` (workflow structure + support scripts) and `agents/` (orchestration skill + agent definitions).
-- **Environments** (GitHub deployment labels) are static: `check` → `development`, `test` → `staging`, `deploy` → `production`. Do **not** reintroduce a dynamic `environment:` expression — a previous one coerced to the boolean `false` and auto-created a junk environment named "false".
-- **Dependabot** (`.github/dependabot.yml`) bumps action versions weekly; its PRs are exempt from the `PRO-XXX` naming validators via `github.actor != 'dependabot[bot]'` guards.
-
-**Pull Request Quality-Gate Summary** (PRO-337):
-- A dedicated `publish` job (`if: always()`, depends on the gating jobs) publishes it, so a comment is posted on **every** run — even when `check` fails and `test` is skipped (the summary degrades gracefully). It is non-gating.
-- **Two comments per run (Option C):** one **sticky** comment (updated in place, carrying an "_Updated: … UTC_" timestamp) with the full report, plus a compact **per-run comment** (`<!-- pro-337-ci-run-line -->`) — the overall result + the status-overview table — posted fresh each run for a per-run trail.
-- The full report opens with the overall result + a **status-overview table** (Lint + the steps, **un-numbered**), then sections: **Traceability** (0–100%; matrix embedded in the PR Run, linked in the comment) → **Testing** (split into **Application Tests** (unit/integration/system) and **CI-Pipeline Tests** (`.github/tests`), each with its own pass-rate %, status and per-level table) → **Code Coverage** (% + 90%-gate status) → **Artifacts** (run, matrix, JUnit/coverage, htmlcov)
-
-**Traceability Validation**:
-- `.github/scripts/generate_traceability_matrix.py` scans requirements and architecture
-- The script is the gate: it exits non-zero if any requirement is untraced
-- Publishes the matrix as an artifact; its summary is folded into the PR quality-gate comment above (rendered by `generate_pr_summary.py`)
-
-## Development Workflow
-
-**Phase 1: Feature Development** (Tests optional)
-```bash
-# Create feature branch
-git checkout -b feature/PRO-123-description master
-
-# Make changes, commit with PRO ticket
-# No tests required on feature branch
-```
-
-**Phase 2: Integration to Master** (Tests REQUIRED)
-```bash
-# Open PR to master
-gh pr create --base master --title "[feat][PRO-123] Description"
-
-# Required CI checks:
-# - Lint checks (Ruff, Black, Pydocstyle, Radon)
-# - Unit tests
-# - Code coverage ≥90%
-# - At least one approval
-```
-
-**Phase 3: Release** (Production only)
-```bash
-# Create release branch
-git checkout -b release/vX.Y.Z master
-
-# Update version, create final commit
-# Open PR to master, get approval
-# After merge: git tag vX.Y.Z && git push origin vX.Y.Z
-
-# Deployment to Production (automation or manual)
-```
-
-## CI Validation Steps
-
-Complete validation on PRs to master:
-1. **Dependencies**: `pip install -e .[dev]`
-2. **Lint**: `ruff check src_timesheetalgo tests`, `black --check src_timesheetalgo tests`, etc.
-3. **Documentation traceability**: `python .github/scripts/generate_traceability_matrix.py` (fails if any requirement is untraced)
-4. **Test suite**: `pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing`
-5. **Quality-gate summary**: Generated automatically
-
-## CI Validation Checks (What Fails PRs)
-
-The CI pipeline (`.github/workflows/python-ci.yml`) has a **Naming Conventions Check** job that runs first and blocks merge if any of these fail:
-
-| Check | What's Validated | Failure Reason |
-|-------|-----------------|----------------|
-| Commit messages | Conventional Commits + `Refs: PRO-XXX` | Missing JIRA ref or wrong format |
-| PR title | `[type][PRO-XXX] Description` | Wrong format or missing ticket |
-| PR body | `## Summary` + `## Testing` + `Refs: PRO-XXX` + no TODO/TBD | Missing sections, missing ref, or placeholder text |
-
-**Key rule**: All three checks must pass before lint/test jobs even run. A failure in any blocks the entire pipeline.
-
-1. **Forget venv activation**: After `git checkout`, always `source .venv/bin/activate`
-
-2. **System test failures**: When real files are missing, tests skip (not fail). Restore with `git checkout sup/2025_extract.csv src_timesheetalgo/2026_FDTech_Dennis_Hartel.xlsm`
-
-3. **Configuration loading**: Must be in repository root, not script directory
-
-4. **Coverage gate**: Must meet 90% target; CI publishes detailed missing coverage areas
-
-5. **PR validation**: Tests run on PRs (master or release/**), release tags, and manual dispatch — not on direct branch pushes
-
-## CI Workflow Optimizations (PRO-368)
-
-The CI pipeline (`python-ci.yml`) has been optimized. An agent editing the workflow should know:
-
-- **Reusable setup action**: All three jobs (`check`, `test`, `deploy`) now start with
-  `uses: ./.github/actions/setup-python-deps` (FR-17, QR-09). Do **not** add a
-  second `actions/checkout` + `actions/setup-python` + `pip install -e .[dev]`
-  block — that is duplicated, obsolete setup logic.
-- **Pip caching**: The composite action passes `cache: pip` /
-  `cache-dependency-path: pyproject.toml` to `actions/setup-python` (FR-16).
-  Cache keys are based on `pyproject.toml`, so dependency changes invalidate.
-- **No Node.js in the check job**: `actions/setup-node` was removed (AC3).
-  JavaScript actions (commitlint, github-script) run on the Node 24 runtime
-  provided by `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`. Do not re-add
-  `setup-node` unless a step actually needs a Node tool.
-- **Validation steps are separate, independent steps** (AC5): `Validate commit
-  messages`, `Validate Jira reference in commits`, `Validate PR Title`,
-  `Validate PR Body`. Steps within a job run **sequentially** (GitHub Actions);
-  "independent" means each is its own step so a failure is individually
-  attributable — not that they run in parallel. The first uses
-  `continue-on-error: true` (third-party action); the other three must keep
-  `continue-on-error: false` or the gate silently degrades.
-- **CI support-script tests live under `.github/tests/`** (not in `tests/`), so
-  they do not count toward the 103-test suite or the 90% coverage gate. The
-  `check` job runs them (`Run CI self-tests`), so they **gate** the pipeline.
-  Tests are split into two groups:
-  - `ci-pipeline/`: `test_verify_ci_workflow.py`, `test_generate_pr_summary.py`,
-    `test_generate_traceability_matrix.py`, `test_validate_pr.py`,
-    `test_verify_gpg_signing.py`, `test_collect_ci_timings.py`,
-    `test_aggregate_ci_timings.py`, `test_backfill_ci_timings.py`
-  - `agents/`: `test_orchestration.py` (orchestration skill + agent definitions)
-  - **Run `pytest -q .github/tests/` locally before committing any change under
-    `.github/`** so CI does not fail on a workflow/script regression.
-- **CI support scripts live under `.github/scripts/`** (verb_subject naming):
-  `generate_pr_summary.py`, `generate_traceability_matrix.py`. `.github/workflows/`
-  holds workflow definitions only (no `.py`).
-- **Traceability**: PRO-368 added `FR-16`, `FR-17`, `QR-08`, `QR-09` to
-  `doc/REQUIREMENTS.md`, `doc/ARCHITECTURE.md`, and the anchor comment in
-  `src_timesheetalgo/TimeSheetAlgo.py`. The traceability validator
-  (`python .github/scripts/generate_traceability_matrix.py`) requires all
-  three sources to list the same IDs — update all three together.
-- **Composite setup action location**: The reusable setup action lives at
-  `.github/actions/setup-python-deps/action.yml` and is referenced as
-  `uses: ./.github/actions/setup-python-deps`. A local composite action must be
-  referenced by its **directory**, never by the `action.yml` file path, and must
-  **not** live under `.github/workflows/` (GitHub would try to parse it as a
-  workflow). Every `run:` step in the composite action requires an explicit
-  `shell:` line.
-
-## CI Timing Benchmark (PRO-369)
-
-A separate `ci-timing.yml` workflow continuously captures per-job / per-step
-execution times from the GitHub Actions API for every successful PR run of
-`python-ci.yml`, persists them on the orphan `ci-metrics` branch, and renders
-`CI_TIMING_REPORT.md` with running statistics.
-
-**Key facts agents must know:**
-
-- **Non-gating**: this workflow never fails a PR. It is purely observational.
-- **Location**: `ci-metrics` branch → `ci-timings.csv` (raw rows) and
-  `CI_TIMING_REPORT.md` (aggregated stats). Report link in the PR quality-gate
-  comment.
-- **No CI loop**: `python-ci.yml` does not trigger on push to `ci-metrics`,
-  so the metrics push never starts a new CI run.
-  (`test_ci_timing_does_not_retrigger_python_ci` in
-  `.github/tests/test_verify_ci_workflow.py` enforces this.)
-- **Scope**: successful `pull_request` runs of `Python CI` only. Failed,
-  cancelled, timed-out, skipped, and superseded runs are excluded automatically.
-- **Data source**: authoritative API timing (`started_at` / `completed_at`) —
-  no workflow instrumentation required.
-- **Scripts** (stdlib-only, in `.github/scripts/`):
-  `collect_ci_timings.py` (fetch + filter one run),
-  `aggregate_ci_timings.py` (render stats + report),
-  `backfill_ci_timings.py` (historical sweep).
-- **Tests** (in `.github/tests/`): `ci-pipeline/test_collect_ci_timings.py`,
-  `ci-pipeline/test_aggregate_ci_timings.py`, `ci-pipeline/test_backfill_ci_timings.py`,
-  `agents/test_orchestration.py`.
-- **Runner variance caveat**: GitHub-hosted runners are noisy (±10–30%).
-  Always read stddev alongside mean; prefer median / p95 for decisions.
-- **Drift handling**: a step key is withheld from the main tables until it has
-  ≥ 3 warm, successful samples. Retired / renamed keys appear in an appendix.
-- **Backfill**: `workflow_dispatch` with `backfill: true` sweeps all historical
-  successful PR runs. The sweep is idempotent (re-running is a no-op).
-- **Do not commit timing results** to the PR branch — they belong on `ci-metrics`.
-- See `doc/01_Implementation_Plan_CI_Timing_Benchmark.md` for the full plan.
-
-## JIRA Workflow Skills
-
-Two skills support the end-to-end JIRA ticket lifecycle:
-
-- **`.opencode/skills/plan-feature/`** — Canonical template for discovering, planning, and scoping new Story tickets. Based on analysis of PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365. Includes field definitions, description structure, AC/DoD formats, story points reference, and quick-start checklist.
-- **`.opencode/skills/complete-feature/`** — Workflow for completing a feature: final verification, AC evaluation, story point assignment, JIRA closure, PR update, commit/push.
-
-## ⚠️ Agent-Team Closure Policy (User-Confirmed Execution)
-
-> The agent-team **prepares** the JIRA closure and PR merge, but must obtain
-> **explicit user / Product-Owner confirmation** before executing the final
-> closure actions. After confirmation, the agent-team is permitted to
-> execute them.
-
-| Operation | Agent-Team Allowed? | Who Decides |
-|-----------|--------------------|--------------------|
-| Prepare AC/DoD checkmarks in JIRA description | ✅ Yes | Agent |
-| Post JIRA status comment | ✅ Yes | Agent |
-| Assign story points (`customfield_10028`) | ✅ Yes | Agent |
-| Update PR description (`gh pr edit`) | ✅ Yes | Agent |
-| Push branch (`git push`) | ✅ Yes | Agent |
-| **Transition JIRA to Fertig (`atlassian_transitionJiraIssue`)** | ⚠️ **Yes, after user/PO confirmation** | **User / PO confirms; agent executes** |
-| **Merge PR (`gh pr merge`)** | ⚠️ **Yes, after user/PO confirmation** | **User / PO confirms; agent executes** |
-| **Delete remote branch after merge** | ⚠️ **Yes, after user/PO confirmation** | **User / PO confirms; agent executes** |
-
-**Rationale:** JIRA closure and PR merges are irreversible quality-gate
-decisions. They require explicit human confirmation of the agent-team's work
-to catch context the agent may have missed (acceptance-criteria drift, scope
-creep, business priorities). The agent-team **prepares** the close; the user
-**confirms**; the agent-team **executes** it.
-
-When the `complete-feature` skill reaches Step 3d (Transition to Done), it
-prepares the closure and requests explicit user/PO confirmation. After that
-confirmation, it executes `atlassian_transitionJiraIssue` directly. See
-`.opencode/skills/complete-feature/SKILL.md` Step 3d for the exact
-wording.
-
-## Agent-Team Workflow
-
-The four agent definitions in `.github/agents/` form a coordinated pipeline. The **Product Owner is the dispatcher** — every feature or bug fix flows through the Product Owner first.
-
-### Pipeline
-
-```
-User Request → Product Owner (dispatcher) → [Architect → Developer → Tester]
-                                                  ↓
-                                          Product Owner (reviewer)
-                                                  ↓
-                                          User (final agreement)
-```
-
-### Key-Request → Product Owner → Agent → Skill Mapping
-
-| User Says | Product Owner Routes To | Agent | Skill Invoked |
-|-----------|------------------------|-------|---------------|
-| "start feature PRO-XXX" | Product Owner (orchestrator) | **Product Owner** (`product-owner-agent`) | `orchestrate-feature` → `plan-feature` |
-| "start feature PRO-XXX" | Architect | **Architect** (`architect-agent`) | `develop-feature` |
-| "start feature PRO-XXX" | Developer | **Developer** (`developer-agent`) | `develop-feature` |
-| "complete feature" | Tester | **Tester** (`tester-agent`) | `complete-feature` |
-| "release vX.Y.Z" | Release | **Release** (manual trigger) | `release-project` |
-
-### What Each Agent Does
-
-| Step | Product Owner Dispatches To | Agent | Skill | What It Does |
-|------|------------------------------|-------|-------|--------------|
-| 1 | Product Owner | **Product Owner** | `plan-feature` | Analyze user intent, define stories with AC, create JIRA ticket, assign story points |
-| 2 | Product Owner → Architect | **Architect** | `develop-feature` | Translate stories into technical design, produce implementation plan (Part A/B/C format) |
-| 3 | Product Owner → Developer | **Developer** | `develop-feature` | Implement features per plan (Phases 3–7: branch, rollout, verification, PR) |
-| 4 | Product Owner → Tester | **Tester** | `complete-feature` | Validate AC, run tests, verify coverage ≥90% CI gate |
-| 5 | Product Owner → complete-feature | **complete-feature** | `complete-feature` | Assign story points, update JIRA description, checkmark ACs/DoD, update PR |
-| 6 | *(release)* | *(manual)* | `release-project` | Tag vX.Y.Z, publish GitHub Release, Confluence release notes |
-
-### Product Owner Dispatch Rules
-
-- **Never bypass**: every feature or bug fix must go through the Product Owner first
-- **Sequential dispatch**: Architect must complete and be reviewed before Developer starts
-- **Developer gate**: Architect's plan must be approved before Developer is dispatched
-- **Tester gate**: Developer's PR must be ready before Tester is dispatched
-- **Review gate**: Tester's validation must be complete before Product Owner reviews
-- **Final gate**: Product Owner's review must be complete before user agrees to close
-
-### Escalation Protocol — Cycle Detection and Interruption
-
-Each agent tracks its cycle count. The Product Owner **interrupts and evaluates** when:
-
-- An agent cannot resolve an issue it reports as a blocker
-- The pipeline exceeds 3 cycles
-- The process loops (agent repeats the same action without progress)
-
-**Cycle detection rules:**
-- Agent reports a blocker → Product Owner evaluates immediately (no cycle limit)
-- Cycle count = 3 → Agent stops and reports to Product Owner
-- Cycle count > 3 → Agent must NOT continue
-
-**Evaluation steps:**
-1. Is the blocker resolvable? → Provide guidance and re-dispatch, or proceed to step 2
-2. Is the issue a scope problem? → Update the JIRA ticket or requirements, or proceed to step 3
-3. Is the issue a priority problem? → Re-prioritise or defer, or proceed to step 4
-4. Should the pipeline stop? → Hand off to user with explanation, or re-dispatch with corrected context
-
-### Skill Invocation Rules
-
-- Each agent **must** load its listed skill before executing its workflow
-- Skills are loaded from `.opencode/skills/<skill-name>/SKILL.md`
-- The `invoke` field controls when the skill loads: `always` (before any work), `after-testing` (after test approval), `after-approval` (after tester approves)
-- The `phases` field lists the skill phases applicable to that agent step
-
-### Handoff Protocol
-
-1. **User → Product Owner**: User provides feature/bug request
-2. **Product Owner → Architect**: Pass complete User Story output with acceptance criteria
-3. **Architect → Developer**: Pass implementation plan (Part A/B/C), file list, test strategy
-4. **Developer → Tester**: Pass implementation output, acceptance criteria, coverage metrics
-5. **Tester → complete-feature**: After PASSED decision, load `complete-feature` skill to prepare JIRA close (assign story points, checkmark ACs/DoD, update PR description)
-6. **complete-feature → Product Owner**: Pass review summary
-7. **Product Owner → User**: Hand off for final agreement. After user/PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`
-8. **Release**: Trigger `release-project` skill manually when ready to publish
-
-### How to Trigger the Agent Team
-
-Every interaction starts with the Product Owner as dispatcher:
-
-- **"plan a new feature"** → Product Owner → `plan-feature` skill → creates JIRA ticket
-- **"plan a bug fix"** → Product Owner → `plan-feature` skill → creates JIRA ticket
-- **"start feature PRO-XXX"** → Product Owner → Architect → Developer → `develop-feature` skill → implements feature
-- **"complete feature"** → Product Owner → Tester → `complete-feature` skill → validates and prepares closure
-- **"release vX.Y.Z"** → Product Owner → Release → `release-project` skill → publishes release
-
-### Quality Gates (CI)
-
-- **Coverage**: ≥90% branch+line (`AGENTS.md` CI gate)
-- **Lint**: `ruff check`, `black --check`, `pydocstyle`, `radon cc`
-- **Tests**: Unit + Integration + System (system tests skip when real data absent)
-- **Traceability**: `python .github/scripts/generate_traceability_matrix.py` — exits non-zero if any requirement untraced
-- **CI self-tests**: `pytest -q .github/tests/` — gates the pipeline
-
-## Additional Resources
-
-- **Branch Protection**: GitHub Settings → Branches
-- **Agent Types**: Check `.github/agents/` for specialized roles: `architect-agent`, `developer-agent`, `tester-agent`, `product-owner-agent`
-- **Commit Messages**: `.github/workflows/python-ci.yml` validates Conventional Commits format
-- **Documentation**: `doc/ARCHITECTURE.md` - `doc/CONTRIBUTING.md` - `doc/TESTING.md`
-
-> **Critical**: All paths in this guide are relative to the repository root. The working directory must be `/workspaces/TimeSheet` for proper configuration and file access.
+## Git & PR Conventions
+
+**Branch strategy:**
+- Feature branches: `feature/PRO-123-description` (direct pushes allowed)
+- PRs always target `master`
+- Release branches: `release/vX.Y.Z` (protected, PR required)
+
+**Naming validation (CI blockers):**
+- **Commit messages:** `type(scope): description` + `Refs: PRO-XXX` footer
+- **PR title:** `[type][PRO-XXX] Description`
+- **PR body:** Must contain `## Summary` + `## Testing` + `Refs: PRO-XXX`
+
+**No tests on direct branch pushes:**
+- CI only runs on PRs to `master` or `release/**`
+- CI also runs on release tags
+- Feature branch commits are not tested
+
+## CI Pipeline Details
+
+**Job structure:**
+- `check`: Linting + naming validation (runs first)
+- `test`: Full test suite (runs in parallel with `check`)
+- `publish`: Quality gate summary + PR comments
+
+**Critical CI gates:**
+1. Naming validation blocks merge entirely
+2. Traceability script exits non-zero if requirements untraced
+3. Coverage must be ≥90% (combined unit + integration + system)
+
+**CI self-tests (.github/tests/):**
+- Run in CI but not in local test suite
+- `ci-pipeline/`: Workflow + script tests
+- `agents/`: Agent orchestration tests
+- Must pass before committing `.github/` changes
+
+## File System & Working Directory
+
+**Working directory requirement:**
+- **All paths relative to project root** (`/workspaces/TimeSheet`)
+- Scripts expect to be run from repository root
+- Configuration loading fails if not in root
+
+**System test real files (committed but skipped when missing):**
+- `sup/2025_extract.csv` - 93 sample timelog entries
+- `src_timesheetalgo/2026_FDTech_Dennis_Hartel.xlsm` - 12-month workbook
+
+**File locking:**
+- Excel files can be locked by other processes
+- Application warns but continues if file locked
+- Requires closing Excel file manually if needed
+
+## Test Fixtures & Structure
+
+**Key fixtures (tests/conftest.py):**
+- `frozen_time` - auto-frozen to "2025-12-23" for deterministic dates
+- `mock_workbook` - Creates dummy 12-sheet workbook
+- `mock_processor` - Processor with mock files already loaded
+- `real_resource_copy` - Copies from `sup/` and `src_timesheetalgo/` or `None`
+
+**Test markers:**
+- `unit` - Individual functions/methods in isolation
+- `integration` - `TimeSheetProcessor` pipeline on in-memory workbook
+- `system` - Real-file copies + CLI flow (skipped when resources absent)
+
+## Runtime Behavior
+
+**Error handling patterns:**
+- Configuration errors raise `ConfigError` with descriptive messages
+- File I/O errors log warnings and continue when possible
+- Year mismatch raises `ConsistencyError` with clear message
+- Invalid dates logged as warnings with retry counts
+
+**User input handling:**
+- Uses dependency injection for `input_provider` and `clock`
+- Tests inject deterministic providers to avoid mocking `builtins.input`
+- Date parsing with retry logic (MAX_RETRIES = 3)
+
+## Build & Release
+
+**Build system:**
+- Uses `setuptools` with `pyproject.toml`
+- Entry points defined in `[tool.setuptools.packages.find]`
+
+**Package structure:**
+- Primary application in `src_timesheetalgo/`
+- Separate tools in `src_azesheetalgo/`
+- Tests in `tests/` with level subdirectories
+
+## Key Gotchas Agents Miss
+
+1. **Virtual environment is `.venv/` not `venv/`** - Must use exact name
+2. **System tests skip when real files missing** - Not test failures
+3. **Environment auto-detection** - Based on folder structure, not config
+4. **No CI on direct branch pushes** - Only on PRs to master/release
+5. **Working directory matters** - All paths relative to project root
+6. **Traceability is CI gate** - Script exits non-zero if requirements untraced
+7. **Coverage ≥90%** - Combined across all test levels
+8. **Freeze time for tests** - Uses `freezegun` frozen to 2025-12-23
+9. **Dependency injection** - Tests inject `input_provider` and `clock`
+10. **Git checkout requires venv reactivation** - Non-negotiable for config
+
+**Debug tip:** When tests fail, run `echo "venv: $VIRTUAL_ENV"` to confirm environment activation.

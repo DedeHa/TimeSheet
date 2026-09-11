@@ -2418,3 +2418,27 @@ run_id,run_attempt,pr_number,head_sha,workflow_sha,created_at,job_name,step_name
 34602789885,1,113,b22103042aeb497e05f5f67e4a22da89ee14a7c5,,2026-09-11T13:10:10Z,Run all test levels (unit + integration + system),Export machine-readable coverage,10,0.0,success,unknown
 34602789885,1,113,b22103042aeb497e05f5f67e4a22da89ee14a7c5,,2026-09-11T13:10:10Z,Run all test levels (unit + integration + system),Combined coverage report and 90% gate,11,1.0,success,unknown
 34602789885,1,113,b22103042aeb497e05f5f67e4a22da89ee14a7c5,,2026-09-11T13:10:10Z,Run all test levels (unit + integration + system),Upload test results,12,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Naming Conventions & Linting Check,<job total>,0,10.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Naming Conventions & Linting Check,Run actions/checkout@v5,2,2.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Naming Conventions & Linting Check,Run ./.github/actions/setup-python-deps,3,2.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Naming Conventions & Linting Check,Print GitHub Context Information and setup environment,4,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Naming Conventions & Linting Check,Validate PR,5,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Naming Conventions & Linting Check,"Run lint tools (ruff, black, pydocstyle, radon)",6,2.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Publish,<job total>,0,8.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Publish,Run actions/checkout@v5,2,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Publish,Show build information,3,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Publish,Download test reports,4,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Publish,Generate PR quality-gate summary,5,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Publish,Publish or update sticky PR comment,6,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),<job total>,0,27.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Run actions/checkout@v5,2,2.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Run ./.github/actions/setup-python-deps,3,6.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Prepare report directory,4,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Generate and validate traceability matrix,5,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Run unit tests,6,5.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Run integration tests,7,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Run system tests,8,4.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Run CI self-tests (.github/tests),9,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Export machine-readable coverage,10,0.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Combined coverage report and 90% gate,11,1.0,success,unknown
+34615625971,1,114,f9926373bd6ec371ee75ea69d0afddec2c86352a,,2026-09-11T15:21:22Z,Run all test levels (unit + integration + system),Upload test results,12,1.0,success,unknown

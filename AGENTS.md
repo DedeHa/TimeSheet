@@ -93,6 +93,10 @@ def detect_environment(base_path: str) -> str:
 - CI also runs on release tags
 - Feature branch commits are not tested
 
+**Closure policy:**
+- Remote branch deletion is User / PO responsibility — agent prepares command, user confirms and executes
+- Agent-team closure executes `atlassian_transitionJiraIssue` and `gh pr merge` only after user / PO confirmation
+
 ## CI Pipeline Details
 
 **Job structure:**

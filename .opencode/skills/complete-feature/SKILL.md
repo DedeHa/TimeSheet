@@ -325,6 +325,42 @@ Refs: PRO-XXX
 
 **Note:** `git push` pushes the branch only; it does not merge the PR.
 
+## Step 5.5 — Delete Remote Branch (User / PO Confirmed)
+
+After the PR is merged, the remote feature branch should be deleted to keep the
+repository clean. This is a **user / Product-Owner responsibility** — the
+agent-team prepares the command but does not execute it.
+
+> **⚠️ Requires User / Product-Owner confirmation before execution.**
+> The agent-team MUST NOT run `git push origin --delete` without explicit
+> user/PO confirmation. Remote branch deletion is destructive and cannot be
+> undone without recreating the branch.
+
+**What the agent-team DOES:**
+1. Confirm the PR is merged to `master` (Step 6 verification).
+2. Identify the branch name from `git branch --show-current` or the PR metadata.
+3. Prepare the deletion command and present it to the user/PO:
+
+   ```bash
+   git push origin --delete <branch-name>
+   ```
+
+4. Warn the user/PO that this is irreversible and that the branch will be gone
+   from the remote after execution.
+
+**What the user / Product-Owner confirms:**
+- PR is merged and the branch is no longer needed
+- All work from the branch has been preserved (merged to master)
+- You are ready to delete the remote branch
+
+**After confirmation, the user / Product-Owner executes:**
+```bash
+git push origin --delete <branch-name>
+```
+
+**Verification:** Confirm the branch is gone from the remote with
+`git ls-remote --heads origin | grep <branch-name>` (should return nothing).
+
 ## Step 6 — Verify Final State
 
 ```bash
@@ -339,6 +375,9 @@ gh pr view <PR_NUMBER> --json title,state,mergeable
 
 # JIRA ticket is closed
 atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "customfield_10028"])
+
+# Remote branch deleted (after user/PO confirmation)
+git ls-remote --heads origin | grep <branch-name>  # should return nothing
 ```
 
 ## Reference: Quick Command Cheatsheet
@@ -359,6 +398,7 @@ atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "
 | Stage all | `git add -A` |
 | Commit | `git commit -m "docs(ci): finalise PRO-XXX...\n\nRefs: PRO-XXX"` |
 | Push | `git push origin <branch>` |
+| Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** |
 
 ## Cycle Tracking and Escalation
 

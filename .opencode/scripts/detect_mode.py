@@ -152,6 +152,12 @@ def get_mode(ticket: str) -> str:
 
 
 def main() -> int:
+    """Detect and persist the development mode for a pipeline ticket.
+
+    Parses ``sys.argv`` for a ticket key and an optional chat message.
+    With ``--show`` reads the persisted mode; otherwise writes the
+    detected mode to the pipeline state file and prints the result.
+    """
     parser = argparse.ArgumentParser(description="Detect and persist pipeline mode")
     parser.add_argument("ticket", help="JIRA ticket key, e.g. PRO-373")
     parser.add_argument(

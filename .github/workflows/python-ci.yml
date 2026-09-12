@@ -240,7 +240,7 @@ jobs:
       - name: Export machine-readable coverage
         if: always()
         continue-on-error: true
-        run: coverage json -o tests/reports/agent-coverage.json --fail-under=0
+        run: coverage json -o tests/reports/agent-coverage.json --fail-under=0 || true
 
       - name: Upload agent test results
         uses: actions/upload-artifact@v5

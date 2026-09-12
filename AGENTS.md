@@ -96,6 +96,40 @@ def detect_environment(base_path: str) -> str:
 **Closure policy:**
 - Remote branch deletion is User / PO responsibility — agent prepares command, user confirms and executes
 - Agent-team closure executes `atlassian_transitionJiraIssue` and `gh pr merge` only after user / PO confirmation
+- **Implementation plan deletion:** After a feature is fully completed (PR merged to master, JIRA ticket transitioned to Fertig), the implementation plan document (`doc/02_Implementation_Plan_PRO-XXX.md`) must be deleted. The plan is a working document that becomes stale once the feature is complete and merged. Deletion is part of the finalization commit/push.
+
+## Agent Development Modes
+
+**Mode selection (set before starting a feature):**
+- `interactive` — pause at every handover for user confirmation before the next agent takes over
+- `automated` — run the full pipeline without user pauses; only blockers and cycle limits interrupt
+
+**Mode detection from chat:**
+The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Default is `interactive` when no mode is detected
+
+**Pipeline state:**
+State is persisted per ticket in `~/.opencode/pipeline-state.json` (encrypted if enabled). The `development_mode` field is read before every dispatch and handoff so all 4 agents respect the user's mode choice.
+
+**Discovery:**
+- `opencode` discovers both agents and skills from `.opencode/`
+- `.opencode/agents/` — agent dev team (Product Owner, Architect, Developer, Tester)
+- `.opencode/skills/` — workflow reference documents used by agents
+- Agents are the primary executors; skills provide supporting instructions
+
+**Handover protocol (all modes):**
+1. Every handover includes a deliverable summary, current state, and next-step request
+2. Interactive mode requires explicit user confirmation before the next agent starts
+3. Automated mode proceeds immediately; escalations still trigger on blockers or cycle limit (3)
+4. User starts every feature with a Product Owner intake conversation (goal, use-case, information)
 
 ## CI Pipeline Details
 
@@ -112,7 +146,7 @@ def detect_environment(base_path: str) -> str:
 **CI self-tests (.github/tests/):**
 - Run in CI but not in local test suite
 - `ci-pipeline/`: Workflow + script tests
-- `agents/`: Agent orchestration tests
+- `agents/`: Agent orchestration tests (validates `.opencode/agents/` and `.opencode/skills/`)
 - Must pass before committing `.github/` changes
 
 ## File System & Working Directory

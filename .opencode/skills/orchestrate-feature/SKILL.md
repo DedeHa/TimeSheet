@@ -1,13 +1,34 @@
 ---
 name: orchestrate-feature
-description: "Orchestrates the complete feature pipeline: reads JIRA state, tracks cycles, dispatches to Architect/Developer/Tester, handles escalations, and coordinates handoffs. Use when starting a feature (PRO-xxxx) or when the pipeline needs rebalancing."
+description: "Orchestrates the complete feature pipeline: reads JIRA state, tracks cycles, dispatches to Architect/Developer/Tester, handles escalations, and coordinates handoffs. Use when starting a feature (PRO-xxxx) or when the pipeline needs rebalancing. NOTE: Story points must be assigned before development pickup or sprint inclusion."
 ---
 
 # Orchestrate Feature Pipeline
 
 ## Overview
 
-The `orchestrate-feature` skill is the central orchestrator that coordinates the entire feature pipeline. It lives in the Product Owner agent and manages the flow from **Plan → Develop → Complete**, with built-in cycle tracking, state management, and escalation handling.
+The `orchestrate-feature` skill is the central orchestrator that coordinates
+the entire feature pipeline. It lives in the Product Owner agent and manages
+the flow from **Plan → Develop → Complete**, with built-in cycle tracking,
+state management, and escalation handling.
+
+## Discovery
+
+Both agents and skills are discovered by `opencode` from the `.opencode/`
+directory:
+
+```
+.opencode/
+├── agents/          # Agent definitions (product-owner, architect, developer, tester)
+│   └── *.agent.md   # YAML frontmatter + handoffs + constraints
+└── skills/          # Workflow reference documents
+    └── <skill>/
+        └── SKILL.md
+```
+
+The Product Owner agent loads this skill via its `skills` frontmatter entry.
+The agent definitions in `.opencode/agents/` are loaded by `opencode` and
+provide the handoff prompts that chain the pipeline.
 
 ## When to Use
 
@@ -33,6 +54,7 @@ The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
 ```json
 {
   "PRO-373": {
+    "development_mode": "interactive",
     "current_step": "plan",
     "cycle_counts": {
       "plan": 1,
@@ -47,6 +69,31 @@ The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
 }
 ```
 
+**Development modes:**
+- **Interactive** (default): Pause at each handover for user confirmation
+- **Automated**: Run the pipeline without pauses; escalations still trigger
+
+**Mode detection from chat:**
+The PO agent parses user chat messages for conversational patterns to derive the mode:
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Mode is checked before each handoff and at each dispatch step
+
+**Mode detection script:**
+The script `.opencode/scripts/detect_mode.py` parses chat messages and persists the mode:
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+The PO agent invokes this script during intake (to set the mode from chat) and before each handoff (to read the persisted mode).
+
+**Mode check step in pipeline flow:**
+Before every dispatch and handoff, the orchestration skill runs:
+1. `python .opencode/scripts/detect_mode.py <ticket> --show` to read the persisted mode
+2. If `development_mode: automated` → proceed without user confirmation
+3. If `development_mode: interactive` → pause for user confirmation
+4. If no mode detected → default to `interactive`
+
 ## Pipeline Flow
 
 ### Step 1: Plan Phase
@@ -58,14 +105,20 @@ The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
 ### Step 2: Develop Phase
 1. **State Detection**: Confirms we're in "develop" step
 2. **Cycle Check**: Verifies Developer agent hasn't exceeded 3 cycles
-3. **Dispatch**: Routes to Developer agent
-4. **Update State**: Sets `current_step: "complete"`, increments Developer cycles
+3. **Story Points Validation**: Confirms PRO-XXX has story points assigned (required for development)
+   - If missing → escalate to Product Owner, do NOT proceed to development
+   - If present → proceed to Developer agent
+4. **Dispatch**: Routes to Developer agent
+5. **Update State**: Sets `current_step: "complete"`, increments Developer cycles
 
 ### Step 3: Complete Phase
 1. **State Detection**: Confirms we're in "complete" step
 2. **Cycle Check**: Verifies Tester agent hasn't exceeded 3 cycles
-3. **Dispatch**: Routes to Tester agent via `complete-feature` skill
-4. **Update State**: Sets `current_step: "done"`
+3. **Story Points Validation**: Confirms PRO-XXX has story points assigned (required for completion)
+   - If missing → escalate to Product Owner, do NOT proceed to completion
+   - If present → proceed to Tester agent
+4. **Dispatch**: Routes to Tester agent via `complete-feature` skill
+5. **Update State**: Sets `current_step: "done"`
 
 ## Agent Mapping
 

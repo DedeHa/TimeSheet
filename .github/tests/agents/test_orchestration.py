@@ -19,8 +19,8 @@ import pytest
 import yaml
 
 _REPO = Path(__file__).resolve().parents[3]
-_SKILLS_DIR = _REPO / ".opencode/skills"
-_AGENTS_DIR = _REPO / ".github/agents"
+_SKILLS_DIR = _REPO / ".opencode" / "skills"
+_AGENTS_DIR = _REPO / ".opencode" / "agents"
 _PO_AGENT = _AGENTS_DIR / "product-owner.agent.md"
 
 
@@ -169,7 +169,7 @@ def test_po_orchestrate_is_first_skill():
 
 @pytest.fixture
 def agent_files():
-    """Return {agent_name: frontmatter} for every .github/agents/*.agent.md."""
+    """Return {agent_name: frontmatter} for every .opencode/agents/*.agent.md."""
     result = {}
     for path in sorted(_AGENTS_DIR.glob("*.agent.md")):
         fm = _parse_agent_frontmatter(path)
@@ -271,3 +271,20 @@ def test_orchestrate_skill_path_resolves():
     assert (
         skill_path.exists()
     ), f"orchestrate-feature skill path {orch_skill['path']} does not exist"
+
+
+def test_orchestrate_skill_documents_development_mode():
+    """orchestrate-feature skill must document automated and interactive modes."""
+    skill_path = _REPO / ".opencode" / "skills" / "orchestrate-feature" / "SKILL.md"
+    content = skill_path.read_text()
+    assert "development_mode" in content
+    assert "automated" in content.lower()
+    assert "interactive" in content.lower()
+
+
+def test_orchestrate_skill_documents_mode_persistence():
+    """orchestrate-feature skill must document mode persistence in pipeline state."""
+    skill_path = _REPO / ".opencode" / "skills" / "orchestrate-feature" / "SKILL.md"
+    content = skill_path.read_text()
+    assert "~/.opencode/pipeline-state.json" in content
+    assert '"development_mode"' in content

@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 
 _REPO = Path(__file__).resolve().parents[3]
-_AGENTS_DIR = _REPO / ".github" / "agents"
+_AGENTS_DIR = _REPO / ".opencode" / "agents"
 
 
 def _parse_agent_frontmatter(path: Path) -> dict:
@@ -250,3 +250,20 @@ def test_po_handoffs_cover_architect_developer_tester_and_escalation():
         "Escalate to Product Owner",
         "Final Review",
     } <= labels
+
+
+def test_po_mode_detection_keywords_are_documented():
+    """Product Owner must document automated and interactive mode keywords."""
+    po_path = _AGENTS_DIR / "product-owner.agent.md"
+    body = po_path.read_text()
+    assert "automated mode" in body.lower()
+    assert "interactive mode" in body.lower()
+
+
+def test_po_mode_detection_conversational_patterns_documented():
+    """Product Owner must document conversational mode patterns."""
+    po_path = _AGENTS_DIR / "product-owner.agent.md"
+    body = po_path.read_text()
+    assert "go ahead" in body.lower()
+    assert "proceed" in body.lower()
+    assert "pause" in body.lower()

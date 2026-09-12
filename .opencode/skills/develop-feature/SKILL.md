@@ -281,7 +281,7 @@ PR description with the final status.
 > ```
 >
 > **Branch deletion:** The `complete-feature` skill includes a
-> **Step 5.5 — Delete Remote Branch** that the agent-team prepares
+> **Step 5.6 — Delete Remote Branch** that the agent-team prepares
 > but the user / Product-Owner confirms and executes. See
 > `.opencode/skills/complete-feature/SKILL.md` for details.
 >
@@ -306,7 +306,8 @@ PR description with the final status.
 | Traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Commit | `git commit -m "<type>(<scope>): <subject>\n\nRefs: PRO-XXX"` |
 | Push | `git push -u origin <branch>` |
-| Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** (via complete-feature Step 5.5) |
+| Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** (via complete-feature Step 5.6) |
+| Delete implementation plan | `git rm doc/02_Implementation_Plan_PRO-XXX.md` — **User/PO confirms and executes** (via complete-feature Step 5.5) |
 | Open PR | `gh pr create --base master --title "[<type>][PRO-XXX] …" --body "…"` |
 
 ## Reference: Worked Example — PRO-369

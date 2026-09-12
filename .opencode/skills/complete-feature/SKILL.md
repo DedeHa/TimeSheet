@@ -325,7 +325,62 @@ Refs: PRO-XXX
 
 **Note:** `git push` pushes the branch only; it does not merge the PR.
 
-## Step 5.5 — Delete Remote Branch (User / PO Confirmed)
+**Note:** After the PR is merged and JIRA is closed, the implementation plan
+is deleted in Step 5.5 as part of the finalization commit.
+
+## Step 5.5 — Delete Implementation Plan
+
+After the PR is merged and JIRA ticket is transitioned to Fertig,
+the implementation plan document (`doc/02_Implementation_Plan_PRO-XXX.md`)
+must be deleted. The plan is a working document that becomes stale
+once the feature is complete and merged. Deletion is part of the
+finalization commit/push.
+
+> **⚠️ Requires User / PO confirmation before execution.**
+> The agent-team MUST NOT run `git rm` without explicit
+> user/PO confirmation. Plan deletion is permanent and cannot be
+> undone without recreating the plan from scratch.
+
+**What the agent-team DOES:**
+1. Confirm the PR is merged to `master` (Step 6 verification).
+2. Confirm the JIRA ticket is in "Fertig" status.
+3. Prepare the deletion command and present it to the user/PO:
+
+   ```bash
+   git rm doc/02_Implementation_Plan_PRO-XXX.md
+   git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
+
+   Remove implementation plan after feature completion and JIRA closure.
+   The plan is a working document that is no longer needed.
+
+   Refs: PRO-XXX"
+   ```
+
+4. Warn the user/PO that this is irreversible and that the plan file
+   will be gone from the repository after execution.
+
+**What the user / Product-Owner confirms:**
+- PR is merged and the plan is no longer needed
+- All work from the plan has been preserved (implemented and merged)
+- You are ready to delete the implementation plan
+
+**After confirmation, the user / Product-Owner executes:**
+```bash
+git rm doc/02_Implementation_Plan_PRO-XXX.md
+git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
+
+Remove implementation plan after feature completion and JIRA closure.
+The plan is a working document that is no longer needed.
+
+Refs: PRO-XXX"
+git push origin <branch-name>
+```
+
+**Verification:** Confirm the plan file is gone from the remote with
+`git ls-remote --heads origin | grep <branch-name>` (should return nothing)
+and `git ls-files doc/02_Implementation_Plan_PRO-XXX.md` returns nothing.
+
+## Step 5.6 — Delete Remote Branch (User / PO Confirmed)
 
 After the PR is merged, the remote feature branch should be deleted to keep the
 repository clean. This is a **user / Product-Owner responsibility** — the
@@ -398,6 +453,7 @@ git ls-remote --heads origin | grep <branch-name>  # should return nothing
 | Stage all | `git add -A` |
 | Commit | `git commit -m "docs(ci): finalise PRO-XXX...\n\nRefs: PRO-XXX"` |
 | Push | `git push origin <branch>` |
+| Delete implementation plan | `git rm doc/02_Implementation_Plan_PRO-XXX.md` — **User/PO confirms and executes** (via Step 5.5) |
 | Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** |
 
 ## Cycle Tracking and Escalation

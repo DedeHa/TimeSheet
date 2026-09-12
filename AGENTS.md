@@ -96,6 +96,7 @@ def detect_environment(base_path: str) -> str:
 **Closure policy:**
 - Remote branch deletion is User / PO responsibility — agent prepares command, user confirms and executes
 - Agent-team closure executes `atlassian_transitionJiraIssue` and `gh pr merge` only after user / PO confirmation
+- **Implementation plan deletion:** After a feature is fully completed (PR merged to master, JIRA ticket transitioned to Fertig), the implementation plan document (`doc/02_Implementation_Plan_PRO-XXX.md`) must be deleted. The plan is a working document that becomes stale once the feature is complete and merged. Deletion is part of the finalization commit/push.
 
 ## Agent Development Modes
 

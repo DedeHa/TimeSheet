@@ -97,6 +97,18 @@ def detect_environment(base_path: str) -> str:
 - Remote branch deletion is User / PO responsibility — agent prepares command, user confirms and executes
 - Agent-team closure executes `atlassian_transitionJiraIssue` and `gh pr merge` only after user / PO confirmation
 
+## Agent Development Modes
+
+**Mode selection (set before starting a feature):**
+- `interactive` — pause at every handover for user confirmation before the next agent takes over
+- `automated` — run the full pipeline without user pauses; only blockers and cycle limits interrupt
+
+**Handover protocol (all modes):**
+1. Every handover includes a deliverable summary, current state, and next-step request
+2. Interactive mode requires explicit user confirmation before the next agent starts
+3. Automated mode proceeds immediately; escalations still trigger on blockers or cycle limit (3)
+4. User starts every feature with a Product Owner intake conversation (goal, use-case, information)
+
 ## CI Pipeline Details
 
 **Job structure:**

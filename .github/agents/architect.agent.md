@@ -217,6 +217,40 @@ When handing off to Developer:
 
 The Developer will implement changes following this plan exactly.
 
+---
+
+## Handoff Protocol
+
+### Interactive Mode
+
+Before handing off to the Developer, **pause and wait for user confirmation**:
+
+1. **Present the deliverable:**
+   - Architecture Analysis summary
+   - Design Decisions with ARCHITECTURE.md references
+   - Files to Modify (create / modify)
+   - Test Strategy and expected coverage
+   - Risks & Mitigations
+
+2. **Ask the user:**
+   > "Architecture plan is ready. Proceed to development?"
+
+3. **On "yes":** Continue to Developer with the full plan output
+4. **On "no":** Return to Product Owner for re-evaluation or scope adjustment
+
+### Automated Mode
+
+Proceed immediately to Developer with the full plan output.
+No user pause — but if a blocker or cycle limit (3) is hit, escalate to Product Owner.
+
+### Common Handoff Rules (Both Modes)
+
+Every handoff must include:
+1. **Deliverable summary** — what was produced and its quality
+2. **Current state** — cycle count, blockers, open questions
+3. **Next-step request** — what the Developer should do
+4. **Constraints** — what must not change or be exceeded
+
 ## Pattern References
 
 All architecture decisions should reference patterns from:

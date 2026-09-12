@@ -100,14 +100,14 @@ Refs: PRO-XXX
 
 ### 3b. Assign Story Points
 
-**Critical:** The project uses story points in `customfield_10028`. Before closing, check if story points are assigned and assign them if missing.
+**Critical:** Story points must have been estimated **before sprint inclusion or development pickup** (`customfield_10028`). Before closing, verify they are assigned. If missing, assign them using comparable tickets as reference:
 
 1. Query recent Stories to identify the story points field and comparable estimates:
    ```
    atlassian_searchJiraIssuesUsingJql(jql='project = PRO AND issuetype = Story ORDER BY created DESC', maxResults=20)
    ```
    Look for `customfield_10028` values in the results.
-2. If PRO-XXX has `customfield_10028: null`, assign a value using:
+2. Verify PRO-XXX has `customfield_10028` populated. If null, assign a value using:
    ```
    atlassian_editJiraIssue(issueIdOrKey="PRO-XXX", fields={"customfield_10028": N})
    ```

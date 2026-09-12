@@ -1,6 +1,6 @@
 ---
 name: plan-feature
-description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: If there is an active sprint, the user/PO must actively review and confirm sprint inclusion before the ticket is created or updated. The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
+description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: If there is an active sprint, the user/PO must actively review and confirm sprint inclusion before the ticket is created or updated. The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`. Story points must be estimated before sprint inclusion or development pickup."
 ---
 
 # Product Discovery & Planning
@@ -21,7 +21,7 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 | **Sprint** | `customfield_10020` — set to current active sprint only after user/PO confirms sprint inclusion; otherwise leave unset for backlog |
 | **Assignee** | Set to developer only after user/PO confirms who should work on it; otherwise leave unassigned |
 | **Fix Versions** | Target release version (e.g. `v4.3.0`) — must exist in project |
-| **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) |
+| **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) — **must be estimated before sprint inclusion or development pickup** |
 | **Labels** | (Optional) category tags, e.g. `KI-Agent`, `Track-A`, `Phase-5` |
 | **Components** | (Optional) `TimeSheet`, `Home-AssistantConfig` |
 
@@ -66,7 +66,7 @@ Before finalizing the ticket, walk through the complete ticket together:
 - Summary matches the feature description
 - Acceptance criteria are testable and complete
 - Definition of Done is realistic
-- Story points are estimated
+- **Story points are estimated and assigned (`customfield_10028`)** — required before sprint inclusion or development pickup
 - Epic link is correct
 - Fix version is set
 - Sprint / backlog decision is recorded
@@ -77,11 +77,13 @@ Before finalizing the ticket, walk through the complete ticket together:
 The user/PO must confirm:
 - All three questions above are answered
 - The ticket setup is reviewed and approved
+- **Story points are assigned** (required before development begins)
 - Development should begin (if "start development now" = Yes)
 
 **Gate:** Do not create or update the ticket, and do not begin development,
 without explicit user/PO confirmation of sprint inclusion and development
-readiness.
+readiness. Additionally, **story points must be assigned to every ticket before
+it is placed in the active sprint or picked up for development**.
 
 ---
 
@@ -136,7 +138,7 @@ Start with a user story or problem description.
 
 ### 8. **Priority / Story Points**
 - `**Priority:** [High|Medium|Low] — rationale`
-- `**Story Points:** [N] (comparable to PRO-XXX = N points)` — fill in when closing
+- `**Story Points:** [N] (comparable to PRO-XXX = N points)` — **estimated and assigned at planning time** (required before sprint inclusion or development pickup)
 
 ### 9. **Acceptance Criteria** *(required, AC-1 to AC-N)*
 Format: `- [ ] AC-N: Description — implementation detail`
@@ -237,7 +239,7 @@ Common items:
 
 **Priority:** [High|Medium|Low] — [rationale]
 
-**Story Points:** [N] (filled when closing, comparable to PRO-XXX = N points)
+**Story Points:** [N] (estimated at planning, required before sprint inclusion or development pickup)
 
 ---
 
@@ -280,7 +282,7 @@ Common items:
 | **Scope** with In/Out of Scope | 2/6 | For features > 5 points |
 | Numbered **Acceptance Criteria** | 6/6 | Always required |
 | **Definition of Done** checklist | 6/6 | Always required |
-| **Story Points** field | 4/6 (when closed) | Assign at close, document in description |
+| **Story Points** field | 4/6 (assigned at planning) | Assign at planning, document in description |
 | **References** / `Refs:` | 6/6 | Always include |
 | German / English mix | 5/6 (German for narrative, English for tech) | Match existing project style |
 | **MoSCoW** priority tag | 2/6 (US-0X tickets) | For product roadmap items |
@@ -320,7 +322,7 @@ When creating a new Story ticket:
 - [ ] Development start confirmed (user/PO confirms: yes, team begins now; or no, deferred)
 - [ ] Assignee set (or confirmed unassigned)
 - [ ] Ticket setup reviewed and approved by user/PO
-- [ ] Story Points to be assigned when closing the ticket
+- [ ] Story Points assigned before sprint inclusion or development pickup
 
 ---
 

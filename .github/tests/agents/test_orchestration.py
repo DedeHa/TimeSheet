@@ -19,8 +19,8 @@ import pytest
 import yaml
 
 _REPO = Path(__file__).resolve().parents[3]
-_SKILLS_DIR = _REPO / ".opencode/skills"
-_AGENTS_DIR = _REPO / ".github/agents"
+_SKILLS_DIR = _REPO / ".opencode" / "skills"
+_AGENTS_DIR = _REPO / ".opencode" / "agents"
 _PO_AGENT = _AGENTS_DIR / "product-owner.agent.md"
 
 
@@ -169,7 +169,7 @@ def test_po_orchestrate_is_first_skill():
 
 @pytest.fixture
 def agent_files():
-    """Return {agent_name: frontmatter} for every .github/agents/*.agent.md."""
+    """Return {agent_name: frontmatter} for every .opencode/agents/*.agent.md."""
     result = {}
     for path in sorted(_AGENTS_DIR.glob("*.agent.md")):
         fm = _parse_agent_frontmatter(path)

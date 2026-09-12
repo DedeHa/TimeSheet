@@ -161,7 +161,7 @@ jobs:
 
       # CI self-tests: the .github/tests suite has two groups:
       #   - ci-pipeline/  (workflow structure + support scripts)
-      #   - agents/       (orchestration skill + agent definitions)
+      #   - agents/       (orchestration skill + agent definitions in .opencode/)
       # Reported as its own "CI Self-Tests" level in the summary. Run without
       # coverage - it validates CI/agent code, not src_timesheetalgo.
       - name: Run CI self-tests (.github/tests)

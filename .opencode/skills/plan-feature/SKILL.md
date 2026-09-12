@@ -7,6 +7,8 @@ description: "Use when discovering, planning, or scoping new features — creati
 
 This skill covers the end-to-end workflow for discovering, scoping, and documenting new features as JIRA Story tickets. Based on analysis of the most recent 6 Story tickets in the **PRO** project: **PRO-370**, **PRO-369**, **PRO-368**, **PRO-367**, **PRO-366**, **PRO-365**.
 
+**Triggered by:** User requests feature planning after completing the PO intake conversation. The user explicitly asks the PO to plan the feature (e.g., "start feature PRO-XXX", "plan a feature", "create a ticket").
+
 ---
 
 ## Ticket Fields (Standard Across PRO Project)
@@ -24,6 +26,16 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 | **Story Points** | `customfield_10028` — Fibonacci (1, 2, 3, 5, 8, 13) — **must be estimated before sprint inclusion or development pickup** |
 | **Labels** | (Optional) category tags, e.g. `KI-Agent`, `Track-A`, `Phase-5` |
 | **Components** | (Optional) `TimeSheet`, `Home-AssistantConfig` |
+
+## Prerequisites
+
+- **Intake conversation completed:** The Product Owner has held an intake
+  conversation with the user to establish the goal, use-case, and information
+  (see `product-owner.agent.md` §"Initial Intake — User ↔ PO Conversation").
+- Working directory: `/workspaces/TimeSheet` (repository root)
+- Virtual environment activated: `source /workspaces/TimeSheet/.venv/bin/activate`
+- `gh` authenticated and `git` configured
+- Atlassian MCP tools available (Jira)
 
 ## Sprint Inclusion Check
 

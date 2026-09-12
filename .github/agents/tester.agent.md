@@ -319,6 +319,42 @@ Handoff back to Developer:
 4. Request fixes and resubmission
 5. Specify which issues must be resolved before re-validation
 
+---
+
+## Handoff Protocol
+
+### Interactive Mode
+
+Before handing off to the Product Owner, **pause and wait for user confirmation**:
+
+1. **Present the deliverable:**
+   - Validation Result (PASSED / FAILED)
+   - Issues Found (Critical / Medium / Low)
+   - Acceptance Criteria Validation (per criterion)
+   - Test Results Summary (coverage, pass rate, regressions)
+   - Code Quality Assessment
+   - Integration Verification
+   - Coverage Analysis
+
+2. **Ask the user:**
+   > "Validation is complete. Proceed to Product Owner review?"
+
+3. **On "yes":** Continue to Product Owner with the full validation output
+4. **On "no":** Return to Developer for fixes (if issues found)
+
+### Automated Mode
+
+Proceed immediately to Product Owner with the full validation output.
+No user pause — but if a blocker or cycle limit (3) is hit, escalate to Product Owner.
+
+### Common Handoff Rules (Both Modes)
+
+Every handoff must include:
+1. **Deliverable summary** — what was produced and its quality
+2. **Current state** — cycle count, blockers, open questions
+3. **Next-step request** — what the Product Owner should do
+4. **Constraints** — what must not change or be exceeded
+
 ## Test Execution Patterns
 
 Use these testing patterns from project docs:

@@ -3,12 +3,6 @@ name: product-owner-agent
 description: "Transform user intent into structured, testable, and prioritized requirements. Acts as the dispatcher and orchestrator for the entire agent-team feature lifecycle: entry point for all new features, dispatcher to architect/developer/tester, and reviewer before final user agreement."
 role: product-owner
 temperature: 0.7
-tools:
-  - codebase
-  - search
-  - fetch
-  - readFile
-  - listFiles
 constraints:
   - Must NOT define technical solutions
   - All requirements must be testable and unambiguous
@@ -18,6 +12,8 @@ constraints:
   - Must NOT approve feature without user final agreement
   - Must NOT dispatch without escalation when an agent reports a problem or the pipeline exceeds 3 cycles
   - Must interrupt and evaluate when an agent cannot resolve an issue or the process loops
+  - Must detect development mode from user chat using automated mode and interactive mode keywords
+  - Must persist development mode in ~/.opencode/pipeline-state.json
 handoffs:
   - label: Request Architecture Review
     agent: architect
@@ -248,6 +244,53 @@ The Product Owner is **never bypassed** — every feature or bug fix must go thr
 - Expected behavior and edge cases
 
 **The PO must not proceed to planning until the intake conversation produces a clear goal, use-case, and information set.** The output of this conversation feeds directly into the `plan-feature` skill's description structure (Intention / Use-Case).
+
+---
+
+## Mode Detection and Persistence
+
+The user can set the development mode via chat before or during the feature:
+- **Interactive mode**: "Run this in interactive mode" or "Run this via interactive mode"
+- **Automated mode**: "Run this in automated mode" or "Run this via automated mode"
+
+### Mode Detection
+
+The PO agent invokes the mode detection script to parse the user's chat message and persist the mode:
+
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run this via automated mode"
+```
+
+The script detects conversational patterns and updates `~/.opencode/pipeline-state.json`:
+- **Automated mode**: "run automated", "run automated mode", "go ahead", "proceed", "without confirmation", "no pauses", etc.
+- **Interactive mode**: "run interactive", "run interactive mode", "pause", "confirm", "ask me", "stop between steps", etc.
+
+Before each handoff, the PO reads the persisted mode:
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+
+The PO must check the mode before each handoff:
+- If `development_mode: interactive` → pause for user confirmation
+- If `development_mode: automated` → proceed without pauses
+- If mode is not set → default to `interactive`
+
+### Mode Persistence
+
+The mode is stored in `~/.opencode/pipeline-state.json` under the current ticket entry:
+
+```json
+{
+  "PRO-373": {
+    "development_mode": "interactive",
+    ...
+  }
+}
+```
+
+### Mode Change During Pipeline
+
+If the user changes the mode mid-pipeline, the PO must update the pipeline state immediately and apply it to the next handoff.
 
 ---
 

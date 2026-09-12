@@ -54,6 +54,7 @@ The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
 ```json
 {
   "PRO-373": {
+    "development_mode": "interactive",
     "current_step": "plan",
     "cycle_counts": {
       "plan": 1,
@@ -67,6 +68,31 @@ The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
   }
 }
 ```
+
+**Development modes:**
+- **Interactive** (default): Pause at each handover for user confirmation
+- **Automated**: Run the pipeline without pauses; escalations still trigger
+
+**Mode detection from chat:**
+The PO agent parses user chat messages for conversational patterns to derive the mode:
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Mode is checked before each handoff and at each dispatch step
+
+**Mode detection script:**
+The script `.opencode/scripts/detect_mode.py` parses chat messages and persists the mode:
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+The PO agent invokes this script during intake (to set the mode from chat) and before each handoff (to read the persisted mode).
+
+**Mode check step in pipeline flow:**
+Before every dispatch and handoff, the orchestration skill runs:
+1. `python .opencode/scripts/detect_mode.py <ticket> --show` to read the persisted mode
+2. If `development_mode: automated` → proceed without user confirmation
+3. If `development_mode: interactive` → pause for user confirmation
+4. If no mode detected → default to `interactive`
 
 ## Pipeline Flow
 

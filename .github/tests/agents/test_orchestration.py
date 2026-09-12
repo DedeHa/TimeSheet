@@ -271,3 +271,20 @@ def test_orchestrate_skill_path_resolves():
     assert (
         skill_path.exists()
     ), f"orchestrate-feature skill path {orch_skill['path']} does not exist"
+
+
+def test_orchestrate_skill_documents_development_mode():
+    """orchestrate-feature skill must document automated and interactive modes."""
+    skill_path = _REPO / ".opencode" / "skills" / "orchestrate-feature" / "SKILL.md"
+    content = skill_path.read_text()
+    assert "development_mode" in content
+    assert "automated" in content.lower()
+    assert "interactive" in content.lower()
+
+
+def test_orchestrate_skill_documents_mode_persistence():
+    """orchestrate-feature skill must document mode persistence in pipeline state."""
+    skill_path = _REPO / ".opencode" / "skills" / "orchestrate-feature" / "SKILL.md"
+    content = skill_path.read_text()
+    assert "~/.opencode/pipeline-state.json" in content
+    assert '"development_mode"' in content

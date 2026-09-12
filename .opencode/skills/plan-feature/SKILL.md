@@ -72,18 +72,40 @@ Before finalizing the ticket, walk through the complete ticket together:
 - Sprint / backlog decision is recorded
 - Non-goals are documented (if scope is non-trivial)
 
-### 6. Proceed only after explicit user/PO confirmation
+### 7. Multi-stakeholder review (developer, architect, tester)
 
-The user/PO must confirm:
-- All three questions above are answered
-- The ticket setup is reviewed and approved
-- **Story points are assigned** (required before development begins)
-- Development should begin (if "start development now" = Yes)
+After the PO defines the feature, conduct a **multi-stakeholder review** with
+the developer, architect, and tester **before** the ticket is finalized.
+This minimizes risk for architecture, implementation, and verification.
 
-**Gate:** Do not create or update the ticket, and do not begin development,
-without explicit user/PO confirmation of sprint inclusion and development
-readiness. Additionally, **story points must be assigned to every ticket before
-it is placed in the active sprint or picked up for development**.
+**Developer review:** Verify implementation feasibility, effort estimate,
+and technical approach. Confirm the implementation plan is realistic.
+
+**Architect review:** Verify architectural alignment, component boundaries,
+and integration points. Confirm the feature fits the system architecture.
+
+**Tester review:** Verify testability of ACs, DoD completeness, and
+coverage strategy. Confirm each AC can be objectively verified.
+
+Each reviewer confirms or raises concerns. If any reviewer raises a concern,
+the PO updates the feature definition before proceeding.
+
+### 8. Common stakeholder review
+
+After individual reviews pass, hold a **common review with all stakeholders**
+(PO, developer, architect, tester) to finalize the feature definition.
+Confirm:
+
+- Intention / use-case is clearly defined
+- Goal is measurable and aligned with business value
+- Steps are ordered and achievable within the sprint
+- Information (background, data sources, constraints) is complete
+- DoD is realistic and verifiable
+- ACs are testable and binary (done / not done)
+- Story points are estimated and assigned
+
+**Gate:** Do not finalize the ticket without explicit confirmation from
+all stakeholders.
 
 ---
 
@@ -99,55 +121,45 @@ it is placed in the active sprint or picked up for development**.
 
 ---
 
-## Description (Standard Sections)
+## Description (Intention / Use-Case Based Structure)
 
-Use the following structure (in this order):
+Use the following structure (in this order). The whole plan is based on
+a single **intention / use-case** that defines the goal, steps,
+information, DoD, ACs, and story point estimation:
 
-### 1. **Story Block / Problem Statement**
-Start with a user story or problem description.
+### 1. **Intention / Use-Case** *(required)*
+A concise use-case statement: `As a [role], I want to [action] so that [benefit].`
+This defines the common understanding of what the feature delivers.
 
-- **For features:** `**As a** [role], **I want** [goal], **so that** [benefit].`
-- **For bug fixes:** `Create a [thing] to [goal] — context about the problem.`
+### 2. **Goal** *(required)*
+What does success look like? Quantifiable outcomes if possible.
+The goal is derived directly from the use-case.
 
-### 2. **Background / Evaluation Data** *(optional but recommended)*
-- Why does this work need to happen now?
-- Reference prior tickets with `PRO-XXX`
-- Cite current state / observed issues
-
-### 3. **Goal / Business Value** *(for larger features)*
-- What does success look like?
-- Quantifiable outcomes if possible
-
-### 4. **Scope** *(for larger features)*
-- What is included
-- What is explicitly NOT included (out of scope / non-goals)
-
-### 5. **Implementation Plan** *(optional)*
+### 3. **Steps / Implementation Plan**
+Ordered steps to achieve the goal:
 - High-level approach or phases
 - Key files to be changed
 - Reference to architecture decisions
 
-### 6. **Next Steps / Technical Approach**
-- Numbered, actionable list
-- References to specific files or config
+### 4. **Information** *(optional but recommended)*
+- Why does this work need to happen now?
+- Reference prior tickets with `PRO-XXX`
+- Cite current state / observed issues
+- Data sources, constraints, dependencies
 
-### 7. **Testing Strategy**
+### 5. **Testing Strategy**
 - **Unit Tests** — what they cover
 - **Integration Tests** — what they cover
 - **System Tests** — what they cover (if applicable)
 
-### 8. **Priority / Story Points**
-- `**Priority:** [High|Medium|Low] — rationale`
-- `**Story Points:** [N] (comparable to PRO-XXX = N points)` — **estimated and assigned at planning time** (required before sprint inclusion or development pickup)
-
-### 9. **Acceptance Criteria** *(required, AC-1 to AC-N)*
+### 6. **Acceptance Criteria** *(required, AC-1 to AC-N)*
 Format: `- [ ] AC-N: Description — implementation detail`
 
 - Numbered (AC-1, AC-2, ...)
 - Each AC is testable and binary (done / not done)
 - One sentence per AC
 
-### 10. **Definition of Done** *(required)*
+### 7. **Definition of Done** *(required)*
 Format: `- [ ] Item — description`
 
 Common items:
@@ -158,11 +170,15 @@ Common items:
 - Traceability: FR-XX, QR-XX added to docs
 - CI self-tests pass
 
-### 11. **Non-Goals / Out of Scope** *(optional but recommended)*
+### 8. **Priority / Story Points**
+- `**Priority:** [High|Medium|Low] — rationale`
+- `**Story Points:** [N] (comparable to PRO-XXX = N points)` — **estimated and assigned at planning time** (required before sprint inclusion or development pickup)
+
+### 9. **Non-Goals / Out of Scope** *(optional but recommended)*
 - What is explicitly NOT part of this work
 - Helps prevent scope creep
 
-### 12. **References** *(recommended)*
+### 10. **References** *(recommended)*
 - `Refs: PRO-XXX` (parent / related tickets)
 - Links to related PRs
 
@@ -171,54 +187,22 @@ Common items:
 ## Sample Description (Use as Starting Point)
 
 ```markdown
-**As a** [role, e.g. development team],
-
-**I want** [goal],
-
-**so that** [measurable benefit].
-
----
-
-## Background
-
-[Why this work matters now. Reference related PRO-XXX tickets. Describe current state.]
-
----
+**Intention / Use-Case:** As a [role], I want to [action] so that [benefit].
 
 ## Goal
 
 [What does success look like? Quantifiable outcomes if possible.]
 
----
-
-## Scope
-
-### In Scope
-
-* [Included work item 1]
-* [Included work item 2]
-
-### Out of Scope
-
-* [Explicitly excluded item 1]
-* [Explicitly excluded item 2]
-
----
-
-## Implementation Plan
+## Steps / Implementation Plan
 
 1. [Step 1]
 2. [Step 2]
 3. [Step 3]
 
----
+## Information
 
-## Next Steps
-
-1. [Concrete file/action 1]
-2. [Concrete file/action 2]
-
----
+[Why this work needs to happen now. Reference prior PRO-XXX tickets.
+Data sources, constraints, dependencies.]
 
 ## Testing Strategy
 
@@ -235,14 +219,6 @@ Common items:
 
     * [Test scope 1]
 
----
-
-**Priority:** [High|Medium|Low] — [rationale]
-
-**Story Points:** [N] (estimated at planning, required before sprint inclusion or development pickup)
-
----
-
 ## Acceptance Criteria
 
 - [ ] AC-1: [Testable condition] — implementation detail
@@ -250,8 +226,6 @@ Common items:
 - [ ] AC-3: [Testable condition] — implementation detail
 - [ ] AC-4: [Testable condition] — implementation detail
 - [ ] AC-5: [Testable condition] — implementation detail
-
----
 
 ## Definition of Done
 
@@ -262,7 +236,16 @@ Common items:
 - [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md, doc/ARCHITECTURE.md
 - [ ] CI self-tests: N tests passed
 
----
+## Priority / Story Points
+
+**Priority:** [High|Medium|Low] — [rationale]
+
+**Story Points:** [N] (estimated at planning, required before sprint inclusion or development pickup)
+
+## Non-Goals / Out of Scope
+
+* [Explicitly excluded item 1]
+* [Explicitly excluded item 2]
 
 ## References
 
@@ -283,6 +266,8 @@ Common items:
 | Numbered **Acceptance Criteria** | 6/6 | Always required |
 | **Definition of Done** checklist | 6/6 | Always required |
 | **Story Points** field | 4/6 (assigned at planning) | Assign at planning, document in description |
+| **Multi-stakeholder review** | 0/6 (new) | Developer, architect, tester review before finalization |
+| **Common stakeholder review** | 0/6 (new) | PO, developer, architect, tester review before finalization |
 | **References** / `Refs:` | 6/6 | Always include |
 | German / English mix | 5/6 (German for narrative, English for tech) | Match existing project style |
 | **MoSCoW** priority tag | 2/6 (US-0X tickets) | For product roadmap items |
@@ -301,28 +286,26 @@ Common items:
 | 13 | Major refactor | PRO-339 (Unit-testability refactor) |
 | 21+ | Epic-scale work | PRO-341 (AI-Driven Development Workflow) |
 
+**Note:** Story points are estimated during planning and assigned to `customfield_10028` before the ticket enters the active sprint. Do not leave story points blank when a ticket is picked up for development.
+
 ---
 
 ## Quick-Start Checklist
 
 When creating a new Story ticket:
 
-- [ ] Project: `PRO`, Issue Type: `Story`
-- [ ] Summary follows `[Verb] [Target] [Context]` pattern
-- [ ] Description has: Story block OR Problem statement
-- [ ] **Background** section references prior PRO-XXX if applicable
-- [ ] **Implementation Plan** lists concrete files/steps
-- [ ] **Acceptance Criteria** are numbered (AC-1, AC-2, ...) and testable
-- [ ] **Definition of Done** is a `- [ ]` checklist
-- [ ] **References** / `Refs: PRO-XXX` footer present
-- [ ] **Priority** set to Medium (or High for release-critical)
-- [ ] **Epic Link** set to parent epic (e.g. `PRO-259`)
-- [ ] **Fix Version** set to target release (e.g. `v4.3.0`)
-- [ ] **Sprint / Backlog** placement decided (user/PO confirms: sprint or backlog)
-- [ ] Development start confirmed (user/PO confirms: yes, team begins now; or no, deferred)
-- [ ] Assignee set (or confirmed unassigned)
-- [ ] Ticket setup reviewed and approved by user/PO
-- [ ] Story Points assigned before sprint inclusion or development pickup
+- [ ] Intention / use-case defined (As a / I want / so that)
+- [ ] Goal is measurable and aligned with business value
+- [ ] Steps are ordered and achievable within the sprint
+- [ ] Information (background, data sources, constraints) is complete
+- [ ] **Architecture reviewed** by architect — alignment confirmed
+- [ ] **Implementation reviewed** by developer — feasibility confirmed
+- [ ] **Verification reviewed** by tester — testability confirmed
+- [ ] **Common stakeholder review** completed (PO, developer, architect, tester)
+- [ ] Acceptance Criteria are numbered (AC-1, AC-2, ...) and testable
+- [ ] Definition of Done is a `- [ ]` checklist
+- [ ] **Story Points assigned** before sprint inclusion or development pickup
+- [ ] References / `Refs: PRO-XXX` footer present
 
 ---
 

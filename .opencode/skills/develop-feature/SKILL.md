@@ -1,6 +1,6 @@
 ---
 name: develop-feature
-description: "Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to 'start feature', 'implement ticket', 'work on PRO-XXX', 'draft implementation plan', 'begin work on JIRA ticket', or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`."
+description: "Use when starting a new feature, bugfix, refactor, or docs change that is tracked in JIRA. Starts with the JIRA ticket (via Atlassian MCP) and either adopts an existing Implementation Plan document or drafts a new one, then drives the implementation step by step against that plan. Triggers on requests to 'start feature', 'implement ticket', 'work on PRO-XXX', 'draft implementation plan', 'begin work on JIRA ticket', or any workflow that begins with a JIRA ticket and ends with a feature branch ready for review. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`. Story points must be assigned before development pickup or sprint inclusion."
 ---
 
 # Feature Development Skill
@@ -65,6 +65,23 @@ the repo state. Common drift to look for and call out explicitly:
 - "Out of Scope" / "Non-Goals" lists that this work would silently violate
 
 If any drift is found, stop and confirm with the user before proceeding.
+
+### 1e. Validate story points before development
+
+**Critical:** If a ticket is created in the active sprint or development
+is picked up, **story points must be assigned** before development
+begins. Verify that `customfield_10028` is populated. If null, stop
+and escalate to the PO — do not begin development.
+
+```
+atlassian_getJiraIssue(issueIdOrKey="PRO-XXX",
+    fields=["summary", "customfield_10028", "status", "sprint"])
+
+if fields["customfield_10028"] is None:
+    print(f"ERROR: PRO-XXX has no story points assigned.")
+    print(f"Story points must be estimated before sprint inclusion or development pickup.")
+    return
+```
 
 ## Phase 2 — Adopt or Draft the Implementation Plan
 

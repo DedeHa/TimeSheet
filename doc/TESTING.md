@@ -62,6 +62,51 @@ Requirement-to-architecture-to-code traceability is generated and validated by [
 which the `check` job runs as part of the CI self-tests
 (`pytest -q .github/tests/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
 
+## Agent-System Tests
+
+The agent-team pipeline (4 agents + 5 skills) is validated by a dedicated `agents` CI job in
+[.github/workflows/python-ci.yml](../.github/workflows/python-ci.yml) that runs
+`pytest -q .github/tests/agents/` and uploads the JUnit report
+(`tests/reports/agent-results.xml`) as an artifact. Agent tests live under
+`.github/tests/agents/` (not in `tests/`), so they do not change the 103-test
+application suite or the coverage gate.
+
+### Layout
+
+```text
+.github/tests/agents/
+├── test_orchestration.py     # Existing - structural tests (YAML frontmatter, file existence, path resolution)
+├── test_handoffs.py         # Handoff protocol: placeholders, cycle counts, escalation triggers
+├── test_constraints.py      # Agent boundary enforcement via constraints
+├── test_agent_outputs.py    # Output format contracts (PO/Architect/Developer/Tester)
+├── test_skill_workflows.py  # Skill phase execution order
+└── test_pipeline_flow.py    # End-to-end pipeline simulation
+```
+
+### Test Categories
+
+| File | Category | Exercises |
+|------|----------|-----------|
+| `test_orchestration.py` | Structural | YAML frontmatter parsing, file existence, path resolution, skill registry consistency |
+| `test_handoffs.py` | Handoff protocol | Placeholder extraction, cycle tracking, escalation context, agent references |
+| `test_constraints.py` | Constraint enforcement | PO/Architect/Developer/Tester boundary enforcement, cycle limit |
+| `test_agent_outputs.py` | Output format | Required markdown sections for each agent's output template |
+| `test_skill_workflows.py` | Skill workflow | Phase execution order for orchestrate/plan/develop/complete/release skills |
+| `test_pipeline_flow.py` | Pipeline simulation | Full PO→Architect→Developer→Tester flow, cycle escalation, error propagation |
+
+### Running
+
+```bash
+# All agent tests
+pytest -q .github/tests/agents/
+
+# One category
+pytest -q .github/tests/agents/test_handoffs.py
+```
+
+CI runs the agent tests as its own "Agent System Tests" level in the summary, in
+parallel with the application test job (no `needs` dependency between them).
+
 ## Pull Request Quality-Gate Summary
 
 Every Pull Request targeting `master` publishes one consolidated quality-gate summary, regenerated on every run, in the GitHub Actions **job summary** (the "PR Run" page) and as a **sticky PR comment** (updated in place, never duplicated, carrying an `_Updated: … UTC_` timestamp). A compact **per-run comment** is also posted fresh on every run (Option C) — the overall result plus the status-overview table — giving a per-run trail alongside the always-current sticky report.

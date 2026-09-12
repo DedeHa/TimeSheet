@@ -233,12 +233,13 @@ jobs:
       - name: Run agent tests
         run: pytest -q .github/tests/agents/ --junitxml=tests/reports/agent-results.xml
 
-      # Additive (PRO-337): export machine-readable coverage for the PR summary.
-      # Runs even if an earlier level failed so the summary always has coverage
-      # data; --fail-under=0 keeps this step green - the real 90% quality gate is
-      # still enforced by the step below, so existing behaviour is unchanged.
+      # Agent-system tests do not measure coverage for src_timesheetalgo,
+      # so coverage json has no data to report; keep this step additive
+      # with continue-on-error while still producing the report artifact
+      # when coverage is available.
       - name: Export machine-readable coverage
         if: always()
+        continue-on-error: true
         run: coverage json -o tests/reports/agent-coverage.json --fail-under=0
 
       - name: Upload agent test results

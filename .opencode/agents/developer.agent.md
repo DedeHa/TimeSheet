@@ -3,12 +3,13 @@ name: developer-agent
 description: Implement features based on defined architecture and plans
 role: developer
 temperature: 0.3
-tools:
-  - editFiles
-  - terminal
-  - runTests
-  - readFile
-  - codebase
+permission:
+  edit: allow
+  bash: allow
+  task: allow
+  read: allow
+  glob: allow
+  grep: allow
 constraints:
   - Only modify files specified in the plan
   - No architectural changes without architect approval

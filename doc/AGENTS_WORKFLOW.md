@@ -210,12 +210,12 @@ Acceptance criteria ambiguous → Product Owner clarifies and confirms
 
 ## 🎯 Agent Tools
 
-Each agent is configured with specific tools in its respective ``-agent.md` (YAML config + detailed documentation)` file:
+Each agent is configured with specific permissions in its respective ``-agent.md` (YAML config + detailed documentation)` file:
 
-- **[product-owner`-agent.md` (YAML config + detailed documentation)](product-owner`-agent.md` (YAML config + detailed documentation))** → `codebase`, `search`, `fetch`, `readFile`, `listFiles`
-- **[architect`-agent.md` (YAML config + detailed documentation)](architect`-agent.md` (YAML config + detailed documentation))** → `codebase`, `search`, `readFile`, `listFiles`
-- **[developer`-agent.md` (YAML config + detailed documentation)](developer`-agent.md` (YAML config + detailed documentation))** → `editFiles`, `terminal`, `runTests`, `readFile`, `codebase`
-- **[tester`-agent.md` (YAML config + detailed documentation)](tester`-agent.md` (YAML config + detailed documentation))** → `runTests`, `terminal`, `codebase`, `diff`, `readFile`
+- **[product-owner`-agent.md` (YAML config + detailed documentation)](product-owner`-agent.md` (YAML config + detailed documentation))** → default OpenCode permissions
+- **[architect`-agent.md` (YAML config + detailed documentation)](architect`-agent.md` (YAML config + detailed documentation))** → `read`, `grep`, `glob`, `list`
+- **[developer`-agent.md` (YAML config + detailed documentation)](developer`-agent.md` (YAML config + detailed documentation))** → `edit`, `bash`, `task`, `read`, `glob`, `grep`
+- **[tester`-agent.md` (YAML config + detailed documentation)](tester`-agent.md` (YAML config + detailed documentation))** → `task`, `bash`, `read`, `glob`, `grep`
 
 See individual agent files for detailed descriptions of tool usage.
 

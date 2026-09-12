@@ -103,6 +103,21 @@ def detect_environment(base_path: str) -> str:
 - `interactive` — pause at every handover for user confirmation before the next agent takes over
 - `automated` — run the full pipeline without user pauses; only blockers and cycle limits interrupt
 
+**Mode detection from chat:**
+The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Default is `interactive` when no mode is detected
+
+**Pipeline state:**
+State is persisted per ticket in `~/.opencode/pipeline-state.json` (encrypted if enabled). The `development_mode` field is read before every dispatch and handoff so all 4 agents respect the user's mode choice.
+
 **Discovery:**
 - `opencode` discovers both agents and skills from `.opencode/`
 - `.opencode/agents/` — agent dev team (Product Owner, Architect, Developer, Tester)

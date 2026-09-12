@@ -7,7 +7,28 @@ description: "Orchestrates the complete feature pipeline: reads JIRA state, trac
 
 ## Overview
 
-The `orchestrate-feature` skill is the central orchestrator that coordinates the entire feature pipeline. It lives in the Product Owner agent and manages the flow from **Plan → Develop → Complete**, with built-in cycle tracking, state management, and escalation handling.
+The `orchestrate-feature` skill is the central orchestrator that coordinates
+the entire feature pipeline. It lives in the Product Owner agent and manages
+the flow from **Plan → Develop → Complete**, with built-in cycle tracking,
+state management, and escalation handling.
+
+## Discovery
+
+Both agents and skills are discovered by `opencode` from the `.opencode/`
+directory:
+
+```
+.opencode/
+├── agents/          # Agent definitions (product-owner, architect, developer, tester)
+│   └── *.agent.md   # YAML frontmatter + handoffs + constraints
+└── skills/          # Workflow reference documents
+    └── <skill>/
+        └── SKILL.md
+```
+
+The Product Owner agent loads this skill via its `skills` frontmatter entry.
+The agent definitions in `.opencode/agents/` are loaded by `opencode` and
+provide the handoff prompts that chain the pipeline.
 
 ## When to Use
 

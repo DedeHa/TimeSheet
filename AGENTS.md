@@ -103,6 +103,12 @@ def detect_environment(base_path: str) -> str:
 - `interactive` — pause at every handover for user confirmation before the next agent takes over
 - `automated` — run the full pipeline without user pauses; only blockers and cycle limits interrupt
 
+**Discovery:**
+- `opencode` discovers both agents and skills from `.opencode/`
+- `.opencode/agents/` — agent dev team (Product Owner, Architect, Developer, Tester)
+- `.opencode/skills/` — workflow reference documents used by agents
+- Agents are the primary executors; skills provide supporting instructions
+
 **Handover protocol (all modes):**
 1. Every handover includes a deliverable summary, current state, and next-step request
 2. Interactive mode requires explicit user confirmation before the next agent starts
@@ -124,7 +130,7 @@ def detect_environment(base_path: str) -> str:
 **CI self-tests (.github/tests/):**
 - Run in CI but not in local test suite
 - `ci-pipeline/`: Workflow + script tests
-- `agents/`: Agent orchestration tests
+- `agents/`: Agent orchestration tests (validates `.opencode/agents/` and `.opencode/skills/`)
 - Must pass before committing `.github/` changes
 
 ## File System & Working Directory

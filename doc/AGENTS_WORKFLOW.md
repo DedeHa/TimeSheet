@@ -1,6 +1,8 @@
-# GitHub Copilot Custom Agents - Complete Team Configuration
+# opencode Agent Team — Complete Team Configuration
 
-This directory contains a configured team of specialized AI agents that collaborate to deliver high-quality features through a structured, repeatable workflow.
+This directory contains the agent team discovered by opencode,
+comprising specialized agents that collaborate to deliver high-quality
+features through a structured, repeatable workflow.
 
 ## 🧩 Agent Team Overview
 
@@ -13,20 +15,36 @@ This directory contains a configured team of specialized AI agents that collabor
 
 ## � File Structure
 
-This directory contains two types of documents:
+This directory contains the opencode-discovered agent team and skills:
+
+```
+.opencode/
+├── agents/          # Agent definitions discovered by opencode
+│   ├── architect.agent.md
+│   ├── developer.agent.md
+│   ├── product-owner.agent.md
+│   └── tester.agent.md
+└── skills/          # Workflow reference documents discovered by opencode
+    ├── complete-feature/SKILL.md
+    ├── develop-feature/SKILL.md
+    ├── orchestrate-feature/SKILL.md
+    ├── plan-feature/SKILL.md
+    └── release-project/SKILL.md
+```
 
 ### Agent Configuration Files (``-agent.md` (YAML config + detailed documentation)`)
-These are **operational files** discovered and used by VS Code:
-- `product-owner`-agent.md` (YAML config + detailed documentation)` - Product Owner Agent (YAML config + detailed documentation)
-- `architect`-agent.md` (YAML config + detailed documentation)` - Architect Agent (YAML config + detailed documentation)
-- `developer`-agent.md` (YAML config + detailed documentation)` - Developer Agent (YAML config + detailed documentation)
-- `tester`-agent.md` (YAML config + detailed documentation)` - Tester & Validator Agent (YAML config + detailed documentation)
+These are **operational files** discovered and used by opencode:
+- `.opencode/agents/product-owner-agent.md` (YAML config + detailed documentation) - Product Owner Agent (YAML config + detailed documentation)
+- `.opencode/agents/architect-agent.md` (YAML config + detailed documentation) - Architect Agent (YAML config + detailed documentation)
+- `.opencode/agents/developer-agent.md` (YAML config + detailed documentation) - Developer Agent (YAML config + detailed documentation)
+- `.opencode/agents/tester-agent.md` (YAML config + detailed documentation) - Tester & Validator Agent (YAML config + detailed documentation)
 
 Each file contains:
-- **YAML frontmatter** with tool configurations (used by VS Code)
+- **YAML frontmatter** with tool configurations, constraints, handoffs, and skills
 - **Markdown body** with purpose, responsibilities, input/output formats, constraints, and decision rules
 
 ### Reference Documentation
+- `.opencode/skills/*/SKILL.md` - Workflow reference documents used by agents
 - `AGENTS_WORKFLOW.md` (this file) - Strategic overview, workflow diagrams, quality gates, and cross-agent context
 
 ## �🔄 Workflow
@@ -396,10 +414,10 @@ Feature complete
 
 ## 🔗 Related Files
 
-- `.github/agents/product-owner`-agent.md` (YAML config + detailed documentation)` - Product Owner Agent configuration
-- `.github/agents/architect`-agent.md` (YAML config + detailed documentation)` - Architect Agent configuration
-- `.github/agents/developer`-agent.md` (YAML config + detailed documentation)` - Developer Agent configuration
-- `.github/agents/tester`-agent.md` (YAML config + detailed documentation)` - Tester & Validator Agent configuration
+- `.opencode/agents/product-owner-agent.md` (YAML config + detailed documentation) - Product Owner Agent configuration
+- `.opencode/agents/architect-agent.md` (YAML config + detailed documentation) - Architect Agent configuration
+- `.opencode/agents/developer-agent.md` (YAML config + detailed documentation) - Developer Agent configuration
+- `.opencode/agents/tester-agent.md` (YAML config + detailed documentation) - Tester & Validator Agent configuration
 - `README.md` - Project documentation
 - `doc/ARCHITECTURE.md` - System architecture
 - `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")
@@ -409,7 +427,7 @@ Feature complete
 ## 🚨 Troubleshooting
 
 ### Agent Not Responding
-- Verify agent file exists in `.github/agents/`
+- Verify agent file exists in `.opencode/agents/`
 - Check YAML frontmatter is valid
 - Ensure agent name matches references
 

@@ -3,11 +3,11 @@ name: architect-agent
 description: Translate requirements into structured technical design and implementation plans
 role: architect
 temperature: 0.5
-tools:
-  - codebase
-  - search
-  - readFile
-  - listFiles
+permission:
+  read: allow
+  grep: allow
+  glob: allow
+  list: allow
 constraints:
   - Must NOT change requirements
   - Must NOT implement code

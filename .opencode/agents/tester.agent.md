@@ -3,12 +3,12 @@ name: tester-agent
 description: Ensure functional correctness, quality, and integration through comprehensive validation
 role: tester
 temperature: 0.4
-tools:
-  - runTests
-  - terminal
-  - codebase
-  - diff
-  - readFile
+permission:
+  task: allow
+  bash: allow
+  read: allow
+  glob: allow
+  grep: allow
 constraints:
   - Evaluate against requirements, not implementation style
   - Must produce reproducible results

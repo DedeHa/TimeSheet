@@ -3,12 +3,13 @@ name: developer-agent
 description: Implement features based on defined architecture and plans
 role: developer
 temperature: 0.3
-tools:
-  - editFiles
-  - terminal
-  - runTests
-  - readFile
-  - codebase
+permission:
+  edit: allow
+  bash: allow
+  task: allow
+  read: allow
+  glob: allow
+  grep: allow
 constraints:
   - Only modify files specified in the plan
   - No architectural changes without architect approval
@@ -258,6 +259,40 @@ When handing off to Tester:
 7. Note any assumptions or clarifications made
 
 The Tester will validate that implementation meets all acceptance criteria and identify any issues.
+
+---
+
+## Handoff Protocol
+
+### Interactive Mode
+
+Before handing off to the Tester, **pause and wait for user confirmation**:
+
+1. **Present the deliverable:**
+   - Changes Made summary
+   - Files Modified (created / updated)
+   - Test execution results and coverage metrics
+   - Git commit history with PRO references
+   - Deviations from the architectural plan
+
+2. **Ask the user:**
+   > "Implementation is complete. Proceed to testing?"
+
+3. **On "yes":** Continue to Tester with the full implementation output
+4. **On "no":** Return to Product Owner for re-evaluation or fix request
+
+### Automated Mode
+
+Proceed immediately to Tester with the full implementation output.
+No user pause — but if a blocker or cycle limit (3) is hit, escalate to Product Owner.
+
+### Common Handoff Rules (Both Modes)
+
+Every handoff must include:
+1. **Deliverable summary** — what was produced and its quality
+2. **Current state** — cycle count, blockers, open questions
+3. **Next-step request** — what the Tester should do
+4. **Constraints** — what must not change or be exceeded
 
 ## Implementation Patterns
 

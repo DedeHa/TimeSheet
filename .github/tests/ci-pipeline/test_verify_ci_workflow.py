@@ -285,14 +285,23 @@ def test_test_job_runs_on_prs_tags_and_dispatch():
 
 
 def test_pipeline_graph():
-    """Jobs are check, test, deploy, publish; check and test run in parallel."""
+    """Jobs are check, test, deploy, publish, and agents (independent)."""
     workflow = _workflow()
-    assert set(workflow["jobs"]) == {"check", "test", "deploy", "publish"}
+    assert set(workflow["jobs"]) == {"check", "test", "deploy", "publish", "agents"}
     # O1: the test job no longer depends on check, so they run in parallel.
     assert "needs" not in workflow["jobs"]["test"]
     assert workflow["jobs"]["deploy"]["needs"] == ["check", "test"]
-    # The publish job depends on the gating jobs and reports their results.
-    assert set(workflow["jobs"]["publish"]["needs"]) >= {"check", "test"}
+    # The publish job depends on the gating jobs and the agents job and
+    # reports their results.
+    assert set(workflow["jobs"]["publish"]["needs"]) >= {
+        "check",
+        "test",
+        "deploy",
+        "agents",
+    }
+    # The agents job is independent of the test job and runs the agent-system tests.
+    assert "agents" in workflow["jobs"]
+    assert workflow["jobs"]["agents"]["name"] == "Agent System Tests"
 
 
 def test_publish_job_always_runs():

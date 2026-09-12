@@ -195,6 +195,61 @@ jobs:
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html
 
+  agents:
+    name: Agent System Tests
+    runs-on: ubuntu-latest
+    # Independent of the application test job: agent tests live under
+    # .github/tests/agents/ and do not affect the 103-test application suite
+    # or the coverage gate. Run on PRs (to master or release/**), release
+    # tags (so the quality gate is enforced before deploy), and manual
+    # dispatch. The PR summary is published by the separate `publish` job,
+    # so this job only runs the agent tests and uploads the report as an
+    # artifact.
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    environment: staging
+    # Least-privilege token: only read the repo (checkout).
+    permissions:
+      contents: read
+
+    steps:
+      # Checkout must run before the local composite action: a local
+      # action cannot be resolved until the repository is already on the runner.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python-deps
+        with:
+          python-version: '3.14'
+
+      - name: Prepare report directory
+        run: mkdir -p tests/reports
+
+      # Agent-system tests live under .github/tests/agents/ (separate from
+      # the 103-test application suite and the coverage gate). Reported as
+      # its own "Agent System Tests" level in the summary.
+      - name: Run agent tests
+        run: pytest -q .github/tests/agents/ --junitxml=tests/reports/agent-results.xml
+
+      # Additive (PRO-337): export machine-readable coverage for the PR summary.
+      # Runs even if an earlier level failed so the summary always has coverage
+      # data; --fail-under=0 keeps this step green - the real 90% quality gate is
+      # still enforced by the step below, so existing behaviour is unchanged.
+      - name: Export machine-readable coverage
+        if: always()
+        run: coverage json -o tests/reports/agent-coverage.json --fail-under=0
+
+      - name: Upload agent test results
+        uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: agent-test-results
+          path: |
+            tests/reports/agent-results.xml
+            tests/reports/agent-coverage.json
+
   deploy:
     name: Build & Deploy to Production
     runs-on: ubuntu-latest
@@ -203,8 +258,8 @@ jobs:
     environment: production
 
     steps:
-      # Checkout must run before the local composite action: a local action
-      # cannot be resolved until the repository is present on the runner.
+      # Checkout must run before the local composite action: a local
+      # action cannot be resolved until the repository is already on the runner.
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
@@ -224,7 +279,7 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
-    needs: [check, test, deploy]
+    needs: [check, test, deploy, agents]
     if: always()
     permissions:
       contents: read

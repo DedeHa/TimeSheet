@@ -55,8 +55,11 @@ The user/PO must answer **all three**:
 
 ### 4. Update ticket fields based on user/PO decisions
 
+- **Priority** (`priority`): Set to Medium (default) or High if release-critical
+- **Epic Link** (`customfield_10014`): Link to parent Epic (e.g. `PRO-259`)
 - **Sprint** (`customfield_10020`): Set to active sprint if "sprint", leave unset if "backlog"
 - **Assignee**: Set if developer assigned, leave unassigned otherwise
+- **Fix Version** (`fixVersions`): Target release version (e.g. `v4.3.0`)
 - **Status**: Keep at "Zu erledigen" — development starts only when dev begins Phase 1 of develop-feature skill
 
 ### 5. Review the intended feature ticket setup
@@ -304,7 +307,12 @@ When creating a new Story ticket:
 - [ ] **Common stakeholder review** completed (PO, developer, architect, tester)
 - [ ] Acceptance Criteria are numbered (AC-1, AC-2, ...) and testable
 - [ ] Definition of Done is a `- [ ]` checklist
-- [ ] **Story Points assigned** before sprint inclusion or development pickup
+- [ ] **Priority** set to Medium (or High for release-critical)
+- [ ] **Epic Link** set to parent epic (e.g. `PRO-259`)
+- [ ] **Fix Version** set to target release (e.g. `v4.3.0`)
+- [ ] **Sprint / Backlog** placement decided (user/PO confirms: sprint or backlog)
+- [ ] Assignee set (or confirmed unassigned)
+- [ ] Story Points assigned before sprint inclusion or development pickup
 - [ ] References / `Refs: PRO-XXX` footer present
 
 ---

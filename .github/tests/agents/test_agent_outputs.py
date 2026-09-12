@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 
 _REPO = Path(__file__).resolve().parents[3]
-_AGENTS_DIR = _REPO / ".github" / "agents"
+_AGENTS_DIR = _REPO / ".opencode" / "agents"
 _SKILLS_DIR = _REPO / ".opencode" / "skills"
 
 
@@ -41,7 +41,7 @@ def _agent_body(agent_name: str) -> str:
     content = path.read_text()
     m = re.match(r"^---\s*\n.*?\n---", content, re.DOTALL)
     assert m, f"No frontmatter in {path}"
-    return content[m.end():].strip()
+    return content[m.end() :].strip()
 
 
 # ---------------------------------------------------------------------------

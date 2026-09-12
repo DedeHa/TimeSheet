@@ -1,6 +1,6 @@
 # Implementation Plan PRO-376: Expand Agent-System Test Coverage with Full Pipeline Simulation
 
-**Status:** In Progress  
+**Status:** Implementation Complete - Awaiting PR Merge and JIRA Closure  
 **Epic Link:** PRO-259  
 **Parent:** PRO-259 (In Arbeit)  
 **Fix Version:** v4.3.0  
@@ -184,9 +184,9 @@ No new configuration knobs. Mode detection uses conversational patterns and pers
 5. ✅ Update agent and skill integration
 6. ✅ Update existing agent tests
 7. ✅ Run final verification: `pytest -q .github/tests/agents/`, `pytest -q .github/tests/`, lint checks, traceability
-8. ⬜ Commit with Conventional Commits + `Refs: PRO-376`
-9. ⬜ Push feature branch and open Pull Request
-10. ⬜ Update JIRA with checkmarked ACs/DoD
+8. ✅ Commit with Conventional Commits + `Refs: PRO-376`
+9. ✅ Push feature branch and open Pull Request (#116)
+10. ✅ Update JIRA with checkmarked ACs/DoD
 11. ⬜ Transition JIRA to Fertig after user/PO confirmation
 
 ## Non-Goals

@@ -15,6 +15,8 @@ PRO-368 (Optimize Python CI Workflow Performance and Maintainability) implemente
 
 PRO-379 (dashboard) and PRO-380 (statistics) depend on structured JSON data — CSV-only output limits consumer flexibility. This ticket refactors the pipeline to produce machine-readable JSON alongside CSV, stores data in a top-level `data/` folder on master as the sole source of truth, and preserves all data perspectives (job, PR, branch).
 
+**Architecture:** See `doc/03_Architecture_PRO-375.md` for detailed technical design.
+
 ## Goal
 
 Refactor the CI timing data collection pipeline to produce structured JSON:

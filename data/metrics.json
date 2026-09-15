@@ -1,0 +1,47 @@
+{
+  "schema_version": "v1.0",
+  "generated_at": "2026-09-15T20:14:03.757428Z",
+  "ready": {
+    "check / <job total>": {
+      "n": 3,
+      "mean": 30.0,
+      "stddev": 0.0,
+      "median": 30.0,
+      "p95": 30.0,
+      "min": 30.0,
+      "max": 30.0,
+      "last": 30.0
+    },
+    "check / Run lint tools": {
+      "n": 3,
+      "mean": 15.0,
+      "stddev": 0.0,
+      "median": 15.0,
+      "p95": 15.0,
+      "min": 15.0,
+      "max": 15.0,
+      "last": 15.0
+    },
+    "test / <job total>": {
+      "n": 3,
+      "mean": 40.0,
+      "stddev": 0.0,
+      "median": 40.0,
+      "p95": 40.0,
+      "min": 40.0,
+      "max": 40.0,
+      "last": 40.0
+    },
+    "test / Run unit tests": {
+      "n": 3,
+      "mean": 30.0,
+      "stddev": 0.0,
+      "median": 30.0,
+      "p95": 30.0,
+      "min": 30.0,
+      "max": 30.0,
+      "last": 30.0
+    }
+  },
+  "withheld": {}
+}

@@ -143,6 +143,154 @@ def test_dedup_keeps_latest_attempt():
     assert out[0]["run_attempt"] == 2
 
 
+def test_extract_rows_includes_branch():
+    """branch field is present in all rows from extract_rows."""
+    rows = mod.extract_rows(_run_meta(), _jobs())
+    assert len(rows) > 0
+    for r in rows:
+        assert "branch" in r, f"row missing branch field: {r}"
+        assert r["branch"] == "master", f"unexpected branch: {r['branch']}"
+
+
+def test_write_json_creates_file(tmp_path):
+    """write_json() creates data/runtimes.json with correct schema."""
+    import json
+
+    path = tmp_path / "runtimes.json"
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "feature/PRO-375",
+    }
+    rows = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "feature/PRO-375",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    mod.write_json(rows, run_meta, path)
+    assert path.exists(), "write_json did not create the file"
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert data["schema_version"] == "v1.0"
+    assert "generated_at" in data
+    assert "runs" in data
+    assert len(data["runs"]) == 1
+    assert data["runs"][0]["run_id"] == 100
+
+
+def test_write_json_deduplicates(tmp_path):
+    """write_json() deduplicates by (run_id, job_name, step_number)."""
+    import json
+
+    path = tmp_path / "runtimes.json"
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 2,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "master",
+    }
+    rows_a = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    rows_b = [
+        {
+            "run_id": 100,
+            "run_attempt": 2,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 12.0,
+            "conclusion": "success",
+            "cache_state": "hit",
+        }
+    ]
+    mod.write_json(rows_a, run_meta, path)
+    mod.write_json(rows_b, run_meta, path)
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert len(data["runs"]) == 1
+    assert data["runs"][0]["duration_s"] == 12.0
+    assert data["runs"][0]["run_attempt"] == 2
+
+
+def test_write_json_schema_version(tmp_path):
+    """write_json() output has schema_version v1.0."""
+    import json
+
+    path = tmp_path / "runtimes.json"
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "master",
+    }
+    rows = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    mod.write_json(rows, run_meta, path)
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert data["schema_version"] == "v1.0"
+
+
 if __name__ == "__main__":
     import pytest
 

@@ -31,6 +31,9 @@ from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = ROOT / "data"
+
+from validator import validate_json  # noqa: E402
 
 #: CSV column order (kept stable; consumers rely on it).
 FIELDS = [
@@ -46,6 +49,7 @@ FIELDS = [
     "duration_s",
     "conclusion",
     "cache_state",
+    "branch",
 ]
 
 #: GitHub's synthetic housekeeping steps, excluded from timing by default.
@@ -103,6 +107,7 @@ def extract_rows(
         "head_sha": run_meta.get("head_sha", ""),
         "workflow_sha": run_meta.get("workflow_sha", ""),
         "created_at": run_meta.get("created_at", ""),
+        "branch": run_meta.get("branch", "master"),
         "cache_state": run_meta.get("cache_state", "unknown"),
     }
 
@@ -184,6 +189,53 @@ def write_csv(path: Path, rows: list[dict]) -> None:
             writer.writerow({k: row.get(k, "") for k in FIELDS})
 
 
+def _utc_now() -> str:
+    """Return the current UTC timestamp in ISO-8601 format."""
+    return (
+        datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+    )
+
+
+def write_json(rows: list[dict], run_meta: dict, path: Path) -> None:
+    """Append run data to a JSON dataset with the v1.0 schema wrapper.
+
+    Reads existing JSON data, appends new rows, deduplicates by
+    ``(run_id, job_name, step_number)`` with the latest attempt winning,
+    validates the result, and writes it back with ``schema_version`` and
+    ``generated_at``. Validation failures are logged as warnings and the write
+    is skipped to preserve the non-gating invariant.
+    """
+    existing: dict = {"schema_version": "v1.0", "generated_at": "", "runs": []}
+    if path.exists():
+        try:
+            with open(path, encoding="utf-8") as fh:
+                loaded = json.load(fh)
+            if isinstance(loaded, dict):
+                existing = loaded
+        except (OSError, json.JSONDecodeError) as exc:
+            print(
+                f"WARNING: unable to read existing JSON at {path}: {exc}",
+                file=sys.stderr,
+            )
+            return
+
+    merged = dedup_latest_attempt(existing.get("runs", []) + rows)
+    payload = {
+        "schema_version": "v1.0",
+        "generated_at": _utc_now(),
+        "runs": merged,
+    }
+    errors = validate_json(payload)
+    if errors:
+        print(f"WARNING: invalid JSON data for {path}: {errors}", file=sys.stderr)
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2)
+        fh.write("\n")
+
+
 def _gh_api(path: str) -> object:
     """Fetch JSON from the GitHub API via the ``gh`` CLI (thin, untested wrapper)."""
     out = subprocess.run(
@@ -223,10 +275,14 @@ def main() -> None:
         "workflow_sha": run.get("workflow_sha", ""),
         "created_at": run.get("created_at", ""),
         "conclusion": run.get("conclusion"),
+        "branch": os.environ.get("GITHUB_HEAD_REF")
+        or os.environ.get("GITHUB_REF_NAME")
+        or "master",
     }
     new_rows = extract_rows(run_meta, jobs.get("jobs", []))
     merged = dedup_latest_attempt(read_csv(csv_path) + new_rows)
     write_csv(csv_path, merged)
+    write_json(new_rows, run_meta, DATA_DIR / "runtimes.json")
     print(
         f"collected {len(new_rows)} rows from run {run_id}; dataset now {len(merged)}"
     )

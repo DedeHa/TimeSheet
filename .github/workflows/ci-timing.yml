@@ -59,6 +59,14 @@ on:
         options:
           - 'false'
           - 'true'
+      update_data:
+        description: 'Also write JSON data to the master branch data/ folder. Off = ci-metrics only.'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 # Avoid racing on the same orphan branch when two backfills are dispatched.
 concurrency:
@@ -74,6 +82,7 @@ env:
   MIN_SAMPLES: ${{ inputs.min_samples || '3' }}
   INCLUDE_HOUSEKEEPING: ${{ inputs.include_housekeeping || 'false' }}
   METRICS_BRANCH: ci-metrics
+  UPDATE_DATA: ${{ inputs.update_data || 'false' }}
 
 jobs:
   collect:
@@ -219,6 +228,22 @@ jobs:
           git -c user.name=github-actions -c user.email=actions@github.com add ci-timings.csv CI_TIMING_REPORT.md
           git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update CI timings dataset and report"
           git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin "$METRICS_BRANCH"
+
+      - name: Write data/ to master (conditional)
+        if: env.UPDATE_DATA == 'true'
+        run: |
+          set -euo pipefail
+          # Commit data/runtimes.json and data/metrics.json to master branch
+          # Separate commit from ci-metrics to prevent loop
+          # The data/ folder lives at the project root on master
+          if [ -f data/runtimes.json ] || [ -f data/metrics.json ]; then
+            echo "JSON files exist in data/ folder"
+            git -c user.name=github-actions -c user.email=actions@github.com add data
+            git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update data/ folder with JSON outputs"
+            git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin master
+          else
+            echo "No JSON files found in data/ folder; skipping commit."
+          fi
 
       - name: Upload report artifact
         if: always()

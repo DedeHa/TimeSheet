@@ -1,8 +1,8 @@
 # Implementation Plan PRO-374: Expand Agent-System Test Coverage with Dedicated Job and Comprehensive Tests
 
-**Status:** In Progress  
+**Status:** ✅ Done  
 **Epic Link:** PRO-259  
-**Parent:** PRO-259 (In Arbeit)  
+**Parent:** PRO-259 (Fertig)  
 **Fix Version:** v4.3.0  
 **Priority:** Medium  
 **Story Points:** 5  

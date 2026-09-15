@@ -28,9 +28,13 @@ if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
 import collect_ci_timings as c  # noqa: E402
+from validator import validate_json  # noqa: E402
 
 #: Target workflow name; runs of any other workflow are out of scope.
 TARGET_WORKFLOW = "Python CI"
+
+ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = ROOT / "data"
 
 
 def _gh_api(path: str) -> object:
@@ -61,6 +65,105 @@ def list_successful_pr_runs(repo: str) -> Iterable[dict]:
     for run in runs:
         if run.get("conclusion") == "success":
             yield run
+
+
+def _utc_now() -> str:
+    """Return the current UTC timestamp in ISO-8601 format."""
+    import datetime
+
+    return (
+        datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+    )
+
+
+def _write_json(runs: list[dict], path: Path) -> None:
+    """Write runs to a JSON file with the v1.0 schema wrapper.
+
+    Reads existing JSON data, appends new runs, deduplicates by
+    ``(run_id, job_name, step_number)`` with the latest attempt winning,
+    validates the result, and writes it back with ``schema_version`` and
+    ``generated_at``. Validation failures are logged as warnings and the write
+    is skipped to preserve the non-gating invariant.
+    """
+    existing: dict = {"schema_version": "v1.0", "generated_at": "", "runs": []}
+    if path.exists():
+        try:
+            with open(path, encoding="utf-8") as fh:
+                loaded = json.load(fh)
+            if isinstance(loaded, dict):
+                existing = loaded
+        except (OSError, json.JSONDecodeError) as exc:
+            print(
+                f"WARNING: unable to read existing JSON at {path}: {exc}",
+                file=sys.stderr,
+            )
+            return
+
+    merged = c.dedup_latest_attempt(existing.get("runs", []) + runs)
+    payload = {
+        "schema_version": "v1.0",
+        "generated_at": _utc_now(),
+        "runs": merged,
+    }
+    errors = validate_json(payload)
+    if errors:
+        print(f"WARNING: invalid JSON data for {path}: {errors}", file=sys.stderr)
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2)
+        fh.write("\n")
+
+
+def migrate_csv_to_json(csv_path: Path, json_path: Path) -> int:
+    """Migrate a CSV dataset to the JSON runtime format.
+
+    Args:
+        csv_path: Path to the source CSV file
+        json_path: Path to the destination JSON file
+
+    Returns:
+        Number of rows migrated
+
+    Raises:
+        ValueError: If the source and destination row counts do not match
+    """
+    rows = c.read_csv(csv_path)
+    # CSV parsing yields strings for all fields; the JSON schema requires
+    # numeric types for duration_s and step_number. Convert where possible
+    # so valid data passes validation, while invalid strings are left in place
+    # so the validator can report them.
+    typed_rows = []
+    for row in rows:
+        typed = dict(row)
+        if "duration_s" in row:
+            try:
+                typed["duration_s"] = float(row["duration_s"])
+            except (TypeError, ValueError):
+                pass  # leave original string so validator can report the error
+        if "step_number" in row:
+            try:
+                typed["step_number"] = int(row["step_number"])
+            except (TypeError, ValueError):
+                pass  # leave original string so validator can report the error
+        typed_rows.append(typed)
+
+    payload = {
+        "schema_version": "v1.0",
+        "generated_at": _utc_now(),
+        "runs": typed_rows,
+    }
+    errors = validate_json(payload)
+    if errors:
+        raise ValueError(f"invalid JSON data for {json_path}: {errors}")
+
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(json_path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2)
+        fh.write("\n")
+
+    return len(rows)
 
 
 def backfill(repo: str, csv_path: Path, *, include_housekeeping: bool = False) -> int:
@@ -104,6 +207,8 @@ def backfill(repo: str, csv_path: Path, *, include_housekeeping: bool = False) -
             "workflow_sha": run.get("workflow_sha", ""),
             "created_at": run.get("created_at", ""),
             "conclusion": run.get("conclusion"),
+            "branch": run.get("head_branch", "master"),
+            "cache_state": "unknown",
         }
         for row in c.extract_rows(
             run_meta,
@@ -124,6 +229,7 @@ def backfill(repo: str, csv_path: Path, *, include_housekeeping: bool = False) -
 
     merged = c.dedup_latest_attempt(list(existing_by_key.values()) + new_rows)
     c.write_csv(csv_path, merged)
+    _write_json(new_rows, DATA_DIR / "runtimes.json")
     print(
         f"backfilled {runs_seen} qualifying runs; added {len(new_rows)} new rows; "
         f"dataset now {len(merged)}"
@@ -132,7 +238,12 @@ def backfill(repo: str, csv_path: Path, *, include_housekeeping: bool = False) -
 
 
 def main() -> None:
-    """Usage: ``backfill_ci_timings.py --repo OWNER/NAME --csv PATH``."""
+    """Usage: ``backfill_ci_timings.py --repo OWNER/NAME --csv PATH``.
+
+    Optional flags:
+      --migrate: migrate CSV to JSON instead of running the backfill
+      --json-path: destination for JSON migration (default: data/runtimes.json)
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--repo",
@@ -145,7 +256,22 @@ def main() -> None:
         action="store_true",
         help="include GitHub housekeeping steps (Set up job / Post ...)",
     )
+    parser.add_argument(
+        "--migrate",
+        action="store_true",
+        help="migrate CSV to JSON instead of running the backfill",
+    )
+    parser.add_argument(
+        "--json-path",
+        default=str(DATA_DIR / "runtimes.json"),
+        help="destination for JSON migration",
+    )
     args = parser.parse_args()
+
+    if args.migrate:
+        count = migrate_csv_to_json(Path(args.csv), Path(args.json_path))
+        print(f"migrated {count} rows from {args.csv} -> {args.json_path}")
+        return
 
     csv_path = Path(args.csv)
     backfill(args.repo, csv_path, include_housekeeping=args.include_housekeeping)

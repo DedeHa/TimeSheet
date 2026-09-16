@@ -253,7 +253,16 @@ def test_write_json_skips_on_corrupt_existing(tmp_path):
     old_stderr = sys.stderr
     sys.stderr = StringIO()
     try:
-        bf._write_json([{"run_id": 100, "run_attempt": 1, "job_name": "check", "step_number": 2, "duration_s": 15.0}], path)
+        sample = [
+            {
+                "run_id": 100,
+                "run_attempt": 1,
+                "job_name": "check",
+                "step_number": 2,
+                "duration_s": 15.0,
+            }
+        ]
+        bf._write_json(sample, path)
         output = sys.stderr.getvalue()
     finally:
         sys.stderr = old_stderr

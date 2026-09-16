@@ -488,80 +488,86 @@ class PipelineManager:
 
 def main():
     """Main entry point for pipeline management tool."""
-    parser = argparse.ArgumentParser(description="Enhanced pipeline management tool")
-    
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-    
-    # State management commands
-    def add_state_commands():
-        state_parser = subparsers.add_parser("show state", help="Show current pipeline state")
-        state_parser.add_argument("ticket", help="JIRA ticket key")
-        state_parser.set_defaults(func=lambda args: manager.show_state(args.ticket))
-        
-        reset_parser = subparsers.add_parser("reset", help="Reset pipeline to initial state")
-        reset_parser.add_argument("ticket", help="JIRA ticket key")
-        reset_parser.add_argument("--force", action="store_true", help="Confirm reset")
-        reset_parser.set_defaults(func=lambda args: manager.reset(args.ticket, args.force))
-        
-        history_parser = subparsers.add_parser("history", help="Show pipeline history")
-        history_parser.add_argument("ticket", help="JIRA ticket key")
-        history_parser.set_defaults(func=lambda args: manager.get_history(args.ticket))
-    
-    # Enhanced workflow commands
-    def add_workflow_commands():
-        # Resume/continue/proceed commands
-        resume_parser = subparsers.add_parser("resume", help="Resume pipeline at current step")
-        resume_parser.add_argument("ticket", help="JIRA ticket key")
-        resume_parser.add_argument("--force", action="store_true", help="Force resume without validation")
-        resume_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
-        
-        continue_parser = subparsers.add_parser("continue", help="Advance to next pipeline step")
-        continue_parser.add_argument("ticket", help="JIRA ticket key")
-        continue_parser.add_argument("--force", action="store_true", help="Force advance without validation")
-        continue_parser.set_defaults(func=lambda args: manager.continue_step(args.ticket, args.force))
-        
-        proceed_parser = subparsers.add_parser("proceed", help="Proceed with current step execution")
-        proceed_parser.add_argument("ticket", help="JIRA ticket key")
-        proceed_parser.add_argument("--force", action="store_true", help="Force proceed without validation")
-        proceed_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
-        
-        what_missed_parser = subparsers.add_parser("what-missed", help="Show what work was missed")
-        what_missed_parser.add_argument("ticket", help="JIRA ticket key")
-        what_missed_parser.set_defaults(func=lambda args: manager.what_missed(args.ticket))
-        
-        # Inspection and monitoring
-        dry_run_parser = subparsers.add_parser("dry-run", help="Preview action without executing")
-        dry_run_parser.add_argument("ticket", help="JIRA ticket key")
-        dry_run_parser.add_argument("action", help="Action to preview (show_state, resume, what_missed, continue)")
-        dry_run_parser.set_defaults(func=lambda args: manager.dry_run(args.ticket, args.action))
-        
-        check_stuck_parser = subparsers.add_parser("check-stuck", help="Detect stuck pipelines")
-        check_stuck_parser.add_argument("ticket", help="JIRA ticket key")
-        check_stuck_parser.set_defaults(func=lambda args: manager.check_stuck(args.ticket))
-        
-        # Mode management
-        set_mode_parser = subparsers.add_parser("set-mode", help="Set development mode")
-        set_mode_parser.add_argument("ticket", help="JIRA ticket key")
-        set_mode_parser.add_argument("mode", help="Mode: 'interactive' or 'automated'")
-        set_mode_parser.set_defaults(func=lambda args: manager.set_mode(args.ticket, args.mode))
-        
-        get_mode_parser = subparsers.add_parser("get-mode", help="Get persisted mode")
-        get_mode_parser.add_argument("ticket", help="JIRA ticket key")
-        get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
-    
-    # Initialize manager
+    # Parse raw args to handle space-separated commands like "show state"
+    raw_args = sys.argv[1:]
+
+    # Build a clean args list that argparse can handle
+    clean_args = []
+    i = 0
+    while i < len(raw_args):
+        arg = raw_args[i]
+        if arg == "show" and i + 1 < len(raw_args) and raw_args[i + 1] == "state":
+            # "show state" -> "showstate"
+            clean_args.append("showstate")
+            i += 2
+        else:
+            clean_args.append(arg)
+            i += 1
+
+    # Initialize manager first so lambdas can reference it
     manager = PipelineManager()
-    
-    # Add commands
-    add_state_commands()
-    add_workflow_commands()
-    
+
+    parser = argparse.ArgumentParser(description="Enhanced pipeline management tool")
+    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+
+    # State management
+    showstate_parser = subparsers.add_parser("showstate", help="Show current pipeline state")
+    showstate_parser.add_argument("ticket", help="JIRA ticket key")
+    showstate_parser.set_defaults(func=lambda args: manager.show_state(args.ticket))
+
+    reset_parser = subparsers.add_parser("reset", help="Reset pipeline to initial state")
+    reset_parser.add_argument("ticket", help="JIRA ticket key")
+    reset_parser.add_argument("--force", action="store_true", help="Confirm reset")
+    reset_parser.set_defaults(func=lambda args: manager.reset(args.ticket, args.force))
+
+    history_parser = subparsers.add_parser("history", help="Show pipeline history")
+    history_parser.add_argument("ticket", help="JIRA ticket key")
+    history_parser.set_defaults(func=lambda args: manager.get_history(args.ticket))
+
+    # Enhanced workflow commands
+    resume_parser = subparsers.add_parser("resume", help="Resume pipeline at current step")
+    resume_parser.add_argument("ticket", help="JIRA ticket key")
+    resume_parser.add_argument("--force", action="store_true", help="Force resume without validation")
+    resume_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
+
+    continue_parser = subparsers.add_parser("continue", help="Advance to next pipeline step")
+    continue_parser.add_argument("ticket", help="JIRA ticket key")
+    continue_parser.add_argument("--force", action="store_true", help="Force advance without validation")
+    continue_parser.set_defaults(func=lambda args: manager.continue_step(args.ticket, args.force))
+
+    proceed_parser = subparsers.add_parser("proceed", help="Proceed with current step execution")
+    proceed_parser.add_argument("ticket", help="JIRA ticket key")
+    proceed_parser.add_argument("--force", action="store_true", help="Force proceed without validation")
+    proceed_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
+
+    what_missed_parser = subparsers.add_parser("what-missed", help="Show what work was missed")
+    what_missed_parser.add_argument("ticket", help="JIRA ticket key")
+    what_missed_parser.set_defaults(func=lambda args: manager.what_missed(args.ticket))
+
+    dry_run_parser = subparsers.add_parser("dry-run", help="Preview action without executing")
+    dry_run_parser.add_argument("ticket", help="JIRA ticket key")
+    dry_run_parser.add_argument("action", help="Action to preview (resume, continue, proceed)")
+    dry_run_parser.set_defaults(func=lambda args: manager.dry_run(args.ticket, args.action))
+
+    check_stuck_parser = subparsers.add_parser("check-stuck", help="Detect stuck pipelines")
+    check_stuck_parser.add_argument("ticket", help="JIRA ticket key")
+    check_stuck_parser.set_defaults(func=lambda args: manager.check_stuck(args.ticket))
+
+    set_mode_parser = subparsers.add_parser("set-mode", help="Set development mode")
+    set_mode_parser.add_argument("ticket", help="JIRA ticket key")
+    set_mode_parser.add_argument("mode", help="Mode: 'interactive' or 'automated'")
+    set_mode_parser.set_defaults(func=lambda args: manager.set_mode(args.ticket, args.mode))
+
+    get_mode_parser = subparsers.add_parser("get-mode", help="Get persisted mode")
+    get_mode_parser.add_argument("ticket", help="JIRA ticket key")
+    get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
+
     # Parse and execute
-    args = parser.parse_args()
+    args = parser.parse_args(clean_args)
     if not hasattr(args, 'func'):
         parser.print_help()
         return
-    
+
     try:
         args.func(args)
     except Exception as e:

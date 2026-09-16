@@ -107,6 +107,7 @@ class SummaryData:
     test_result: str
     levels: list[LevelStats]
     coverage_percent: Optional[float]
+    ci_coverage_percent: Optional[float]
     run_url: Optional[str] = None
     traceability_coverage: Optional[float] = None
     generated_at: Optional[str] = None
@@ -224,6 +225,25 @@ def read_traceability_coverage(reports_dir: Path) -> Optional[float]:
     return float(match.group(1)) if match else None
 
 
+def read_ci_coverage(reports_dir: Path) -> Optional[float]:
+    """Return the CI pipeline code coverage % from ``agent-coverage.json``.
+
+    The ``agents`` job runs ``coverage json -o tests/reports/agent-coverage.json``
+    on the ``.github/tests`` suite. This reads the combined ``percent_covered``
+    from that file, or ``None`` when it is missing or unparseable.
+    """
+    path = reports_dir / "agent-coverage.json"
+    if not path.exists():
+        return None
+    try:
+        import json
+
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return float(data["totals"]["percent_covered"])
+    except (ValueError, KeyError, OSError):
+        return None
+
+
 def read_traceability_matrix_md(reports_dir: Path) -> Optional[str]:
     """Return the full traceability matrix Markdown, or ``None`` when missing."""
     path = reports_dir / TRACEABILITY_MD
@@ -292,16 +312,17 @@ def _status_overview(data: SummaryData) -> list[str]:
     trace_cell = _fmt_percent(data.traceability_coverage)
     app_status, app_cell = _group_summary(_app_levels(data.levels))
     ci_status, ci_cell = _group_summary(_ci_levels(data.levels))
-    cov_cell = f"{_fmt_percent(data.coverage_percent)} (gate {COVERAGE_GATE:.0f}%)"
+    app_coverage_cell = f"{_fmt_percent(data.coverage_percent)} (gate {COVERAGE_GATE:.0f}%)"
+    traceability_coverage_cell = trace_cell
 
     return [
         "| Step | Status | Summary |",
         "| --- | --- | --- |",
         f"| Lint & Formatting | {lint_status} | — |",
-        f"| Traceability | {trace_status} | {trace_cell} |",
+        f"| Traceability | {trace_status} | {traceability_coverage_cell} |",
         f"| Application Tests | {app_status} | {app_cell} |",
         f"| CI-Pipeline Tests | {ci_status} | {ci_cell} |",
-        f"| Code Coverage | {_coverage_status(data)} | {cov_cell} |",
+        f"| Application Code Coverage | {_coverage_status(data)} | {app_coverage_cell} |",
         "| Artifacts | — | see Artifacts section |",
     ]
 
@@ -425,6 +446,14 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
         f"- Quality gate (>= {COVERAGE_GATE:.0f}%): {coverage_status}",
     ]
 
+    # CI Pipeline Coverage
+    lines += [
+        "",
+        "### CI Pipeline Coverage",
+        "",
+        f"- CI pipeline code coverage: **{_fmt_percent(data.ci_coverage_percent)}**",
+    ]
+
     # Artifacts (for all aspects)
     lines += ["", "### Artifacts"]
     if data.run_url:
@@ -463,6 +492,7 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
     levels = collect_levels(reports_dir)
     coverage = read_coverage(reports_dir)
     traceability_coverage = read_traceability_coverage(reports_dir)
+    ci_coverage = read_ci_coverage(reports_dir)
 
     run_url = None
     server = env.get("GITHUB_SERVER_URL")
@@ -485,12 +515,15 @@ def build_summary(reports_dir: Path, env: dict[str, str]) -> SummaryData:
         )
     if coverage is None:
         notes.append("Coverage data was not available for this run.")
+    if ci_coverage is None:
+        notes.append("CI pipeline coverage data was not available for this run.")
 
     return SummaryData(
         lint_result=env.get("LINT_RESULT", ""),
         test_result=env.get("TEST_RESULT", ""),
         levels=levels,
         coverage_percent=coverage,
+        ci_coverage_percent=ci_coverage,
         run_url=run_url,
         traceability_coverage=traceability_coverage,
         generated_at=generated_at,

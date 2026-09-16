@@ -213,6 +213,115 @@ def test_migrate_csv_to_json_rejects_invalid_data(tmp_path):
         raise AssertionError("Expected ValueError for invalid JSON data")
 
 
+def test_migrate_csv_to_json_validates_with_invalid_duration(tmp_path):
+    """Migration rejects rows with invalid duration_s."""
+    csv_path = tmp_path / "ci-timings.csv"
+    json_path = tmp_path / "runtimes.json"
+    rows = [
+        {
+            "run_id": "100",
+            "run_attempt": "1",
+            "pr_number": "95",
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": "2",
+            "duration_s": "not-a-number",
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    c.write_csv(csv_path, rows)
+    try:
+        bf.migrate_csv_to_json(csv_path, json_path)
+    except ValueError as exc:
+        assert "invalid JSON data" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for invalid duration")
+
+
+def test_write_json_skips_on_corrupt_existing(tmp_path):
+    """_write_json() skips the write when the existing JSON file is corrupt."""
+    import sys
+    from io import StringIO
+
+    path = tmp_path / "runtimes.json"
+    path.write_text("not valid json", encoding="utf-8")
+    old_stderr = sys.stderr
+    sys.stderr = StringIO()
+    try:
+        bf._write_json([{"run_id": 100, "run_attempt": 1, "job_name": "check", "step_number": 2, "duration_s": 15.0}], path)
+        output = sys.stderr.getvalue()
+    finally:
+        sys.stderr = old_stderr
+    assert "WARNING" in output
+    assert path.read_text(encoding="utf-8") == "not valid json"
+
+
+def test_write_json_skips_on_invalid_data(tmp_path):
+    """_write_json() skips the write when validation fails."""
+    path = tmp_path / "runtimes.json"
+    runs = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "job_name": "check",
+            "step_number": 2,
+            "duration_s": "not-a-number",
+        }
+    ]
+    bf._write_json(runs, path)
+    assert not path.exists()
+
+
+def test_main_migrate_flag(tmp_path):
+    """main() with --migrate flag calls migrate_csv_to_json."""
+    import subprocess
+
+    csv_path = tmp_path / "ci-timings.csv"
+    json_path = tmp_path / "runtimes.json"
+    rows = [
+        {
+            "run_id": "100",
+            "run_attempt": "1",
+            "pr_number": "95",
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": "2",
+            "duration_s": "15.0",
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    c.write_csv(csv_path, rows)
+    result = subprocess.run(
+        [
+            "python",
+            "-m",
+            "backfill_ci_timings",
+            "--repo",
+            "owner/repo",
+            "--csv",
+            str(csv_path),
+            "--migrate",
+            "--json-path",
+            str(json_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).resolve().parents[2] / "scripts"),
+    )
+    assert result.returncode == 0
+    assert json_path.exists()
+
+
 if __name__ == "__main__":
     import pytest
 

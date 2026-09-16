@@ -291,6 +291,185 @@ def test_write_json_schema_version(tmp_path):
     assert data["schema_version"] == "v1.0"
 
 
+def test_write_json_skips_on_corrupt_existing(tmp_path, capsys):
+    """write_json() skips the write when the existing file is corrupt."""
+    path = tmp_path / "runtimes.json"
+    path.write_text("not valid json", encoding="utf-8")
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "master",
+    }
+    rows = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    mod.write_json(rows, run_meta, path)
+    captured = capsys.readouterr()
+    assert "WARNING" in captured.err
+    # File should still be the corrupt original
+    assert path.read_text(encoding="utf-8") == "not valid json"
+
+
+def test_write_json_skips_on_invalid_data(tmp_path, capsys):
+    """write_json() skips the write when validation fails."""
+    path = tmp_path / "runtimes.json"
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "master",
+    }
+    # Second row missing conclusion — validation should fail
+    rows = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        },
+        {
+            "run_id": 100,
+            "run_attempt": 2,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 12.0,
+            "cache_state": "hit",
+        },
+    ]
+    mod.write_json(rows, run_meta, path)
+    captured = capsys.readouterr()
+    assert "WARNING" in captured.err
+    assert not path.exists()
+
+
+def test_write_json_appends_to_existing_valid(tmp_path):
+    """write_json() appends to an existing valid file."""
+    import json
+
+    path = tmp_path / "runtimes.json"
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "master",
+    }
+    rows_a = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    rows_b = [
+        {
+            "run_id": 101,
+            "run_attempt": 1,
+            "pr_number": 96,
+            "head_sha": "def456",
+            "workflow_sha": "wf456",
+            "created_at": "2026-08-21T11:00:00Z",
+            "branch": "master",
+            "job_name": "test",
+            "step_name": "Run unit tests",
+            "step_number": 2,
+            "duration_s": 30.0,
+            "conclusion": "success",
+            "cache_state": "hit",
+        }
+    ]
+    mod.write_json(rows_a, run_meta, path)
+    mod.write_json(rows_b, run_meta, path)
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert len(data["runs"]) == 2
+
+
+def test_write_json_creates_parent_dir(tmp_path):
+    """write_json() creates parent directories if needed."""
+    path = tmp_path / "nested" / "runtimes.json"
+    run_meta = {
+        "run_id": 100,
+        "run_attempt": 1,
+        "pr_number": 95,
+        "head_sha": "abc123",
+        "workflow_sha": "wf123",
+        "created_at": "2026-08-21T10:00:00Z",
+        "conclusion": "success",
+        "branch": "master",
+    }
+    rows = [
+        {
+            "run_id": 100,
+            "run_attempt": 1,
+            "pr_number": 95,
+            "head_sha": "abc123",
+            "workflow_sha": "wf123",
+            "created_at": "2026-08-21T10:00:00Z",
+            "branch": "master",
+            "job_name": "check",
+            "step_name": "Run lint tools",
+            "step_number": 2,
+            "duration_s": 15.0,
+            "conclusion": "success",
+            "cache_state": "miss",
+        }
+    ]
+    mod.write_json(rows, run_meta, path)
+    assert path.exists()
+
+
 if __name__ == "__main__":
     import pytest
 

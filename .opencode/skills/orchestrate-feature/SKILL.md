@@ -150,12 +150,97 @@ If any agent exceeds 3 cycles:
 
 ## State Commands
 
+### Basic Commands
+
 | Command | Purpose |
 |---------|---------|
 | `show state PRO-373` | Displays current pipeline state |
 | `reset pipeline PRO-373` | Resets all cycles and state |
 | `check cycles PRO-373` | Shows cycle counts |
 | `escalate PRO-373` | Triggers escalation handling |
+
+### Enhanced Commands (via `pipeline.py`)
+
+The `pipeline.py` script provides enhanced pipeline management with
+interrupted-pipeline detection, resume/continue/proceed, dry-run, and
+history tracking. All commands are invoked via:
+
+```bash
+python .opencode/scripts/pipeline.py <command> <ticket> [options]
+```
+
+#### Resume / Continue / Proceed
+
+| Command | Purpose |
+|---------|---------|
+| `resume PRO-373` | Resume pipeline at the current step (clears interruption flag) |
+| `resume PRO-373 --force` | Force resume without validation |
+| `continue PRO-373` | Advance to the next pipeline step |
+| `continue PRO-373 --force` | Force advance without validation |
+| `proceed PRO-373` | Proceed with current step execution |
+| `proceed PRO-373 --force` | Force proceed without validation |
+
+**When to use each:**
+- **`resume`**: Pipeline was interrupted mid-step. Use to clear the
+  interruption flag and attempt to complete the current step.
+- **`continue`**: Current step is done. Use to advance to the next step
+  (e.g., plan → develop).
+- **`proceed`**: Same as `resume` but emphasizes continuing the current
+  step's execution.
+
+#### Inspection & Monitoring
+
+| Command | Purpose |
+|---------|---------|
+| `what-missed PRO-373` | Show what work was missed in an interrupted pipeline |
+| `check-stuck PRO-373` | Detect and alert on stuck pipelines |
+| `dry-run PRO-373 <action>` | Preview action without executing |
+| `history PRO-373` | Show pipeline history |
+
+**What `what-missed` reveals:**
+- Which step was interrupted
+- How many cycles were expected vs. actually completed
+- What work was supposed to be done in that step
+- Whether the work is INCOMPLETE or COMPLETE
+
+**What `check-stuck` detects:**
+- Pipelines stuck in a step with 0 cycles
+- Time since interruption (1h, 12h, 24h thresholds)
+- Suggested next actions
+
+**What `dry-run` does:**
+- Simulates the action without modifying state
+- Shows what would happen
+- Useful for testing before committing
+
+#### Mode Management
+
+| Command | Purpose |
+|---------|---------|
+| `set-mode PRO-373 interactive` | Set development mode |
+| `get-mode PRO-373` | Show persisted mode |
+
+### Quick Reference: Pipeline Interruption Recovery
+
+If a pipeline was interrupted (e.g., connection loss during agent
+handoff), use this workflow:
+
+```bash
+# 1. Check what was missed
+python .opencode/scripts/pipeline.py what-missed PRO-373
+
+# 2. Check if pipeline is stuck
+python .opencode/scripts/pipeline.py check-stuck PRO-373
+
+# 3. Preview the resume action
+python .opencode/scripts/pipeline.py dry-run PRO-373 resume
+
+# 4. Resume the pipeline
+python .opencode/scripts/pipeline.py resume PRO-373
+
+# 5. Verify state
+python .opencode/scripts/pipeline.py show state PRO-373
+```
 
 ## Integration with Other Skills
 

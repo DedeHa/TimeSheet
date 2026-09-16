@@ -324,7 +324,8 @@ def _status_overview(data: SummaryData) -> list[str]:
         f"| Traceability | {trace_status} | {traceability_coverage_cell} |",
         f"| Application Tests | {app_status} | {app_cell} |",
         f"| CI-Pipeline Tests | {ci_status} | {ci_cell} |",
-        f"| Application Code Coverage | {_coverage_status(data)} | {app_coverage_cell} |",
+        f"| Application Code Coverage | {_coverage_status(data)} "
+        f"| {app_coverage_cell} |",
         "| Artifacts | — | see Artifacts section |",
     ]
 

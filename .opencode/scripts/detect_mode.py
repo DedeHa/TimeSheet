@@ -8,6 +8,13 @@ Usage:
 Reads/writes ``~/.opencode/pipeline-state.json``.  The Product Owner agent
 invokes this script to parse user chat messages for mode keywords and to
 read back the persisted mode before each handoff.
+
+For advanced pipeline management (resume, continue, what-missed, dry-run,
+check-stuck, history, reset), use:
+
+    python pipeline.py <command> <ticket> [options]
+
+See pipeline.py --help for all available commands.
 """
 
 from __future__ import annotations

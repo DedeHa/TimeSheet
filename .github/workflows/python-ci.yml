@@ -162,10 +162,13 @@ jobs:
       # CI self-tests: the .github/tests suite has two groups:
       #   - ci-pipeline/  (workflow structure + support scripts)
       #   - agents/       (orchestration skill + agent definitions in .opencode/)
-      # Reported as its own "CI Self-Tests" level in the summary. Run without
-      # coverage - it validates CI/agent code, not src_timesheetalgo.
+      # Reported as its own "CI Self-Tests" level in the summary.
+      # Coverage is measured separately from the application tests
+      # to provide distinct CI-pipeline coverage in the GitHub Bot Comment.
       - name: Run CI self-tests (.github/tests)
-        run: pytest -q .github/tests/ --junitxml=tests/reports/ci-results.xml
+        run: |
+          coverage run --source=.github --branch --data-file=.coverage.ci \
+            -m pytest -q .github/tests/ --junitxml=tests/reports/ci-results.xml
 
       # Additive (PRO-337): export machine-readable coverage for the PR summary.
       # Runs even if an earlier level failed so the summary always has coverage
@@ -174,6 +177,11 @@ jobs:
       - name: Export machine-readable coverage
         if: always()
         run: coverage json -o tests/reports/coverage.json --fail-under=0
+
+      # Export CI pipeline coverage separately from the application coverage.
+      - name: Export CI pipeline coverage
+        if: always()
+        run: coverage json -o tests/reports/ci-coverage.json --data-file=.coverage.ci --fail-under=0
 
       - name: Combined coverage report and 90% gate
         run: |
@@ -191,6 +199,7 @@ jobs:
             tests/reports/system-results.xml
             tests/reports/ci-results.xml
             tests/reports/coverage.json
+            tests/reports/ci-coverage.json
             tests/reports/htmlcov
             tests/reports/traceability-matrix.md
             tests/reports/traceability-matrix.html

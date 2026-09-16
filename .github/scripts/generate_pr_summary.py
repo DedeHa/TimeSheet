@@ -226,13 +226,13 @@ def read_traceability_coverage(reports_dir: Path) -> Optional[float]:
 
 
 def read_ci_coverage(reports_dir: Path) -> Optional[float]:
-    """Return the CI pipeline code coverage % from ``agent-coverage.json``.
+    """Return the CI pipeline code coverage % from ``ci-coverage.json``.
 
-    The ``agents`` job runs ``coverage json -o tests/reports/agent-coverage.json``
+    The ``test`` job runs ``coverage json -o tests/reports/ci-coverage.json``
     on the ``.github/tests`` suite. This reads the combined ``percent_covered``
     from that file, or ``None`` when it is missing or unparseable.
     """
-    path = reports_dir / "agent-coverage.json"
+    path = reports_dir / "ci-coverage.json"
     if not path.exists():
         return None
     try:

@@ -79,7 +79,7 @@ def _write_ci_coverage(path: Path, percent: float):
 def _all_green_reports_with_ci(tmp_path: Path):
     _all_green_reports(tmp_path)
     _write_junit(tmp_path / "ci-results.xml", tests=44, failures=0, errors=0, skipped=0)
-    _write_ci_coverage(tmp_path / "agent-coverage.json", 98.5)
+    _write_ci_coverage(tmp_path / "ci-coverage.json", 98.5)
 
 
 def test_parse_junit_counts(tmp_path):
@@ -124,8 +124,8 @@ def test_read_traceability_coverage(tmp_path):
 
 
 def test_read_ci_coverage(tmp_path):
-    """CI pipeline coverage is read from agent-coverage.json and missing files return ``None``."""
-    _write_ci_coverage(tmp_path / "agent-coverage.json", 97.5)
+    """CI pipeline coverage is read from ci-coverage.json or ``None``."""
+    _write_ci_coverage(tmp_path / "ci-coverage.json", 97.5)
     assert mod.read_ci_coverage(tmp_path) == 97.5
     assert mod.read_ci_coverage(tmp_path / "empty") is None
 

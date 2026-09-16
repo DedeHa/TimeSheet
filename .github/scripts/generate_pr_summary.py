@@ -312,7 +312,9 @@ def _status_overview(data: SummaryData) -> list[str]:
     trace_cell = _fmt_percent(data.traceability_coverage)
     app_status, app_cell = _group_summary(_app_levels(data.levels))
     ci_status, ci_cell = _group_summary(_ci_levels(data.levels))
-    app_coverage_cell = f"{_fmt_percent(data.coverage_percent)} (gate {COVERAGE_GATE:.0f}%)"
+    app_coverage_cell = (
+        f"{_fmt_percent(data.coverage_percent)} " f"(gate {COVERAGE_GATE:.0f}%)"
+    )
     traceability_coverage_cell = trace_cell
 
     return [

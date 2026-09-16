@@ -207,7 +207,7 @@ def test_comment_and_job_summary_variants():
 
 def test_overall_pass(tmp_path):
     """All-green inputs produce an overall pass with correct totals."""
-    _all_green_reports(tmp_path)
+    _all_green_reports_with_ci(tmp_path)
     data = mod.build_summary(
         tmp_path, {"LINT_RESULT": "success", "TEST_RESULT": "success"}
     )
@@ -221,13 +221,15 @@ def test_overall_pass(tmp_path):
     # Testing is split into application and CI-pipeline rows.
     assert "| Application Tests | ✅ Passed | 99.0% (102/103 passed) |" in report
     assert "| CI-Pipeline Tests |" in report
-    assert "| Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
+    # Coverage is split between application and CI pipeline sections.
+    assert "| Application Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
     assert "1. Traceability" not in report  # numbering removed everywhere
     # Sections appear in the required order, un-numbered.
     order = [
         "### Traceability",
         "### Testing",
         "### Code Coverage",
+        "### CI Pipeline Coverage",
         "### Artifacts",
     ]
     positions = [report.index(section) for section in order]
@@ -240,6 +242,9 @@ def test_overall_pass(tmp_path):
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report
     # Code Coverage - percentage + gate status.
     assert "Combined line + branch coverage: **99.1%**" in report
+    # CI Pipeline Coverage - separate section.
+    assert "### CI Pipeline Coverage" in report
+    assert "CI pipeline code coverage: **98.5%**" in report
     # The obsolete PRO-337 footer is no longer emitted.
     assert "PRO-337" not in report
 

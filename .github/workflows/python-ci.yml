@@ -179,8 +179,12 @@ jobs:
         run: coverage json -o tests/reports/coverage.json --fail-under=0
 
       # Export CI pipeline coverage separately from the application coverage.
+      # Non-gating: the coverage file may be absent when the self-test suite
+      # produced no data (e.g. importlib-loaded modules); the summary degrades
+      # gracefully via read_ci_coverage() returning ``None``.
       - name: Export CI pipeline coverage
         if: always()
+        continue-on-error: true
         run: coverage json -o tests/reports/ci-coverage.json --data-file=.coverage.ci --fail-under=0
 
       - name: Combined coverage report and 90% gate

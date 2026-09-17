@@ -73,6 +73,97 @@ def test_empty_dataset_renders_placeholder():
     assert "No timing data collected yet" in report
 
 
+def test_write_metrics_creates_file(tmp_path):
+    """write_metrics() creates data/metrics.json with correct schema."""
+    import json
+
+    path = tmp_path / "metrics.json"
+    agg_data = agg.aggregate(
+        [
+            {
+                "run_id": str(i),
+                "job_name": "check",
+                "step_name": "Run lint tools",
+                "duration_s": str(d),
+            }
+            for i, d in enumerate([10.0, 20.0, 30.0])
+        ]
+    )
+    agg.write_metrics(agg_data, path)
+    assert path.exists(), "write_metrics did not create the file"
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert data["schema_version"] == "v1.0"
+    assert "generated_at" in data
+    assert "ready" in data
+    assert "withheld" in data
+
+
+def test_write_metrics_ready_withheld(tmp_path):
+    """write_metrics() output has ready/withheld buckets."""
+    import json
+
+    path = tmp_path / "metrics.json"
+    # 3 samples -> ready, 1 sample -> withheld
+    agg_data = agg.aggregate(
+        [
+            {
+                "run_id": str(i),
+                "job_name": "check",
+                "step_name": "Run lint tools",
+                "duration_s": str(d),
+            }
+            for i, d in enumerate([10.0, 20.0, 30.0])
+        ]
+        + [
+            {
+                "run_id": "99",
+                "job_name": "test",
+                "step_name": "Run system tests",
+                "duration_s": "7.0",
+            }
+        ]
+    )
+    agg.write_metrics(agg_data, path)
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert "check / Run lint tools" in data["ready"]
+    assert "test / Run system tests" in data["withheld"]
+
+
+def test_write_metrics_skips_invalid_data(tmp_path, capsys, monkeypatch):
+    """write_metrics() skips the write when validation fails."""
+    path = tmp_path / "metrics.json"
+
+    # Monkeypatch validation to return errors, simulating invalid metrics data
+    def fake_validate(data, schema="metrics"):
+        return ["invalid metrics data"]
+
+    monkeypatch.setattr(agg, "validate_json", fake_validate)
+    agg.write_metrics({"ready": {}, "withheld": {}}, path)
+    captured = capsys.readouterr()
+    assert "WARNING" in captured.err
+    assert not path.exists()
+
+
+def test_write_metrics_creates_parent_dir(tmp_path):
+    """write_metrics() creates parent directories if needed."""
+    path = tmp_path / "nested" / "metrics.json"
+    agg_data = agg.aggregate(
+        [
+            {
+                "run_id": str(i),
+                "job_name": "check",
+                "step_name": "Run lint tools",
+                "duration_s": str(d),
+            }
+            for i, d in enumerate([10.0, 20.0, 30.0])
+        ]
+    )
+    agg.write_metrics(agg_data, path)
+    assert path.exists()
+
+
 if __name__ == "__main__":
     import pytest
 

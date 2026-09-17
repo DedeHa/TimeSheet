@@ -119,17 +119,64 @@ python .opencode/scripts/detect_mode.py PRO-373 --show
 **Pipeline state:**
 State is persisted per ticket in `~/.opencode/pipeline-state.json` (encrypted if enabled). The `development_mode` field is read before every dispatch and handoff so all 4 agents respect the user's mode choice.
 
-**Discovery:**
-- `opencode` discovers both agents and skills from `.opencode/`
-- `.opencode/agents/` — agent dev team (Product Owner, Architect, Developer, Tester)
-- `.opencode/skills/` — workflow reference documents used by agents
-- Agents are the primary executors; skills provide supporting instructions
+**Enhanced Pipeline Management:**
+The `pipeline.py` script provides enhanced pipeline management for handling
+interrupted pipelines, resuming stuck steps, and inspecting state. All commands
+are invoked from the repository root:
 
-**Handover protocol (all modes):**
-1. Every handover includes a deliverable summary, current state, and next-step request
-2. Interactive mode requires explicit user confirmation before the next agent starts
-3. Automated mode proceeds immediately; escalations still trigger on blockers or cycle limit (3)
-4. User starts every feature with a Product Owner intake conversation (goal, use-case, information)
+```bash
+python .opencode/scripts/pipeline.py <command> <ticket> [options]
+```
+
+| Command | Purpose |
+|---------|---------|
+| `show state PRO-373` | Show current pipeline state with interruption detection |
+| `what-missed PRO-373` | Show what work was missed in an interrupted pipeline |
+| `check-stuck PRO-373` | Detect and alert on stuck pipelines |
+| `dry-run PRO-373 <action>` | Preview action without executing |
+| `resume PRO-373` | Resume pipeline at current step (clears interruption flag) |
+| `resume PRO-373 --force` | Force resume without validation |
+| `continue PRO-373` | Advance to next pipeline step |
+| `continue PRO-373 --force` | Force advance without validation |
+| `proceed PRO-373` | Proceed with current step execution |
+| `history PRO-373` | Show pipeline history |
+| `reset PRO-373` | Reset all cycles and state |
+| `set-mode PRO-373 interactive` | Set development mode |
+| `get-mode PRO-373` | Show persisted mode |
+
+**Interruption recovery workflow:**
+```bash
+# 1. Check what was missed
+python .opencode/scripts/pipeline.py what-missed PRO-373
+
+# 2. Check if pipeline is stuck
+python .opencode/scripts/pipeline.py check-stuck PRO-373
+
+# 3. Preview the resume action
+python .opencode/scripts/pipeline.py dry-run PRO-373 resume
+
+# 4. Resume the pipeline
+python .opencode/scripts/pipeline.py resume PRO-373
+
+# 5. Verify state
+python .opencode/scripts/pipeline.py show state PRO-373
+```
+
+**Pipeline state file location:**
+- State: `~/.opencode/pipeline-state.json`
+- History: `~/.opencode/pipeline-history.json`
+
+**Mode detection from chat:**
+The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Default is `interactive` when no mode is detected
 
 ## CI Pipeline Details
 

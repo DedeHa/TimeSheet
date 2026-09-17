@@ -70,6 +70,18 @@ def _all_green_reports(tmp_path: Path):
     _write_traceability(tmp_path / "traceability-matrix.md", 100.0)
 
 
+def _write_ci_coverage(path: Path, percent: float):
+    path.write_text(
+        json.dumps({"totals": {"percent_covered": percent}}), encoding="utf-8"
+    )
+
+
+def _all_green_reports_with_ci(tmp_path: Path):
+    _all_green_reports(tmp_path)
+    _write_junit(tmp_path / "ci-results.xml", tests=44, failures=0, errors=0, skipped=0)
+    _write_ci_coverage(tmp_path / "ci-coverage.json", 98.5)
+
+
 def test_parse_junit_counts(tmp_path):
     """Verify JUnit XML parsing sums tests, failures, errors and skipped."""
     _write_junit(
@@ -111,10 +123,16 @@ def test_read_traceability_coverage(tmp_path):
     assert mod.read_traceability_coverage(tmp_path / "empty") is None
 
 
+def test_read_ci_coverage(tmp_path):
+    """CI pipeline coverage is read from ci-coverage.json or ``None``."""
+    _write_ci_coverage(tmp_path / "ci-coverage.json", 97.5)
+    assert mod.read_ci_coverage(tmp_path) == 97.5
+    assert mod.read_ci_coverage(tmp_path / "empty") is None
+
+
 def test_ci_pipeline_tests_reported_separately(tmp_path):
     """CI self-tests are a separate group from the application tests."""
-    _all_green_reports(tmp_path)
-    _write_junit(tmp_path / "ci-results.xml", tests=44, failures=0, errors=0, skipped=0)
+    _all_green_reports_with_ci(tmp_path)
     data = mod.build_summary(
         tmp_path, {"LINT_RESULT": "success", "TEST_RESULT": "success"}
     )
@@ -128,6 +146,10 @@ def test_ci_pipeline_tests_reported_separately(tmp_path):
     assert "| CI Self-Tests | 44 | 44 | 0 | 0 |" in report
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report  # application total
     assert "| **Total** | 44 | 44 | 0 | 0 |" in report  # CI total
+    # Coverage is split between application and CI pipeline sections.
+    assert "| Application Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
+    assert "### CI Pipeline Coverage" in report
+    assert "CI pipeline code coverage: **98.5%**" in report
 
 
 def test_short_comment_has_overview_table_and_timestamp():
@@ -139,6 +161,7 @@ def test_short_comment_has_overview_table_and_timestamp():
             mod.LevelStats("Unit Tests", "u.xml", 79, 78, 0, 1, True),
         ],
         coverage_percent=99.6,
+        ci_coverage_percent=98.5,
         run_url="https://example/run/9",
         traceability_coverage=100.0,
         generated_at="2026-08-19 20:14 UTC",
@@ -162,6 +185,7 @@ def test_comment_and_job_summary_variants():
         test_result="success",
         levels=[],
         coverage_percent=99.1,
+        ci_coverage_percent=98.5,
         run_url="https://example/run/1",
         traceability_coverage=100.0,
     )
@@ -183,7 +207,7 @@ def test_comment_and_job_summary_variants():
 
 def test_overall_pass(tmp_path):
     """All-green inputs produce an overall pass with correct totals."""
-    _all_green_reports(tmp_path)
+    _all_green_reports_with_ci(tmp_path)
     data = mod.build_summary(
         tmp_path, {"LINT_RESULT": "success", "TEST_RESULT": "success"}
     )
@@ -197,13 +221,15 @@ def test_overall_pass(tmp_path):
     # Testing is split into application and CI-pipeline rows.
     assert "| Application Tests | ✅ Passed | 99.0% (102/103 passed) |" in report
     assert "| CI-Pipeline Tests |" in report
-    assert "| Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
+    # Coverage is split between application and CI pipeline sections.
+    assert "| Application Code Coverage | ✅ Passed | 99.1% (gate 90%) |" in report
     assert "1. Traceability" not in report  # numbering removed everywhere
     # Sections appear in the required order, un-numbered.
     order = [
         "### Traceability",
         "### Testing",
         "### Code Coverage",
+        "### CI Pipeline Coverage",
         "### Artifacts",
     ]
     positions = [report.index(section) for section in order]
@@ -216,6 +242,9 @@ def test_overall_pass(tmp_path):
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report
     # Code Coverage - percentage + gate status.
     assert "Combined line + branch coverage: **99.1%**" in report
+    # CI Pipeline Coverage - separate section.
+    assert "### CI Pipeline Coverage" in report
+    assert "CI pipeline code coverage: **98.5%**" in report
     # The obsolete PRO-337 footer is no longer emitted.
     assert "PRO-337" not in report
 

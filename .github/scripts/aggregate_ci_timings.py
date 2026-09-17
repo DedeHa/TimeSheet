@@ -12,6 +12,8 @@ Standard library only.
 
 from __future__ import annotations
 
+import datetime
+import json
 import statistics
 import sys
 from collections import defaultdict
@@ -19,6 +21,10 @@ from pathlib import Path
 from typing import Optional
 
 from collect_ci_timings import JOB_TOTAL, read_csv
+from validator import validate_json
+
+ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = ROOT / "data"
 
 #: Minimum successful samples before a key's stats are considered meaningful.
 MIN_SAMPLES = 3
@@ -147,6 +153,55 @@ def render_report(agg: dict, meta: Optional[dict] = None) -> str:
     return "\n".join(lines)
 
 
+def _utc_now() -> str:
+    """Return the current UTC timestamp in ISO-8601 format."""
+    return (
+        datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+    )
+
+
+def _stringify_keys(d: dict) -> dict:
+    """Convert tuple keys (job, step) to 'job / step' strings for JSON."""
+    return {f"{job} / {step}": v for (job, step), v in d.items()}
+
+
+def _add_withheld_reasons(d: dict) -> dict:
+    """Add a reason to each withheld entry if missing."""
+    result = {}
+    for key, value in d.items():
+        entry = dict(value)
+        if "reason" not in entry:
+            entry["reason"] = "insufficient samples"
+        result[key] = entry
+    return result
+
+
+def write_metrics(agg_data: dict, path: Path) -> None:
+    """Write aggregated metrics to a JSON file with the v1.0 schema wrapper.
+
+    Formats the output from :func:`aggregate` with ``schema_version`` and
+    ``generated_at``, validates it, and writes it to ``path``.
+    Validation failures are logged as warnings and the write is skipped.
+    """
+    payload = {
+        "schema_version": "v1.0",
+        "generated_at": _utc_now(),
+        "ready": _stringify_keys(agg_data.get("ready", {})),
+        "withheld": _add_withheld_reasons(
+            _stringify_keys(agg_data.get("withheld", {}))
+        ),
+    }
+    errors = validate_json(payload, schema="metrics")
+    if errors:
+        print(f"WARNING: invalid metrics JSON for {path}: {errors}", file=sys.stderr)
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2)
+        fh.write("\n")
+
+
 def main() -> None:
     """Read the dataset CSV and write the Markdown report.
 
@@ -165,6 +220,7 @@ def main() -> None:
     report = render_report(agg, {"run_count": len(run_ids)})
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report + "\n", encoding="utf-8")
+    write_metrics(agg, DATA_DIR / "metrics.json")
     print(f"aggregated {len(rows)} rows from {len(run_ids)} runs -> {report_path}")
 
 

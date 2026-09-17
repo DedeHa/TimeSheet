@@ -1,47 +1,1106 @@
 {
   "schema_version": "v1.0",
-  "generated_at": "2026-09-15T20:14:03.757428Z",
+  "generated_at": "2026-09-16T19:57:49.851988Z",
   "ready": {
-    "check / <job total>": {
-      "n": 3,
-      "mean": 30.0,
-      "stddev": 0.0,
-      "median": 30.0,
-      "p95": 30.0,
-      "min": 30.0,
-      "max": 30.0,
-      "last": 30.0
+    "Lint and Format Check (3.11) / <job total>": {
+      "n": 47,
+      "mean": 17.25531914893617,
+      "stddev": 2.9301141475493453,
+      "median": 17.0,
+      "p95": 22.0,
+      "min": 12.0,
+      "max": 24.0,
+      "last": 19.0
     },
-    "check / Run lint tools": {
-      "n": 3,
+    "Lint and Format Check (3.12) / <job total>": {
+      "n": 47,
+      "mean": 18.0,
+      "stddev": 2.6865202966565924,
+      "median": 18.0,
+      "p95": 23.0,
+      "min": 13.0,
+      "max": 24.0,
+      "last": 23.0
+    },
+    "Run unit tests and publish results / <job total>": {
+      "n": 26,
+      "mean": 22.03846153846154,
+      "stddev": 5.355227496424549,
+      "median": 22.0,
+      "p95": 31.0,
+      "min": 14.0,
+      "max": 32.0,
+      "last": 32.0
+    },
+    "Build & Deploy / <job total>": {
+      "n": 6,
       "mean": 15.0,
+      "stddev": 3.0983866769659336,
+      "median": 15.5,
+      "p95": 18.0,
+      "min": 11.0,
+      "max": 18.0,
+      "last": 18.0
+    },
+    "Lint and Format Check (3.11) / Run actions/checkout@v4": {
+      "n": 24,
+      "mean": 1.25,
+      "stddev": 0.6079187588743288,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 3.0,
+      "last": 2.0
+    },
+    "Lint and Format Check (3.11) / Run actions/setup-python@v5": {
+      "n": 20,
+      "mean": 0.3,
+      "stddev": 0.47016234598162726,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.11) / Print GitHub Context Information and setup environment": {
+      "n": 24,
+      "mean": 0.08333333333333333,
+      "stddev": 0.28232985128663995,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.11) / Install dependencies": {
+      "n": 24,
+      "mean": 10.333333333333334,
+      "stddev": 1.7362294645648624,
+      "median": 10.0,
+      "p95": 13.0,
+      "min": 8.0,
+      "max": 14.0,
+      "last": 11.0
+    },
+    "Lint and Format Check (3.11) / Run ruff": {
+      "n": 19,
+      "mean": 0.0,
       "stddev": 0.0,
-      "median": 15.0,
-      "p95": 15.0,
-      "min": 15.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.11) / Run black formatter": {
+      "n": 19,
+      "mean": 0.7368421052631579,
+      "stddev": 0.5619514869490164,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 2.0
+    },
+    "Lint and Format Check (3.11) / Run pydocstyle": {
+      "n": 19,
+      "mean": 0.42105263157894735,
+      "stddev": 0.5072572735017881,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.11) / Run radon": {
+      "n": 19,
+      "mean": 0.10526315789473684,
+      "stddev": 0.3153017676423058,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.12) / Run actions/checkout@v4": {
+      "n": 24,
+      "mean": 1.2083333333333333,
+      "stddev": 0.5089773777040516,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 1.0,
+      "max": 3.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.12) / Run actions/setup-python@v5": {
+      "n": 20,
+      "mean": 0.25,
+      "stddev": 0.44426165831931924,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.12) / Print GitHub Context Information and setup environment": {
+      "n": 24,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.12) / Install dependencies": {
+      "n": 24,
+      "mean": 11.125,
+      "stddev": 1.650098811270562,
+      "median": 11.0,
+      "p95": 14.0,
+      "min": 9.0,
       "max": 15.0,
+      "last": 13.0
+    },
+    "Lint and Format Check (3.12) / Run ruff": {
+      "n": 19,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.12) / Run black formatter": {
+      "n": 19,
+      "mean": 0.8947368421052632,
+      "stddev": 0.3153017676423058,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.12) / Run pydocstyle": {
+      "n": 19,
+      "mean": 0.2631578947368421,
+      "stddev": 0.45241392835886407,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.12) / Run radon": {
+      "n": 19,
+      "mean": 0.15789473684210525,
+      "stddev": 0.3746343246326776,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Run unit tests and publish results / Run actions/checkout@v4": {
+      "n": 5,
+      "mean": 1.0,
+      "stddev": 0.7071067811865476,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 1.0
+    },
+    "Run unit tests and publish results / Run actions/setup-python@v5": {
+      "n": 5,
+      "mean": 0.2,
+      "stddev": 0.4472135954999579,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Run unit tests and publish results / Install dependencies and setup environment": {
+      "n": 5,
+      "mean": 9.8,
+      "stddev": 1.9235384061671346,
+      "median": 9.0,
+      "p95": 13.0,
+      "min": 8.0,
+      "max": 13.0,
+      "last": 13.0
+    },
+    "Run unit tests and publish results / Run tests with coverage": {
+      "n": 5,
+      "mean": 11.8,
+      "stddev": 0.4472135954999579,
+      "median": 12.0,
+      "p95": 12.0,
+      "min": 11.0,
+      "max": 12.0,
+      "last": 12.0
+    },
+    "Run unit tests and publish results / Upload test results": {
+      "n": 5,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / <job total>": {
+      "n": 95,
+      "mean": 31.88421052631579,
+      "stddev": 7.132280763639173,
+      "median": 33.0,
+      "p95": 42.0,
+      "min": 18.0,
+      "max": 47.0,
+      "last": 28.0
+    },
+    "Run all test levels (unit + integration + system) / Run actions/checkout@v4": {
+      "n": 32,
+      "mean": 1.34375,
+      "stddev": 0.7006621292426463,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 1.0,
+      "max": 4.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Run actions/setup-python@v5": {
+      "n": 16,
+      "mean": 0.375,
+      "stddev": 0.5,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Run all test levels (unit + integration + system) / Install dependencies and setup environment": {
+      "n": 32,
+      "mean": 11.4375,
+      "stddev": 2.256710423488993,
+      "median": 11.0,
+      "p95": 15.0,
+      "min": 8.0,
+      "max": 17.0,
+      "last": 10.0
+    },
+    "Run all test levels (unit + integration + system) / Prepare report directory": {
+      "n": 95,
+      "mean": 0.021052631578947368,
+      "stddev": 0.1443214031708876,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Run all test levels (unit + integration + system) / Run unit tests": {
+      "n": 95,
+      "mean": 3.5894736842105264,
+      "stddev": 0.7648492667812767,
+      "median": 3.0,
+      "p95": 5.0,
+      "min": 3.0,
+      "max": 6.0,
+      "last": 4.0
+    },
+    "Run all test levels (unit + integration + system) / Run integration tests": {
+      "n": 95,
+      "mean": 1.0210526315789474,
+      "stddev": 0.35666741670163554,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Run system tests": {
+      "n": 95,
+      "mean": 6.431578947368421,
+      "stddev": 2.029844515473754,
+      "median": 7.0,
+      "p95": 9.0,
+      "min": 3.0,
+      "max": 9.0,
+      "last": 4.0
+    },
+    "Run all test levels (unit + integration + system) / Combined coverage report and 90% gate": {
+      "n": 95,
+      "mean": 0.35789473684210527,
+      "stddev": 0.48192410176875516,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Upload test results": {
+      "n": 95,
+      "mean": 1.105263157894737,
+      "stddev": 0.47206392035911326,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 2.0
+    },
+    "Run all test levels (unit + integration + system) / Validate documentation traceability": {
+      "n": 37,
+      "mean": 0.7297297297297297,
+      "stddev": 0.5081911631052416,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Comment traceability report on PR": {
+      "n": 37,
+      "mean": 0.6216216216216216,
+      "stddev": 0.4916723926983716,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Validate PR quality-gate summary generator": {
+      "n": 30,
+      "mean": 0.3,
+      "stddev": 0.466091599699399,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Export machine-readable coverage": {
+      "n": 87,
+      "mean": 0.14942528735632185,
+      "stddev": 0.35857390766770925,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Generate PR quality-gate summary": {
+      "n": 33,
+      "mean": 0.030303030303030304,
+      "stddev": 0.17407765595569785,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Run all test levels (unit + integration + system) / Publish or update sticky PR comment": {
+      "n": 33,
+      "mean": 0.9393939393939394,
+      "stddev": 0.24230584229877994,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.11) / Run lint tools (ruff, black, pydocstyle, radon)": {
+      "n": 5,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.12) / Run lint tools (ruff, black, pydocstyle, radon)": {
+      "n": 5,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check (3.11) / Run actions/setup-python@v6": {
+      "n": 4,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Lint and Format Check (3.12) / Run actions/setup-python@v6": {
+      "n": 4,
+      "mean": 0.5,
+      "stddev": 0.5773502691896257,
+      "median": 0.5,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Run all test levels (unit + integration + system) / Run actions/setup-python@v6": {
+      "n": 16,
+      "mean": 0.25,
+      "stddev": 0.4472135954999579,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check / <job total>": {
+      "n": 8,
+      "mean": 36.875,
+      "stddev": 7.809106405802321,
+      "median": 34.0,
+      "p95": 52.0,
+      "min": 27.0,
+      "max": 52.0,
+      "last": 52.0
+    },
+    "Lint and Format Check / Pull wagoid/commitlint-github-action:6.2.1": {
+      "n": 8,
+      "mean": 12.625,
+      "stddev": 3.1594529363709247,
+      "median": 11.5,
+      "p95": 18.0,
+      "min": 9.0,
+      "max": 18.0,
+      "last": 17.0
+    },
+    "Lint and Format Check / Run actions/checkout@v4": {
+      "n": 8,
+      "mean": 1.375,
+      "stddev": 0.5175491695067657,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 1.0,
+      "max": 2.0,
+      "last": 2.0
+    },
+    "Lint and Format Check / Run actions/setup-python@v6": {
+      "n": 8,
+      "mean": 0.25,
+      "stddev": 0.4629100498862757,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Lint and Format Check / Print GitHub Context Information and setup environment": {
+      "n": 8,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Lint and Format Check / Setup Node.js": {
+      "n": 8,
+      "mean": 0.875,
+      "stddev": 0.9910312089651149,
+      "median": 1.0,
+      "p95": 3.0,
+      "min": 0.0,
+      "max": 3.0,
+      "last": 3.0
+    },
+    "Lint and Format Check / Install dependencies": {
+      "n": 8,
+      "mean": 12.25,
+      "stddev": 2.712405363721075,
+      "median": 11.5,
+      "p95": 18.0,
+      "min": 9.0,
+      "max": 18.0,
+      "last": 18.0
+    },
+    "Lint and Format Check / Validate commit messages": {
+      "n": 8,
+      "mean": 1.75,
+      "stddev": 0.7071067811865476,
+      "median": 2.0,
+      "p95": 3.0,
+      "min": 1.0,
+      "max": 3.0,
+      "last": 2.0
+    },
+    "Lint and Format Check / Validate Jira reference in commits": {
+      "n": 8,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Lint and Format Check / Validate PR Title": {
+      "n": 8,
+      "mean": 0.125,
+      "stddev": 0.3535533905932738,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Lint and Format Check / Validate PR Body": {
+      "n": 8,
+      "mean": 0.25,
+      "stddev": 0.4629100498862757,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Lint and Format Check / Run lint tools (ruff, black, pydocstyle, radon)": {
+      "n": 8,
+      "mean": 1.25,
+      "stddev": 0.4629100498862757,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 1.0,
+      "max": 2.0,
+      "last": 1.0
+    },
+    "Naming Conventions & Linting Check / <job total>": {
+      "n": 68,
+      "mean": 26.176470588235293,
+      "stddev": 12.174037920822716,
+      "median": 28.0,
+      "p95": 45.0,
+      "min": 9.0,
+      "max": 61.0,
       "last": 15.0
     },
-    "test / <job total>": {
-      "n": 3,
-      "mean": 40.0,
-      "stddev": 0.0,
-      "median": 40.0,
-      "p95": 40.0,
-      "min": 40.0,
-      "max": 40.0,
-      "last": 40.0
+    "Naming Conventions & Linting Check / Pull wagoid/commitlint-github-action:6.2.1": {
+      "n": 27,
+      "mean": 12.222222222222221,
+      "stddev": 3.2502465389724766,
+      "median": 11.0,
+      "p95": 20.0,
+      "min": 9.0,
+      "max": 22.0,
+      "last": 9.0
     },
-    "test / Run unit tests": {
-      "n": 3,
-      "mean": 30.0,
+    "Naming Conventions & Linting Check / Run actions/checkout@v4": {
+      "n": 5,
+      "mean": 1.6,
+      "stddev": 0.8944271909999159,
+      "median": 1.0,
+      "p95": 3.0,
+      "min": 1.0,
+      "max": 3.0,
+      "last": 1.0
+    },
+    "Naming Conventions & Linting Check / Run actions/setup-python@v6": {
+      "n": 5,
+      "mean": 0.0,
       "stddev": 0.0,
-      "median": 30.0,
-      "p95": 30.0,
-      "min": 30.0,
-      "max": 30.0,
-      "last": 30.0
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Naming Conventions & Linting Check / Print GitHub Context Information and setup environment": {
+      "n": 68,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0
+    },
+    "Naming Conventions & Linting Check / Setup Node.js": {
+      "n": 5,
+      "mean": 2.0,
+      "stddev": 1.8708286933869707,
+      "median": 1.0,
+      "p95": 4.0,
+      "min": 0.0,
+      "max": 4.0,
+      "last": 0.0
+    },
+    "Naming Conventions & Linting Check / Validate commit messages": {
+      "n": 22,
+      "mean": 1.6818181818181819,
+      "stddev": 0.6463349888014092,
+      "median": 2.0,
+      "p95": 3.0,
+      "min": 1.0,
+      "max": 3.0,
+      "last": 2.0
+    },
+    "Naming Conventions & Linting Check / Validate Jira reference in commits": {
+      "n": 22,
+      "mean": 0.09090909090909091,
+      "stddev": 0.29424494316824984,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Naming Conventions & Linting Check / Validate PR Title": {
+      "n": 22,
+      "mean": 0.09090909090909091,
+      "stddev": 0.29424494316824984,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Naming Conventions & Linting Check / Validate PR Body": {
+      "n": 22,
+      "mean": 0.09090909090909091,
+      "stddev": 0.29424494316824984,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Naming Conventions & Linting Check / Install dependencies and setup environment": {
+      "n": 5,
+      "mean": 13.0,
+      "stddev": 1.5811388300841898,
+      "median": 13.0,
+      "p95": 15.0,
+      "min": 11.0,
+      "max": 15.0,
+      "last": 12.0
+    },
+    "Naming Conventions & Linting Check / Run lint tools (ruff, black, pydocstyle, radon)": {
+      "n": 68,
+      "mean": 1.9558823529411764,
+      "stddev": 0.6787570626753687,
+      "median": 2.0,
+      "p95": 3.0,
+      "min": 1.0,
+      "max": 4.0,
+      "last": 2.0
+    },
+    "Naming Conventions & Linting Check / Run actions/checkout@v5": {
+      "n": 62,
+      "mean": 1.8709677419354838,
+      "stddev": 1.0477747062264542,
+      "median": 2.0,
+      "p95": 3.0,
+      "min": 1.0,
+      "max": 7.0,
+      "last": 2.0
+    },
+    "Naming Conventions & Linting Check / Run ./.github/actions/setup-python-deps": {
+      "n": 63,
+      "mean": 10.174603174603174,
+      "stddev": 6.861627011373875,
+      "median": 9.0,
+      "p95": 22.0,
+      "min": 2.0,
+      "max": 33.0,
+      "last": 6.0
+    },
+    "Run all test levels (unit + integration + system) / Run actions/checkout@v5": {
+      "n": 62,
+      "mean": 1.6451612903225807,
+      "stddev": 0.7702836223137975,
+      "median": 2.0,
+      "p95": 3.0,
+      "min": 1.0,
+      "max": 5.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Run ./.github/actions/setup-python-deps": {
+      "n": 63,
+      "mean": 10.047619047619047,
+      "stddev": 6.45437728794306,
+      "median": 8.0,
+      "p95": 22.0,
+      "min": 2.0,
+      "max": 24.0,
+      "last": 6.0
+    },
+    "Run all test levels (unit + integration + system) / Generate and validate traceability matrix": {
+      "n": 57,
+      "mean": 0.07017543859649122,
+      "stddev": 0.2577130964857056,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Publish / <job total>": {
+      "n": 52,
+      "mean": 10.403846153846153,
+      "stddev": 7.238945907949597,
+      "median": 9.0,
+      "p95": 12.0,
+      "min": 6.0,
+      "max": 46.0,
+      "last": 9.0
+    },
+    "Publish / Run actions/checkout@v5": {
+      "n": 51,
+      "mean": 1.2352941176470589,
+      "stddev": 0.5133511583357984,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 1.0
+    },
+    "Publish / Show build information": {
+      "n": 52,
+      "mean": 0.057692307692307696,
+      "stddev": 0.23543547789870936,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Publish / Download test reports": {
+      "n": 52,
+      "mean": 0.6730769230769231,
+      "stddev": 0.47366546671567095,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
+    },
+    "Publish / Generate PR quality-gate summary": {
+      "n": 52,
+      "mean": 0.057692307692307696,
+      "stddev": 0.23543547789870936,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Publish / Publish or update sticky PR comment": {
+      "n": 52,
+      "mean": 1.1923076923076923,
+      "stddev": 0.4445072856528807,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 2.0,
+      "last": 1.0
+    },
+    "Run all test levels (unit + integration + system) / Run CI self-tests (.github/tests)": {
+      "n": 49,
+      "mean": 1.2448979591836735,
+      "stddev": 0.662401321106836,
+      "median": 1.0,
+      "p95": 3.0,
+      "min": 0.0,
+      "max": 3.0,
+      "last": 3.0
+    },
+    "Naming Conventions & Linting Check / Validate PR": {
+      "n": 41,
+      "mean": 1.024390243902439,
+      "stddev": 0.935088361547955,
+      "median": 1.0,
+      "p95": 2.0,
+      "min": 0.0,
+      "max": 4.0,
+      "last": 1.0
+    },
+    "Agent System Tests / <job total>": {
+      "n": 10,
+      "mean": 17.3,
+      "stddev": 6.4299645756757045,
+      "median": 15.0,
+      "p95": 34.0,
+      "min": 13.0,
+      "max": 34.0,
+      "last": 13.0
+    },
+    "Agent System Tests / Run actions/checkout@v5": {
+      "n": 10,
+      "mean": 1.6,
+      "stddev": 0.5163977794943223,
+      "median": 2.0,
+      "p95": 2.0,
+      "min": 1.0,
+      "max": 2.0,
+      "last": 2.0
+    },
+    "Agent System Tests / Run ./.github/actions/setup-python-deps": {
+      "n": 10,
+      "mean": 6.3,
+      "stddev": 5.657836257007719,
+      "median": 4.5,
+      "p95": 22.0,
+      "min": 3.0,
+      "max": 22.0,
+      "last": 3.0
+    },
+    "Agent System Tests / Prepare report directory": {
+      "n": 10,
+      "mean": 0.2,
+      "stddev": 0.4216370213557839,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Agent System Tests / Run agent tests": {
+      "n": 10,
+      "mean": 2.9,
+      "stddev": 0.8755950357709131,
+      "median": 3.0,
+      "p95": 4.0,
+      "min": 1.0,
+      "max": 4.0,
+      "last": 3.0
+    },
+    "Agent System Tests / Export machine-readable coverage": {
+      "n": 10,
+      "mean": 0.3,
+      "stddev": 0.48304589153964794,
+      "median": 0.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0
+    },
+    "Agent System Tests / Upload agent test results": {
+      "n": 10,
+      "mean": 0.8,
+      "stddev": 0.4216370213557839,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 1.0
     }
   },
-  "withheld": {}
+  "withheld": {
+    "Publish quality-gate summary to PR / <job total>": {
+      "n": 1,
+      "mean": 7.0,
+      "stddev": 0.0,
+      "median": 7.0,
+      "p95": 7.0,
+      "min": 7.0,
+      "max": 7.0,
+      "last": 7.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary to PR / Run actions/checkout@v4": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary to PR / Run actions/setup-python@v5": {
+      "n": 1,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary to PR / Prepare report directory": {
+      "n": 1,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary to PR / Download test result artifacts": {
+      "n": 1,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary to PR / Generate PR quality-gate summary": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary to PR / Publish or update sticky PR comment": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Run all test levels (unit + integration + system) / Generate traceability matrix": {
+      "n": 1,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary / <job total>": {
+      "n": 1,
+      "mean": 8.0,
+      "stddev": 0.0,
+      "median": 8.0,
+      "p95": 8.0,
+      "min": 8.0,
+      "max": 8.0,
+      "last": 8.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary / Run actions/checkout@v5": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary / Download test reports": {
+      "n": 1,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "median": 0.0,
+      "p95": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "last": 0.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary / Generate PR quality-gate summary": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Publish quality-gate summary / Publish or update sticky PR comment": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Naming Conventions & Linting Check / Run CI self-tests (.github/tests)": {
+      "n": 1,
+      "mean": 1.0,
+      "stddev": 0.0,
+      "median": 1.0,
+      "p95": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "last": 1.0,
+      "reason": "insufficient samples"
+    },
+    "Naming Conventions & Linting Check / Run actions/checkout@v7": {
+      "n": 1,
+      "mean": 2.0,
+      "stddev": 0.0,
+      "median": 2.0,
+      "p95": 2.0,
+      "min": 2.0,
+      "max": 2.0,
+      "last": 2.0,
+      "reason": "insufficient samples"
+    },
+    "Publish / Run actions/checkout@v7": {
+      "n": 1,
+      "mean": 2.0,
+      "stddev": 0.0,
+      "median": 2.0,
+      "p95": 2.0,
+      "min": 2.0,
+      "max": 2.0,
+      "last": 2.0,
+      "reason": "insufficient samples"
+    },
+    "Run all test levels (unit + integration + system) / Run actions/checkout@v7": {
+      "n": 1,
+      "mean": 2.0,
+      "stddev": 0.0,
+      "median": 2.0,
+      "p95": 2.0,
+      "min": 2.0,
+      "max": 2.0,
+      "last": 2.0,
+      "reason": "insufficient samples"
+    },
+    "Run all test levels (unit + integration + system) / Export CI pipeline coverage": {
+      "n": 2,
+      "mean": 0.5,
+      "stddev": 0.7071067811865476,
+      "median": 0.5,
+      "p95": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "last": 0.0,
+      "reason": "insufficient samples"
+    }
+  }
 }

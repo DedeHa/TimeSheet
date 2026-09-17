@@ -1,6 +1,6 @@
 # Implementation Plan PRO-375: Refactor CI Timing Measurement Pipeline — JSON Output & Data Validation
 
-**Status:** In Progress  
+**Status:** ✅ Done  
 **Epic Link:** PRO-259  
 **Parent:** PRO-259 (In Arbeit)  
 **Fix Version:** v4.4.0  
@@ -93,9 +93,11 @@ Refactor the CI timing data collection pipeline to produce structured JSON:
    - Separate commit step for master data/ folder
    - Safety gate prevents runaway loops
 2. Add migration step to `backfill_ci_timings.py`:
-   - Read existing `ci-timings.csv` from ci-metrics branch
-   - Convert to `data/runtimes.json` format
-   - Validate row counts match, no data loss
+    - Read existing `ci-timings.csv` from ci-metrics branch
+    - Convert to `data/runtimes.json` format
+    - Validate row counts match, no data loss
+    - Extract feature branch info from historical runs via GitHub API
+    - Support `--since-run-id` and `--since-date` to start from a specific starting point
 3. Create `data/` folder structure on master branch
 
 **Gate:** Workflow YAML valid, `workflow_dispatch` writes to both branches, data/ folder populated, validation passes.
@@ -344,6 +346,52 @@ def validate_json(data: dict) -> list[str]:
 ### Phase 4 Gate (Rollout Step 4)
 - Documentation updated in AGENTS.md, CONTRIBUTING.md, ARCHITECTURE.md
 - Traceability entries added to REQUIREMENTS.md, ARCHITECTURE.md
+
+---
+
+## Final Status
+
+**Status:** ✅ Done — all phases complete
+
+- **Phase 1 (Scripts + Tests):** ✅ Done — JSON output, schema validation, and unit tests implemented
+- **Phase 2 (Workflow + Dual Storage):** ✅ Done — `ci-timing.yml` generates both CSV and JSON; `data/` folder populated on master
+- **Phase 3 (Verification & Migration):** ✅ Done — two-step migration completed; 2,755 CSV rows match JSON exactly; 26 qualifying runs backfilled from GitHub API with branch data
+- **Phase 4 (Documentation):** ✅ Done — AGENTS.md, CONTRIBUTING.md, ARCHITECTURE.md, and REQUIREMENTS.md updated
+
+### Acceptance Criteria
+
+| AC | Description | Status |
+|----|-------------|--------|
+| AC-1 | `collect_ci_timings.py` outputs valid JSON to `data/runtimes.json` alongside CSV | ✅ Complete |
+| AC-2 | `aggregate_ci_timings.py` outputs valid `data/metrics.json` with stats per (job, step) | ✅ Complete |
+| AC-3 | JSON schema documented with `schema_version: "v1.0"` at root level | ✅ Complete |
+| AC-4 | Existing CSV consumers remain unaffected (backward compatibility confirmed) | ✅ Complete |
+| AC-5 | Unit tests cover all new JSON output functions with ≥90% coverage | ✅ Complete |
+| AC-6 | `ci-timing.yml` generates both CSV and JSON without errors | ✅ Complete |
+| AC-7 | Data validation catches malformed or missing fields in output | ✅ Complete |
+| AC-8 | Data stored in top-level `data/` folder on master branch | ✅ Complete |
+| AC-9 | All data perspectives preserved (job, PR, branch) and usable | ✅ Complete |
+| AC-10 | Existing ci-metrics branch CSV data migrated to `data/` on master | ✅ Complete |
+
+### Definition of Done
+
+- [x] All ACs checkmarked
+- [x] Story Points: 8 assigned
+- [x] PR #117 prepared for merge to master
+- [x] CI self-tests: 139 passed
+- [x] Application tests: 150 passed (99.71% coverage)
+- [x] Lint checks: ruff, black, pydocstyle, radon
+- [x] Traceability: 100%
+- [x] JIRA PRO-375 prepared for transition to Fertig
+
+### Test Results
+
+- Application tests: 150 passed (99.71% coverage, gate: 90%)
+- CI self-tests: 139 passed (100%)
+- Traceability: 100%
+- Lint: ruff, black, pydocstyle all clean
+- Data validation: 0 errors in `data/runtimes.json` and `data/metrics.json`
+- Migration: 2,755 CSV rows == 2,755 JSON rows (exact match)
 
 ---
 

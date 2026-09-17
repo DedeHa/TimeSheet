@@ -150,6 +150,34 @@ def test_list_successful_pr_runs_skips_non_success(tmp_path):
     assert [r["id"] for r in out] == [1]
 
 
+def test_list_successful_pr_runs_filters_since_run_id():
+    runs = [
+        _run(100),
+        _run(99),
+        _run(98),
+    ]
+    with mock.patch.object(
+        bf, "_gh_api", return_value={"workflow_runs": runs}
+    ) as mock_api:
+        out = list(bf.list_successful_pr_runs("owner/repo", since_run_id=99))
+    assert [r["id"] for r in out] == [100]
+    assert "per_page=100" in mock_api.call_args.args[0]
+
+
+def test_list_successful_pr_runs_filters_since_date():
+    runs = [
+        _run(100),
+        _run(99),
+        _run(98),
+    ]
+    with mock.patch.object(
+        bf, "_gh_api", return_value={"workflow_runs": runs}
+    ) as mock_api:
+        out = list(bf.list_successful_pr_runs("owner/repo", since_date="2025-01-01"))
+    assert [r["id"] for r in out] == [100, 99, 98]
+    assert "created>=2025-01-01" in mock_api.call_args.args[0]
+
+
 def test_migrate_csv_to_json_preserves_row_count(tmp_path):
     """CSV to JSON migration preserves row count and validates output."""
     import json

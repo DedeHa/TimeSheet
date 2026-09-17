@@ -134,9 +134,11 @@ def test_write_metrics_ready_withheld(tmp_path):
 def test_write_metrics_skips_invalid_data(tmp_path, capsys, monkeypatch):
     """write_metrics() skips the write when validation fails."""
     path = tmp_path / "metrics.json"
+
     # Monkeypatch validation to return errors, simulating invalid metrics data
     def fake_validate(data, schema="metrics"):
         return ["invalid metrics data"]
+
     monkeypatch.setattr(agg, "validate_json", fake_validate)
     agg.write_metrics({"ready": {}, "withheld": {}}, path)
     captured = capsys.readouterr()

@@ -47,22 +47,64 @@ def _gh_api(path: str) -> object:
         capture_output=True,
         text=True,
     ).stdout
-    return json.loads(out)
+    # gh api --paginate emits one JSON document per page, concatenated.
+    # Parse each document separately and merge list payloads.
+    decoder = json.JSONDecoder()
+    payloads = []
+    idx = 0
+    while idx < len(out):
+        while idx < len(out) and out[idx].isspace():
+            idx += 1
+        if idx >= len(out):
+            break
+        payload, idx = decoder.raw_decode(out, idx)
+        payloads.append(payload)
+    if not payloads:
+        return None
+    if len(payloads) == 1:
+        return payloads[0]
+    if all(isinstance(p, list) for p in payloads):
+        return [item for payload in payloads for item in payload]
+    if all(
+        isinstance(p, dict) and isinstance(p.get("workflow_runs"), list)
+        for p in payloads
+    ):
+        merged = dict(payloads[0])
+        merged["workflow_runs"] = [
+            run for payload in payloads for run in payload.get("workflow_runs", [])
+        ]
+        return merged
+    return payloads[0]
 
 
-def list_successful_pr_runs(repo: str) -> Iterable[dict]:
+def list_successful_pr_runs(
+    repo: str, since_run_id: int | None = None, since_date: str | None = None
+) -> Iterable[dict]:
     """Yield successful `pull_request` runs of ``Python CI`` (newest first).
 
     Pagination via ``gh api --paginate`` handles the full history. Runs whose
     conclusion is anything other than ``success`` are skipped here so the
     per-run exclusion rule (A.4) is enforced at the source.
+
+    Args:
+        repo: Repository name, e.g. "owner/repo"
+        since_run_id: Only yield runs with id > since_run_id (newer runs)
+        since_date: ISO 8601 date string; only yield runs created after this date
     """
+    query_parts = [
+        "event=pull_request",
+        "status=success",
+        "per_page=100",
+    ]
+    if since_date:
+        query_parts.append(f"created>={since_date}")
     payload = _gh_api(
-        f"repos/{repo}/actions/workflows/python-ci.yml/runs"
-        "?event=pull_request&status=success&per_page=100"
+        f"repos/{repo}/actions/workflows/python-ci.yml/runs" f"?{'&'.join(query_parts)}"
     )
     runs = (payload or {}).get("workflow_runs", []) if isinstance(payload, dict) else []
     for run in runs:
+        if since_run_id is not None and run.get("id", 0) <= since_run_id:
+            continue
         if run.get("conclusion") == "success":
             yield run
 
@@ -166,7 +208,14 @@ def migrate_csv_to_json(csv_path: Path, json_path: Path) -> int:
     return len(rows)
 
 
-def backfill(repo: str, csv_path: Path, *, include_housekeeping: bool = False) -> int:
+def backfill(
+    repo: str,
+    csv_path: Path,
+    *,
+    include_housekeeping: bool = False,
+    since_run_id: int | None = None,
+    since_date: str | None = None,
+) -> int:
     """Append timings for every qualifying historical run; return rows added.
 
     Existing rows are preserved and de-duplicated against the new ones, so a
@@ -193,7 +242,9 @@ def backfill(repo: str, csv_path: Path, *, include_housekeeping: bool = False) -
 
     new_rows: list[dict] = []
     runs_seen = 0
-    for run in list_successful_pr_runs(repo):
+    for run in list_successful_pr_runs(
+        repo, since_run_id=since_run_id, since_date=since_date
+    ):
         runs_seen += 1
         run_id = run.get("id")
         if run_id is None:
@@ -243,6 +294,8 @@ def main() -> None:
     Optional flags:
       --migrate: migrate CSV to JSON instead of running the backfill
       --json-path: destination for JSON migration (default: data/runtimes.json)
+      --since-run-id: only backfill runs newer than this run ID
+      --since-date: only backfill runs created on or after this date (ISO 8601)
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -266,6 +319,23 @@ def main() -> None:
         default=str(DATA_DIR / "runtimes.json"),
         help="destination for JSON migration",
     )
+    parser.add_argument(
+        "--since-run-id",
+        type=int,
+        default=None,
+        help=(
+            "only backfill runs newer than this run ID "
+            "(extracts branch info from that point)"
+        ),
+    )
+    parser.add_argument(
+        "--since-date",
+        default=None,
+        help=(
+            "only backfill runs created on or after this date "
+            "(ISO 8601, e.g. 2025-01-01)"
+        ),
+    )
     args = parser.parse_args()
 
     if args.migrate:
@@ -274,7 +344,13 @@ def main() -> None:
         return
 
     csv_path = Path(args.csv)
-    backfill(args.repo, csv_path, include_housekeeping=args.include_housekeeping)
+    backfill(
+        args.repo,
+        csv_path,
+        include_housekeeping=args.include_housekeeping,
+        since_run_id=args.since_run_id,
+        since_date=args.since_date,
+    )
 
 
 if __name__ == "__main__":

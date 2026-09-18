@@ -1,5 +1,8 @@
 """Aggregate the CI-timing dataset into a Markdown report (PRO-368).
 
+Implements FR-19 (rolling stats, Bollinger bands, normal distribution)
+and QR-12 (CI timing traceability via schema validation).
+
 Reads the ``ci-timings.csv`` produced by ``collect_ci_timings.py`` and renders
 running statistics per ``(job, step)`` — count, mean, sample standard deviation,
 median, p95, min, max, last — recomputed from the full dataset on every update
@@ -20,6 +23,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
+from ci_stats import (
+    compute_bollinger_bands,
+    compute_normal_distribution,
+    compute_rolling_stats,
+)
 from collect_ci_timings import JOB_TOTAL, read_csv
 from validator import validate_json
 
@@ -64,9 +72,11 @@ def stats_for(values: list[float]) -> dict:
 def aggregate(rows: list[dict], min_samples: int = MIN_SAMPLES) -> dict:
     """Group rows by (job, step) and compute stats.
 
-    Returns ``{"ready": {...}, "withheld": {...}}`` where keys are
-    ``(job_name, step_name)`` tuples and values are stat dicts. ``withheld`` holds
-    keys with fewer than ``min_samples`` samples.
+    Returns ``{"ready": {...}, "withheld": {...}, "values": {...}}`` where
+    keys are ``(job_name, step_name)`` tuples and values are stat dicts.
+    ``withheld`` holds keys with fewer than ``min_samples`` samples.
+    ``values`` maps each key to the raw sorted duration list for rolling
+    and distribution computations.
     """
     grouped: dict[tuple, list[float]] = defaultdict(list)
     for row in rows:
@@ -79,10 +89,12 @@ def aggregate(rows: list[dict], min_samples: int = MIN_SAMPLES) -> dict:
 
     ready: dict[tuple, dict] = {}
     withheld: dict[tuple, dict] = {}
-    for key, values in grouped.items():
-        bucket = ready if len(values) >= min_samples else withheld
-        bucket[key] = stats_for(values)
-    return {"ready": ready, "withheld": withheld}
+    values: dict[tuple, list[float]] = {}
+    for key, vals in grouped.items():
+        bucket = ready if len(vals) >= min_samples else withheld
+        bucket[key] = stats_for(vals)
+        values[key] = sorted(vals)
+    return {"ready": ready, "withheld": withheld, "values": values}
 
 
 def _fmt(value: float) -> str:
@@ -182,11 +194,36 @@ def write_metrics(agg_data: dict, path: Path) -> None:
     Formats the output from :func:`aggregate` with ``schema_version`` and
     ``generated_at``, validates it, and writes it to ``path``.
     Validation failures are logged as warnings and the write is skipped.
+
+    For each ready bucket, also computes rolling window statistics,
+    Bollinger bands, and normal-distribution parameters from the raw
+    duration values.
     """
+    raw_values = agg_data.get("values", {})
+    ready = agg_data.get("ready", {})
+    for key in ready:
+        vals = raw_values.get(key)
+        if vals:
+            window = min(20, len(vals))
+            try:
+                ready[key]["rolling"] = compute_rolling_stats(vals, window=window)
+                ready[key]["bollinger"] = compute_bollinger_bands(
+                    vals, window=window, k=2
+                )
+                ready[key]["distribution"] = compute_normal_distribution(vals)
+            except Exception as exc:
+                print(f"WARNING: stats for {key}: {exc}", file=sys.stderr)
+                ready[key]["rolling"] = []
+                ready[key]["bollinger"] = {}
+                ready[key]["distribution"] = {}
+        else:
+            ready[key]["rolling"] = []
+            ready[key]["bollinger"] = {}
+            ready[key]["distribution"] = {}
     payload = {
         "schema_version": "v1.0",
         "generated_at": _utc_now(),
-        "ready": _stringify_keys(agg_data.get("ready", {})),
+        "ready": _stringify_keys(ready),
         "withheld": _add_withheld_reasons(
             _stringify_keys(agg_data.get("withheld", {}))
         ),

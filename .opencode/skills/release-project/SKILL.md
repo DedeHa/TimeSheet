@@ -204,3 +204,13 @@ gh run list --branch vX.Y.Z --limit 1
 | Update release notes | `gh release edit vX.Y.Z --notes-file /tmp/vX.Y.Z_release_notes.md` |
 | Release JIRA version | `PUT /rest/api/3/version/<id>` with `{"released": true}` |
 | Publish Confluence | `atlassian_updateConfluencePage(pageId, body, contentFormat="html")` |
+
+## Related Documents
+
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `doc/CONTRIBUTING.md` — Development standards
+- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `.opencode/skills/release-project/` — This skill
+- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/orchestrate-feature/SKILL.md` — Workflow for orchestrating the pipeline

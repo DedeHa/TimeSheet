@@ -48,6 +48,8 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | QR-09 | CI maintainability | [setup-python-deps/action.yml](../.github/actions/setup-python-deps/action.yml) - single composite action for Python setup, pip caching and dependency install (each job runs `actions/checkout` before it) |
 | QR-10 | GitHub signing verification | [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml) - verifies signing capability and validates GPG key import before deployment |
 | QR-11 | CI GPG action maintainability | [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml) - dedicated composite action for GPG signing setup, isolated from Python environment setup |
+| FR-19 | CI timing statistical enhancement | [ci_stats.py](../.github/scripts/ci_stats.py) - `compute_rolling_stats()`, `compute_bollinger_bands()`, `compute_normal_distribution()`; [aggregate_ci_timings.py](../.github/scripts/aggregate_ci_timings.py) - `aggregate()` and `write_metrics()` |
+| QR-12 | CI timing traceability | [validator.py](../.github/scripts/validator.py) - `STAT_KEYS` extended with `rolling`, `bollinger`, `distribution`; [test_validator.py](../.github/tests/ci-pipeline/test_validator.py) - schema validation tests |
 
 ## CI Setup Design Decision: Composite Action vs. Inlined Steps (QR-08, QR-09)
 

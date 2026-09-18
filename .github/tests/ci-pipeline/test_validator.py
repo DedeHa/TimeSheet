@@ -53,6 +53,9 @@ def test_validate_json_valid_metrics():
                 "min": 8.1,
                 "max": 25.4,
                 "last": 14.2,
+                "rolling": [],
+                "bollinger": {},
+                "distribution": {},
             }
         },
         "withheld": {
@@ -232,17 +235,44 @@ def test_validate_json_ready_missing_stat_key():
 
 
 def test_validate_json_ready_not_dict():
-    """Ready bucket with non-dict value produces errors."""
+    """Valid ready entry must be a dict."""
     data = {
         "schema_version": "v1.0",
         "generated_at": "2026-09-14T20:57:40Z",
         "ready": {
-            "check / Run lint tools": "not a dict",  # String instead of dict
+            "check / Run lint tools": "not a dict",
         },
         "withheld": {},
     }
     errors = validate_json(data, schema="metrics")
-    assert any("must be a dict" in e for e in errors)
+    assert len(errors) > 0
+    assert any("ready[check / Run lint tools] must be a dict" in e for e in errors)
+
+
+def test_validate_json_ready_with_new_stat_keys():
+    """Ready entries may include rolling, bollinger, distribution keys (PRO-380)."""
+    data = {
+        "schema_version": "v1.0",
+        "generated_at": "2026-09-14T20:57:40Z",
+        "ready": {
+            "check / Run lint tools": {
+                "n": 128,
+                "mean": 12.5,
+                "stddev": 2.3,
+                "median": 12.1,
+                "p95": 18.2,
+                "min": 8.1,
+                "max": 25.4,
+                "last": 14.2,
+                "rolling": [],
+                "bollinger": {},
+                "distribution": {},
+            }
+        },
+        "withheld": {},
+    }
+    errors = validate_json(data, schema="metrics")
+    assert errors == [], f"Expected no errors, got: {errors}"
 
 
 def test_validate_json_withheld_missing_n():

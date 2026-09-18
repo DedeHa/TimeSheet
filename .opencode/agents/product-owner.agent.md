@@ -572,4 +572,14 @@ When handing off to Architect:
 4. Include related documentation references
 5. Provide prioritization and dependency information
 
+## Documentation
+
+This agent definition follows the workflow documented in:
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/skills/plan-feature/SKILL.md` — Feature planning, JIRA ticket creation, story points, ACs
+- `.opencode/skills/orchestrate-feature/SKILL.md` — Pipeline orchestration, dispatch, escalation, handoff tracking
+- `.opencode/skills/complete-feature/SKILL.md` — Feature completion, AC validation, JIRA closure
+- `doc/CONTRIBUTING.md` — Contributing guidelines & Git workflow
+
 The Architect will translate these stories into technical design and implementation plans.

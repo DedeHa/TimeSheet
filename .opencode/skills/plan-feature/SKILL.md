@@ -331,6 +331,8 @@ When creating a new Story ticket:
 
 ## Related Documents
 
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/REQUIREMENTS.md` — FR / QR requirement IDs
 - `doc/ARCHITECTURE.md` — System architecture and design decisions

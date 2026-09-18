@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REQUIREMENTS = ROOT / "doc" / "REQUIREMENTS.md"
 ARCHITECTURE = ROOT / "doc" / "ARCHITECTURE.md"
 SOURCE = ROOT / "src_timesheetalgo" / "TimeSheetAlgo.py"
+CI_SCRIPTS = ROOT / ".github" / "scripts"
 REPORT_PATH = ROOT / "tests" / "reports" / "traceability-matrix.md"
 
 
@@ -60,11 +61,15 @@ def extract_requirement_ids(text: str) -> list[str]:
 
 
 def collect_ids() -> TraceabilityData:
-    """Read the three sources and collect their requirement identifiers."""
+    """Read the sources and collect their requirement identifiers."""
+    code_text = _read_text(SOURCE)
+    for script in CI_SCRIPTS.iterdir():
+        if script.suffix in (".py",):
+            code_text += "\n" + _read_text(script)
     return TraceabilityData(
         requirement_ids=extract_requirement_ids(_read_text(REQUIREMENTS)),
         architecture_ids=set(extract_requirement_ids(_read_text(ARCHITECTURE))),
-        code_ids=set(extract_requirement_ids(_read_text(SOURCE))),
+        code_ids=set(extract_requirement_ids(code_text)),
     )
 
 

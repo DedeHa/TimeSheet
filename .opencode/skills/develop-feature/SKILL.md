@@ -382,5 +382,16 @@ When escalating, provide:
 | Lint error recurs | Same ruff/black error after 3 fix attempts | Yes |
 | JIRA field missing | Cannot determine acceptance criteria | Yes — ask PO |
 | Plan ambiguous | Two valid interpretations of requirement | Yes — ask PO |
+
+## Related Documents
+
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `doc/CONTRIBUTING.md` — Development standards
+- `doc/TESTING.md` — Test structure, test markers, test organization
+- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `.opencode/skills/develop-feature/` — This skill
+- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket
 | Out of scope | Implementation requires changes not in plan | Yes — ask PO |
 | External dependency | Waiting on third-party or upstream PR | Yes — pause and notify |

@@ -507,3 +507,14 @@ When escalating, provide:
 | JIRA update fails | Description update returns error | Yes — ask PO |
 | Test fails | Same test fails after 3 fix attempts | Yes |
 | Out of scope | Required changes not in original ACs | Yes — ask PO |
+
+## Related Documents
+
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `doc/CONTRIBUTING.md` — Development standards
+- `doc/TESTING.md` — Test structure, test markers, test organization
+- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `.opencode/skills/complete-feature/` — This skill
+- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

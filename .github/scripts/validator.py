@@ -18,7 +18,19 @@ REQUIRED_RUN_KEYS = {
     "conclusion",
 }
 REQUIRED_METRICS_KEYS = {"ready", "withheld"}
-STAT_KEYS = {"n", "mean", "stddev", "median", "p95", "min", "max", "last"}
+STAT_KEYS = {
+    "n",
+    "mean",
+    "stddev",
+    "median",
+    "p95",
+    "min",
+    "max",
+    "last",
+    "rolling",
+    "bollinger",
+    "distribution",
+}
 
 
 def _validate_root(data: dict, errors: list[str]) -> None:

@@ -372,3 +372,12 @@ Expected output format:
 - Test count and pass rate
 - Coverage percentage and missing lines
 - Any failures with stack traces
+
+## Documentation
+
+This agent definition follows the workflow documented in:
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/skills/complete-feature/SKILL.md` — Feature completion workflow (final-verification, evaluate-ac, assign-story-points, close-ticket)
+- `doc/TESTING.md` — Test markers and organization
+- `doc/CONTRIBUTING.md` — Contributing guidelines & Git workflow

@@ -4,6 +4,180 @@ This directory contains the agent team discovered by opencode,
 comprising specialized agents that collaborate to deliver high-quality
 features through a structured, repeatable workflow.
 
+## Documentation Hierarchy
+
+```
+AGENTS.md                  ← Top-level guide: project conventions, modes, CI gates
+└── doc/AGENTS_WORKFLOW.md ← This file: agent team workflow, diagrams, quality gates
+    ├── .opencode/agents/   ← Operational agent definitions (4 agents)
+    ├── .opencode/scripts/  ← Pipeline automation (detect_mode.py, pipeline.py)
+    └── .opencode/skills/   ← Workflow reference docs (5 skills)
+```
+
+## 🚀 Triggering Workflows
+
+### User Messages / Commands
+
+| Intent | User Message | Triggered By |
+|--------|-------------|--------------|
+| **Plan a feature** | `plan a feature`, `create a new ticket`, `estimate effort`, `discovery session`, `refine the backlog` | PO: `plan-feature` skill |
+| **Define AC** | `define AC/acceptance criteria for PRO-XXX` | PO: `plan-feature` skill |
+| **Start development** | `start development on PRO-XXX`, `start feature PRO-XXX`, `implement PRO-XXX` | PO: `develop-feature` skill (entry gate) |
+| **Implement** | (post-dispatch) developer receives architecture plan | Developer: `develop-feature` skill |
+| **Test/Validate** | `test PRO-XXX`, `validate implementation` | Tester: `complete-feature` skill |
+| **Complete feature** | `complete feature PRO-XXX`, `finalise implementation` | PO: `complete-feature` skill |
+| **Release** | `release`, `create a release`, `tag vX.Y.Z`, `publish release notes` | PO: `release-project` skill |
+| **Contract review** | `review contracts`, `update contracts PRO-XXX` | Architect: contract review pass |
+| **Unit tests** | `run unit tests`, `unit test PRO-XXX` | Developer: `pytest` / `run_tests.sh` |
+| **Set dev mode** | `run in automated` / `run in interactive` / `proceed` / `pause` | PO: `detect_mode.py` |
+| **Pipeline control** | `python .opencode/scripts/pipeline.py <cmd> <ticket>` | User/PO |
+
+### Message to Skill Bindings (opencode)
+
+| Message pattern | Skill launched |
+|-----------------|----------------|
+| `plan a feature`, `plan <feature>` | `plan-feature` (workflow: plan-feature) |
+| `develop-feature`, `develop feature PRO-XXX`, ticket link → `develop-feature` | `develop-feature` |
+| `complete-feature`, `complete feature PRO-XXX` | `complete-feature` |
+| `orchestrate-feature`, `run the pipeline` | `orchestrate-feature` (dispatches to PO/Arch/Dev/Tester) |
+| `release-project`, `release`, `tag`, `publish release notes` | `release-project` |
+
+### Lifecycle Chart
+
+```
+User message "plan a feature"
+        │
+        ▼
+┌─────────────────┐     JIRA created      ┌──────────────────────┐
+│  plan-feature   │ ─────────────────────▶│ JIRA Story (PRO-XXX) │
+│  (PO)           │                       └──────────┬───────────┘
+└─────────────────┘                                  │
+                                                     ▼
+                                      ┌──────────────────────────┐
+        "proceed" / PO dispatch       │  Story points assigned   │
+   ┌─────────────────────────────────│ before sprint pickup     │
+   │                                  └──────────┬───────────────┘
+   ▼                                             │
+┌─────────────────┐                    ┌─────────▼──────────┐
+│ develop-feature │                    │ orchestrate-feature│
+│ (Dev)           │ ◀── architecture ──│ dispatches         │
+│                 │     plan           │ Architect → Dev    │
+└────────┬────────┘                    └─────────┬──────────┘
+         │ ACs + impl plan                       │
+         ▼                                       ▼
+┌─────────────────┐                    ┌──────────────────────┐
+│ complete-feature│                    │ complete-feature     │
+│ (Tester)        │                    │ (PO closure)         │
+└────────┬────────┘                    └──────────────────────┘
+         │ validated + ACs checked
+         ▼
+┌─────────────────┐
+│ release-project │  tag vX.Y.Z → PR merge → JIRA release
+└─────────────────┘
+```
+
+## 🕹️ Pipeline Commands (orchestration)
+
+The pipeline is driven from a shell via `.opencode/scripts/pipeline.py`:
+
+```bash
+# Show current state of a ticket (mode, step, cycle counts, status, escalation)
+python .opencode/scripts/pipeline.py show state PRO-373
+
+# Show what work was missed in an interrupted pipeline
+python .opencode/scripts/pipeline.py what-missed PRO-373
+
+# Resume the pipeline at its current step (clears interruption flag)
+python .opencode/scripts/pipeline.py resume PRO-373
+
+# Advance to the next pipeline step
+python .opencode/scripts/pipeline.py continue PRO-373
+
+# (Re)proceed with current step execution
+python .opencode/scripts/pipeline.py proceed PRO-373
+
+# Detect and alert on stuck pipelines
+python .opencode/scripts/pipeline.py check-stuck PRO-373
+
+# Preview an action without executing (dry-run)
+python .opencode/scripts/pipeline.py dry-run PRO-373 <action>
+
+# Show pipeline history
+python .opencode/scripts/pipeline.py history PRO-373
+
+# Reset all cycles and state for a ticket
+python .opencode/scripts/pipeline.py reset PRO-373
+
+# Set / show the development mode for a ticket
+python .opencode/scripts/pipeline.py set-mode PRO-373 automated   # or: interactive
+python .opencode/scripts/pipeline.py get-mode PRO-373
+```
+
+### Orchestration dispatch (orchestrate-feature)
+
+The `orchestrate-feature` skill reads JIRA state, tracks cycles, and dispatches work
+to the Architect → Developer → Tester pipeline, handling escalations and handoffs:
+
+| Step | Stage | Gate / Input | Output |
+|------|-------|--------------|--------|
+| 1 | Architecture review | User stories + ACs vs `ARCHITECTURE.md` | Approved implementation plan |
+| 2 | Developer implementation | Approved plan | Feature branch with changes |
+| 3 | Tester validation | Implementation + ACs | Validation result, AC status |
+| 4 | PO completion | Validation report | ACs checkmarked, DoD done, feature closure |
+
+```text
+PO ──dispatch──▶ Architect ──plan──▶ Developer ──impl──▶ Tester ──validate──▶ PO ──PR/JIRA──▶ Done
+```
+
+### Handoff Labels (agent-to-agent)
+
+| From → To | Handoff Label | Message |
+|-----------|--------------|---------|
+| PO → Architect | `Request Architecture Review` | Review user stories + ACs against ARCHITECTURE.md |
+| Architect → Developer | `Start Implementation` | Approved implementation plan with phases/files |
+| Developer → Tester | `Start Testing & Validation` | Implementation output + acceptance criteria |
+| Tester → Developer | `Request Fixes` | Issues with severity, evidence, root causes |
+| Tester → PO | `Approve & Complete` | Validation result, AC status, test summary |
+| PO → User | `Final Review` | Complete summary, AC status, PR status |
+
+## 📐 Visual Representation
+
+### Agent Development Workflow
+
+```mermaid
+flowchart TD
+    U[User Request] --> PO[Product Owner Agent]
+    PO -->|"1. Intake"| A[Architect Agent]
+    A -->|"2. Architecture Plan"| D[Developer Agent]
+    D -->|"3. Code + Tests"| T[Tester Agent]
+    T -->|"4. PASS"| PO2[Product Owner Final Review]
+    T -->|"4. FAIL"| D
+    PO2 -->|"5. User Confirmation"| U
+    PO2 -->|"Closure"| C[Close Ticket & Merge PR]
+```
+
+### Interactive vs Automated Mode Decision
+
+```mermaid
+flowchart TD
+    S[User Message] --> M{Mode Detection<br>detect_mode.py}
+    M -->|interactive| I[PO pauses at every handoff]
+    I --> A1[Architect]
+    A1 --> D1[Developer]
+    D1 --> T1[Tester]
+    T1 --> PO_CHECK{PO Review}
+    PO_CHECK -->|User confirms| CONT[Continue pipeline]
+    PO_CHECK -->|User stops| STOP[Pause]
+
+    M -->|automated| AUTO[PO proceeds without pauses]
+    AUTO --> A2[Architect]
+    A2 --> D2[Developer]
+    D2 --> T2[Tester]
+    T2 --> PO_AUTO{Max Cycles 3?}
+    PO_AUTO -->|Pass| CONT2[Close Ticket]
+    PO_AUTO -->|Blocked| ESC[Escalate to PO]
+```
+
 ## 🧩 Agent Team Overview
 
 | Agent | Role | Input | Output | Handoff To |
@@ -13,7 +187,7 @@ features through a structured, repeatable workflow.
 | **Developer** | Implement features following the plan | Implementation plan, architecture | Code changes, tests, commits | Tester |
 | **Tester** | Validate correctness and quality | Implementation, tests, requirements | Pass/Fail decision with evidence | Product Owner / Developer |
 
-## � File Structure
+## 📁 File Structure
 
 This directory contains the opencode-discovered agent team and skills:
 
@@ -24,13 +198,21 @@ This directory contains the opencode-discovered agent team and skills:
 │   ├── developer.agent.md
 │   ├── product-owner.agent.md
 │   └── tester.agent.md
-└── skills/          # Workflow reference documents discovered by opencode
-    ├── complete-feature/SKILL.md
-    ├── develop-feature/SKILL.md
-    ├── orchestrate-feature/SKILL.md
-    ├── plan-feature/SKILL.md
-    └── release-project/SKILL.md
+├── skills/          # Workflow reference documents discovered by opencode
+│   ├── complete-feature/SKILL.md
+│   ├── develop-feature/SKILL.md
+│   ├── orchestrate-feature/SKILL.md
+│   ├── plan-feature/SKILL.md
+│   └── release-project/SKILL.md
+└── scripts/         # Pipeline automation scripts
+    ├── detect_mode.py
+    └── pipeline.py
 ```
+
+### Supporting Scripts
+
+- `.opencode/scripts/detect_mode.py` — Detects and persists the development mode (`interactive`/`automated`) from user chat messages into `~/.opencode/pipeline-state.json`
+- `.opencode/scripts/pipeline.py` — Enhanced pipeline management with resume, continue, proceed, dry-run, check-stuck, what-missed, history, reset, set-mode, and get-mode commands
 
 ### Agent Configuration Files (``-agent.md` (YAML config + detailed documentation)`)
 These are **operational files** discovered and used by opencode:
@@ -47,7 +229,7 @@ Each file contains:
 - `.opencode/skills/*/SKILL.md` - Workflow reference documents used by agents
 - `AGENTS_WORKFLOW.md` (this file) - Strategic overview, workflow diagrams, quality gates, and cross-agent context
 
-## �🔄 Workflow
+## 🔄 Workflow
 
 ### Primary Flow: Successful Feature
 
@@ -414,10 +596,25 @@ Feature complete
 
 ## 🔗 Related Files
 
+### Agent Definitions (`.opencode/agents/`)
 - `.opencode/agents/product-owner-agent.md` (YAML config + detailed documentation) - Product Owner Agent configuration
 - `.opencode/agents/architect-agent.md` (YAML config + detailed documentation) - Architect Agent configuration
 - `.opencode/agents/developer-agent.md` (YAML config + detailed documentation) - Developer Agent configuration
 - `.opencode/agents/tester-agent.md` (YAML config + detailed documentation) - Tester & Validator Agent configuration
+
+### Pipeline Scripts (`.opencode/scripts/`)
+- `.opencode/scripts/detect_mode.py` — Mode detection from user chat messages → persists to `~/.opencode/pipeline-state.json`
+- `.opencode/scripts/pipeline.py` — Pipeline management: show state, resume, continue, proceed, check-stuck, what-missed, history, reset, set-mode, get-mode
+
+### Workflow Reference Documents (`.opencode/skills/`)
+- `.opencode/skills/plan-feature/SKILL.md` — Feature planning, JIRA ticket creation, story points, ACs
+- `.opencode/skills/develop-feature/SKILL.md` — Feature development workflow, implementation steps
+- `.opencode/skills/complete-feature/SKILL.md` — Feature completion, AC validation, JIRA closure
+- `.opencode/skills/orchestrate-feature/SKILL.md` — Pipeline orchestration, dispatch, escalation, handoff tracking
+- `.opencode/skills/release-project/SKILL.md` — Release process, versioning, GitHub Release, JIRA version
+
+### Project Documentation
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `README.md` - Project documentation
 - `doc/ARCHITECTURE.md` - System architecture
 - `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")

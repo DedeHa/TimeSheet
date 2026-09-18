@@ -359,3 +359,15 @@ The pipeline state is stored in `~/.opencode/pipeline-state.json` (encrypted if 
 3. **Pipeline Templates**: Store and reuse pipeline configurations
 4. **Metrics Collection**: Track cycle times and success rates
 5. **Integration Hooks**: Connect to external CI/CD systems
+
+## Related Documents
+
+- `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
+- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `doc/CONTRIBUTING.md` — Development standards
+- `doc/TESTING.md` — Test structure, test markers, test organization
+- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `.opencode/skills/orchestrate-feature/` — This skill
+- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature
+- `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket

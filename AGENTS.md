@@ -182,6 +182,14 @@ python .opencode/scripts/pipeline.py show state PRO-373
 - State: `.opencode/pipeline-state.json`
 - History: `.opencode/pipeline-history.json`
 
+### Canonical Workflow Contract
+
+The runtime in `.opencode/scripts/pipeline.py` is the authoritative source of truth for workflow state, transitions, recovery, and handoff payload generation. The canonical lifecycle for all agent and skill docs is:
+
+`backlog -> plan -> develop -> complete -> approved -> released`
+
+All markdown layers must describe this same lifecycle. A doc is considered stale if it introduces a separate ad hoc phase model, a shortened `Plan → Develop → Complete` wording without the full lifecycle, or policy that contradicts the runtime state machine.
+
 ### Agent Development Workflow
 
 ```mermaid
@@ -208,17 +216,56 @@ User → PO (intake) → [Architect → Developer → Tester] → PO (review) �
 
 ### Documentation Reference
 
-This file is the top-level guide for the TimeSheetAlgo agent development setup. It is organized top-down:
+This file is the top-level index for the TimeSheetAlgo agent setup. It summarizes project conventions and operating rules. The deeper workflow description lives in [doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md), while the runtime state machine remains authoritative in [.opencode/scripts/pipeline.py](.opencode/scripts/pipeline.py).
 
-1. **[AGENTS.md](AGENTS.md)** - This file: project conventions, quick setup, testing, and agent development modes.
-2. **[doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md)** - Detailed agent team workflow, handoff rules, quality gates, and Mermaid diagrams.
+1. **[AGENTS.md](AGENTS.md)** - Top-level index: setup, CI gates, modes, and project conventions.
+2. **[doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md)** - Detailed operational workflow, handoff rules, and quality gates.
 3. **[.opencode/agents/](.opencode/agents/)** - Operational agent definitions (`product-owner.agent.md`, `architect.agent.md`, `developer.agent.md`, `tester.agent.md`).
 4. **[.opencode/scripts/](.opencode/scripts/)** - Pipeline automation scripts (`detect_mode.py`, `pipeline.py`).
-5. **[.opencode/skills/](.opencode/skills/)** - Workflow reference documents (`plan-feature`, `develop-feature`, `complete-feature`, `orchestrate-feature`, `release-project`).
+5. **[.opencode/skills/](.opencode/skills/)** - Workflow reference docs (`plan-feature`, `develop-feature`, `complete-feature`, `orchestrate-feature`, `release-project`).
 
 - `.opencode/agents/` files are discovered and executed by opencode.
 - `.opencode/scripts/` are invoked from the repository root.
 - `.opencode/skills/` are loaded by agents via YAML frontmatter `skills:` entries.
+- The runtime in `.opencode/scripts/pipeline.py` is the final authority when workflow wording and state validation differ from markdown docs.
+
+## Workflow Reference
+
+This file is the project index and quick-start guide. The detailed workflow behavior is defined in [doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md), and the runtime in [.opencode/scripts/pipeline.py](.opencode/scripts/pipeline.py) remains the authoritative source of truth for state transitions and recovery.
+
+The canonical lifecycle across all agent and skill docs is:
+
+`backlog -> plan -> develop -> complete -> approved -> released`
+
+### Agent responsibilities
+
+- Product Owner: intake, prioritization, dispatch, escalation, final approval
+- Architect: requirements-to-design, implementation planning, scope control
+- Developer: implementation within approved scope, tests, validation prep
+- Tester: acceptance verification, evidence-based sign-off, reject/fix loops
+
+### Workflow overview
+
+```mermaid
+flowchart LR
+    U[User Request] --> PO[Product Owner]
+    PO --> A[Architect]
+    A --> D[Developer]
+    D --> T[Tester]
+    T -->|PASS| PO2[Product Owner Final Review]
+    T -->|FAIL| D
+    PO2 --> U
+```
+
+### Source-of-truth rule
+
+- AGENTS.md: quick-start, conventions, and index
+- doc/AGENTS_WORKFLOW.md: detailed orchestration and lifecycle flow
+- .opencode/agents: role definitions and constraints
+- .opencode/skills: reusable workflow modules
+- .opencode/scripts/pipeline.py: enforced state machine and recovery logic
+
+When documentation and runtime behavior diverge, the runtime contract wins.
 
 ## CI Pipeline Details
 

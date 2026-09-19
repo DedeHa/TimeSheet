@@ -14,6 +14,12 @@ Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the c
 - `gh` authenticated and `git` configured
 - Atlassian MCP tools available (Jira)
 
+## Canonical Workflow Contract
+
+This skill must only run after the canonical workflow has reached the `complete` or `approved` state and the runtime confirms the ticket is ready for closure. If the pipeline shows interruption, blocking state, or missing story points, stop and resolve those checks before proceeding.
+
+The project-wide workflow is: `backlog -> plan -> develop -> complete -> approved -> released`
+
 ## Step 0 — Determine Current State
 
 1. Identify the current branch and JIRA ticket:

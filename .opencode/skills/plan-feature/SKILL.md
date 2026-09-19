@@ -9,6 +9,14 @@ This skill covers the end-to-end workflow for discovering, scoping, and document
 
 **Triggered by:** User requests feature planning after completing the PO intake conversation. The user explicitly asks the PO to plan the feature (e.g., "start feature PRO-XXX", "plan a feature", "create a ticket").
 
+## Canonical Workflow Contract
+
+The planning skill is the first stage in the canonical lifecycle and must only create or refine backlog/plan items when the runtime state is valid for the `backlog` or `plan` phase. The project-wide workflow is:
+
+`backlog -> plan -> develop -> complete -> approved -> released`
+
+The runtime in `.opencode/scripts/pipeline.py` is the source of truth for validation, recovery, and handoff payload generation. This skill must not push a ticket into development without story points, PO approval, or a valid transition from the current state.
+
 ---
 
 ## Ticket Fields (Standard Across PRO Project)

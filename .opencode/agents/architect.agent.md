@@ -14,6 +14,8 @@ constraints:
   - Must minimize complexity
   - Must strictly reference ARCHITECTURE.md patterns
   - All designs must align with existing codebase
+  - "Must follow the canonical workflow: backlog -> plan -> develop -> complete -> approved -> released"
+  - "Must not hand off to developer if the pipeline is blocked, interrupted, or missing story points"
 handoffs:
   - label: Start Implementation
     agent: developer

@@ -229,3 +229,48 @@ def test_plan_feature_invoke_always_in_po_agent():
     """plan-feature must use invoke: always in the PO agent."""
     skill = _skill_in_agent("product-owner-agent", "plan-feature")
     assert skill["invoke"] == "always"
+
+
+def test_root_docs_share_same_canonical_lifecycle_contract():
+    """AGENTS.md and AGENTS_WORKFLOW.md must describe the same canonical lifecycle."""
+    root = (_REPO / "AGENTS.md").read_text()
+    workflow = (_REPO / "doc" / "AGENTS_WORKFLOW.md").read_text()
+    assert "backlog -> plan -> develop -> complete -> approved -> released" in root
+    assert "backlog -> plan -> develop -> complete -> approved -> released" in workflow
+    assert "runtime in `.opencode/scripts/pipeline.py`" in root
+    assert "authoritative source of truth" in workflow
+
+
+# ---------------------------------------------------------------------------
+# Canonical workflow governance
+# ---------------------------------------------------------------------------
+
+_CANONICAL_LIFECYCLE = "backlog -> plan -> develop -> complete -> approved -> released"
+
+
+def test_all_agents_reference_canonical_workflow_contract():
+    """Every agent must reference the same canonical lifecycle contract."""
+    for path in sorted((_REPO / ".opencode" / "agents").glob("*.agent.md")):
+        content = path.read_text()
+        assert _CANONICAL_LIFECYCLE in content, (
+            f"{path.name} lacks the canonical workflow contract"
+        )
+
+
+def test_all_skills_reference_canonical_workflow_contract():
+    """Every skill must use the same canonical lifecycle wording."""
+    for path in sorted((_REPO / ".opencode" / "skills").glob("*/SKILL.md")):
+        content = path.read_text()
+        assert _CANONICAL_LIFECYCLE in content, (
+            f"{path.relative_to(_REPO)} lacks the canonical workflow contract"
+        )
+
+
+def test_workflow_docs_are_split_by_role():
+    """AGENTS.md stays high level while AGENTS_WORKFLOW holds the detailed flow."""
+    root = (_REPO / "AGENTS.md").read_text()
+    workflow = (_REPO / "doc" / "AGENTS_WORKFLOW.md").read_text()
+    assert "quick-start guide" in root.lower()
+    assert "detailed operational reference" in workflow.lower()
+    assert "canonical lifecycle" in root.lower()
+    assert "state machine" in workflow.lower()

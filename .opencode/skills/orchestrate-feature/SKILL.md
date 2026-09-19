@@ -49,7 +49,7 @@ Use this skill when:
 
 ## State Management
 
-The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
+The orchestration skill maintains state in `.opencode/pipeline-state.json`:
 
 ```json
 {
@@ -322,7 +322,7 @@ Finalizes the pipeline:
 
 ## State File Location
 
-The pipeline state is stored in `~/.opencode/pipeline-state.json` (encrypted if enabled). This file contains:
+The pipeline state is stored in `.opencode/pipeline-state.json` (encrypted if enabled). This file contains:
 - Cycle counts per agent
 - Current pipeline step
 - Escalation status
@@ -338,7 +338,7 @@ The pipeline state is stored in `~/.opencode/pipeline-state.json` (encrypted if 
 ## Troubleshooting
 
 ### State Not Updating
-- Check file permissions on `~/.opencode/pipeline-state.json`
+- Check file permissions on `.opencode/pipeline-state.json`
 - Verify the orchestration skill has write access
 - Restart opencode if the state file is corrupted
 

@@ -1,5 +1,21 @@
 # AGENTS.md — TimeSheetAlgo
 
+## Table of Contents
+- [Quick Setup](#quick-setup-critical-for-ramping-up)
+- [Testing Strategy](#testing-strategy)
+- [Architecture & Configuration](#architecture--configuration)
+- [Environment Detection Rules](#environment-detection-rules)
+- [Git & PR Conventions](#git--pr-conventions)
+- [Agent Development Modes](#agent-development-modes)
+- [Agent Development Workflow](#agent-development-workflow)
+- [CI Pipeline Details](#ci-pipeline-details)
+- [File System & Working Directory](#file-system--working-directory)
+- [Test Fixtures & Structure](#test-fixtures--structure)
+- [Runtime Behavior](#runtime-behavior)
+- [Build & Release](#build--release)
+- [Key Gotchas Agents Miss](#key-gotchas-agents-miss)
+- [Documentation Reference](#documentation-reference)
+
 ## Quick Setup (Critical for Ramping Up)
 
 **Install development environment:**
@@ -105,7 +121,7 @@ def detect_environment(base_path: str) -> str:
 - `automated` — run the full pipeline without user pauses; only blockers and cycle limits interrupt
 
 **Mode detection from chat:**
-The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `.opencode/pipeline-state.json`:
 
 ```bash
 python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
@@ -117,7 +133,7 @@ python .opencode/scripts/detect_mode.py PRO-373 --show
 - Default is `interactive` when no mode is detected
 
 **Pipeline state:**
-State is persisted per ticket in `~/.opencode/pipeline-state.json` (encrypted if enabled). The `development_mode` field is read before every dispatch and handoff so all 4 agents respect the user's mode choice.
+State is persisted per ticket in `.opencode/pipeline-state.json` (encrypted if enabled). The `development_mode` field is read before every dispatch and handoff so all 4 agents respect the user's mode choice.
 
 **Enhanced Pipeline Management:**
 The `pipeline.py` script provides enhanced pipeline management for handling
@@ -163,20 +179,46 @@ python .opencode/scripts/pipeline.py show state PRO-373
 ```
 
 **Pipeline state file location:**
-- State: `~/.opencode/pipeline-state.json`
-- History: `~/.opencode/pipeline-history.json`
+- State: `.opencode/pipeline-state.json`
+- History: `.opencode/pipeline-history.json`
 
-**Mode detection from chat:**
-The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+### Agent Development Workflow
 
-```bash
-python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
-python .opencode/scripts/detect_mode.py PRO-373 --show
+```mermaid
+flowchart LR
+    U[User Request] --> PO[Product Owner Agent<br/>Intake & Requirements]
+    PO --> A[Architect Agent<br/>Design & Implementation Plan]
+    A --> D[Developer Agent<br/>Implement & Write Tests]
+    D --> T[Tester Agent<br/>Validate & Verify]
+    T -->|PASS| PO2[Product Owner<br/>Final Review]
+    T -->|FAIL| D
+    PO2 --> U2[User<br/>Confirmation & Closure]
+    A -->|Escalation| PO
+    T -->|Escalation| PO
 ```
 
-- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
-- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
-- Default is `interactive` when no mode is detected
+The Product Owner orchestrates the entire pipeline:
+
+```
+User → PO (intake) → [Architect → Developer → Tester] → PO (review) → User
+```
+
+- In **interactive** mode, the PO pauses for user confirmation before each handoff.
+- In **automated** mode, the PO proceeds without pauses; only blockers and cycle limits interrupt.
+
+### Documentation Reference
+
+This file is the top-level guide for the TimeSheetAlgo agent development setup. It is organized top-down:
+
+1. **[AGENTS.md](AGENTS.md)** - This file: project conventions, quick setup, testing, and agent development modes.
+2. **[doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md)** - Detailed agent team workflow, handoff rules, quality gates, and Mermaid diagrams.
+3. **[.opencode/agents/](.opencode/agents/)** - Operational agent definitions (`product-owner.agent.md`, `architect.agent.md`, `developer.agent.md`, `tester.agent.md`).
+4. **[.opencode/scripts/](.opencode/scripts/)** - Pipeline automation scripts (`detect_mode.py`, `pipeline.py`).
+5. **[.opencode/skills/](.opencode/skills/)** - Workflow reference documents (`plan-feature`, `develop-feature`, `complete-feature`, `orchestrate-feature`, `release-project`).
+
+- `.opencode/agents/` files are discovered and executed by opencode.
+- `.opencode/scripts/` are invoked from the repository root.
+- `.opencode/skills/` are loaded by agents via YAML frontmatter `skills:` entries.
 
 ## CI Pipeline Details
 

@@ -141,7 +141,7 @@ def validate_pr_merged(ticket: str, pr_number: int) -> ValidationResult:
     """
     try:
         result = subprocess.run(
-            ["gh", "pr", "view", str(pr_number), "--json", "state", "mergeState"],
+            ["gh", "pr", "view", str(pr_number), "--json", "state"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -156,33 +156,23 @@ def validate_pr_merged(ticket: str, pr_number: int) -> ValidationResult:
 
         data = json.loads(result.stdout)
         state = data.get("state", "OPEN")
-        merge_state = data.get("mergeState", "UNKNOWN")
 
-        if state == "MERGED" or merge_state == "MERGED":
+        if state == "MERGED":
             return ValidationResult(
                 check_name="PR Merged",
                 status=ValidationStatus.PASS,
                 message=f"PR #{pr_number} is merged to master",
-                details={
-                    "pr_number": pr_number,
-                    "state": state,
-                    "merge_state": merge_state,
-                },
+                details={"pr_number": pr_number, "state": state},
             )
         else:
             return ValidationResult(
                 check_name="PR Merged",
                 status=ValidationStatus.FAIL,
                 message=(
-                    f"PR #{pr_number} is NOT merged (state={state}, "
-                    f"merge_state={merge_state}). "
+                    f"PR #{pr_number} is NOT merged (state={state}). "
                     "Cannot close ticket until PR is merged."
                 ),
-                details={
-                    "pr_number": pr_number,
-                    "state": state,
-                    "merge_state": merge_state,
-                },
+                details={"pr_number": pr_number, "state": state},
             )
     except FileNotFoundError:
         # gh CLI not available — return SKIP with warning

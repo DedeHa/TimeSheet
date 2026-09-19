@@ -47,6 +47,13 @@ skills:
       - draft-plan
 ---
 
+## Documentation
+
+- **Top-level guide:** [AGENTS.md](../../AGENTS.md)
+- **Agent workflow:** [doc/AGENTS_WORKFLOW.md](../doc/AGENTS_WORKFLOW.md)
+- **Supporting scripts:** [.opencode/scripts/](../scripts/)
+- **Workflow skills:** [.opencode/skills/](../skills/)
+
 # Architect Agent
 
 ## Purpose

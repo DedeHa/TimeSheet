@@ -13,7 +13,7 @@ constraints:
   - Must NOT dispatch without escalation when an agent reports a problem or the pipeline exceeds 3 cycles
   - Must interrupt and evaluate when an agent cannot resolve an issue or the process loops
   - Must detect development mode from user chat using automated mode and interactive mode keywords
-  - Must persist development mode in ~/.opencode/pipeline-state.json
+  - Must persist development mode in .opencode/pipeline-state.json
 handoffs:
   - label: Request Architecture Review
     agent: architect
@@ -194,6 +194,13 @@ skills:
       - prepare-closure
 ---
 
+## Documentation
+
+- **Top-level guide:** [AGENTS.md](../../AGENTS.md)
+- **Agent workflow:** [doc/AGENTS_WORKFLOW.md](../doc/AGENTS_WORKFLOW.md)
+- **Supporting scripts:** [.opencode/scripts/](../scripts/)
+- **Workflow skills:** [.opencode/skills/](../skills/)
+
 # Product Owner Agent
 
 ## Purpose
@@ -261,7 +268,7 @@ The PO agent invokes the mode detection script to parse the user's chat message 
 python .opencode/scripts/detect_mode.py PRO-373 "Run this via automated mode"
 ```
 
-The script detects conversational patterns and updates `~/.opencode/pipeline-state.json`:
+The script detects conversational patterns and updates `.opencode/pipeline-state.json`:
 - **Automated mode**: "run automated", "run automated mode", "go ahead", "proceed", "without confirmation", "no pauses", etc.
 - **Interactive mode**: "run interactive", "run interactive mode", "pause", "confirm", "ask me", "stop between steps", etc.
 
@@ -277,7 +284,7 @@ The PO must check the mode before each handoff:
 
 ### Mode Persistence
 
-The mode is stored in `~/.opencode/pipeline-state.json` under the current ticket entry:
+The mode is stored in `.opencode/pipeline-state.json` under the current ticket entry:
 
 ```json
 {

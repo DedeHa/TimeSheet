@@ -14,8 +14,6 @@ AGENTS.md                  ← Top-level guide: project conventions, modes, CI g
     └── .opencode/skills/   ← Workflow reference docs (5 skills)
 ```
 
-## 🚀 Triggering Workflows
-
 ### User Messages / Commands
 
 | Intent | User Message | Triggered By |
@@ -178,6 +176,16 @@ flowchart TD
     PO_AUTO -->|Blocked| ESC[Escalate to PO]
 ```
 
+This is the top-down reference map for agent development:
+
+```
+@AGENTS.md                ← Project conventions, quick setup, modes, CI gates
+└── @doc/AGENTS_WORKFLOW.md ← Agent team workflow, diagrams, quality gates, handoffs
+    ├── @.opencode/agents/   ← Operational agent definitions (4 agents)
+    ├── @.opencode/scripts/  ← Pipeline automation (detect_mode.py, pipeline.py)
+    └── @.opencode/skills/   ← Workflow reference docs (5 skills)
+```
+
 ## 🧩 Agent Team Overview
 
 | Agent | Role | Input | Output | Handoff To |
@@ -211,7 +219,7 @@ This directory contains the opencode-discovered agent team and skills:
 
 ### Supporting Scripts
 
-- `.opencode/scripts/detect_mode.py` — Detects and persists the development mode (`interactive`/`automated`) from user chat messages into `~/.opencode/pipeline-state.json`
+- `.opencode/scripts/detect_mode.py` — Detects and persists the development mode (`interactive`/`automated`) from user chat messages into `.opencode/pipeline-state.json`
 - `.opencode/scripts/pipeline.py` — Enhanced pipeline management with resume, continue, proceed, dry-run, check-stuck, what-missed, history, reset, set-mode, and get-mode commands
 
 ### Agent Configuration Files (``-agent.md` (YAML config + detailed documentation)`)
@@ -603,7 +611,7 @@ Feature complete
 - `.opencode/agents/tester-agent.md` (YAML config + detailed documentation) - Tester & Validator Agent configuration
 
 ### Pipeline Scripts (`.opencode/scripts/`)
-- `.opencode/scripts/detect_mode.py` — Mode detection from user chat messages → persists to `~/.opencode/pipeline-state.json`
+- `.opencode/scripts/detect_mode.py` — Mode detection from user chat messages → persists to `.opencode/pipeline-state.json`
 - `.opencode/scripts/pipeline.py` — Pipeline management: show state, resume, continue, proceed, check-stuck, what-missed, history, reset, set-mode, get-mode
 
 ### Workflow Reference Documents (`.opencode/skills/`)

@@ -286,5 +286,5 @@ def test_orchestrate_skill_documents_mode_persistence():
     """orchestrate-feature skill must document mode persistence in pipeline state."""
     skill_path = _REPO / ".opencode" / "skills" / "orchestrate-feature" / "SKILL.md"
     content = skill_path.read_text()
-    assert "~/.opencode/pipeline-state.json" in content
+    assert ".opencode/pipeline-state.json" in content
     assert '"development_mode"' in content

@@ -60,25 +60,30 @@ def old_opencode_dir(tmp_path: Path) -> Path:
 class TestPathResolution:
     """Tests for path resolution in pipeline scripts."""
 
+    @property
+    def project_root(self) -> Path:
+        """Return the project root directory (parent of .opencode/scripts)."""
+        return Path(__file__).resolve().parent.parent.parent.parent
+
     def test_detect_mode_state_path_is_project_local(self):
         """detect_mode.STATE_PATH must not use Path.home()."""
-        assert "home" not in str(detect_mode.STATE_PATH)
-        assert ".opencode" in str(detect_mode.STATE_PATH)
+        expected = self.project_root / ".opencode" / "pipeline-state.json"
+        assert detect_mode.STATE_PATH == expected
 
     def test_pipeline_state_path_is_project_local(self):
         """pipeline.STATE_PATH must not use Path.home()."""
-        assert "home" not in str(pipe_module.STATE_PATH)
-        assert ".opencode" in str(pipe_module.STATE_PATH)
+        expected = self.project_root / ".opencode" / "pipeline-state.json"
+        assert pipe_module.STATE_PATH == expected
 
     def test_pipeline_history_path_is_project_local(self):
         """pipeline.HISTORY_PATH must not use Path.home()."""
-        assert "home" not in str(pipe_module.HISTORY_PATH)
-        assert ".opencode" in str(pipe_module.HISTORY_PATH)
+        expected = self.project_root / ".opencode" / "pipeline-history.json"
+        assert pipe_module.HISTORY_PATH == expected
 
     def test_pre_closure_validation_state_path_is_project_local(self):
         """pre_closure_validation.STATE_PATH must not use Path.home()."""
-        assert "home" not in str(pcl.STATE_PATH)
-        assert ".opencode" in str(pcl.STATE_PATH)
+        expected = self.project_root / ".opencode" / "pipeline-state.json"
+        assert pcl.STATE_PATH == expected
 
 
 # ---------------------------------------------------------------------------

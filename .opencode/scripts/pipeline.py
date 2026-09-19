@@ -43,6 +43,24 @@ STATE_PATH = Path(__file__).resolve().parent.parent / "pipeline-state.json"
 HISTORY_PATH = Path(__file__).resolve().parent.parent / "pipeline-history.json"
 
 LOCK_TIMEOUT = 5.0
+PIPELINE_STEPS = ("plan", "develop", "complete")
+CANONICAL_STATES = {
+    "backlog": "Ticket is created and awaiting readiness checks.",
+    "plan": "Requirements and implementation plan are being prepared.",
+    "develop": "Implementation is in progress.",
+    "complete": "Validation and closure work is underway.",
+    "approved": "Implementation has passed validation and is ready for closure.",
+    "released": "The feature has been released and closed out.",
+}
+STATE_TRANSITIONS = {
+    "backlog": ("plan",),
+    "plan": ("develop", "blocked"),
+    "develop": ("complete", "blocked"),
+    "complete": ("approved", "blocked"),
+    "approved": ("released",),
+    "released": (),
+    "blocked": ("plan", "develop", "complete"),
+}
 
 
 def _acquire_lock(fd):
@@ -145,12 +163,85 @@ class PipelineManager:
             json.dump(self.history, fh, indent=2, sort_keys=True)
         tmp.replace(HISTORY_PATH)
 
+    def _canonical_state(self, entry: Dict[str, Any]) -> str:
+        """Resolve the canonical workflow state for an entry."""
+        workflow_state = entry.get("workflow_state")
+        if workflow_state in CANONICAL_STATES:
+            return workflow_state
+        current_step = entry.get("current_step")
+        if current_step in PIPELINE_STEPS:
+            return current_step
+        return "backlog"
+
+    def _normalize_entry(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        """Ensure the workflow entry includes the canonical state fields."""
+        entry.setdefault("development_mode", "interactive")
+        entry.setdefault("current_step", "plan")
+        entry.setdefault("workflow_state", "backlog")
+        entry.setdefault("cycle_counts", {"plan": 0, "develop": 0, "complete": 0})
+        entry.setdefault("last_updated", datetime.now(timezone.utc).isoformat())
+        entry.setdefault("status", "not_started")
+        entry.setdefault("blocked", False)
+        entry.setdefault("escalation_level", 0)
+        entry.setdefault("interrupted", False)
+        entry.setdefault("interrupted_step", None)
+        entry.setdefault("interrupted_at", None)
+        entry.setdefault("story_points", None)
+        entry.setdefault("blockers", [])
+        entry.setdefault("last_action", "pipeline_initialized")
+        entry.setdefault("required_next_step", "plan")
+        entry["workflow_state"] = self._canonical_state(entry)
+        return entry
+
+    def _validate_transition(self, ticket: str, next_step: str) -> tuple[bool, str]:
+        """Validate a transition against the canonical workflow state machine."""
+        entry = self._normalize_entry(self._get_entry(ticket))
+        current_step = entry.get("current_step")
+        current_state = self._canonical_state(entry)
+
+        if next_step not in STATE_TRANSITIONS.get(current_state, ()):
+            return (
+                False,
+                (
+                    f"Invalid transition from '{current_state}' "
+                    f"to '{next_step}'. Allowed states: "
+                    f"{', '.join(STATE_TRANSITIONS.get(current_state, ())) or 'none'}"
+                ),
+            )
+
+        if current_step in PIPELINE_STEPS and entry.get("cycle_counts", {}).get(current_step, 0) == 0 and current_state != "blocked":
+            return (
+                False,
+                f"Cannot advance from '{current_step}' because the current step has not been completed yet.",
+            )
+
+        if entry.get("blocked") and next_step not in STATE_TRANSITIONS.get("blocked", ()):
+            return (
+                False,
+                "The ticket is blocked and must be resolved before continuing the pipeline.",
+            )
+
+        return True, ""
+
+    def _record_transition(self, ticket: str, from_step: str, to_step: str) -> None:
+        """Persist a state transition to history."""
+        entry = self._get_entry(ticket)
+        history = self.history.setdefault(ticket, {"created": entry.get("last_updated"), "actions": [], "transitions": []})
+        transition = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "from": from_step,
+            "to": to_step,
+        }
+        history.setdefault("transitions", []).append(transition)
+        self._save_history()
+
     def _get_entry(self, ticket: str) -> Dict[str, Any]:
         """Get or create a pipeline entry for a ticket."""
         if ticket not in self.state:
             self.state[ticket] = {
                 "development_mode": "interactive",
                 "current_step": "plan",
+                "workflow_state": "backlog",
                 "cycle_counts": {"plan": 0, "develop": 0, "complete": 0},
                 "last_updated": datetime.now(timezone.utc).isoformat(),
                 "status": "not_started",
@@ -159,9 +250,14 @@ class PipelineManager:
                 "interrupted": False,
                 "interrupted_step": None,
                 "interrupted_at": None,
+                "story_points": None,
+                "blockers": [],
+                "last_action": "pipeline_created",
+                "required_next_step": "plan",
             }
             self._save_state()
             self._record_history(ticket, "pipeline_created", self.state[ticket])
+        self.state[ticket] = self._normalize_entry(self.state[ticket])
         return self.state[ticket]
 
     def _record_history(
@@ -241,6 +337,48 @@ class PipelineManager:
             ),
         }
 
+    def generate_handoff_payload(self, ticket: str) -> Dict[str, Any]:
+        """Build a standard handoff payload for downstream agent dispatch."""
+        entry = self._get_entry(ticket)
+        interruption = self._detect_interruption(ticket)
+        return {
+            "ticket": ticket,
+            "current_step": entry.get("current_step", "plan"),
+            "workflow_state": entry.get("workflow_state", self._canonical_state(entry)),
+            "status": entry.get("status", "not_started"),
+            "development_mode": entry.get("development_mode", "interactive"),
+            "story_points": entry.get("story_points"),
+            "blocked": entry.get("blocked", False),
+            "blockers": entry.get("blockers", []),
+            "cycle_counts": entry.get("cycle_counts", {"plan": 0, "develop": 0, "complete": 0}),
+            "last_action": entry.get("last_action", "unknown"),
+            "required_next_step": entry.get("required_next_step", "plan"),
+            "interrupted": bool(interruption and interruption.get("interrupted")),
+            "interruption": interruption,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def recover_ticket(self, ticket: str) -> Dict[str, Any]:
+        """Return the canonical recovery recommendation for a ticket."""
+        entry = self._get_entry(ticket)
+        interruption = self._detect_interruption(ticket)
+        payload = self.generate_handoff_payload(ticket)
+        payload["recovery"] = {
+            "is_interrupted": bool(interruption and interruption.get("interrupted")),
+            "missed_work": interruption.get("what_was_missed") if interruption else None,
+            "suggested_action": (
+                "resume"
+                if interruption and interruption.get("interrupted")
+                else "continue"
+                if entry.get("current_step") in PIPELINE_STEPS
+                else "plan"
+            ),
+            "should_escalate": entry.get("blocked", False)
+            or (entry.get("status") == "blocked")
+            or entry.get("escalation_level", 0) > 0,
+        }
+        return payload
+
     def show_state(self, ticket: str) -> None:
         """Show current pipeline state with interruption detection."""
         entry = self._get_entry(ticket)
@@ -248,6 +386,7 @@ class PipelineManager:
         print(f"=== Pipeline State: {ticket} ===\n")
 
         print(f"Current Step: {entry.get('current_step', 'N/A')}")
+        print(f"Workflow State: {entry.get('workflow_state', self._canonical_state(entry))}")
         print(f"Status: {entry.get('status', 'N/A')}")
         print(f"Development Mode: {entry.get('development_mode', 'interactive')}")
         print(f"Last Updated: {entry.get('last_updated', 'N/A')}")
@@ -306,6 +445,11 @@ class PipelineManager:
                 print("   Or provide --force to skip validation.")
                 return
 
+        entry["status"] = "in_progress"
+        entry["workflow_state"] = self._canonical_state(entry)
+        entry["last_action"] = "pipeline_resumed"
+        entry["required_next_step"] = current_step
+
         print(f"Resuming pipeline at step: {current_step}")
 
         # Clear interruption flag if present
@@ -318,6 +462,8 @@ class PipelineManager:
             self._record_history(ticket, "interruption_cleared", entry)
             print("   ✓ Interruption flag cleared")
 
+        self._save_state()
+        self._record_history(ticket, "pipeline_resumed", entry)
         print("\n✅ Pipeline resumed successfully")
 
     def what_missed(self, ticket: str) -> None:
@@ -361,7 +507,6 @@ class PipelineManager:
 
         print(f"=== Continuing Pipeline: {ticket} ===\n")
 
-        # Check if we can advance
         step_order = ["plan", "develop", "complete"]
         current_index = (
             step_order.index(current_step) if current_step in step_order else -1
@@ -377,23 +522,24 @@ class PipelineManager:
 
         next_step = step_order[current_index + 1]
 
-        # Validate we can advance
         if not force:
-            cycle_counts = entry.get("cycle_counts", {})
-            current_cycles = cycle_counts.get(current_step, 0)
-
-            if current_cycles == 0:
-                print(f"   ❌ Cannot continue from {current_step} - has 0 cycles")
-                print(f"   ⚠️  Must complete {current_step} step before continuing")
-                print("   Use 'what-missed' to see what was lost in this step")
+            valid, reason = self._validate_transition(ticket, next_step)
+            if not valid:
+                print(f"   ❌ {reason}")
+                print("   Use --force to override validation when you intentionally want to continue anyway.")
                 return
 
         print(f"Advancing from {current_step} to {next_step}")
 
         # Update state
         entry["current_step"] = next_step
+        entry["workflow_state"] = next_step
+        entry["status"] = "in_progress"
+        entry["required_next_step"] = next_step
+        entry["last_action"] = "step_advance"
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()
+        self._record_transition(ticket, current_step, next_step)
         self._record_history(
             ticket,
             "step_advance",
@@ -510,6 +656,7 @@ class PipelineManager:
         self.state[ticket] = {
             "development_mode": "interactive",
             "current_step": "plan",
+            "workflow_state": "backlog",
             "cycle_counts": {"plan": 0, "develop": 0, "complete": 0},
             "last_updated": datetime.now(timezone.utc).isoformat(),
             "status": "not_started",
@@ -518,6 +665,10 @@ class PipelineManager:
             "interrupted": False,
             "interrupted_step": None,
             "interrupted_at": None,
+            "story_points": None,
+            "blockers": [],
+            "last_action": "pipeline_reset",
+            "required_next_step": "plan",
         }
 
         self._record_history(ticket, "pipeline_reset", self.state[ticket])
@@ -525,6 +676,7 @@ class PipelineManager:
 
         print("   ✓ Pipeline reset to initial state")
         print("   - Step: plan")
+        print("   - Workflow state: backlog")
         print("   - Status: not_started")
 
     def get_history(self, ticket: str) -> None:
@@ -564,6 +716,11 @@ class PipelineManager:
         entry = self._get_entry(ticket)
         mode = entry.get("development_mode", "interactive")
         print(f"Mode for {ticket}: {mode}")
+
+    def recover_ticket_cli(self, ticket: str) -> None:
+        """Print the canonical recovery recommendation for a ticket."""
+        payload = self.recover_ticket(ticket)
+        print(json.dumps(payload, indent=2, sort_keys=True))
 
 
 def main():
@@ -675,6 +832,15 @@ def main():
     get_mode_parser = subparsers.add_parser("get-mode", help="Get persisted mode")
     get_mode_parser.add_argument("ticket", help="JIRA ticket key")
     get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
+
+    recover_parser = subparsers.add_parser(
+        "recover",
+        help="Report the canonical recovery state for a ticket",
+    )
+    recover_parser.add_argument("ticket", help="JIRA ticket key")
+    recover_parser.set_defaults(
+        func=lambda args: manager.recover_ticket_cli(args.ticket)
+    )
 
     # Parse and execute
     args = parser.parse_args(clean_args)

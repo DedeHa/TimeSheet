@@ -17,6 +17,9 @@ constraints:
   - Must follow CONTRIBUTING.md guidelines
   - All code must include docstrings and type hints
   - Each commit must reference PRO ticket
+  - "Must enforce the canonical workflow: backlog -> plan -> develop -> complete -> approved -> released"
+  - "Must verify the current pipeline state before implementation begins and stop when the workflow is blocked or interrupted"
+  - "Must use the structured handoff payload provided by the runtime or product owner before beginning implementation"
 handoffs:
   - label: Start Testing & Validation
     agent: tester

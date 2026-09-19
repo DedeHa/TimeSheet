@@ -83,6 +83,15 @@ if fields["customfield_10028"] is None:
     return
 ```
 
+## Canonical Workflow Contract
+
+All work in this skill is governed by the same lifecycle and handoff payload contract used by the product-owner and orchestrate-feature workflows. Before implementation proceeds, the ticket must be in a valid state and the runtime must be able to produce a handoff payload via `.opencode/scripts/pipeline.py`.
+
+The canonical lifecycle is:
+`backlog -> plan -> develop -> complete -> approved -> released`
+
+Use the pipeline recovery tooling (`show state`, `what-missed`, `resume`, `check-stuck`) before continuing when the ticket has been interrupted or stalled.
+
 ## Phase 2 — Adopt or Draft the Implementation Plan
 
 ### 2a. Look for an existing plan

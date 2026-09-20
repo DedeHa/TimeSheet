@@ -9,11 +9,8 @@ description: "Orchestrates the complete feature pipeline: reads JIRA state, trac
 
 The `orchestrate-feature` skill is the central orchestrator that coordinates
 the entire feature pipeline. It lives in the Product Owner agent and manages
-the flow defined by the canonical lifecycle:
-
-`backlog -> plan -> develop -> complete -> approved -> released`
-
-It includes built-in cycle tracking, state management, and escalation handling.
+the flow from **Plan → Develop → Complete**, with built-in cycle tracking,
+state management, and escalation handling.
 
 ## Discovery
 
@@ -52,7 +49,7 @@ Use this skill when:
 
 ## State Management
 
-The orchestration skill maintains state in `.opencode/pipeline-state.json`:
+The orchestration skill maintains state in `~/.opencode/pipeline-state.json`:
 
 ```json
 {
@@ -76,16 +73,6 @@ The orchestration skill maintains state in `.opencode/pipeline-state.json`:
 - **Interactive** (default): Pause at each handover for user confirmation
 - **Automated**: Run the pipeline without pauses; escalations still trigger
 
-**Canonical lifecycle state machine:**
-The runtime and agent coordination follow this sequence:
-`backlog -> plan -> develop -> complete -> approved -> released`
-
-The authoritative state rules are enforced by `.opencode/scripts/pipeline.py`:
-- a transition is invalid if the current step has not completed
-- a blocked ticket cannot continue until the blocker is cleared
-- required state checks must pass before dispatching to the next agent
-- history is recorded for every transition for auditability and recovery
-
 **Mode detection from chat:**
 The PO agent parses user chat messages for conversational patterns to derive the mode:
 - "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
@@ -106,30 +93,6 @@ Before every dispatch and handoff, the orchestration skill runs:
 2. If `development_mode: automated` → proceed without user confirmation
 3. If `development_mode: interactive` → pause for user confirmation
 4. If no mode detected → default to `interactive`
-
-**Structured handoff contract:**
-Every dispatch and escalation should carry a machine-readable payload. The runtime helper in `.opencode/scripts/pipeline.py` exposes `generate_handoff_payload(ticket)` and `recover_ticket(ticket)`, which provide a canonical structure with:
-- ticket
-- current_step
-- workflow_state
-- status
-- development_mode
-- story_points
-- blocked / blockers
-- cycle_counts
-- last_action
-- required_next_step
-- interruption / missed work
-
-This keeps agent handoff context consistent across product-owner, architect, developer, tester, and escalation flows.
-
-**Automatic recovery policy:**
-When a pipeline resumes or is inspected, the system should:
-1. read the current state
-2. detect interruption or stalled work
-3. identify the missed work
-4. recommend the next valid action (`resume`, `continue`, or escalation)
-5. log the state transition in history before proceeding
 
 ## Pipeline Flow
 
@@ -359,7 +322,7 @@ Finalizes the pipeline:
 
 ## State File Location
 
-The pipeline state is stored in `.opencode/pipeline-state.json` (encrypted if enabled). This file contains:
+The pipeline state is stored in `~/.opencode/pipeline-state.json` (encrypted if enabled). This file contains:
 - Cycle counts per agent
 - Current pipeline step
 - Escalation status
@@ -375,7 +338,7 @@ The pipeline state is stored in `.opencode/pipeline-state.json` (encrypted if en
 ## Troubleshooting
 
 ### State Not Updating
-- Check file permissions on `.opencode/pipeline-state.json`
+- Check file permissions on `~/.opencode/pipeline-state.json`
 - Verify the orchestration skill has write access
 - Restart opencode if the state file is corrupted
 

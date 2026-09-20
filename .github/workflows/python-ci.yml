@@ -159,7 +159,7 @@ jobs:
       - name: Run system tests
         run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
-      # CI self-tests cover GitHub workflow structure and CI support scripts.
+# CI self-tests cover GitHub workflow structure and CI support scripts.
       # Opencode agent-system tests run in the independent agents job below.
       # Reported as its own "CI Self-Tests" level in the summary.
       # Coverage is measured separately from the application tests
@@ -210,8 +210,8 @@ jobs:
   agents:
     name: Agent System Tests
     runs-on: ubuntu-latest
-    # Independent of the application test job: opencode tests live under
-    # .opencode/tests/ and do not affect the 103-test application suite
+    # Independent of the application test job: agent tests live under
+    # .github/tests/agents/ and do not affect the 103-test application suite
     # or the coverage gate. Run on PRs (to master or release/**), release
     # tags (so the quality gate is enforced before deploy), and manual
     # dispatch. The PR summary is published by the separate `publish` job,
@@ -239,13 +239,11 @@ jobs:
       - name: Prepare report directory
         run: mkdir -p tests/reports
 
-      # Agent-system tests live under .opencode/tests/ (separate from the
-      # 103-test application suite and the coverage gate). Reported as its
-      # own "Agent System Tests" level in the summary.
+      # Agent-system tests live under .github/tests/agents/ (separate from
+      # the 103-test application suite and the coverage gate). Reported as
+      # its own "Agent System Tests" level in the summary.
       - name: Run agent tests
-        run: >-
-          pytest -q .opencode/tests/agents/ .opencode/tests/scripts/
-          --junitxml=tests/reports/agent-results.xml
+        run: pytest -q .github/tests/agents/ --junitxml=tests/reports/agent-results.xml
 
       # Agent-system tests do not measure coverage for src_timesheetalgo,
       # so coverage json has no data to report; keep this step additive

@@ -1,216 +1,265 @@
-# TimeSheetAlgo User and Project Guide
+# AGENTS.md — TimeSheetAlgo
 
-This is the user-facing entry point for the repository. It explains the
-project, the top-level development workflow, the interaction modes, and the
-commands users need to start or monitor work.
+## Quick Setup (Critical for Ramping Up)
 
-The detailed opencode implementation reference is in
-[doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md). That document contains the
-agent, skill, script, dependency, handoff, and runtime details.
-
-## Table of Contents
-
-- [Quick Setup](#quick-setup)
-- [User Interaction Model](#user-interaction-model)
-- [Top-Level Workflow](#top-level-workflow)
-- [Development Modes](#development-modes)
-- [User Pipeline Commands](#user-pipeline-commands)
-- [Testing and Quality Checks](#testing-and-quality-checks)
-- [Project Architecture](#project-architecture)
-- [Git and Pull Request Conventions](#git-and-pull-request-conventions)
-- [Configuration and Environment](#configuration-and-environment)
-- [File System and Runtime Notes](#file-system-and-runtime-notes)
-- [Where to Find Operational Details](#where-to-find-operational-details)
-
-## Quick Setup
-
-Install the project with development dependencies:
-
+**Install development environment:**
 ```bash
+# Always install in development mode with dev extras
 python -m pip install -e .[dev]
 ```
 
-Activate the repository virtual environment:
-
+**Virtual environment activation (non-negotiable):**
 ```bash
+# Git checkout always requires this
+git checkout <branch-name>
 source /workspaces/TimeSheet/.venv/bin/activate
-echo "venv: $VIRTUAL_ENV"
+echo "✅ venv activated: $VIRTUAL_ENV"  # Must show /.venv path
 ```
 
-Run commands from the repository root:
+## Testing Strategy
 
+**Run different test suites:**
 ```bash
-cd /workspaces/TimeSheet
-```
-
-## User Interaction Model
-
-Users can interact with the team in natural language. Typical requests are:
-
-- “Plan a feature for PRO-123.”
-- “Start development on PRO-123.”
-- “Run in automated mode.”
-- “Run in interactive mode.”
-- “Resume PRO-123.”
-- “Validate the implementation.”
-- “Prepare PRO-123 for release.”
-
-Every feature follows the canonical lifecycle:
-
-```text
-backlog -> plan -> develop -> complete -> approved -> released
-```
-
-The lifecycle is enforced by the project runtime. Users should not ask an
-agent to skip a required gate; instead, resolve the reported blocker or use
-the documented recovery command.
-
-## Top-Level Workflow
-
-1. **Backlog** — identify the request and confirm its goal.
-2. **Plan** — define the user story, acceptance criteria, scope, and estimate.
-3. **Develop** — implement the approved plan and add or update tests.
-4. **Complete** — validate the implementation against the acceptance criteria.
-5. **Approved** — review the evidence and authorize closure or release.
-6. **Released** — merge, publish, and close the completed work.
-
-The normal collaboration path is:
-
-```text
-User -> Product Owner -> Architect -> Developer -> Tester -> Product Owner -> User
-```
-
-The Product Owner coordinates the process. The user is asked for
-confirmation when the selected mode requires it and before irreversible
-closure or release actions.
-
-## Development Modes
-
-### Interactive mode
-
-Interactive mode pauses at handoff points and asks for confirmation before the
-next agent proceeds. Use it when you want to inspect plans, implementation
-scope, test evidence, or release decisions.
-
-### Automated mode
-
-Automated mode proceeds through valid handoffs without pausing. It still stops
-for blockers, failed validation, invalid transitions, missing requirements, or
-cycle limits.
-
-Mode can be selected in a conversation:
-
-```text
-Run in automated mode
-Run in interactive mode
-```
-
-If no mode is stated, interactive mode is used by default.
-
-## User Pipeline Commands
-
-Run these commands from the repository root:
-
-```bash
-python .opencode/scripts/detect_mode.py PRO-123 "Run in automated"
-python .opencode/scripts/detect_mode.py PRO-123 --show
-
-python .opencode/scripts/pipeline.py show state PRO-123
-python .opencode/scripts/pipeline.py what-missed PRO-123
-python .opencode/scripts/pipeline.py check-stuck PRO-123
-python .opencode/scripts/pipeline.py dry-run PRO-123 resume
-python .opencode/scripts/pipeline.py resume PRO-123
-python .opencode/scripts/pipeline.py continue PRO-123
-python .opencode/scripts/pipeline.py proceed PRO-123
-python .opencode/scripts/pipeline.py history PRO-123
-python .opencode/scripts/pipeline.py set-mode PRO-123 interactive
-python .opencode/scripts/pipeline.py get-mode PRO-123
-```
-
-Use `what-missed`, `check-stuck`, and `dry-run` before resuming an interrupted
-workflow. Do not edit pipeline state manually unless migration or recovery
-instructions explicitly require it.
-
-## Testing and Quality Checks
-
-Fast project validation:
-
-```bash
-python -m pytest -m "not system"
-```
-
-Focused agent-team validation:
-
-```bash
-python -m pytest .opencode/tests/agents .opencode/tests/scripts -q
-```
-
-Full test and quality checks:
-
-```bash
+# Full test suite with coverage (CI requirement)
 python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
+
+# Fast CI mode (what actual PRs run)
+python -m pytest -m "not system"
+
+# Individual levels
+python -m pytest tests/unit -m unit          # Unit tests only
+python -m pytest tests/integration -m integration  # Integration tests only
+python -m pytest tests/system -m system      # System tests (real files required)
+```
+
+**Code quality checks (gates PRs):**
+```bash
+# Order matters - run in sequence
 ruff check src_timesheetalgo tests
 black --check src_timesheetalgo tests
 pydocstyle src_timesheetalgo tests
 radon cc src_timesheetalgo -a
+
+# Traceability - CI gate, exits non-zero if incomplete
 python .github/scripts/generate_traceability_matrix.py
 ```
 
-System tests may be skipped when their real workbook or extract fixtures are
-not present.
+## Architecture & Configuration
 
-## Project Architecture
+**Package structure:**
+- `src_timesheetalgo/` - Main package (tested, covered)
+  - `TimeSheetAlgo.py` - Entrypoint application
+  - `config.yaml` - Configuration file
+- `src_azesheetalgo/` - Separate package (AZE sheet functionality, NOT packaged, NOT tested)
 
-- `src_timesheetalgo/` — primary application package
-- `src_azesheetalgo/` — separate AZE sheet functionality
-- `.opencode/` — agent-team runtime configuration and state
-- `.opencode/tests/agents/` — agent setup and workflow policy tests
-- `.opencode/tests/scripts/` — tests for opencode runtime and support scripts
-- `doc/` — project documentation and implementation references
+**Critical config requirements:**
+- Year is **required** at root level in `config.yaml` - no fallback
+- Environment auto-detected by folder structure, not config parameter
+- Paths are **relative to project root**, not script location
 
-## Git and Pull Request Conventions
+## Environment Detection Rules
 
-- Feature branches use `feature/PRO-123-description`.
-- Bug fixes use `bugfix/PRO-123-description` or `hotfix/PRO-123-description`.
-- Pull requests target `master`.
-- Commit format is `type(scope): description`.
-- Include `Refs: PRO-123` when a Jira ticket exists.
-- Pull request bodies include `## Summary`, `## Testing`, and the Jira
-  reference.
-- Do not merge or delete remote branches without the required user or
-  Product Owner confirmation.
+**Environment detection logic:**
+- Development: Running from `src_timesheetalgo/` directory
+- Production: Contains `Timealarm/` subfolder in path
+- Fallback: Always development
 
-See [doc/CONTRIBUTING.md](doc/CONTRIBUTING.md) for the complete repository
-contribution and naming rules.
+**Configuration auto-detection:**
+```python
+# From TimeSheetAlgo.py:96-110
+def detect_environment(base_path: str) -> str:
+    if os.path.basename(base_path) == "src_timesheetalgo":
+        return "development"
+    elif os.path.isdir(os.path.join(base_path, "Timealarm")):
+        return "production"
+    else:
+        return "development"
+```
 
-## Configuration and Environment
+## Git & PR Conventions
 
-- `year` is required at the root of `src_timesheetalgo/config.yaml`.
-- Paths are relative to the project root.
-- Development and production environments are detected from the folder
-  structure, not from a configuration flag.
-- The default fallback environment is development.
+**Branch strategy:**
+- Feature branches: `feature/PRO-123-description` (direct pushes allowed)
+- PRs always target `master`
+- Release branches: `release/vX.Y.Z` (protected, PR required)
 
-## File System and Runtime Notes
+**Naming validation (CI blockers):**
+- **Commit messages:** `type(scope): description` + `Refs: PRO-XXX` footer
+- **PR title:** `[type][PRO-XXX] Description`
+- **PR body:** Must contain `## Summary` + `## Testing` + `Refs: PRO-XXX`
 
-- Pipeline state is stored in `.opencode/pipeline-state.json`.
-- Pipeline history is stored in `.opencode/pipeline-history.json`.
-- Close Excel files before running workflows that update workbooks.
-- Configuration and pipeline commands must be run from the repository root.
-- File I/O warnings may be recoverable; configuration and consistency errors
-  must be addressed before proceeding.
+**No tests on direct branch pushes:**
+- CI only runs on PRs to `master` or `release/**`
+- CI also runs on release tags
+- Feature branch commits are not tested
 
-## Where to Find Operational Details
+**Closure policy:**
+- Remote branch deletion is User / PO responsibility — agent prepares command, user confirms and executes
+- Agent-team closure executes `atlassian_transitionJiraIssue` and `gh pr merge` only after user / PO confirmation
+- **Implementation plan deletion:** After a feature is fully completed (PR merged to master, JIRA ticket transitioned to Fertig), the implementation plan document (`doc/02_Implementation_Plan_PRO-XXX.md`) must be deleted. The plan is a working document that becomes stale once the feature is complete and merged. Deletion is part of the finalization commit/push.
 
-Use [doc/AGENTS_WORKFLOW.md](doc/AGENTS_WORKFLOW.md) for:
+## Agent Development Modes
 
-- the complete agent and skill catalog
-- script responsibilities and dependencies
-- state-machine implementation details
-- handoff payloads and escalation rules
-- migration and pre-closure validation
-- opencode frontmatter and binding conventions
-- workflow policy tests and documentation governance
+**Mode selection (set before starting a feature):**
+- `interactive` — pause at every handover for user confirmation before the next agent takes over
+- `automated` — run the full pipeline without user pauses; only blockers and cycle limits interrupt
 
-Use [doc/CONTRIBUTING.md](doc/CONTRIBUTING.md) for Git, branch, commit, pull
-request, and release policy.
+**Mode detection from chat:**
+The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Default is `interactive` when no mode is detected
+
+**Pipeline state:**
+State is persisted per ticket in `~/.opencode/pipeline-state.json` (encrypted if enabled). The `development_mode` field is read before every dispatch and handoff so all 4 agents respect the user's mode choice.
+
+**Enhanced Pipeline Management:**
+The `pipeline.py` script provides enhanced pipeline management for handling
+interrupted pipelines, resuming stuck steps, and inspecting state. All commands
+are invoked from the repository root:
+
+```bash
+python .opencode/scripts/pipeline.py <command> <ticket> [options]
+```
+
+| Command | Purpose |
+|---------|---------|
+| `show state PRO-373` | Show current pipeline state with interruption detection |
+| `what-missed PRO-373` | Show what work was missed in an interrupted pipeline |
+| `check-stuck PRO-373` | Detect and alert on stuck pipelines |
+| `dry-run PRO-373 <action>` | Preview action without executing |
+| `resume PRO-373` | Resume pipeline at current step (clears interruption flag) |
+| `resume PRO-373 --force` | Force resume without validation |
+| `continue PRO-373` | Advance to next pipeline step |
+| `continue PRO-373 --force` | Force advance without validation |
+| `proceed PRO-373` | Proceed with current step execution |
+| `history PRO-373` | Show pipeline history |
+| `reset PRO-373` | Reset all cycles and state |
+| `set-mode PRO-373 interactive` | Set development mode |
+| `get-mode PRO-373` | Show persisted mode |
+
+**Interruption recovery workflow:**
+```bash
+# 1. Check what was missed
+python .opencode/scripts/pipeline.py what-missed PRO-373
+
+# 2. Check if pipeline is stuck
+python .opencode/scripts/pipeline.py check-stuck PRO-373
+
+# 3. Preview the resume action
+python .opencode/scripts/pipeline.py dry-run PRO-373 resume
+
+# 4. Resume the pipeline
+python .opencode/scripts/pipeline.py resume PRO-373
+
+# 5. Verify state
+python .opencode/scripts/pipeline.py show state PRO-373
+```
+
+**Pipeline state file location:**
+- State: `~/.opencode/pipeline-state.json`
+- History: `~/.opencode/pipeline-history.json`
+
+**Mode detection from chat:**
+The Product Owner agent parses user chat messages for conversational patterns to derive the mode and persists it in `~/.opencode/pipeline-state.json`:
+
+```bash
+python .opencode/scripts/detect_mode.py PRO-373 "Run in automated"
+python .opencode/scripts/detect_mode.py PRO-373 --show
+```
+
+- "Run in automated", "go ahead", "proceed", "without confirmation" → `development_mode: automated`
+- "Run in interactive", "pause", "confirm", "ask me" → `development_mode: interactive`
+- Default is `interactive` when no mode is detected
+
+## CI Pipeline Details
+
+**Job structure:**
+- `check`: Linting + naming validation (runs first)
+- `test`: Full test suite (runs in parallel with `check`)
+- `publish`: Quality gate summary + PR comments
+
+**Critical CI gates:**
+1. Naming validation blocks merge entirely
+2. Traceability script exits non-zero if requirements untraced
+3. Coverage must be ≥90% (combined unit + integration + system)
+
+**CI self-tests (.github/tests/):**
+- Run in CI but not in local test suite
+- `ci-pipeline/`: Workflow + script tests
+- `agents/`: Agent orchestration tests (validates `.opencode/agents/` and `.opencode/skills/`)
+- Must pass before committing `.github/` changes
+
+## File System & Working Directory
+
+**Working directory requirement:**
+- **All paths relative to project root** (`/workspaces/TimeSheet`)
+- Scripts expect to be run from repository root
+- Configuration loading fails if not in root
+
+**System test real files (committed but skipped when missing):**
+- `sup/2025_extract.csv` - 93 sample timelog entries
+- `src_timesheetalgo/2026_FDTech_Dennis_Hartel.xlsm` - 12-month workbook
+
+**File locking:**
+- Excel files can be locked by other processes
+- Application warns but continues if file locked
+- Requires closing Excel file manually if needed
+
+## Test Fixtures & Structure
+
+**Key fixtures (tests/conftest.py):**
+- `frozen_time` - auto-frozen to "2025-12-23" for deterministic dates
+- `mock_workbook` - Creates dummy 12-sheet workbook
+- `mock_processor` - Processor with mock files already loaded
+- `real_resource_copy` - Copies from `sup/` and `src_timesheetalgo/` or `None`
+
+**Test markers:**
+- `unit` - Individual functions/methods in isolation
+- `integration` - `TimeSheetProcessor` pipeline on in-memory workbook
+- `system` - Real-file copies + CLI flow (skipped when resources absent)
+
+## Runtime Behavior
+
+**Error handling patterns:**
+- Configuration errors raise `ConfigError` with descriptive messages
+- File I/O errors log warnings and continue when possible
+- Year mismatch raises `ConsistencyError` with clear message
+- Invalid dates logged as warnings with retry counts
+
+**User input handling:**
+- Uses dependency injection for `input_provider` and `clock`
+- Tests inject deterministic providers to avoid mocking `builtins.input`
+- Date parsing with retry logic (MAX_RETRIES = 3)
+
+## Build & Release
+
+**Build system:**
+- Uses `setuptools` with `pyproject.toml`
+- Entry points defined in `[tool.setuptools.packages.find]`
+
+**Package structure:**
+- Primary application in `src_timesheetalgo/`
+- Separate tools in `src_azesheetalgo/`
+- Tests in `tests/` with level subdirectories
+
+## Key Gotchas Agents Miss
+
+1. **Virtual environment is `.venv/` not `venv/`** - Must use exact name
+2. **System tests skip when real files missing** - Not test failures
+3. **Environment auto-detection** - Based on folder structure, not config
+4. **No CI on direct branch pushes** - Only on PRs to master/release
+5. **Working directory matters** - All paths relative to project root
+6. **Traceability is CI gate** - Script exits non-zero if requirements untraced
+7. **Coverage ≥90%** - Combined across all test levels
+8. **Freeze time for tests** - Uses `freezegun` frozen to 2025-12-23
+9. **Dependency injection** - Tests inject `input_provider` and `clock`
+10. **Git checkout requires venv reactivation** - Non-negotiable for config
+
+**Debug tip:** When tests fail, run `echo "venv: $VIRTUAL_ENV"` to confirm environment activation.

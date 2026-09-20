@@ -67,7 +67,7 @@ def collect_ids() -> TraceabilityData:
         if script.suffix in (".py",):
             code_text += "\n" + _read_text(script)
     return TraceabilityData(
-        requirement_ids=list(dict.fromkeys(extract_requirement_ids(_read_text(REQUIREMENTS)))),
+        requirement_ids=extract_requirement_ids(_read_text(REQUIREMENTS)),
         architecture_ids=set(extract_requirement_ids(_read_text(ARCHITECTURE))),
         code_ids=set(extract_requirement_ids(code_text)),
     )

@@ -452,7 +452,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Release Branches** (inherited): Tests already run on Master
 
 ### Quality-Gate Result Publication:
-- ✅ **Master PRs**: a dedicated `publish` job (`if: always()`) publishes a consolidated **quality-gate summary** (regenerated every run) in the job summary and as a sticky PR comment. It opens with the overall result and a status-overview table (Lint + the steps, un-numbered), then sections — **Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **Testing** (split into **Application Tests** (unit/integration/system) and **CI-Pipeline Tests** (`.github/tests/ci-pipeline/` + `.github/tests/agents/`), each with its own pass-rate %, status and test per-level table), **Code Coverage** (% vs. the 90% gate), **Artifacts** (run, matrix, JUnit/coverage, htmlcov).
+- ✅ **Master PRs**: a dedicated `publish` job (`if: always()`) publishes a consolidated **quality-gate summary** (regenerated every run) in the job summary and as a sticky PR comment. It opens with the overall result and a status-overview table (Lint + the steps, un-numbered), then sections — **Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **Testing** (split into **Application Tests** (unit/integration/system), **CI-Pipeline Tests** (`.github/tests/ci-pipeline/`), and **Agent System Tests** (`.opencode/tests/`), each with its own pass-rate %, status and test per-level table), **Code Coverage** (% vs. the 90% gate), **Artifacts** (run, matrix, JUnit/coverage, htmlcov).
 - ✅ Two comments per run (Option C): the full report as a **sticky** comment updated in place (with an `_Updated: … UTC_` timestamp), plus a compact **per-run comment** (overall result + overview table) posted fresh each run for a per-run trail. Because `publish` is separate and `if: always()`, a comment is posted on **every** run — including when `check` (lint/naming) fails and `test` is skipped.
 - ℹ️ The `publish` job is **non-gating** — it only reports results; the merge is still gated by the `check` and `test` jobs. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
 
@@ -545,4 +545,3 @@ All PRs must meet these requirements:
 - **GitHub Actions Workflow**: `.github/workflows/python-ci.yml`
 - **Conventional Commits**: https://www.conventionalcommits.org/en/v1.0.0/
 - **Semantic Versioning**: https://semver.org/
-

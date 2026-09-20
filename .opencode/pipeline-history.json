@@ -658,10 +658,135 @@
           "status": "not_started"
         },
         "timestamp": "2026-09-19T19:03:38.483754+00:00"
+      },
+      {
+        "action": "pipeline_created",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "plan",
+          "cycle_counts": {
+            "complete": 0,
+            "develop": 0,
+            "plan": 0
+          },
+          "development_mode": "interactive",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_created",
+          "last_updated": "2026-09-20T09:57:07.966549+00:00",
+          "required_next_step": "plan",
+          "status": "not_started",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T09:57:07.966712+00:00"
+      },
+      {
+        "action": "pipeline_created",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "plan",
+          "cycle_counts": {
+            "complete": 0,
+            "develop": 0,
+            "plan": 0
+          },
+          "development_mode": "interactive",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_created",
+          "last_updated": "2026-09-20T10:29:47.587268+00:00",
+          "required_next_step": "plan",
+          "status": "not_started",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T10:29:47.587436+00:00"
+      },
+      {
+        "action": "pipeline_resumed",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "complete",
+          "cycle_counts": {
+            "complete": 1,
+            "develop": 1,
+            "plan": 1
+          },
+          "development_mode": "automated",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_resumed",
+          "last_updated": "2026-09-19T18:45:00.000000+00:00",
+          "required_next_step": "complete",
+          "status": "in_progress",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T10:34:37.980077+00:00"
+      },
+      {
+        "action": "pipeline_resumed",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "complete",
+          "cycle_counts": {
+            "complete": 1,
+            "develop": 1,
+            "plan": 1
+          },
+          "development_mode": "automated",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_resumed",
+          "last_updated": "2026-09-19T18:45:00.000000+00:00",
+          "required_next_step": "complete",
+          "status": "in_progress",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T10:35:02.629533+00:00"
+      },
+      {
+        "action": "pipeline_created",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "plan",
+          "cycle_counts": {
+            "complete": 0,
+            "develop": 0,
+            "plan": 0
+          },
+          "development_mode": "interactive",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_created",
+          "last_updated": "2026-09-20T10:36:03.680188+00:00",
+          "required_next_step": "plan",
+          "status": "not_started",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T10:36:03.680374+00:00"
       }
     ],
     "created": "2026-09-19T13:30:13.885411+00:00",
-    "last_updated": "2026-09-19T19:03:38.483754+00:00",
+    "last_updated": "2026-09-20T10:36:03.680374+00:00",
     "transitions": []
   }
 }

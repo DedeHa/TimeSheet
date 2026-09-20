@@ -237,8 +237,8 @@ def test_root_docs_share_same_canonical_lifecycle_contract():
     workflow = (_REPO / "doc" / "AGENTS_WORKFLOW.md").read_text()
     assert "backlog -> plan -> develop -> complete -> approved -> released" in root
     assert "backlog -> plan -> develop -> complete -> approved -> released" in workflow
-    assert "runtime in `.opencode/scripts/pipeline.py`" in root
-    assert "authoritative source of truth" in workflow
+    assert ".opencode/scripts/pipeline.py" in root
+    assert "authoritative source of" in workflow
 
 
 # ---------------------------------------------------------------------------
@@ -267,10 +267,46 @@ def test_all_skills_reference_canonical_workflow_contract():
 
 
 def test_workflow_docs_are_split_by_role():
-    """AGENTS.md stays high level while AGENTS_WORKFLOW holds the detailed flow."""
+    """AGENTS.md stays user-facing while AGENTS_WORKFLOW holds operational detail."""
     root = (_REPO / "AGENTS.md").read_text()
     workflow = (_REPO / "doc" / "AGENTS_WORKFLOW.md").read_text()
-    assert "quick-start guide" in root.lower()
+    assert "user-facing entry point" in root.lower()
+    assert "user interaction model" in root.lower()
     assert "detailed operational reference" in workflow.lower()
-    assert "canonical lifecycle" in root.lower()
+    assert "complete agent and skill catalog" in root.lower()
+    assert "script responsibilities and dependencies" in root.lower()
     assert "state machine" in workflow.lower()
+
+
+def test_all_operational_scripts_are_documented():
+    """Every script in .opencode/scripts must be listed in the workflow reference."""
+    workflow = (_REPO / "doc" / "AGENTS_WORKFLOW.md").read_text()
+    scripts = sorted((_REPO / ".opencode" / "scripts").glob("*.py"))
+    for path in scripts:
+        assert str(path.relative_to(_REPO)) in workflow, (
+            f"{path.relative_to(_REPO)} is not documented in AGENTS_WORKFLOW.md"
+        )
+
+
+def test_workflow_dependency_references_exist():
+    """Documented agent, skill, and script paths must resolve in the repository."""
+    workflow = (_REPO / "doc" / "AGENTS_WORKFLOW.md").read_text()
+    expected_paths = [
+        ".opencode/scripts/pipeline.py",
+        ".opencode/scripts/detect_mode.py",
+        ".opencode/scripts/migrate_pipeline_state.py",
+        ".opencode/scripts/verify_migration.py",
+        ".opencode/scripts/pre_closure_validation.py",
+    ]
+    for relative_path in expected_paths:
+        assert relative_path in workflow
+        assert (_REPO / relative_path).exists()
+
+
+def test_user_guide_does_not_duplicate_operational_catalog():
+    """The user guide should link to, not reproduce, the operational catalog."""
+    root = (_REPO / "AGENTS.md").read_text()
+    assert "complete agent and skill catalog" in root
+    assert "script responsibilities and dependencies" in root
+    assert ".opencode/agents/*.agent.md" not in root
+    assert ".opencode/skills/*/SKILL.md" not in root

@@ -7,6 +7,14 @@ description: Use when releasing a new version of the TimeSheetAlgo project. Trig
 
 Reusable end-to-end release workflow for TimeSheetAlgo. Follows the conventions in `doc/CONTRIBUTING.md` §5 and §7.
 
+## Canonical Workflow Contract
+
+Release execution is only valid after the ticket has reached the `approved` or `released` phase in the canonical lifecycle:
+
+`backlog -> plan -> develop -> complete -> approved -> released`
+
+This skill must not be used for feature work that is still in the planning or development phases. The runtime state, JIRA transition history, and required approvals provide the authoritative gate before any release tag or GitHub publication is created.
+
 ## Prerequisites
 
 - Working directory: `/workspaces/TimeSheet` (repository root)

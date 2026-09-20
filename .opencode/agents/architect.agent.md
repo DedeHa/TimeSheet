@@ -14,8 +14,6 @@ constraints:
   - Must minimize complexity
   - Must strictly reference ARCHITECTURE.md patterns
   - All designs must align with existing codebase
-  - "Must follow the canonical workflow: backlog -> plan -> develop -> complete -> approved -> released"
-  - "Must not hand off to developer if the pipeline is blocked, interrupted, or missing story points"
 handoffs:
   - label: Start Implementation
     agent: developer
@@ -48,13 +46,6 @@ skills:
       - adopt-plan
       - draft-plan
 ---
-
-## Documentation
-
-- **Top-level guide:** [AGENTS.md](../../AGENTS.md)
-- **Agent workflow:** [doc/AGENTS_WORKFLOW.md](../doc/AGENTS_WORKFLOW.md)
-- **Supporting scripts:** [.opencode/scripts/](../scripts/)
-- **Workflow skills:** [.opencode/skills/](../skills/)
 
 # Architect Agent
 

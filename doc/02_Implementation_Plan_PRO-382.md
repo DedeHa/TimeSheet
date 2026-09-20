@@ -58,7 +58,7 @@ Eliminate all `external_directory` permission prompts from the agent-team pipeli
    - Test that `.gitignore` does not exclude state files
    - Test idempotency of migration
 
-7. **Update `.opencode/tests/agents/test_orchestration.py`:**
+7. **Update `tests/agents/test_orchestration.py`:**
    - Fix line 289 assertion from `"~/.opencode/pipeline-state.json" in content` to `".opencode/pipeline-state.json" in content`
    - Update test to reflect new path location
 
@@ -71,7 +71,7 @@ Eliminate all `external_directory` permission prompts from the agent-team pipeli
 9. **Update `.opencode/skills/orchestrate-feature/SKILL.md`:**
    - Replace `~/.opencode/pipeline-state.json` with `.opencode/pipeline-state.json` at lines 52, 325, 341
    - Update any other `~/.opencode` references in the file to project-local `.opencode/` paths
-   - Ensure documentation matches the test assertion in `.opencode/tests/agents/test_orchestration.py:289`
+   - Ensure documentation matches the test assertion in `tests/agents/test_orchestration.py:289`
 
 10. **Update `doc/AGENTS_WORKFLOW.md`:**
     - Replace `~/.opencode/pipeline-state.json` with `.opencode/pipeline-state.json` at lines 214 and 606
@@ -216,6 +216,6 @@ Eliminate all `external_directory` permission prompts from the agent-team pipeli
 * [.opencode/scripts/detect_mode.py](file:///workspaces/TimeSheet/.opencode/scripts/detect_mode.py): Line 29 — STATE_PATH
 * [.opencode/scripts/pipeline.py](file:///workspaces/TimeSheet/.opencode/scripts/pipeline.py): Lines 39-40 — STATE_PATH, HISTORY_PATH
 * [.opencode/scripts/pre_closure_validation.py](file:///workspaces/TimeSheet/.opencode/scripts/pre_closure_validation.py): Line 66 — STATE_PATH
-* [.opencode/tests/agents/test_orchestration.py](file:///workspaces/TimeSheet/.opencode/tests/agents/test_orchestration.py): Line 289 — path assertion
+* [tests/agents/test_orchestration.py](file:///workspaces/TimeSheet/tests/agents/test_orchestration.py): Line 289 — path assertion
 
 Refs: PRO-382

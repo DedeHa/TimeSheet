@@ -66,15 +66,15 @@ which the `check` job runs as part of the CI self-tests
 
 The agent-team pipeline (4 agents + 5 skills) is validated by a dedicated `agents` CI job in
 [.github/workflows/python-ci.yml](../.github/workflows/python-ci.yml) that runs
-`pytest -q .opencode/tests/agents/ .opencode/tests/scripts/` and uploads the JUnit report
+`pytest -q tests/agents/ tests/opencode/` and uploads the JUnit report
 (`tests/reports/agent-results.xml`) as an artifact. Agent tests live under
-`.opencode/tests/` (not in `tests/`), so they do not change the 103-test
+`tests/` (not in `tests/`), so they do not change the 103-test
 application suite or the coverage gate.
 
 ### Layout
 
 ```text
-.opencode/tests/
+tests/
 ├── agents/
 │   ├── test_orchestration.py     # YAML frontmatter, file and binding checks
 │   ├── test_handoffs.py          # Handoff protocol and escalation
@@ -104,10 +104,10 @@ application suite or the coverage gate.
 
 ```bash
 # All agent tests
-pytest -q .opencode/tests/agents/ .opencode/tests/scripts/
+pytest -q tests/agents/ tests/opencode/
 
 # One category
-pytest -q .opencode/tests/agents/test_handoffs.py
+pytest -q tests/agents/test_handoffs.py
 ```
 
 CI runs the agent tests as its own "Agent System Tests" level in the summary, in

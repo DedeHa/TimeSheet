@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-_REPO = Path(__file__).resolve().parents[3]
+_REPO = Path(__file__).resolve().parents[2]
 _AGENTS_DIR = _REPO / ".opencode" / "agents"
 _SKILLS_DIR = _REPO / ".opencode" / "skills"
 

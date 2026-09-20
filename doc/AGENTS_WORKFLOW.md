@@ -30,8 +30,8 @@ policy tests fail when an agent or skill omits or changes the lifecycle.
 ├── pipeline-state.json      project-local ticket state
 └── pipeline-history.json    transition and action history
 
-.opencode/tests/agents/      agent, skill, and workflow policy tests
-.opencode/tests/scripts/     runtime and support-script tests
+tests/agents/      agent, skill, and workflow policy tests
+tests/opencode/     runtime and support-script tests
 AGENTS.md                    user-facing project and interaction guide
 doc/AGENTS_WORKFLOW.md       this detailed operational reference
 ```
@@ -77,8 +77,8 @@ Tests are stored with the subsystem they validate:
 
 | Test directory | Coverage |
 |---|---|
-| `.opencode/tests/agents/` | agent definitions, skill bindings, handoffs, constraints, outputs, and workflow policy |
-| `.opencode/tests/scripts/` | pipeline runtime and mode-detection script behavior |
+| `tests/agents/` | agent definitions, skill bindings, handoffs, constraints, outputs, and workflow policy |
+| `tests/opencode/` | pipeline runtime and mode-detection script behavior |
 | `.github/tests/ci-pipeline/` | GitHub Actions workflow structure and CI support scripts |
 
 The GitHub Actions `Agent System Tests` job executes both opencode test
@@ -238,9 +238,9 @@ Documentation responsibilities are intentionally separated:
 - `doc/AGENTS_WORKFLOW.md` — agent, skill, script, dependency, state-machine,
   handoff, migration, and validation details
 - `.opencode/scripts/pipeline.py` — executable source of truth
-- `.opencode/tests/agents/` — regression policy for agents, skills, and
+- `tests/agents/` — regression policy for agents, skills, and
   documentation
-- `.opencode/tests/scripts/` — regression tests for opencode scripts
+- `tests/opencode/` — regression tests for opencode scripts
 
 When prose and runtime behavior differ, update the prose to match the
 runtime. Do not create a second lifecycle in a skill or script document.
@@ -259,5 +259,5 @@ The agent policy suite must verify:
 Run the complete policy suite with:
 
 ```bash
-python -m pytest .opencode/tests/agents .opencode/tests/scripts -q
+python -m pytest tests/agents tests/scripts -q
 ```

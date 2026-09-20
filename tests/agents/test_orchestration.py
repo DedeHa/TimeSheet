@@ -1,13 +1,12 @@
 """Tests for the agent-team orchestration infrastructure.
 
 Validates the ``orchestrate-feature`` skill, agent definitions, and pipeline
-handoffs work together as designed. Like the other CI self-test files, this
-lives under ``.opencode/tests/agents/`` (not in ``tests/``), so it does not
-change the 103-test application suite or the coverage gate.
+handoffs work together as designed. These tests moved under the ``tests/``
+directory alongside the other application test levels.
 
 Run with::
 
-    pytest -q .opencode/tests/agents/test_orchestration.py
+    pytest -q tests/agents/test_orchestration.py
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-_REPO = Path(__file__).resolve().parents[3]
+_REPO = Path(__file__).resolve().parents[2]
 _SKILLS_DIR = _REPO / ".opencode" / "skills"
 _AGENTS_DIR = _REPO / ".opencode" / "agents"
 _PO_AGENT = _AGENTS_DIR / "product-owner.agent.md"

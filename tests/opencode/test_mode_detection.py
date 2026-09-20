@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-_REPO = Path(__file__).resolve().parents[3]
+_REPO = Path(__file__).resolve().parents[2]
 _SCRIPT = _REPO / ".opencode" / "scripts" / "detect_mode.py"
 _SPEC = importlib.util.spec_from_file_location("detect_mode", _SCRIPT)
 _DETECT_MODE = importlib.util.module_from_spec(_SPEC)

@@ -59,7 +59,7 @@ APP_TEST_LEVELS: list[tuple[str, str]] = [
 ]
 
 #: CI-pipeline tests live under .github/tests/ci-pipeline/. Agent-system tests
-#: live under .opencode/tests/ and are reported by their dedicated job.
+#: live under tests/ and are reported by their dedicated job.
 CI_TEST_LEVELS: list[tuple[str, str]] = [
     ("CI Self-Tests", "ci-results.xml"),
 ]

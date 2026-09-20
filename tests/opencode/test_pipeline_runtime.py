@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-_REPO = Path(__file__).resolve().parents[3]
+_REPO = Path(__file__).resolve().parents[2]
 _SCRIPT = _REPO / ".opencode" / "scripts" / "pipeline.py"
 _SPEC = importlib.util.spec_from_file_location("pipeline_runtime", _SCRIPT)
 _PIPELINE = importlib.util.module_from_spec(_SPEC)

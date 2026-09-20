@@ -2,12 +2,12 @@
 
 Validates the ``orchestrate-feature`` skill, agent definitions, and pipeline
 handoffs work together as designed. Like the other CI self-test files, this
-lives under ``.github/tests/agents/`` (not in ``tests/``), so it does not
+lives under ``.opencode/tests/agents/`` (not in ``tests/``), so it does not
 change the 103-test application suite or the coverage gate.
 
 Run with::
 
-    pytest -q .github/tests/agents/test_orchestration.py
+    pytest -q .opencode/tests/agents/test_orchestration.py
 """
 
 from __future__ import annotations
@@ -286,5 +286,5 @@ def test_orchestrate_skill_documents_mode_persistence():
     """orchestrate-feature skill must document mode persistence in pipeline state."""
     skill_path = _REPO / ".opencode" / "skills" / "orchestrate-feature" / "SKILL.md"
     content = skill_path.read_text()
-    assert "~/.opencode/pipeline-state.json" in content
+    assert ".opencode/pipeline-state.json" in content
     assert '"development_mode"' in content

@@ -14,6 +14,9 @@ constraints:
   - Must produce reproducible results
   - Test decisions must be data-driven (test results, coverage metrics)
   - No approval without verification of all acceptance criteria
+  - "Must enforce the canonical workflow: backlog -> plan -> develop -> complete -> approved -> released"
+  - "Must not approve a ticket until the pipeline state and quality gates are valid for the current phase"
+  - "Must NOT ignore test failures, blockers, or interrupted workflow state"
 
 skills:
   - name: complete-feature

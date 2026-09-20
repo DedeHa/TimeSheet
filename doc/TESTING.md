@@ -66,21 +66,25 @@ which the `check` job runs as part of the CI self-tests
 
 The agent-team pipeline (4 agents + 5 skills) is validated by a dedicated `agents` CI job in
 [.github/workflows/python-ci.yml](../.github/workflows/python-ci.yml) that runs
-`pytest -q .github/tests/agents/` and uploads the JUnit report
+`pytest -q .opencode/tests/agents/ .opencode/tests/scripts/` and uploads the JUnit report
 (`tests/reports/agent-results.xml`) as an artifact. Agent tests live under
-`.github/tests/agents/` (not in `tests/`), so they do not change the 103-test
+`.opencode/tests/` (not in `tests/`), so they do not change the 103-test
 application suite or the coverage gate.
 
 ### Layout
 
 ```text
-.github/tests/agents/
-├── test_orchestration.py     # Existing - structural tests (YAML frontmatter, file existence, path resolution)
-├── test_handoffs.py         # Handoff protocol: placeholders, cycle counts, escalation triggers
-├── test_constraints.py      # Agent boundary enforcement via constraints
-├── test_agent_outputs.py    # Output format contracts (PO/Architect/Developer/Tester)
-├── test_skill_workflows.py  # Skill phase execution order
-└── test_pipeline_flow.py    # End-to-end pipeline simulation
+.opencode/tests/
+├── agents/
+│   ├── test_orchestration.py     # YAML frontmatter, file and binding checks
+│   ├── test_handoffs.py          # Handoff protocol and escalation
+│   ├── test_constraints.py       # Agent boundary enforcement
+│   ├── test_agent_outputs.py     # Agent output format contracts
+│   ├── test_skill_workflows.py   # Skill phase execution order
+│   └── test_pipeline_flow.py     # End-to-end agent pipeline simulation
+└── scripts/
+    ├── test_pipeline_runtime.py  # Pipeline state machine and recovery
+    └── test_mode_detection.py    # Conversational mode detection and persistence
 ```
 
 ### Test Categories
@@ -93,15 +97,17 @@ application suite or the coverage gate.
 | `test_agent_outputs.py` | Output format | Required markdown sections for each agent's output template |
 | `test_skill_workflows.py` | Skill workflow | Phase execution order for orchestrate/plan/develop/complete/release skills |
 | `test_pipeline_flow.py` | Pipeline simulation | Full PO→Architect→Developer→Tester flow, cycle escalation, error propagation |
+| `test_pipeline_runtime.py` | Script runtime | Canonical states, transitions, recovery, handoff payloads |
+| `test_mode_detection.py` | Script runtime | Interactive/automated phrase detection and state persistence |
 
 ### Running
 
 ```bash
 # All agent tests
-pytest -q .github/tests/agents/
+pytest -q .opencode/tests/agents/ .opencode/tests/scripts/
 
 # One category
-pytest -q .github/tests/agents/test_handoffs.py
+pytest -q .opencode/tests/agents/test_handoffs.py
 ```
 
 CI runs the agent tests as its own "Agent System Tests" level in the summary, in

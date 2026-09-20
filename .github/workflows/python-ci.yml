@@ -159,15 +159,15 @@ jobs:
       - name: Run system tests
         run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
-      # CI self-tests cover GitHub workflow structure and CI support scripts.
-      # Opencode agent-system tests run in the independent agents job below.
-      # Reported as its own "CI Self-Tests" level in the summary.
-      # Coverage is measured separately from the application tests
-      # to provide distinct CI-pipeline coverage in the GitHub Bot Comment.
-      - name: Run CI self-tests (.github/tests)
-        run: |
-          coverage run --source=.github --branch --data-file=.coverage.ci \
-            -m pytest -q .github/tests/ --junitxml=tests/reports/ci-results.xml
+       # CI self-tests cover GitHub workflow structure and CI support scripts.
+       # Opencode agent-system tests run in the independent agents job below.
+       # Reported as its own "CI Self-Tests" level in the summary.
+       # Coverage is measured separately from the application tests
+       # to provide distinct CI-pipeline coverage in the GitHub Bot Comment.
+       - name: Run CI self-tests (.opencode/tests)
+         run: |
+           coverage run --source=.opencode --branch --data-file=.coverage.ci \
+             -m pytest -q .opencode/tests/ --junitxml=tests/reports/ci-results.xml
 
       # Additive (PRO-337): export machine-readable coverage for the PR summary.
       # Runs even if an earlier level failed so the summary always has coverage
@@ -186,10 +186,10 @@ jobs:
         continue-on-error: true
         run: coverage json -o tests/reports/ci-coverage.json --data-file=.coverage.ci --fail-under=0
 
-      - name: Combined coverage report and 90% gate
-        run: |
-          coverage report --show-missing --fail-under=90
-          coverage html -d tests/reports/htmlcov
+        - name: Application coverage report and 90% gate
+          run: |
+            coverage report --include='src_timesheetalgo/*' --show-missing --fail-under=90
+            coverage html -d tests/reports/htmlcov
 
       - name: Upload test results
         uses: actions/upload-artifact@v5

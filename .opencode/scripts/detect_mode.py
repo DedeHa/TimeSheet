@@ -5,7 +5,7 @@ Usage:
     python detect_mode.py <ticket> "<chat message>"
     python detect_mode.py <ticket> --show
 
-Reads/writes project-local .opencode/pipeline-state.json.  The Product Owner agent
+Reads/writes ``~/.opencode/pipeline-state.json``.  The Product Owner agent
 invokes this script to parse user chat messages for mode keywords and to
 read back the persisted mode before each handoff.
 
@@ -26,25 +26,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-try:
-    import fcntl
-except ImportError:
-    fcntl = None
-
-STATE_PATH = Path(__file__).resolve().parent.parent / "pipeline-state.json"
-
-
-def _ensure_migrated() -> None:
-    """Run migration if new state missing but old state exists."""
-    if STATE_PATH.exists():
-        return
-    try:
-        from migrate_pipeline_state import migrate_pipeline_state
-
-        migrate_pipeline_state()
-    except Exception:
-        pass
-
+STATE_PATH = Path.home() / ".opencode" / "pipeline-state.json"
 
 # Conversational phrases that indicate the user wants no pauses during development.
 AUTOMATED_PATTERNS = (
@@ -91,69 +73,26 @@ AUTOMATED_HINTS = (
 )
 
 
-LOCK_TIMEOUT = 5.0
-
-
-def _acquire_lock(fd):
-    """Acquire an exclusive file lock, non-blocking with retry."""
-    if fcntl is None:
-        return
-    import time
-
-    deadline = time.time() + LOCK_TIMEOUT
-    while True:
-        try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            return
-        except BlockingIOError:
-            if time.time() >= deadline:
-                return
-            time.sleep(0.05)
-
-
-def _release_lock(fd):
-    """Release an exclusive file lock."""
-    if fcntl is None:
-        return
-    try:
-        fcntl.flock(fd, fcntl.LOCK_UN)
-    except OSError:
-        pass
-
-
 def _load_state() -> dict:
-    """Load the pipeline state file, triggering migration if needed."""
-    _ensure_migrated()
+    """Load the pipeline state file, creating it if missing."""
     if not STATE_PATH.exists():
         STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
         return {}
     try:
-        with STATE_PATH.open("r+", encoding="utf-8") as fh:
-            _acquire_lock(fh)
-            try:
-                data = json.load(fh)
-            finally:
-                _release_lock(fh)
+        with STATE_PATH.open("r", encoding="utf-8") as fh:
+            data = json.load(fh)
         return data if isinstance(data, dict) else {}
     except (json.JSONDecodeError, OSError):
         return {}
 
 
 def _save_state(state: dict) -> None:
-    """Persist the pipeline state file atomically with locking."""
+    """Persist the pipeline state file atomically."""
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     tmp = STATE_PATH.with_suffix(".json.tmp")
     with tmp.open("w", encoding="utf-8") as fh:
         json.dump(state, fh, indent=2, sort_keys=True)
-    try:
-        with STATE_PATH.open("r+", encoding="utf-8") as fh:
-            _acquire_lock(fh)
-            try:
-                tmp.replace(STATE_PATH)
-            finally:
-                _release_lock(fh)
-    except OSError:
-        tmp.replace(STATE_PATH)
+    tmp.replace(STATE_PATH)
 
 
 def detect_mode(message: str) -> dict:

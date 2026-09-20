@@ -9,8 +9,8 @@ configured after the CI workflow and naming-convention changes:
 - ``.github/workflows/`` holds workflow definitions only (no ``.py`` scripts)
 - ``.github/scripts/`` holds CI support scripts (``verb_subject``, e.g.
   ``generate_pr_summary``); ``.github/tests/ci-pipeline/`` holds their unit
-  tests (``test_verb_subject``), and ``.opencode/tests/`` holds agent-team
-  and opencode script tests.
+  tests (``test_verb_subject``), and ``.github/tests/agents/`` holds
+  agent-team tests.
 
 Run with::
 
@@ -31,9 +31,7 @@ GITHUB_DIR = REPO_ROOT / ".github"
 WORKFLOWS_DIR = GITHUB_DIR / "workflows"
 SCRIPTS_DIR = GITHUB_DIR / "scripts"
 TESTS_DIR = GITHUB_DIR / "tests" / "ci-pipeline"
-OPENCODE_TESTS_DIR = REPO_ROOT / ".opencode" / "tests"
-OPENCODE_AGENT_TESTS_DIR = OPENCODE_TESTS_DIR / "agents"
-OPENCODE_SCRIPT_TESTS_DIR = OPENCODE_TESTS_DIR / "scripts"
+AGENTS_TESTS_DIR = GITHUB_DIR / "tests" / "agents"
 
 EXPECTED_CI_FILES = [
     WORKFLOWS_DIR / "python-ci.yml",
@@ -80,16 +78,9 @@ def test_ci_scripts_are_not_named_as_tests():
 
 
 def test_ci_tests_use_test_prefix():
-    """CI support tests and opencode tests use the test_* module prefix."""
+    """Every Python file in .github/tests/ is a test_* module."""
     bad = [f.name for f in TESTS_DIR.glob("*.py") if not f.name.startswith("test_")]
-    for directory in (OPENCODE_AGENT_TESTS_DIR, OPENCODE_SCRIPT_TESTS_DIR):
-        bad += [
-            f.name for f in directory.glob("*.py") if not f.name.startswith("test_")
-        ]
-    assert not bad, f"Test directories must contain only test_* files: {bad}"
-
-
-def test_opencode_test_directories_exist():
-    """Agent and script tests are owned by the opencode subsystem."""
-    assert OPENCODE_AGENT_TESTS_DIR.is_dir()
-    assert OPENCODE_SCRIPT_TESTS_DIR.is_dir()
+    bad += [
+        f.name for f in AGENTS_TESTS_DIR.glob("*.py") if not f.name.startswith("test_")
+    ]
+    assert not bad, f".github/tests/ must contain only test_* files: {bad}"

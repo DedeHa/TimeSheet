@@ -833,10 +833,85 @@
           "workflow_state": "released"
         },
         "timestamp": "2026-09-20T12:01:34.395996+00:00"
+      },
+      {
+        "action": "pipeline_created",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "plan",
+          "cycle_counts": {
+            "complete": 0,
+            "develop": 0,
+            "plan": 0
+          },
+          "development_mode": "interactive",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_created",
+          "last_updated": "2026-09-20T12:22:26.060954+00:00",
+          "required_next_step": "plan",
+          "status": "not_started",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T12:22:26.061138+00:00"
+      },
+      {
+        "action": "pipeline_created",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "plan",
+          "cycle_counts": {
+            "complete": 0,
+            "develop": 0,
+            "plan": 0
+          },
+          "development_mode": "interactive",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_created",
+          "last_updated": "2026-09-20T14:37:38.029553+00:00",
+          "required_next_step": "plan",
+          "status": "not_started",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T14:37:38.029677+00:00"
+      },
+      {
+        "action": "pipeline_created",
+        "details": {
+          "blocked": false,
+          "blockers": [],
+          "current_step": "plan",
+          "cycle_counts": {
+            "complete": 0,
+            "develop": 0,
+            "plan": 0
+          },
+          "development_mode": "interactive",
+          "escalation_level": 0,
+          "interrupted": false,
+          "interrupted_at": null,
+          "interrupted_step": null,
+          "last_action": "pipeline_created",
+          "last_updated": "2026-09-20T14:38:28.295574+00:00",
+          "required_next_step": "plan",
+          "status": "not_started",
+          "story_points": null,
+          "workflow_state": "backlog"
+        },
+        "timestamp": "2026-09-20T14:38:28.295731+00:00"
       }
     ],
     "created": "2026-09-19T13:30:13.885411+00:00",
-    "last_updated": "2026-09-20T12:01:34.395996+00:00",
+    "last_updated": "2026-09-20T14:38:28.295731+00:00",
     "transitions": []
   }
 }

@@ -34,7 +34,7 @@
   },
   "PRO-376": {
     "development_mode": "automated",
-    "last_updated": "2026-09-20T11:42:28.741930+00:00"
+    "last_updated": "2026-09-20T11:54:01.188635+00:00"
   },
   "PRO-380": {
     "blocked": false,
@@ -59,7 +59,7 @@
   "PRO-382": {
     "blocked": false,
     "blockers": [],
-    "current_step": "complete",
+    "current_step": "released",
     "cycle_counts": {
       "complete": 1,
       "develop": 1,
@@ -70,11 +70,11 @@
     "interrupted": false,
     "interrupted_at": null,
     "interrupted_step": null,
-    "last_action": "pipeline_resumed",
-    "last_updated": "2026-09-19T18:45:00.000000+00:00",
-    "required_next_step": "complete",
-    "status": "in_progress",
+    "last_action": "pipeline_completed",
+    "last_updated": "2026-09-20T12:01:34.395975+00:00",
+    "required_next_step": null,
+    "status": "completed",
     "story_points": null,
-    "workflow_state": "backlog"
+    "workflow_state": "released"
   }
 }

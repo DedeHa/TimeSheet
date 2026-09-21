@@ -14,12 +14,6 @@ Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the c
 - `gh` authenticated and `git` configured
 - Atlassian MCP tools available (Jira)
 
-## Canonical Workflow Contract
-
-This skill must only run after the canonical workflow has reached the `complete` or `approved` state and the runtime confirms the ticket is ready for closure. If the pipeline shows interruption, blocking state, or missing story points, stop and resolve those checks before proceeding.
-
-The project-wide workflow is: `backlog -> plan -> develop -> complete -> approved -> released`
-
 ## Step 0 — Determine Current State
 
 1. Identify the current branch and JIRA ticket:
@@ -54,52 +48,6 @@ python .github/scripts/generate_traceability_matrix.py
 ```
 
 **Gate:** All checks must pass before proceeding. If any fail, fix and re-run.
-
-## Step 1.5 — Run Pre-Closure Validation
-
-**⚠️ REQUIRED GATE:** Before any JIRA ticket can be transitioned to "Fertig",
-the pre-closure validation MUST pass. This is an automated, non-bypassable check
-that verifies pipeline integrity across all systems.
-
-### Validation Script
-
-Run the pre-closure validation script:
-
-```bash
-python .opencode/scripts/pre_closure_validation.py <TICKET> <PR_NUMBER> --verbose
-```
-
-### What It Checks
-
-The validation script runs four automated checks:
-
-| # | Check | What It Verifies |
-|---|-------|-----------------|
-| 1 | **PR Merged** | PR is merged to master via GitHub API (`gh pr view`) |
-| 2 | **Pipeline State** | Pipeline state file exists and is consistent with git state |
-| 3 | **Plan Lifecycle** | Implementation plan document exists and is properly maintained |
-| 4 | **Cross-System Consistency** | JIRA, Git, and pipeline states are all consistent |
-
-### Gate Rules
-
-- **If all checks PASS:** Proceed to Step 2 (Evaluate Acceptance Criteria).
-- **If ANY check FAILS:** STOP. Do NOT proceed to JIRA transition.
-  - Record the failure in the JIRA ticket comment.
-  - Fix the failing condition (e.g., merge the PR, update pipeline state).
-  - Re-run validation until all checks pass.
-- **If a check is SKIP:** Record the skip reason and proceed with caution.
-  - Document the skip in the JIRA ticket comment.
-  - Verify manually that the skipped check would pass.
-
-### Integration with Step 3d (Transition to Done)
-
-The pre-closure validation MUST be run immediately before calling
-`atlassian_transitionJiraIssue`. The transition MUST NOT be called if
-the validation report shows `all_passed: false`.
-
-**This is a hard gate.** No JIRA ticket may be transitioned to "Fertig"
-without passing pre-closure validation. This prevents the exact failure
-mode described in PRO-381 where tickets were closed before PRs were merged.
 
 ## Step 2 — Evaluate Acceptance Criteria
 
@@ -486,19 +434,6 @@ atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["status", "resolution", "
 # Remote branch deleted (after user/PO confirmation)
 git ls-remote --heads origin | grep <branch-name>  # should return nothing
 ```
-
-## Step 7 — Re-initialise Opencode Session
-
-After the feature is fully completed (PR merged, JIRA in Fertig, implementation plan and remote branch deleted), the opencode session must be re-initialised to refresh agent and skill discovery from `.opencode/`.
-
-> **Why this step is required:** opencode caches agent and skill definitions from `.opencode/`. Without re-initialisation, a new session may not pick up changes made during the feature (e.g. updated agents, new skills, modified handoffs).
-
-**Command:**
-```bash
-/init
-```
-
-**Verification:** After running `/init`, confirm that any new or modified agents and skills under `.opencode/agents/` and `.opencode/skills/` are discoverable by the session.
 
 ## Reference: Quick Command Cheatsheet
 

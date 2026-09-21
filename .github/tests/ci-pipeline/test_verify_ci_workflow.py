@@ -311,11 +311,11 @@ def test_publish_job_always_runs():
 
 
 def test_test_job_runs_ci_self_tests():
-    """O5: the test job runs the .opencode/tests suite (as the CI Self-Tests level)."""
+    """O5: the test job runs the .github/tests suite (as the CI Self-Tests level)."""
     steps = _job_steps("test")
     assert any(
-        ".opencode/tests" in s.get("run", "") for s in steps
-    ), "test job does not run the Opencode agent-system self-tests"
+        ".github/tests" in s.get("run", "") for s in steps
+    ), "test job does not run the CI self-tests"
 
 
 def test_concurrency_grouping_unchanged():

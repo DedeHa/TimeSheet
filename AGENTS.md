@@ -142,7 +142,7 @@ python -m pytest -m "not system"
 Focused agent-team validation:
 
 ```bash
-python -m pytest tests/agents tests/scripts -q
+python -m pytest .opencode/tests/agents .opencode/tests/scripts -q
 ```
 
 Full test and quality checks:
@@ -164,8 +164,8 @@ not present.
 - `src_timesheetalgo/` — primary application package
 - `src_azesheetalgo/` — separate AZE sheet functionality
 - `.opencode/` — agent-team runtime configuration and state
-- `tests/agents/` — agent setup and workflow policy tests
-- `tests/opencode/` — tests for opencode runtime and support scripts
+- `.opencode/tests/agents/` — agent setup and workflow policy tests
+- `.opencode/tests/scripts/` — tests for opencode runtime and support scripts
 - `doc/` — project documentation and implementation references
 
 ## Git and Pull Request Conventions

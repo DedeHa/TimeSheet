@@ -9,7 +9,7 @@ configured after the CI workflow and naming-convention changes:
 - ``.github/workflows/`` holds workflow definitions only (no ``.py`` scripts)
 - ``.github/scripts/`` holds CI support scripts (``verb_subject``, e.g.
   ``generate_pr_summary``); ``.github/tests/ci-pipeline/`` holds their unit
-  tests (``test_verb_subject``), and ``tests/`` holds agent-team
+  tests (``test_verb_subject``), and ``.opencode/tests/`` holds agent-team
   and opencode script tests.
 
 Run with::
@@ -31,9 +31,9 @@ GITHUB_DIR = REPO_ROOT / ".github"
 WORKFLOWS_DIR = GITHUB_DIR / "workflows"
 SCRIPTS_DIR = GITHUB_DIR / "scripts"
 TESTS_DIR = GITHUB_DIR / "tests" / "ci-pipeline"
-OPENCODE_TESTS_DIR = REPO_ROOT / "tests"
+OPENCODE_TESTS_DIR = REPO_ROOT / ".opencode" / "tests"
 OPENCODE_AGENT_TESTS_DIR = OPENCODE_TESTS_DIR / "agents"
-OPENCODE_SCRIPT_TESTS_DIR = OPENCODE_TESTS_DIR / "opencode"
+OPENCODE_SCRIPT_TESTS_DIR = OPENCODE_TESTS_DIR / "scripts"
 
 EXPECTED_CI_FILES = [
     WORKFLOWS_DIR / "python-ci.yml",

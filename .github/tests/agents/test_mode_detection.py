@@ -72,6 +72,8 @@ def test_mode_persistence_round_trip(monkeypatch: pytest.MonkeyPatch, tmp_path):
     # Patch the pipeline module's STATE_PATH and HISTORY_PATH before creating manager
     monkeypatch.setattr(pipeline_module, "STATE_PATH", state_path)
     monkeypatch.setattr(pipeline_module, "HISTORY_PATH", history_path)
+    # Also patch detect_mode so it reads/writes the same temp file
+    monkeypatch.setattr(_DETECT_MODE, "STATE_PATH", state_path)
 
     # Create initial entry via pipeline manager (not detect_mode.py)
     manager = pipeline_module.PipelineManager()

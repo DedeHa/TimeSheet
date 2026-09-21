@@ -72,6 +72,11 @@ The orchestration skill maintains state in `.opencode/pipeline-state.json`:
 }
 ```
 
+**State file lifecycle:**
+- **Created** only when the Product Owner receives a feature definition/implementation request, via `pipeline.py init <ticket>` or `detect_mode.py <ticket> "<message>" --init`.
+- **Updated** during pipeline execution (step advances, resumes, mode changes).
+- **Read** by inspection commands (`show state`, `what-missed`, `check-stuck`, `dry-run`, `history`, `get-mode`). These commands do NOT create entries.
+
 **Development modes:**
 - **Interactive** (default): Pause at each handover for user confirmation
 - **Automated**: Run the pipeline without pauses; escalations still trigger

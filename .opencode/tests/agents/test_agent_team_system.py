@@ -319,7 +319,7 @@ class TestAgentTeamFullPipelineInteractiveMode:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "interactive")
+        _DETECT_MODE.set_mode("PRO-376", "interactive", create_if_missing=True)
         assert _DETECT_MODE.get_mode("PRO-376") == "interactive"
 
         # Simulate pipeline steps updating state
@@ -345,7 +345,7 @@ class TestAgentTeamFullPipelineAutomatedMode:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "automated")
+        _DETECT_MODE.set_mode("PRO-376", "automated", create_if_missing=True)
         assert _DETECT_MODE.get_mode("PRO-376") == "automated"
 
         # Simulate multiple handoffs
@@ -369,7 +369,7 @@ class TestAgentTeamFullPipelineAutomatedMode:
 
     def test_full_pipeline_automated_mode(self):
         """Complete pipeline must succeed in automated mode."""
-        _DETECT_MODE.set_mode("PRO-376", "automated")
+        _DETECT_MODE.set_mode("PRO-376", "automated", create_if_missing=True)
         assert _DETECT_MODE.get_mode("PRO-376") == "automated"
 
         po_output = _conduct_po_intake(DUMMY_FEATURE)
@@ -414,10 +414,10 @@ class TestAgentTeamModeDetectionEdgeCases:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "interactive")
+        _DETECT_MODE.set_mode("PRO-376", "interactive", create_if_missing=True)
         assert _DETECT_MODE.get_mode("PRO-376") == "interactive"
 
-        _DETECT_MODE.set_mode("PRO-376", "automated")
+        _DETECT_MODE.set_mode("PRO-376", "automated", create_if_missing=True)
         assert _DETECT_MODE.get_mode("PRO-376") == "automated"
 
 
@@ -432,7 +432,7 @@ class TestAgentTeamPipelineState:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "automated")
+        _DETECT_MODE.set_mode("PRO-376", "automated", create_if_missing=True)
         assert _DETECT_MODE.STATE_PATH.exists()
 
     def test_state_includes_last_updated(self, tmp_path, monkeypatch):
@@ -443,7 +443,7 @@ class TestAgentTeamPipelineState:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "automated")
+        _DETECT_MODE.set_mode("PRO-376", "automated", create_if_missing=True)
         state = json.loads(_DETECT_MODE.STATE_PATH.read_text())
         assert "last_updated" in state["PRO-376"]
 
@@ -455,7 +455,7 @@ class TestAgentTeamPipelineState:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "interactive")
+        _DETECT_MODE.set_mode("PRO-376", "interactive", create_if_missing=True)
         state = json.loads(_DETECT_MODE.STATE_PATH.read_text())
         assert state["PRO-376"]["development_mode"] == "interactive"
 
@@ -467,7 +467,7 @@ class TestAgentTeamPipelineState:
             _DETECT_MODE, "STATE_PATH", state_dir / "pipeline-state.json"
         )
 
-        _DETECT_MODE.set_mode("PRO-376", "automated")
+        _DETECT_MODE.set_mode("PRO-376", "automated", create_if_missing=True)
         assert _DETECT_MODE.get_mode("PRO-376") == "automated"
 
 

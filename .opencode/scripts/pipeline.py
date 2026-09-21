@@ -2,6 +2,7 @@
 """Enhanced pipeline management tool for TimeSheetAlgo agent team.
 
 This tool provides commands to:
+- Initialize pipeline state for new feature requests (init)
 - Resume/continue/proceed pipeline steps that are stuck
 - Show what work was missed in interrupted pipelines
 - Preview pipeline actions (dry-run)
@@ -12,17 +13,18 @@ Usage:
     python pipeline.py <command> <ticket> [options]
 
 Commands:
-    show state <ticket>              Show current pipeline state
-    resume <ticket>                   Resume pipeline at current step
-    continue <ticket>                 Continue to next pipeline step
-    proceed <ticket>                  Proceed with current step execution
-    what-missed <ticket>              Show what work was missed in interrupted pipeline
-    dry-run <ticket> <command>        Preview action without executing
-    check-stuck <ticket>              Detect and alert on stuck pipelines
-    reset <ticket>                    Reset all cycles and state
-    history <ticket>                  Show pipeline history
-    set-mode <ticket> <mode>           Set interactive/automated mode
-    get-mode <ticket>                  Show persisted mode
+    init <ticket>                 Initialize pipeline state for new feature
+    show state <ticket>           Show current pipeline state
+    resume <ticket>               Resume pipeline at current step
+    continue <ticket>             Continue to next pipeline step
+    proceed <ticket>              Proceed with current step execution
+    what-missed <ticket>          Show what work was missed in interrupted pipeline
+    dry-run <ticket> <command>    Preview action without executing
+    check-stuck <ticket>          Detect and alert on stuck pipelines
+    reset <ticket>                Reset all cycles and state
+    history <ticket>              Show pipeline history
+    set-mode <ticket> <mode>      Set interactive/automated mode
+    get-mode <ticket>             Show persisted mode
 """
 
 from __future__ import annotations
@@ -195,7 +197,10 @@ class PipelineManager:
 
     def _validate_transition(self, ticket: str, next_step: str) -> tuple[bool, str]:
         """Validate a transition against the canonical workflow state machine."""
-        entry = self._normalize_entry(self._get_entry(ticket))
+        entry = self._get_entry(ticket)
+        if entry is None:
+            return False, f"Ticket '{ticket}' has no pipeline state entry. Initialize it first."
+
         current_step = entry.get("current_step")
         current_state = self._canonical_state(entry)
 
@@ -226,6 +231,8 @@ class PipelineManager:
     def _record_transition(self, ticket: str, from_step: str, to_step: str) -> None:
         """Persist a state transition to history."""
         entry = self._get_entry(ticket)
+        if entry is None:
+            return
         history = self.history.setdefault(ticket, {"created": entry.get("last_updated"), "actions": [], "transitions": []})
         transition = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -235,7 +242,13 @@ class PipelineManager:
         history.setdefault("transitions", []).append(transition)
         self._save_history()
 
-    def _get_entry(self, ticket: str) -> Dict[str, Any]:
+    def _get_entry(self, ticket: str) -> Dict[str, Any] | None:
+        """Get pipeline entry for a ticket, or None if it doesn't exist."""
+        if ticket not in self.state:
+            return None
+        return self._normalize_entry(self.state[ticket])
+
+    def _ensure_entry(self, ticket: str) -> Dict[str, Any]:
         """Get or create a pipeline entry for a ticket."""
         if ticket not in self.state:
             self.state[ticket] = {
@@ -280,6 +293,8 @@ class PipelineManager:
     def _detect_interruption(self, ticket: str) -> Optional[Dict[str, Any]]:
         """Detect if a pipeline was interrupted and what was missed."""
         entry = self._get_entry(ticket)
+        if entry is None:
+            return None
 
         # Check if pipeline is stuck in a step
         current_step = entry.get("current_step")
@@ -341,6 +356,23 @@ class PipelineManager:
         """Build a standard handoff payload for downstream agent dispatch."""
         entry = self._get_entry(ticket)
         interruption = self._detect_interruption(ticket)
+        if entry is None:
+            return {
+                "ticket": ticket,
+                "current_step": "plan",
+                "workflow_state": "backlog",
+                "status": "not_started",
+                "development_mode": "interactive",
+                "story_points": None,
+                "blocked": False,
+                "blockers": [],
+                "cycle_counts": {"plan": 0, "develop": 0, "complete": 0},
+                "last_action": "unknown",
+                "required_next_step": "plan",
+                "interrupted": False,
+                "interruption": None,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
         return {
             "ticket": ticket,
             "current_step": entry.get("current_step", "plan"),
@@ -363,6 +395,14 @@ class PipelineManager:
         entry = self._get_entry(ticket)
         interruption = self._detect_interruption(ticket)
         payload = self.generate_handoff_payload(ticket)
+        if entry is None:
+            payload["recovery"] = {
+                "is_interrupted": False,
+                "missed_work": None,
+                "suggested_action": "init",
+                "should_escalate": False,
+            }
+            return payload
         payload["recovery"] = {
             "is_interrupted": bool(interruption and interruption.get("interrupted")),
             "missed_work": interruption.get("what_was_missed") if interruption else None,
@@ -382,6 +422,10 @@ class PipelineManager:
     def show_state(self, ticket: str) -> None:
         """Show current pipeline state with interruption detection."""
         entry = self._get_entry(ticket)
+        if entry is None:
+            print(f"No pipeline state found for {ticket}.")
+            print("Use 'init' command to create the entry first.")
+            return
 
         print(f"=== Pipeline State: {ticket} ===\n")
 
@@ -418,7 +462,7 @@ class PipelineManager:
 
     def resume(self, ticket: str, force: bool = False) -> None:
         """Resume pipeline at the current step with validation."""
-        entry = self._get_entry(ticket)
+        entry = self._ensure_entry(ticket)
         current_step = entry.get("current_step")
 
         print(f"=== Resuming Pipeline: {ticket} ===\n")
@@ -468,14 +512,16 @@ class PipelineManager:
 
     def what_missed(self, ticket: str) -> None:
         """Show what work was missed in an interrupted pipeline."""
+        entry = self._get_entry(ticket)
+        if entry is None:
+            print(f"No pipeline state found for {ticket}.")
+            return
+
         interruption = self._detect_interruption(ticket)
         if not interruption or not interruption.get("interrupted"):
             print(f"No interrupted pipeline found for {ticket}")
             print("Pipeline status: in_progress, but not interrupted")
             return
-
-        entry = self._get_entry(ticket)
-        print(f"=== What Was Missed: {ticket} ===\n")
 
         print(f"⚠️  Pipeline interrupted at: {interruption['interrupted_at']}")
         print(f"   Step: {interruption['interrupted_step']}\n")
@@ -502,7 +548,7 @@ class PipelineManager:
 
     def continue_step(self, ticket: str, force: bool = False) -> None:
         """Advance pipeline to the next step."""
-        entry = self._get_entry(ticket)
+        entry = self._ensure_entry(ticket)
         current_step = entry.get("current_step")
 
         print(f"=== Continuing Pipeline: {ticket} ===\n")
@@ -553,6 +599,11 @@ class PipelineManager:
         print(f"=== Dry Run: {ticket} - {action} ===\n")
 
         entry = self._get_entry(ticket)
+        if entry is None:
+            print("No pipeline state found for this ticket.")
+            print("Use 'init' command to create the entry first.")
+            return
+
         print("Current state:")
         print(f"  Step: {entry.get('current_step')}")
         print(f"  Cycles: {entry.get('cycle_counts')}")
@@ -595,6 +646,11 @@ class PipelineManager:
 
     def check_stuck(self, ticket: str) -> None:
         """Detect and alert on stuck pipelines."""
+        entry = self._get_entry(ticket)
+        if entry is None:
+            print(f"No pipeline state found for {ticket}.")
+            return
+
         print(f"=== Checking for Stuck Pipelines: {ticket} ===\n")
 
         # Check if pipeline is stuck in a step
@@ -641,6 +697,10 @@ class PipelineManager:
         """Reset pipeline to initial state."""
         if not force:
             entry = self._get_entry(ticket)
+            if entry is None:
+                print(f"No pipeline state found for {ticket}.")
+                print("Use 'init' command to create the entry first.")
+                return
             print(f"⚠️  WARNING: This will delete all pipeline progress for {ticket}")
             print("   Current state:")
             print(f"   - Step: {entry.get('current_step')}")
@@ -649,7 +709,7 @@ class PipelineManager:
             print("\n   Use --force to confirm reset")
             return
 
-        entry = self._get_entry(ticket)
+        entry = self._ensure_entry(ticket)
         print(f"=== Resetting Pipeline: {ticket} ===\n")
 
         # Reset to initial state
@@ -699,10 +759,10 @@ class PipelineManager:
 
     def set_mode(self, ticket: str, mode: str) -> None:
         """Set development mode for a ticket."""
-        entry = self._get_entry(ticket)
+        entry = self._ensure_entry(ticket)
 
         if mode not in ["interactive", "automated"]:
-            print(f"❌ Invalid mode: {mode}. Must be 'interactive' or 'automated'")
+            print(f"❌ Invalid mode: {mode}. Must be 'interactive' or 'automated")
             return
 
         entry["development_mode"] = mode
@@ -714,8 +774,20 @@ class PipelineManager:
     def get_mode(self, ticket: str) -> None:
         """Get persisted mode for a ticket."""
         entry = self._get_entry(ticket)
+        if entry is None:
+            print(f"Mode for {ticket}: interactive (no state entry found)")
+            return
         mode = entry.get("development_mode", "interactive")
         print(f"Mode for {ticket}: {mode}")
+
+    def init(self, ticket: str) -> None:
+        """Initialize pipeline state for a new feature request."""
+        entry = self._ensure_entry(ticket)
+        print(f"✓ Pipeline initialized for {ticket}")
+        print(f"  Step: {entry['current_step']}")
+        print(f"  Workflow state: {entry['workflow_state']}")
+        print(f"  Mode: {entry['development_mode']}")
+        print(f"  Status: {entry['status']}")
 
     def recover_ticket_cli(self, ticket: str) -> None:
         """Print the canonical recovery recommendation for a ticket."""
@@ -748,6 +820,10 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # State management
+    init_parser = subparsers.add_parser("init", help="Initialize pipeline state for a new feature request")
+    init_parser.add_argument("ticket", help="JIRA ticket key")
+    init_parser.set_defaults(func=lambda args: manager.init(args.ticket))
+
     showstate_parser = subparsers.add_parser(
         "showstate", help="Show current pipeline state"
     )

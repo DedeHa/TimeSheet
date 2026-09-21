@@ -9,6 +9,10 @@ Reads/writes project-local .opencode/pipeline-state.json.  The Product Owner age
 invokes this script to parse user chat messages for mode keywords and to
 read back the persisted mode before each handoff.
 
+Use --init when the Product Officer is starting a new feature request to
+create the pipeline state entry. Without --init, set_mode only updates
+existing entries and returns a minimal response for non-existent tickets.
+
 For advanced pipeline management (resume, continue, what-missed, dry-run,
 check-stuck, history, reset), use:
 
@@ -198,13 +202,24 @@ def format_mode_result(result: dict) -> str:
     )
 
 
-def set_mode(ticket: str, mode: str) -> dict:
-    """Persist ``mode`` for ``ticket`` and return the updated entry."""
+def set_mode(ticket: str, mode: str, create_if_missing: bool = False) -> dict:
+    """Persist ``mode`` for ``ticket`` and return the updated entry.
+    
+    Only updates an entry if it already exists. Set create_if_missing to True
+    to allow creating a new entry (used for initial pipeline setup).
+    """
     state = _load_state()
-    entry = state.get(ticket, {})
+    entry = state.get(ticket)
+    
+    if entry is None:
+        if create_if_missing:
+            entry = {}
+            state[ticket] = entry
+        else:
+            return {"development_mode": mode, "last_updated": datetime.now(timezone.utc).isoformat()}
+    
     entry["development_mode"] = mode
     entry["last_updated"] = datetime.now(timezone.utc).isoformat()
-    state[ticket] = entry
     _save_state(state)
     return entry
 
@@ -235,6 +250,7 @@ def main() -> int:
         help="Chat message to parse for mode keywords",
     )
     parser.add_argument("--show", action="store_true", help="Show persisted mode")
+    parser.add_argument("--init", action="store_true", help="Create entry if missing (feature request)")
     args = parser.parse_args()
 
     if args.show:
@@ -246,7 +262,7 @@ def main() -> int:
         print(f"No mode detected; current mode: {get_mode(args.ticket)}")
         return 0
 
-    entry = set_mode(args.ticket, result["mode"])
+    entry = set_mode(args.ticket, result["mode"], create_if_missing=args.init)
     print(format_mode_result(result))
     print(json.dumps(entry, indent=2))
     return 0

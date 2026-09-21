@@ -220,12 +220,12 @@ class TestIntegration:
     """Integration tests for pipeline flow at new location."""
 
     def test_detect_mode_writes_to_project_local(self, tmp_path: Path):
-        """detect_mode.py writes state to project-local .opencode/."""
+        """detect_mode.py writes state to project-local .opencode/ only with --init."""
         state_file = tmp_path / ".opencode" / "pipeline-state.json"
         with (
             patch.object(detect_mode, "STATE_PATH", state_file),
             patch.object(
-                sys, "argv", ["detect_mode.py", "PRO-382", "Run in automated"]
+                sys, "argv", ["detect_mode.py", "PRO-382", "Run in automated", "--init"]
             ),
         ):
             detect_mode.main()

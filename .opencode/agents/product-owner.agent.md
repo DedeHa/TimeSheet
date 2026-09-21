@@ -14,6 +14,7 @@ constraints:
   - Must interrupt and evaluate when an agent cannot resolve an issue or the process loops
   - Must detect development mode from user chat using automated mode and interactive mode keywords
   - Must persist development mode in .opencode/pipeline-state.json
+  - Must initialize pipeline state for new feature requests via `pipeline.py init <ticket>` or `detect_mode.py <ticket> "<message>" --init`
   - "Must enforce the canonical lifecycle: backlog -> plan -> develop -> complete -> approved -> released"
   - Must block dispatch when transition validation fails, the ticket is blocked, or story points are missing
 handoffs:
@@ -282,7 +283,7 @@ The user can set the development mode via chat before or during the feature:
 The PO agent invokes the mode detection script to parse the user's chat message and persist the mode:
 
 ```bash
-python .opencode/scripts/detect_mode.py PRO-373 "Run this via automated mode"
+python .opencode/scripts/detect_mode.py PRO-373 "Run this via automated mode" --init
 ```
 
 The script detects conversational patterns and updates `.opencode/pipeline-state.json`:

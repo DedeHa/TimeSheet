@@ -17,8 +17,8 @@ _SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-ROOT = Path(__file__).resolve().parents[2]
-CI_TIMING = ROOT / ".github" / "workflows" / "ci-timing.yml"
+_ROOT = Path(__file__).resolve().parents[3]
+CI_TIMING = _ROOT / ".github" / "workflows" / "ci-timing.yml"
 
 
 def _workflow() -> dict:
@@ -34,7 +34,10 @@ def _update_data_expr() -> str:
 
 
 def _triggers() -> dict:
-    return _workflow()["on"]
+    """Get triggers dict, handling PyYAML's on->True boolean alias."""
+    raw = _workflow()
+    # PyYAML parses YAML 1.1 `on:` as boolean True
+    return raw.get(True) or raw.get("on") or {}
 
 
 def _collect_steps() -> list[dict]:

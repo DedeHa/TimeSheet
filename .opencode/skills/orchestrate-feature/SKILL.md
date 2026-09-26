@@ -96,13 +96,24 @@ Before every dispatch and handoff, the orchestration skill runs:
 
 ## Pipeline Flow
 
-### Step 1: Plan Phase
-1. **State Detection**: Checks JIRA for existing PRO-xxxx ticket
+### Step 1: Discover Phase
+1. **State Detection**: Checks JIRA for existing PRO-XXXX ticket
+2. **Dispatch**: Routes to PO agent via `discover-feature` skill to draft the ticket
+3. **Update State**: Sets `current_step: "refine"`
+
+### Step 2: Refine Phase
+1. **State Detection**: Confirms we're in "refine" step
+2. **Cycle Check**: Verifies stakeholder reviewers haven't exceeded 3 cycles
+3. **Dispatch**: Routes to PO agent via `refine-feature` skill for stakeholder review
+4. **Update State**: Sets `current_step: "plan"`
+
+### Step 3: Plan Phase
+1. **State Detection**: Confirms we're in "plan" step
 2. **Cycle Check**: Verifies Architect agent hasn't exceeded 3 cycles
 3. **Dispatch**: Routes to Architect agent via `develop-feature` skill
 4. **Update State**: Sets `current_step: "develop"`, increments Architect cycles
 
-### Step 2: Develop Phase
+### Step 4: Develop Phase
 1. **State Detection**: Confirms we're in "develop" step
 2. **Cycle Check**: Verifies Developer agent hasn't exceeded 3 cycles
 3. **Story Points Validation**: Confirms PRO-XXX has story points assigned (required for development)
@@ -111,7 +122,7 @@ Before every dispatch and handoff, the orchestration skill runs:
 4. **Dispatch**: Routes to Developer agent
 5. **Update State**: Sets `current_step: "complete"`, increments Developer cycles
 
-### Step 3: Complete Phase
+### Step 5: Complete Phase
 1. **State Detection**: Confirms we're in "complete" step
 2. **Cycle Check**: Verifies Tester agent hasn't exceeded 3 cycles
 3. **Story Points Validation**: Confirms PRO-XXX has story points assigned (required for completion)
@@ -124,6 +135,8 @@ Before every dispatch and handoff, the orchestration skill runs:
 
 | Pipeline Step | Agent | Skill Trigger |
 |---------------|-------|----------------|
+| **Discover** | Product Owner | `discover-feature` |
+| **Refine** | Product Owner | `refine-feature` |
 | **Plan** | Architect | `develop-feature` (architect phase) |
 | **Develop** | Developer | Direct execution |
 | **Complete** | Tester | `complete-feature` (tester phase) |
@@ -273,52 +286,69 @@ Finalizes the pipeline:
 **User**: "start feature PRO-373"
 
 1. **Orchestration Skill**:
-   - Reads JIRA for existing PRO-373
-   - Initializes pipeline state
-   - Routes to Architect agent
-   - Updates state: `current_step: "plan"`
+    - Reads JIRA for existing PRO-373
+    - Initializes pipeline state
+    - Routes to PO agent via `discover-feature` skill
+    - Updates state: `current_step: "refine"`
+
+**User**: "discover phase"
+
+2. **PO Agent**:
+    - Executes `discover-feature` skill
+    - Drafts JIRA ticket (intention, goal, ACs, DoD, story points)
+    - Returns to orchestration skill
+
+**User**: "refine phase"
+
+3. **PO Agent**:
+    - Executes `refine-feature` skill
+    - Conducts multi-stakeholder review (developer, architect, tester)
+    - Holds common stakeholder review
+    - Finalizes ticket
+    - Returns to orchestration skill
+    - Updates state: `current_step: "plan"`
 
 **User**: "architect phase"
 
-2. **Architect Agent**:
-   - Executes `develop-feature` skill (architect phase)
-   - Produces implementation plan
-   - Returns to orchestration skill
+4. **Architect Agent**:
+    - Executes `develop-feature` skill (architect phase)
+    - Produces implementation plan
+    - Returns to orchestration skill
 
-3. **Orchestration Skill**:
-   - Receives Architect output
-   - Increments Architect cycle count
-   - Updates state
-   - Routes to Developer agent
-   - Sets `current_step: "develop"`
+5. **Orchestration Skill**:
+    - Receives Architect output
+    - Increments Architect cycle count
+    - Updates state
+    - Routes to Developer agent
+    - Sets `current_step: "develop"`
 
 **User**: "develop phase"
 
-4. **Developer Agent**:
-   - Implements feature
-   - Opens PR
-   - Returns to orchestration skill
+6. **Developer Agent**:
+    - Implements feature
+    - Opens PR
+    - Returns to orchestration skill
 
-5. **Orchestration Skill**:
-   - Receives Developer output
-   - Increments Developer cycle count
-   - Updates state
-   - Routes to Tester agent
-   - Sets `current_step: "complete"`
+7. **Orchestration Skill**:
+    - Receives Developer output
+    - Increments Developer cycle count
+    - Updates state
+    - Routes to Tester agent
+    - Sets `current_step: "complete"`
 
 **User**: "test phase"
 
-6. **Tester Agent**:
-   - Runs tests
-   - Validates AC/DoD
-   - Returns to orchestration skill
+8. **Tester Agent**:
+    - Runs tests
+    - Validates AC/DoD
+    - Returns to orchestration skill
 
-7. **Orchestration Skill**:
-   - Receives Tester output
-   - Increments Tester cycle count
-   - Updates state
-   - Sets `current_step: "done"`
-   - Routes back to Product Owner for review
+9. **Orchestration Skill**:
+    - Receives Tester output
+    - Increments Tester cycle count
+    - Updates state
+    - Sets `current_step: "done"`
+    - Routes back to Product Owner for review
 
 ## State File Location
 
@@ -368,6 +398,7 @@ The pipeline state is stored in `~/.opencode/pipeline-state.json` (encrypted if 
 - `doc/TESTING.md` — Test structure, test markers, test organization
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/orchestrate-feature/` — This skill
-- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
+- `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization
 - `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature
 - `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket

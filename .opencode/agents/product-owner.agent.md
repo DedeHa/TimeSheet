@@ -134,9 +134,9 @@ handoffs:
       - What remains: {{remaining}}
       
       Hand off to the user for final agreement. After user/PO confirmation,
-      the agent-team executes:
-      - atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
-      - gh pr merge <PR_NUMBER> --merge
+      execute the closure workflow via the `complete-feature` skill
+      (transitions JIRA to Fertig and merges the PR).
+      See `.opencode/skills/complete-feature/SKILL.md` for details.
 
 skills:
   - name: orchestrate-feature
@@ -154,19 +154,33 @@ skills:
       - cycle-tracking
       - escalation
       - handoff-coordination
-  - name: plan-feature
-    path: .opencode/skills/plan-feature/SKILL.md
+  - name: discover-feature
+    path: .opencode/skills/discover-feature/SKILL.md
     description: >
-      Use when creating JIRA Story tickets, estimating story points,
-      defining acceptance criteria, or refining the backlog.
-      Load this skill for ticket creation, field definitions,
-      AC/DoD formats, and story point estimation.
+      Use when discovering new features and creating initial JIRA Story
+      tickets. Triggers on 'create a new ticket', 'plan a feature',
+      'estimate effort', 'discovery session'. Drafts the ticket
+      (intention, goal, steps/implementation plan, information,
+      testing strategy, ACs, DoD, story points, sprint placement).
     invoke: always
     phases:
+      - intake-handoff
       - ticket-creation
-      - ac-definition
       - story-points-estimation
-      - backlog-refinement
+      - sprint-placement
+  - name: refine-feature
+    path: .opencode/skills/refine-feature/SKILL.md
+    description: >
+      Use when refining a drafted feature with stakeholder review and
+      finalization. Triggers on 'refine the backlog', 'stakeholder
+      review', 'review the ticket'. Conducts multi-stakeholder review
+      (developer, architect, tester) and common review before the
+      ticket is finalized for development.
+    invoke: after-refine
+    phases:
+      - stakeholder-review
+      - implementation-planning
+      - finalization
   - name: develop-feature
     path: .opencode/skills/develop-feature/SKILL.md
     description: >
@@ -174,7 +188,7 @@ skills:
       ticket, adopt or draft the Implementation Plan, then execute in
       verifiable rollout steps. Load this skill for phases 2-7
       (plan → branch → rollout → verification → PR).
-    invoke: after-plan-review
+    invoke: after-refine
     phases:
       - prepare-branch
       - implement-rollout
@@ -243,7 +257,7 @@ The Product Owner is **never bypassed** — every feature or bug fix must go thr
 - What should be testable and verifiable?
 - Expected behavior and edge cases
 
-**The PO must not proceed to planning until the intake conversation produces a clear goal, use-case, and information set.** The output of this conversation feeds directly into the `plan-feature` skill's description structure (Intention / Use-Case).
+**The PO must not proceed to planning until the intake conversation produces a clear goal, use-case, and information set.** The output of this conversation feeds directly into the `discover-feature` skill's description structure (Intention / Use-Case).
 
 ---
 
@@ -308,7 +322,9 @@ Before each handoff to the next agent, the PO **must pause and wait for user con
 
 | Handoff | Gate | PO Presents | User Confirms |
 |---------|------|-------------|---------------|
-| PO → Architect | After intake | Intake output (goal, use-case, information) | "Proceed to architecture?" |
+| PO → discover-feature | After intake | Intake output (goal, use-case, information) | "Proceed to discovery?" |
+| discover-feature → refine-feature | After ticket draft | Ticket summary, ACs, DoD, story points, sprint placement | "Proceed to stakeholder review?" |
+| refine-feature → develop-feature | After finalization | Finalized ticket (stakeholders confirmed, ACs testable, DoD realistic, story points assigned) | "Proceed to development?" |
 | Architect → Developer | After plan | Architecture plan, implementation plan | "Proceed to development?" |
 | Developer → Tester | After implementation | Changes made, test coverage | "Proceed to testing?" |
 | Tester → PO | After validation | Test results, pass/fail decision | "Proceed to review?" |
@@ -359,10 +375,10 @@ Every handoff must include:
    - Return to **Product Owner** for review
 
 3. **Plan Features**
-   - Use `plan-feature` skill to create JIRA ticket
-   - Define user stories with acceptance criteria
-   - Assign story points using Fibonacci scale
-   - Set Epic Link and Fix Version
+    - Use `discover-feature` skill to create JIRA ticket
+    - Define user stories with acceptance criteria
+    - Assign story points using Fibonacci scale
+    - Set Epic Link and Fix Version
 
 4. **Review Completed Work**
    - Verify all acceptance criteria are met
@@ -464,13 +480,13 @@ When escalating to the user:
    - Verify no technical implementation details leaked into requirements
 
 5. **Create JIRA Ticket**
-   - Use the `plan-feature` skill to generate the ticket fields
-   - Set Project: `PRO`, Type: `Story`, Priority: `Medium`
-   - Set Epic Link to parent epic (e.g. `PRO-259`)
-   - Set Fix Version to target release (e.g. `v4.3.0`)
-   - Assign story points using Fibonacci scale (1, 2, 3, 5, 8, 13)
-   - Format description with Story Block, Background, Goal, AC (numbered), DoD checklist
-   - Include `Refs: PRO-XXX` footer
+    - Use the `discover-feature` skill to generate the ticket fields
+    - Set Project: `PRO`, Type: `Story`, Priority: `Medium`
+    - Set Epic Link to parent epic (e.g. `PRO-259`)
+    - Set Fix Version to target release (e.g. `v4.3.0`)
+    - Assign story points using Fibonacci scale (1, 2, 3, 5, 8, 13)
+    - Format description with Story Block, Background, Goal, AC (numbered), DoD checklist
+    - Include `Refs: PRO-XXX` footer
 
 ## Input Format
 
@@ -538,13 +554,14 @@ User provides:
 - **Priority:** [High/Medium/Low]
 - **Epic Link:** [parent epic, e.g. `PRO-259`]
 - **Fix Version:** [target release, e.g. `v4.3.0`]
-- **Story Points:** [estimate using Fibonacci scale, per `plan-feature` skill]
+- **Story Points:** [estimate using Fibonacci scale, per `discover-feature` skill]
 - **Labels:** [optional category tags]
 - **Refs:** [PRO-XXX or related tickets]
 
 ### Skill Invocation
-- Load `plan-feature` skill before creating the JIRA ticket
+- Load `discover-feature` skill before creating the JIRA ticket
 - Follow the skill's field definitions, AC/DoD formats, and story points reference
+- After the ticket is drafted, load `refine-feature` for stakeholder review and finalization
 ```
 
 ## Decision Rules
@@ -577,7 +594,8 @@ When handing off to Architect:
 This agent definition follows the workflow documented in:
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `.opencode/skills/plan-feature/SKILL.md` — Feature planning, JIRA ticket creation, story points, ACs
+- `.opencode/skills/discover-feature/SKILL.md` — Feature discovery, JIRA ticket creation, story points, ACs
+- `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review, ticket finalization
 - `.opencode/skills/orchestrate-feature/SKILL.md` — Pipeline orchestration, dispatch, escalation, handoff tracking
 - `.opencode/skills/complete-feature/SKILL.md` — Feature completion, AC validation, JIRA closure
 - `doc/CONTRIBUTING.md` — Contributing guidelines & Git workflow

@@ -391,7 +391,8 @@ When escalating, provide:
 - `doc/TESTING.md` — Test structure, test markers, test organization
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/develop-feature/` — This skill
-- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
+- `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization
 - `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket
 | Out of scope | Implementation requires changes not in plan | Yes — ask PO |
 | External dependency | Waiting on third-party or upstream PR | Yes — pause and notify |

@@ -20,8 +20,9 @@ AGENTS.md                  ← Top-level guide: project conventions, modes, CI g
 
 | Intent | User Message | Triggered By |
 |--------|-------------|--------------|
-| **Plan a feature** | `plan a feature`, `create a new ticket`, `estimate effort`, `discovery session`, `refine the backlog` | PO: `plan-feature` skill |
-| **Define AC** | `define AC/acceptance criteria for PRO-XXX` | PO: `plan-feature` skill |
+| **Plan a feature** | `plan a feature`, `create a new ticket`, `estimate effort`, `discovery session` | PO: `discover-feature` skill |
+| **Refine a feature** | `refine the backlog`, `stakeholder review`, `review the ticket`, `finalize the ticket` | PO: `refine-feature` skill |
+| **Define AC** | `define AC/acceptance criteria for PRO-XXX` | PO: `discover-feature` skill |
 | **Start development** | `start development on PRO-XXX`, `start feature PRO-XXX`, `implement PRO-XXX` | PO: `develop-feature` skill (entry gate) |
 | **Implement** | (post-dispatch) developer receives architecture plan | Developer: `develop-feature` skill |
 | **Test/Validate** | `test PRO-XXX`, `validate implementation` | Tester: `complete-feature` skill |
@@ -36,7 +37,8 @@ AGENTS.md                  ← Top-level guide: project conventions, modes, CI g
 
 | Message pattern | Skill launched |
 |-----------------|----------------|
-| `plan a feature`, `plan <feature>` | `plan-feature` (workflow: plan-feature) |
+| `plan a feature`, `plan <feature>` | `discover-feature` (workflow: discover-feature) |
+| `refine-feature`, `refine the backlog`, `stakeholder review` | `refine-feature` |
 | `develop-feature`, `develop feature PRO-XXX`, ticket link → `develop-feature` | `develop-feature` |
 | `complete-feature`, `complete feature PRO-XXX` | `complete-feature` |
 | `orchestrate-feature`, `run the pipeline` | `orchestrate-feature` (dispatches to PO/Arch/Dev/Tester) |
@@ -48,16 +50,26 @@ AGENTS.md                  ← Top-level guide: project conventions, modes, CI g
 User message "plan a feature"
         │
         ▼
-┌─────────────────┐     JIRA created      ┌──────────────────────┐
-│  plan-feature   │ ─────────────────────▶│ JIRA Story (PRO-XXX) │
+┌─────────────────┐     JIRA drafted     ┌──────────────────────┐
+│  discover-feature│ ───────────────────▶│ JIRA Story (PRO-XXX) │
 │  (PO)           │                       └──────────┬───────────┘
 └─────────────────┘                                  │
+                                                     │ review + finalize
                                                      ▼
-                                      ┌──────────────────────────┐
-        "proceed" / PO dispatch       │  Story points assigned   │
-   ┌─────────────────────────────────│ before sprint pickup     │
-   │                                  └──────────┬───────────────┘
-   ▼                                             │
+                                        ┌──────────────────────────┐
+                                        │  refine-feature          │
+                                        │  (PO + stakeholders)     │
+                                        └──────────┬───────────────┘
+                                                   │
+                                                   ▼
+                                       ┌──────────────────────────┐
+                                       │  Story points assigned   │
+                                       │  before sprint pickup    │
+                                       └──────────┬───────────────┘
+                                                  │
+    "proceed" / PO dispatch                       │
+   ┌──────────────────────────────────────────────┘
+   ▼
 ┌─────────────────┐                    ┌─────────▼──────────┐
 │ develop-feature │                    │ orchestrate-feature│
 │ (Dev)           │ ◀── architecture ──│ dispatches         │
@@ -201,8 +213,9 @@ This directory contains the opencode-discovered agent team and skills:
 ├── skills/          # Workflow reference documents discovered by opencode
 │   ├── complete-feature/SKILL.md
 │   ├── develop-feature/SKILL.md
+│   ├── discover-feature/SKILL.md
 │   ├── orchestrate-feature/SKILL.md
-│   ├── plan-feature/SKILL.md
+│   ├── refine-feature/SKILL.md
 │   └── release-project/SKILL.md
 └── scripts/         # Pipeline automation scripts
     ├── detect_mode.py
@@ -607,7 +620,8 @@ Feature complete
 - `.opencode/scripts/pipeline.py` — Pipeline management: show state, resume, continue, proceed, check-stuck, what-missed, history, reset, set-mode, get-mode
 
 ### Workflow Reference Documents (`.opencode/skills/`)
-- `.opencode/skills/plan-feature/SKILL.md` — Feature planning, JIRA ticket creation, story points, ACs
+- `.opencode/skills/discover-feature/SKILL.md` — Feature discovery, JIRA ticket creation, story points, ACs
+- `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review, ticket finalization
 - `.opencode/skills/develop-feature/SKILL.md` — Feature development workflow, implementation steps
 - `.opencode/skills/complete-feature/SKILL.md` — Feature completion, AC validation, JIRA closure
 - `.opencode/skills/orchestrate-feature/SKILL.md` — Pipeline orchestration, dispatch, escalation, handoff tracking

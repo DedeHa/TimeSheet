@@ -212,5 +212,6 @@ gh run list --branch vX.Y.Z --limit 1
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/release-project/` — This skill
-- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
+- `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization
 - `.opencode/skills/orchestrate-feature/SKILL.md` — Workflow for orchestrating the pipeline

@@ -1,6 +1,6 @@
 ---
 name: complete-feature
-description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team prepares closure. PR merge and remote branch deletion ALWAYS require explicit final user/PO confirmation in BOTH interactive and automated workflow modes. Sprint inclusion is verified in the plan-feature skill."
+description: "Use when completing a feature and needing to verify acceptance criteria, update JIRA ticket, checkmark ACs and DoD, update PR description, and commit/push changes. Triggers on requests to 'complete feature', 'finalise implementation', 'verify feature completeness', 'check off acceptance criteria', or 'prepare JIRA closure'. NOTE: The agent-team prepares closure. PR merge and remote branch deletion ALWAYS require explicit final user/PO confirmation in BOTH interactive and automated workflow modes. Sprint inclusion is verified in the discover-feature skill."
 ---
 
 # Feature Complete Skill
@@ -719,5 +719,6 @@ When escalating, provide:
 - `doc/TESTING.md` — Test structure, test markers, test organization
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/complete-feature/` — This skill
-- `.opencode/skills/plan-feature/SKILL.md` — Workflow for planning a feature
+- `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
+- `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization
 - `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

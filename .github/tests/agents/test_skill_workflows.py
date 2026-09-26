@@ -199,33 +199,65 @@ def test_complete_feature_invoke_after_approval_in_tester_agent():
 
 
 # ---------------------------------------------------------------------------
-# plan-feature phase order (PO agent)
+# discover-feature phase order (PO agent)
 # ---------------------------------------------------------------------------
 
 
-def test_plan_feature_phases_in_po_agent():
-    """plan-feature must declare phases in the PO agent."""
-    skill = _skill_in_agent("product-owner-agent", "plan-feature")
-    assert "phases" in skill, "plan-feature must declare phases"
+def test_discover_feature_phases_in_po_agent():
+    """discover-feature must declare phases in the PO agent."""
+    skill = _skill_in_agent("product-owner-agent", "discover-feature")
+    assert "phases" in skill, "discover-feature must declare phases"
     assert len(skill["phases"]) >= 4
 
 
-def test_plan_feature_phase_order_in_po_agent():
-    """plan-feature phases must execute in planning order."""
-    skill = _skill_in_agent("product-owner-agent", "plan-feature")
+def test_discover_feature_phase_order_in_po_agent():
+    """discover-feature phases must execute in discovery order."""
+    skill = _skill_in_agent("product-owner-agent", "discover-feature")
     phases = skill["phases"]
 
     expected_order = [
+        "intake-handoff",
         "ticket-creation",
-        "ac-definition",
         "story-points-estimation",
-        "backlog-refinement",
+        "sprint-placement",
     ]
     for i, expected in enumerate(expected_order):
         assert phases[i] == expected
 
 
-def test_plan_feature_invoke_always_in_po_agent():
-    """plan-feature must use invoke: always in the PO agent."""
-    skill = _skill_in_agent("product-owner-agent", "plan-feature")
+def test_discover_feature_invoke_always_in_po_agent():
+    """discover-feature must use invoke: always in the PO agent."""
+    skill = _skill_in_agent("product-owner-agent", "discover-feature")
     assert skill["invoke"] == "always"
+
+
+# ---------------------------------------------------------------------------
+# refine-feature phase order (PO agent)
+# ---------------------------------------------------------------------------
+
+
+def test_refine_feature_phases_in_po_agent():
+    """refine-feature must declare phases in the PO agent."""
+    skill = _skill_in_agent("product-owner-agent", "refine-feature")
+    assert "phases" in skill, "refine-feature must declare phases"
+    assert len(skill["phases"]) >= 3
+
+
+def test_refine_feature_phase_order_in_po_agent():
+    """refine-feature phases must execute in refinement order."""
+    skill = _skill_in_agent("product-owner-agent", "refine-feature")
+    phases = skill["phases"]
+
+    expected_order = [
+        "stakeholder-review",
+        "implementation-planning",
+        "finalization",
+    ]
+    for i, expected in enumerate(expected_order):
+        assert phases[i] == expected
+
+
+def test_refine_feature_invoke_after_refine_in_po_agent():
+    """refine-feature must use invoke: after-refine in the PO agent."""
+    skill = _skill_in_agent("product-owner-agent", "refine-feature")
+    assert skill["invoke"] == "after-refine"

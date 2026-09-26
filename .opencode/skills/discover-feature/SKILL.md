@@ -1,13 +1,15 @@
 ---
-name: plan-feature
-description: "Use when discovering, planning, or scoping new features — creating JIRA Story tickets, estimating story points, defining acceptance criteria, writing implementation plans, or refining the backlog. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'define AC', 'discovery session', or any product planning workflow. NOTE: If there is an active sprint, the user/PO must actively review and confirm sprint inclusion before the ticket is created or updated. The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`. Story points must be estimated before sprint inclusion or development pickup."
+name: discover-feature
+description: "Use when discovering new features and creating initial JIRA Story tickets — drafting the ticket (intention/use-case, goal, steps/implementation plan, information, testing strategy, acceptance criteria, definition of done, story points) and deciding sprint placement. Triggers on requests to 'create a new ticket', 'plan a feature', 'estimate effort', 'discovery session', or any product discovery workflow. NOTE: If there is an active sprint, the user/PO must actively review and confirm sprint inclusion before the ticket is created or updated. Story points must be estimated before sprint inclusion or development pickup."
 ---
 
-# Product Discovery & Planning
+# Product Discovery
 
-This skill covers the end-to-end workflow for discovering, scoping, and documenting new features as JIRA Story tickets. Based on analysis of the most recent 6 Story tickets in the **PRO** project: **PRO-370**, **PRO-369**, **PRO-368**, **PRO-367**, **PRO-366**, **PRO-365**.
+This skill covers the workflow for discovering and documenting new features as JIRA Story tickets. Based on analysis of the most recent 6 Story tickets in the **PRO** project: **PRO-370**, **PRO-369**, **PRO-368**, **PRO-367**, **PRO-366**, **PRO-365**.
 
 **Triggered by:** User requests feature planning after completing the PO intake conversation. The user explicitly asks the PO to plan the feature (e.g., "start feature PRO-XXX", "plan a feature", "create a ticket").
+
+**Next step:** Once the ticket is drafted, the PO runs `refine-feature` to conduct the multi-stakeholder review and finalize the ticket before development begins.
 
 ---
 
@@ -86,41 +88,6 @@ Before finalizing the ticket, walk through the complete ticket together:
 - Fix version is set
 - Sprint / backlog decision is recorded
 - Non-goals are documented (if scope is non-trivial)
-
-### 7. Multi-stakeholder review (developer, architect, tester)
-
-After the PO defines the feature, conduct a **multi-stakeholder review** with
-the developer, architect, and tester **before** the ticket is finalized.
-This minimizes risk for architecture, implementation, and verification.
-
-**Developer review:** Verify implementation feasibility, effort estimate,
-and technical approach. Confirm the implementation plan is realistic.
-
-**Architect review:** Verify architectural alignment, component boundaries,
-and integration points. Confirm the feature fits the system architecture.
-
-**Tester review:** Verify testability of ACs, DoD completeness, and
-coverage strategy. Confirm each AC can be objectively verified.
-
-Each reviewer confirms or raises concerns. If any reviewer raises a concern,
-the PO updates the feature definition before proceeding.
-
-### 8. Common stakeholder review
-
-After individual reviews pass, hold a **common review with all stakeholders**
-(PO, developer, architect, tester) to finalize the feature definition.
-Confirm:
-
-- Intention / use-case is clearly defined
-- Goal is measurable and aligned with business value
-- Steps are ordered and achievable within the sprint
-- Information (background, data sources, constraints) is complete
-- DoD is realistic and verifiable
-- ACs are testable and binary (done / not done)
-- Story points are estimated and assigned
-
-**Gate:** Do not finalize the ticket without explicit confirmation from
-all stakeholders.
 
 ---
 
@@ -281,8 +248,6 @@ Data sources, constraints, dependencies.]
 | Numbered **Acceptance Criteria** | 6/6 | Always required |
 | **Definition of Done** checklist | 6/6 | Always required |
 | **Story Points** field | 4/6 (assigned at planning) | Assign at planning, document in description |
-| **Multi-stakeholder review** | 0/6 (new) | Developer, architect, tester review before finalization |
-| **Common stakeholder review** | 0/6 (new) | PO, developer, architect, tester review before finalization |
 | **References** / `Refs:` | 6/6 | Always include |
 | German / English mix | 5/6 (German for narrative, English for tech) | Match existing project style |
 | **MoSCoW** priority tag | 2/6 (US-0X tickets) | For product roadmap items |
@@ -313,10 +278,6 @@ When creating a new Story ticket:
 - [ ] Goal is measurable and aligned with business value
 - [ ] Steps are ordered and achievable within the sprint
 - [ ] Information (background, data sources, constraints) is complete
-- [ ] **Architecture reviewed** by architect — alignment confirmed
-- [ ] **Implementation reviewed** by developer — feasibility confirmed
-- [ ] **Verification reviewed** by tester — testability confirmed
-- [ ] **Common stakeholder review** completed (PO, developer, architect, tester)
 - [ ] Acceptance Criteria are numbered (AC-1, AC-2, ...) and testable
 - [ ] Definition of Done is a `- [ ]` checklist
 - [ ] **Priority** set to Medium (or High for release-critical)
@@ -329,6 +290,25 @@ When creating a new Story ticket:
 
 ---
 
+## Handoff to refine-feature
+
+The ticket is now drafted and ready for stakeholder review.
+
+**Gate:** Before starting `refine-feature`, present the drafted ticket to the
+user / Product-Owner and ask explicitly:
+
+> "The ticket draft is complete (Summary, ACs, DoD, story points, sprint
+> placement). Proceed to stakeholder review via `refine-feature`?"
+
+- **On "yes":** Continue to `refine-feature` (multi-stakeholder review + finalization).
+- **On "no":** Return to the user for revisions to the ticket draft before
+  re-presenting.
+
+In **both interactive and automated modes**, pause and wait for this
+confirmation before starting refinement.
+
+---
+
 ## Related Documents
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
@@ -336,6 +316,6 @@ When creating a new Story ticket:
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/REQUIREMENTS.md` — FR / QR requirement IDs
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
-- `.opencode/skills/plan-feature/` — This skill
-- `.opencode/skills/complete-feature/SKILL.md` — Workflow for closing a ticket
+- `.opencode/skills/discover-feature/` — This skill
+- `.opencode/skills/refine-feature/` — Stakeholder review and ticket finalization
 - `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

@@ -1,20 +1,20 @@
 ---
 name: refine-feature
-description: "Use when refining a drafted JIRA Story ticket with stakeholder review and finalization — conducting multi-stakeholder review (developer, architect, tester) and common stakeholder review before the ticket is finalized for development. Triggers on requests to 'refine the backlog', 'stakeholder review', 'review the ticket', 'define AC', 'finalize the ticket', or 'implementation plan'. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`. Story points must be estimated before sprint inclusion or development pickup."
+description: "Use when refining a drafted JIRA Story/Bug ticket with stakeholder review and finalization — conducting multi-stakeholder review (developer, architect, tester) and common stakeholder review before the ticket is finalized for development. Triggers on requests to 'refine the backlog', 'stakeholder review', 'review the ticket', 'define AC', 'finalize the ticket', or 'implementation plan'. NOTE: The agent-team prepares closure; after user / PO confirmation, the agent-team executes `atlassian_transitionJiraIssue` and `gh pr merge`. Story points must be estimated before sprint inclusion or development pickup."
 ---
 
-# Feature Refinement & Stakeholder Review
+# Feature & Bug Refinement & Stakeholder Review
 
 This skill covers the stakeholder review and finalization of a JIRA Story
-ticket that was drafted by the `discover-feature` skill. It is the gate
+or Bug ticket that was drafted by the `discover-feature` skill. It is the gate
 between discovery and development: the ticket is not finalized until every
 stakeholder has confirmed it.
 
 **Triggered by:** The PO has drafted a ticket via `discover-feature` and is
 ready to review and finalize it before `develop-feature` begins.
 
-**Prerequisite:** A drafted JIRA Story ticket (status "Zu erledigen") with
-Intention / Use-Case, Goal, Steps / Implementation Plan, Information,
+**Prerequisite:** A drafted JIRA Story or Bug ticket (status "Zu erledigen") with
+Intention / Use-Case (stories) or Problem Statement (bugs), Goal, Steps / Implementation Plan, Information,
 Testing Strategy, Acceptance Criteria, Definition of Done, Priority /
 Story Points, Non-Goals, and References already populated by
 `discover-feature`.
@@ -64,13 +64,17 @@ Confirm:
 **Gate:** Do not finalize the ticket without explicit confirmation from
 all stakeholders.
 
+**For Bug Tickets:** The bug-specific ACs (especially "Bug does not reproduce after fix")
+must be verified by the tester before finalization.
+
 ---
 
 ## Finalization Checklist
 
 Before marking the ticket as ready for development, verify each item:
 
-- [ ] Intention / use-case clearly defined
+**Common to Stories and Bugs:**
+- [ ] Intention / use-case clearly defined (stories) or Problem Statement clearly defined (bugs)
 - [ ] Goal is measurable and aligned with business value
 - [ ] Steps are ordered and achievable within the sprint
 - [ ] Information (background, data sources, constraints) is complete
@@ -88,6 +92,12 @@ Before marking the ticket as ready for development, verify each item:
 - [ ] **Story Points assigned** before sprint inclusion or development pickup
 - [ ] Non-goals documented (if scope is non-trivial)
 - [ ] References / `Refs: PRO-XXX` footer present
+
+**Bug-Specific:**
+- [ ] Root Cause Analysis is documented
+- [ ] Steps to Reproduce are complete and ordered
+- [ ] Expected and Actual Behavior are documented
+- [ ] AC-1 is "Bug does not reproduce after fix"
 
 ---
 

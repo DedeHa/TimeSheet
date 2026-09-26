@@ -236,15 +236,26 @@ def write_json(rows: list[dict], run_meta: dict, path: Path) -> None:
         fh.write("\n")
 
 
-def _gh_api(path: str) -> object:
-    """Fetch JSON from the GitHub API via the ``gh`` CLI (thin, untested wrapper)."""
-    out = subprocess.run(
-        ["gh", "api", "--paginate", path],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout
-    return json.loads(out)
+def _gh_api(path: str, max_retries: int = 3) -> object:
+    """Fetch JSON from the GitHub API via the ``gh`` CLI with retry logic.
+
+    Retries on transient failures with exponential backoff.
+    """
+    import time
+
+    for attempt in range(max_retries):
+        try:
+            out = subprocess.run(
+                ["gh", "api", "--paginate", path],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout
+            return json.loads(out)
+        except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(2 ** attempt)
 
 
 def main() -> None:
@@ -262,8 +273,16 @@ def main() -> None:
         raise SystemExit(2)
     repo, run_id, csv_path = sys.argv[1], sys.argv[2], Path(sys.argv[3])
 
-    run = _gh_api(f"repos/{repo}/actions/runs/{run_id}")
-    jobs = _gh_api(f"repos/{repo}/actions/runs/{run_id}/jobs")
+    try:
+        run = _gh_api(f"repos/{repo}/actions/runs/{run_id}")
+        jobs = _gh_api(f"repos/{repo}/actions/runs/{run_id}/jobs")
+    except subprocess.CalledProcessError as exc:
+        print(f"ERROR: GitHub API request failed: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: Failed to parse GitHub API response: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+
     pulls = run.get("pull_requests") or []
     run_meta = {
         "run_id": run.get("id"),
@@ -279,13 +298,17 @@ def main() -> None:
         or os.environ.get("GITHUB_REF_NAME")
         or "master",
     }
-    new_rows = extract_rows(run_meta, jobs.get("jobs", []))
-    merged = dedup_latest_attempt(read_csv(csv_path) + new_rows)
-    write_csv(csv_path, merged)
-    write_json(new_rows, run_meta, DATA_DIR / "runtimes.json")
-    print(
-        f"collected {len(new_rows)} rows from run {run_id}; dataset now {len(merged)}"
-    )
+    try:
+        new_rows = extract_rows(run_meta, jobs.get("jobs", []))
+        merged = dedup_latest_attempt(read_csv(csv_path) + new_rows)
+        write_csv(csv_path, merged)
+        write_json(new_rows, run_meta, DATA_DIR / "runtimes.json")
+        print(
+            f"collected {len(new_rows)} rows from run {run_id}; dataset now {len(merged)}"
+        )
+    except Exception as exc:
+        print(f"ERROR: Failed to write data: {exc}", file=sys.stderr)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

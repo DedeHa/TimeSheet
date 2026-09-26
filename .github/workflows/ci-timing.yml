@@ -82,7 +82,7 @@ env:
   MIN_SAMPLES: ${{ inputs.min_samples || '3' }}
   INCLUDE_HOUSEKEEPING: ${{ inputs.include_housekeeping || 'false' }}
   METRICS_BRANCH: ci-metrics
-  UPDATE_DATA: ${{ inputs.update_data || 'false' }}
+  UPDATE_DATA: ${{ github.event_name == 'workflow_run' && 'true' || (inputs.update_data || 'false') }}
 
 jobs:
   collect:

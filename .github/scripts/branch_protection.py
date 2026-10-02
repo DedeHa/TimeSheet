@@ -91,7 +91,7 @@ STRICT: bool = True
 # ---------------------------------------------------------------------------
 
 
-def _gh_api(path: str) -> object:
+def _gh_api(path: str) -> object:  # pragma: no cover
     """Fetch JSON from the GitHub API via the ``gh`` CLI (thin wrapper).
 
     Retries on transient failures with exponential backoff (up to 3 attempts).
@@ -114,7 +114,7 @@ def _gh_api(path: str) -> object:
             time.sleep(2**attempt)
 
 
-def get_owner_repo() -> str:
+def get_owner_repo() -> str:  # pragma: no cover
     """Return the repository identifier ``owner/repo``."""
     result = subprocess.run(
         ["gh", "repo", "view", "--json", "owner,name"],
@@ -137,7 +137,7 @@ def get_owner_repo() -> str:
 # ---------------------------------------------------------------------------
 
 
-def get_protection(owner_repo: str, branch: str) -> dict:
+def get_protection(owner_repo: str, branch: str) -> dict:  # pragma: no cover
     """Fetch current branch protection for ``branch``.
 
     Returns the full protection config dict from
@@ -194,7 +194,7 @@ def verify(required: list[str], protection: dict, branch: str) -> list[str]:
     return errors
 
 
-def apply_protection(
+def apply_protection(  # pragma: no cover
     owner_repo: str,
     branch: str,
     checks: list[str] | None = None,

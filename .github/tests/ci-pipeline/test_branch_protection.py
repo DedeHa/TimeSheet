@@ -12,8 +12,12 @@ Run with::
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 _MODULE_PATH = (
     Path(__file__).resolve().parents[3] / ".github" / "scripts" / "branch_protection.py"
@@ -135,3 +139,140 @@ def test_verify_multiple_contexts_present():
     }
     errors = mod.verify(required, protection, "test-branch")
     assert errors == []
+
+
+# ---------------------------------------------------------------------------
+# CLI dispatch tests (main / argparse)
+# ---------------------------------------------------------------------------
+
+
+def test_main_help_exits_zero(monkeypatch):
+    """main() with --help prints help and exits 0."""
+    monkeypatch.setattr(sys, "argv", ["branch_protection.py", "--help"])
+    with pytest.raises(SystemExit) as exc_info:
+        mod.main()
+    assert exc_info.value.code == 0
+
+
+def test_main_no_subcommand_exits_error(monkeypatch):
+    """main() with no subcommand exits with error."""
+    monkeypatch.setattr(sys, "argv", ["branch_protection.py"])
+    with pytest.raises(SystemExit) as exc_info:
+        mod.main()
+    assert exc_info.value.code != 0
+
+
+# ---------------------------------------------------------------------------
+# CLI dispatch tests with mocked GitHub API
+# ---------------------------------------------------------------------------
+
+
+class FakeGhOutput:
+    """Mock for the stdout returned by subprocess.run for gh api calls."""
+
+    def __init__(self, stdout: str) -> None:
+        self.stdout = stdout
+        self.stderr = ""
+        self.returncode = 0
+
+
+def _mock_gh_repo_view(cmd: list[str], **kwargs) -> FakeGhOutput:
+    """Mock for the gh repo view call (resolves owner/repo)."""
+    return FakeGhOutput('{"owner": {"login": "test"}, "name": "repo"}')
+
+
+def _mock_gh_protection(cmd: list[str], **kwargs) -> FakeGhOutput:
+    """Mock for the GET /branches/{branch}/protection call (verify)."""
+    return FakeGhOutput(
+        json.dumps(
+            {
+                "required_status_checks": {
+                    "strict": False,
+                    "checks": [
+                        {"context": "Python CI / Naming Conventions & Linting Check"},
+                    ],
+                }
+            }
+        )
+    )
+
+
+def test_main_verify_success(monkeypatch) -> None:
+    """main() verify subcommand succeeds when the required check is present."""
+
+    def mock_run(cmd: list[str], **kwargs) -> FakeGhOutput:
+        if cmd[1] == "repo" and cmd[2] == "view":
+            return _mock_gh_repo_view(cmd, **kwargs)
+        return _mock_gh_protection(cmd, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr(
+        sys, "argv", ["branch_protection.py", "verify", "--branch", "master"]
+    )
+    exit_code = mod.main()
+    assert exit_code == 0, "verify should succeed when the required check is configured"
+
+
+def test_main_verify_missing_check(monkeypatch) -> None:
+    """main() verify subcommand fails when the required check is missing."""
+    protection = {"required_status_checks": {"checks": [{"context": "Other check"}]}}
+
+    def mock_run(cmd: list[str], **kwargs) -> FakeGhOutput:
+        if cmd[1] == "repo" and cmd[2] == "view":
+            return _mock_gh_repo_view(cmd, **kwargs)
+        return FakeGhOutput(json.dumps(protection))
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr(
+        sys, "argv", ["branch_protection.py", "verify", "--branch", "master"]
+    )
+    exit_code = mod.main()
+    assert exit_code == 1, "verify should fail when the required check is missing"
+
+
+def test_main_apply(monkeypatch) -> None:
+    """main() apply subcommand sets branch protection."""
+
+    def mock_run(cmd: list[str], **kwargs) -> FakeGhOutput:
+        if cmd[1] == "repo" and cmd[2] == "view":
+            return _mock_gh_repo_view(cmd, **kwargs)
+        return FakeGhOutput("")
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr(
+        sys, "argv", ["branch_protection.py", "apply", "--branch", "master"]
+    )
+    exit_code = mod.main()
+    assert exit_code == 0, "apply should succeed"
+
+
+def test_main_apply_failure(monkeypatch) -> None:
+    """main() apply subcommand fails when gh api returns an error."""
+
+    def mock_run(cmd: list[str], **kwargs) -> FakeGhOutput:
+        if cmd[1] == "repo" and cmd[2] == "view":
+            return _mock_gh_repo_view(cmd, **kwargs)
+        raise subprocess.CalledProcessError(1, cmd, stderr="API error")
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr(
+        sys, "argv", ["branch_protection.py", "apply", "--branch", "master"]
+    )
+    exit_code = mod.main()
+    assert exit_code == 1, "apply should fail when gh api errors"
+
+
+def test_main_verify_api_failure(monkeypatch) -> None:
+    """main() verify subcommand fails when the API call errors."""
+
+    def mock_run(cmd: list[str], **kwargs) -> FakeGhOutput:
+        if cmd[1] == "repo" and cmd[2] == "view":
+            return _mock_gh_repo_view(cmd, **kwargs)
+        raise subprocess.CalledProcessError(1, cmd, stderr="API error")
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    monkeypatch.setattr(
+        sys, "argv", ["branch_protection.py", "verify", "--branch", "master"]
+    )
+    exit_code = mod.main()
+    assert exit_code == 1, "verify should fail when the API call errors"

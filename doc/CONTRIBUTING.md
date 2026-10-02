@@ -23,14 +23,17 @@ The following branches are **protected** and do not allow direct pushes:
   - Direct Pushes: ❌ Blocked
   - PRs required: ✅ Yes
   - Reviewer required: ✅ Yes
-  - Status Checks required: ✅ Yes (Lint, Tests)
+  - Status Checks required: ✅ Yes
+    - `Python CI / Naming Conventions & Linting Check` (CI quality gate — must be required)
+    - `Python CI / Run all test levels (unit + integration + system)` (tests)
+  - Managed via `.github/scripts/branch_protection.py` (verify/apply)
 
 - **`release/*`** - Release branches (e.g., `release/v4.1.0`, `release/v4.1.1`)
   - Status: ✅ Protected
   - Direct Pushes: ❌ Blocked
   - PRs required: ✅ Yes
   - Reviewer required: ✅ Yes
-  - Status Checks required: ✅ Yes (Lint, Tests)
+  - Status Checks required: ✅ Yes (same as `master`)
 
 ### Development Branches (Direct Pushes Allowed)
 

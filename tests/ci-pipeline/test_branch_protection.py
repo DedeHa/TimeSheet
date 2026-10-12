@@ -1,12 +1,12 @@
 """Unit tests for the branch protection script (PRO-386).
 
 Like the other CI support-script tests, this file lives under
-``.github/tests/ci-pipeline/`` (not in ``tests/``), so it does not change the
+``tests/ci-pipeline/`` (not in ``tests/``), so it does not change the
 103-test application suite or the coverage gate.
 
 Run with::
 
-    pytest -q .github/tests/ci-pipeline/test_branch_protection.py
+    pytest -q tests/ci-pipeline/test_branch_protection.py
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[3] / ".github" / "scripts" / "branch_protection.py"
+    Path(__file__).resolve().parents[2] / ".github" / "scripts" / "branch_protection.py"
 )
 _spec = importlib.util.spec_from_file_location("branch_protection", _MODULE_PATH)
 mod = importlib.util.module_from_spec(_spec)

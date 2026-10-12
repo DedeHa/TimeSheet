@@ -81,7 +81,7 @@ handoffs:
       Tasks:
       1. Verify all acceptance criteria are met
       2. Run full test suite and check coverage (gate: ≥90% per AGENTS.md)
-      3. Run CI self-tests (pytest -q .github/tests/)
+      3. Run CI self-tests (pytest -q tests/ci-pipeline/)
       4. Run traceability matrix (python .github/scripts/generate_traceability_matrix.py)
       5. Identify any bugs, regressions, or issues
       6. Confirm code follows CONTRIBUTING.md guidelines
@@ -593,7 +593,7 @@ When handing off to Architect:
 
 This agent definition follows the workflow documented in:
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
-- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `.opencode/skills/discover-feature/SKILL.md` — Feature discovery, JIRA ticket creation, story points, ACs
 - `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review, ticket finalization
 - `.opencode/skills/orchestrate-feature/SKILL.md` — Pipeline orchestration, dispatch, escalation, handoff tracking

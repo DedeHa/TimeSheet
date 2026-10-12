@@ -159,7 +159,7 @@ The plan's **rollout section** (Part B step 6) is the execution order. Do
 reversible, verifiable increment that ends in a passing gate. Typical shape:
 
 1. **Land pure code first** (scripts, modules, tests). No workflow file yet,
-   so CI behaviour is unchanged. Verify with `pytest -q .github/tests/ci-pipeline/` (or
+   so CI behaviour is unchanged. Verify with `pytest -q tests/ci-pipeline/` (or
    the appropriate marker) and the linters.
 2. **Land the workflow / API surface**. Initially in a manual-trigger-only
    mode (`workflow_dispatch`) so the live system is not yet affected.
@@ -183,7 +183,7 @@ For each rollout step:
    - For step 1 (pure code): unit tests + `ruff` + `black` + `pydocstyle`
      on the changed files.
    - For step 2 (workflow YAML): YAML validity, plus the existing CI
-     self-test gate (`pytest -q .github/tests/`) — the verifier tests
+     self-test gate (`pytest -q tests/ci-pipeline/`) — the verifier tests
      catch workflow regressions.
    - For step 3 (data seed): smoke-test the new scripts with synthetic
      input rather than live API calls.
@@ -203,7 +203,7 @@ Before opening a PR, run the **full** quality gate. All of these must pass:
 
 ```bash
 # CI self-tests (gate the pipeline per AGENTS.md gotcha)
-pytest -q .github/tests/
+pytest -q tests/ci-pipeline/
 
 # Application tests
 python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
@@ -300,7 +300,7 @@ PR description with the final status.
 | Draft plan | write `doc/02_Implementation_Plan_PRO-XXX.md` with Parts A/B/C |
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |
 | Create branch | `git switch -c <type>/PRO-XXX-<desc> master` |
-| Run CI self-tests | `pytest -q .github/tests/ci-pipeline/` |
+| Run CI self-tests | `pytest -q tests/ci-pipeline/` |
 | Run application tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
 | Lint | `ruff check src_timesheetalgo tests .github && black --check src_timesheetalgo tests .github && pydocstyle src_timesheetalgo tests .github` |
 | Traceability | `python .github/scripts/generate_traceability_matrix.py` |
@@ -386,7 +386,7 @@ When escalating, provide:
 ## Related Documents
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
-- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/TESTING.md` — Test structure, test markers, test organization
 - `doc/ARCHITECTURE.md` — System architecture and design decisions

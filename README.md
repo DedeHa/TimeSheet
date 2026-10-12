@@ -50,9 +50,9 @@ python src_timesheetalgo/TimeSheetAlgo.py
 
 2. **Create a virtual environment (recommended):**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # Linux/macOS
-   venv\Scripts\activate     # Windows
+python -m venv .venv
+    source .venv/bin/activate  # Linux/macOS
+    .venv\Scripts\activate     # Windows
    ```
 
 3. **Install dependencies:**
@@ -172,9 +172,9 @@ feature/PRO-123  →  PR + Tests  →  master  →  release/vX.Y.Z  →  Deploym
 When switching between Git branches, **always reactivate the virtual environment**:
 
 ```bash
-git checkout feature/PRO-123-description
-source venv/bin/activate          # Linux/macOS
-# venv\Scripts\activate           # Windows
+    git checkout feature/PRO-123-description
+    source .venv/bin/activate          # Linux/macOS
+    # .venv\Scripts\activate           # Windows
 ```
 
 For detailed instructions on branch switching, shell aliases, and environment management, see [`doc/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management`](doc/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management).

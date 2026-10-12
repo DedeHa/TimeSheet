@@ -58,23 +58,23 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 ## Traceability Validation
 
 Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by
-[.github/tests/ci-pipeline/test_generate_traceability_matrix.py](../.github/tests/ci-pipeline/test_generate_traceability_matrix.py),
+[tests/ci-pipeline/test_generate_traceability_matrix.py](../tests/ci-pipeline/test_generate_traceability_matrix.py),
 which the `check` job runs as part of the CI self-tests
-(`pytest -q .github/tests/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
+(`pytest -q tests/ci-pipeline/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
 
 ## Agent-System Tests
 
 The agent-team pipeline (4 agents + 5 skills) is validated by a dedicated `agents` CI job in
 [.github/workflows/python-ci.yml](../.github/workflows/python-ci.yml) that runs
-`pytest -q .github/tests/agents/` and uploads the JUnit report
+`pytest -q .opencode/tests/agents/` and uploads the JUnit report
 (`tests/reports/agent-results.xml`) as an artifact. Agent tests live under
-`.github/tests/agents/` (not in `tests/`), so they do not change the 103-test
+`.opencode/tests/agents/` (not in `tests/`), so they do not change the 103-test
 application suite or the coverage gate.
 
 ### Layout
 
 ```text
-.github/tests/agents/
+.opencode/tests/agents/
 ├── test_orchestration.py     # Existing - structural tests (YAML frontmatter, file existence, path resolution)
 ├── test_handoffs.py         # Handoff protocol: placeholders, cycle counts, escalation triggers
 ├── test_constraints.py      # Agent boundary enforcement via constraints
@@ -98,10 +98,10 @@ application suite or the coverage gate.
 
 ```bash
 # All agent tests
-pytest -q .github/tests/agents/
+pytest -q .opencode/tests/agents/
 
 # One category
-pytest -q .github/tests/agents/test_handoffs.py
+pytest -q .opencode/tests/agents/test_handoffs.py
 ```
 
 CI runs the agent tests as its own "Agent System Tests" level in the summary, in
@@ -114,8 +114,8 @@ Every Pull Request targeting `master` publishes one consolidated quality-gate su
 The report opens with the **overall workflow result** and a **status-overview table** — one row each for Lint & Formatting and the steps (un-numbered), with status and a one-line summary — so the whole gate is readable at a glance. It then details each step (headings are un-numbered):
 
 - **Traceability** — requirement→code traceability summary (0–100%) + status. The **PR Run** embeds the full traceability matrix table; the **PR comment** shows the percentage plus a link to the matrix artifact.
-- **Testing** — split into two independent groups, each with its own pass rate, status and per-level table (executed / passed / failed / skipped + Total): **Application** (the script: Unit / Integration / System) and **CI Pipeline** (the `.github/tests` suite). The status overview shows them as separate **Application Tests** and **CI-Pipeline Tests** rows.
-- **Code Coverage** — split into two independent sections: **Application Code Coverage** (the script: Unit / Integration / System) and **CI Pipeline Coverage** (the `.github/tests` suite). The status overview table shows the 90% quality-gate status on the application coverage.
+- **Testing** — split into two independent groups, each with its own pass rate, status and per-level table (executed / passed / failed / skipped + Total): **Application** (the script: Unit / Integration / System) and **CI Pipeline** (the `tests/ci-pipeline` suite). The status overview shows them as separate **Application Tests** and **CI-Pipeline Tests** rows.
+- **Code Coverage** — split into two independent sections: **Application Code Coverage** (the script: Unit / Integration / System) and **CI Pipeline Coverage** (the `tests/ci-pipeline` suite). The status overview table shows the 90% quality-gate status on the application coverage.
 - **Artifacts** — links covering all aspects: the workflow run, the traceability matrix (`.md` / `.html`), the JUnit reports (incl. `ci-results.xml`) and `coverage.json`, and the HTML coverage report — all inside the `test-results` artifact.
 
 How it is produced:
@@ -127,7 +127,7 @@ How it is produced:
 Because the `publish` job runs with `if: always()` in its own job — **not** inside `test` — a PR receives an up-to-date comment on **every** run, including when `check` (lint/naming) fails and the `test` job is skipped (the summary then degrades gracefully, showing lint failed and tests skipped). Publication is non-gating: it only reports results; the merge is still gated by the `check` and `test` jobs.
 
 The generator uses the standard library only and is covered by
-[.github/tests/ci-pipeline/test_generate_pr_summary.py](../.github/tests/ci-pipeline/test_generate_pr_summary.py),
+[tests/ci-pipeline/test_generate_pr_summary.py](../tests/ci-pipeline/test_generate_pr_summary.py),
 which the `test` job runs explicitly (it is outside `testpaths`, so it does
 not change the application suite or the coverage gate).
 

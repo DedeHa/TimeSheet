@@ -252,7 +252,7 @@ def _gh_api(path: str, max_retries: int = 3) -> object:
                 text=True,
             ).stdout
             return json.loads(out)
-        except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+        except (subprocess.CalledProcessError, json.JSONDecodeError):
             if attempt == max_retries - 1:
                 raise
             time.sleep(2 ** attempt)
@@ -278,10 +278,10 @@ def main() -> None:
         jobs = _gh_api(f"repos/{repo}/actions/runs/{run_id}/jobs")
     except subprocess.CalledProcessError as exc:
         print(f"ERROR: GitHub API request failed: {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from exc
     except json.JSONDecodeError as exc:
         print(f"ERROR: Failed to parse GitHub API response: {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from exc
 
     pulls = run.get("pull_requests") or []
     run_meta = {
@@ -304,11 +304,12 @@ def main() -> None:
         write_csv(csv_path, merged)
         write_json(new_rows, run_meta, DATA_DIR / "runtimes.json")
         print(
-            f"collected {len(new_rows)} rows from run {run_id}; dataset now {len(merged)}"
+            f"collected {len(new_rows)} rows from run {run_id}; dataset now "
+            f"{len(merged)} rows"
         )
     except Exception as exc:
         print(f"ERROR: Failed to write data: {exc}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from exc
 
 
 if __name__ == "__main__":

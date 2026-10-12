@@ -23,9 +23,114 @@ Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the c
    ```
 2. Extract the PRO-XXX ticket from the branch name or recent commits.
 3. Verify the working tree is clean before proceeding:
-   ```bash
-   git status
-   ```
+    ```bash
+    git status
+    ```
+
+## Step 0.5 — Pre-Closure Validation (New)
+
+Before proceeding with final verification, validate all critical closure
+conditions. This phase is **mandatory and blocking**: if any check fails,
+the workflow reports the specific failing check and halts — it must not
+reach Step 3g (Transition JIRA to DONE).
+
+The 5 checks are executed in order. Check 1 (PR merge) must pass before
+Check 2 (comment gating) is even evaluated.
+
+### Check 1 — PR Merge Verification
+
+Execute `gh pr view` to confirm the PR is actually merged:
+
+```bash
+gh pr view <PR_NUMBER> --json mergeCommit,state,headRefName
+```
+
+**Pass conditions:**
+- `state == "MERGED"`
+- `mergeCommit` is not null (not empty)
+
+**If failed:** Report `PR #XXX is not merged. Current state: OPEN/CLOSED. Cannot transition to Fertig.` and halt the workflow.
+
+**If `gh pr view` fails:** Report `Cannot check PR #XXX state (gh pr view failed). Verify that gh is authenticated and the PR number is correct.` and halt the workflow.
+
+### Check 2 — No Unverified Merge Comment
+
+Check 1 must pass before any JIRA comment is posted claiming a PR merge.
+
+**Gate:** Step 3a (Add Implementation Status Comment) must be gated so that
+the merge comment is posted **only after** Check 1 confirms `state == "MERGED"`.
+
+**If Check 1 fails:** Do NOT post a merge comment. Report the PR state
+failure and halt.
+
+### Check 3 — Implementation Plan Deleted
+
+Verify that the implementation plan document has been deleted:
+
+```bash
+ls doc/02_Implementation_Plan_PRO-XXX.md
+```
+
+**Pass condition:** The file does not exist.
+
+**If failed:** Report `Implementation plan not deleted: doc/02_Implementation_Plan_PRO-XXX.md still exists. Delete before proceeding.` and halt the workflow.
+
+### Check 4 — Working Tree Clean
+
+Execute `git status --porcelain` to verify there are no uncommitted changes:
+
+```bash
+git status --porcelain
+```
+
+**Pass condition:** Output is empty (no modified, staged, or untracked files).
+
+**If failed:** Report `Uncommitted changes detected. Commit or stash before proceeding.` and halt the workflow.
+
+### Check 5 — Remote Branch Deleted
+
+Verify that the remote feature branch has been deleted:
+
+```bash
+git ls-remote --heads origin <branch-name>
+```
+
+**Pass condition:** Output is empty (the branch is absent from origin).
+
+**If the branch still exists:** Report `Remote branch '<branch-name>' still exists on origin. Delete before proceeding.` and halt the workflow.
+
+**If `git ls-remote` fails:** Treat the branch as absent (return True) and continue.
+
+### Helper Scripts
+
+The validation logic is implemented in reusable helper scripts that can be
+used by the complete-feature workflow and by CI self-tests:
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `ci/scripts/validate_pr_merge.py` | PR merge validation | `python ci/scripts/validate_pr_merge.py <PR_NUMBER>` |
+| `ci/scripts/validate_filesystem.py` | Filesystem validation | `python ci/scripts/validate_filesystem.py <plan_path> <branch_name>` |
+
+Both scripts return exit code 0 on success and 1 on failure, with a
+descriptive message on stdout.
+
+### Validation Order
+
+The checks are executed in the following order. If any check fails, the
+workflow halts immediately and reports the specific failing check — it does
+not continue to the next check or reach Step 3g (Transition JIRA to DONE).
+
+1. **PR merge verification** (Check 1) — blocks all JIRA transitions
+2. **Comment gating** (Check 2) — only posts merge comments after Check 1 passes
+3. **Implementation plan deletion** (Check 3)
+4. **Working tree clean** (Check 4)
+5. **Remote branch deletion** (Check 5) — reported as a remaining action if present
+
+### Post-Hoc Verification
+
+Step 5 (Verify Final State) performs a post-hoc verification of all 5 checks
+as a safety net, but must not be the only place where these checks occur. The
+pre-closure validation in Step 0.5 is the primary gate.
 
 ## Step 1 — Run Final Verification
 
@@ -41,7 +146,7 @@ pydocstyle src_timesheetalgo tests .github
 python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
 
 # CI self-tests
-python -m pytest .github/tests/ci-pipeline/ -q
+python -m pytest tests/ci-pipeline/ -q
 
 # Traceability
 python .github/scripts/generate_traceability_matrix.py
@@ -69,6 +174,20 @@ python .github/scripts/generate_traceability_matrix.py
 ## Step 3 — Update JIRA Ticket
 
 ### 3a. Add Implementation Status Comment
+
+> **⚠️ GATED BY CHECK 1 — PR merge verification must pass first.**
+>
+> This comment claims that the PR is merged to master. It must be posted
+> **only after** Step 0.5 (Check 1) confirms via `gh pr view` that
+> `state == "MERGED"` and `mergeCommit` is not null. Posting this comment
+> before verification is the exact failure mode of PRO-380.
+>
+> **Gating logic:**
+>
+> 1. Run Check 1: `gh pr view <PR_NUMBER> --json mergeCommit,state,headRefName`
+> 2. If the PR is NOT merged (or `gh pr view` fails), do NOT post this comment.
+>    Report the PR state failure and halt the workflow.
+> 3. Only if Check 1 passes, proceed to post the comment below.
 
 Post a comprehensive comment using `atlassian_addCommentToJiraIssue`:
 
@@ -497,7 +616,7 @@ git ls-remote --heads origin | grep <branch-name>  # should return nothing
 | Action | Command |
 |--------|---------|
 | Run tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
-| Run CI self-tests | `python -m pytest .github/tests/ci-pipeline/ -q` |
+| Run CI self-tests | `python -m pytest tests/ci-pipeline/ -q` |
 | Run lint | `ruff check src_timesheetalgo tests .github` |
 | Check traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
@@ -570,7 +689,7 @@ When escalating, provide:
 ## Related Documents
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
-- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/TESTING.md` — Test structure, test markers, test organization
 - `doc/ARCHITECTURE.md` — System architecture and design decisions

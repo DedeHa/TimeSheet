@@ -1,7 +1,7 @@
 """Unit tests for validator.py (PRO-375 JSON output & data validation).
 
 Validates the JSON schema validation functions for CI timing data.
-Runs in the .github/tests/ci-pipeline/ CI self-test group. Standard-library only.
+Runs in the tests/ci-pipeline/ CI self-test group. Standard-library only.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-_SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
+_SCRIPTS = Path(__file__).resolve().parents[2] / ".github" / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 

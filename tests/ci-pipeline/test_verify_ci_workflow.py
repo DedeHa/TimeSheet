@@ -4,10 +4,10 @@ Consolidates the former ``test_workflow_optimization.py`` (asserts the PRO-368
 optimizations are in place) and ``test_regression_ci.py`` (asserts the existing
 quality gates, branch strategy and deployment behaviour are unchanged) into a
 single workflow-verification suite, removing the duplicated YAML-parsing
-helpers. Like the other files under ``.github/tests/`` it does not affect the
+helpers. Like the other files under ``tests/ci-pipeline/`` it does not affect the
 103-test application suite or the coverage gate, and can be run locally with::
 
-    pytest -q .github/tests/ci-pipeline/test_verify_ci_workflow.py
+    pytest -q tests/ci-pipeline/test_verify_ci_workflow.py
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "python-ci.yml"
 ACTION = ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml"
 GPG_ACTION = ROOT / ".github" / "actions" / "setup-gpg-signing" / "action.yml"
@@ -224,7 +224,7 @@ def test_pr_title_regex_unchanged():
     """The PR title validator still accepts [type][PRO-XXX] Description."""
     # O4: Validation rules moved to validate_pr.py
     script_path = (
-        Path(__file__).resolve().parents[3] / ".github" / "scripts" / "validate_pr.py"
+        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
     )
     script = script_path.read_text(encoding="utf-8")
     assert r"PRO-\d+" in script
@@ -237,7 +237,7 @@ def test_pr_body_sections_required():
     """The PR body validator still requires ## Summary and ## Testing."""
     # O4: Validation rules moved to validate_pr.py
     script_path = (
-        Path(__file__).resolve().parents[3] / ".github" / "scripts" / "validate_pr.py"
+        Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_pr.py"
     )
     script = script_path.read_text(encoding="utf-8")
     assert "## Summary" in script
@@ -311,11 +311,11 @@ def test_publish_job_always_runs():
 
 
 def test_test_job_runs_ci_self_tests():
-    """O5: the test job runs the .github/tests suite (as the CI Self-Tests level)."""
+    """O5: the test job runs the tests/ci-pipeline suite (as the CI Self-Tests level)."""
     steps = _job_steps("test")
     assert any(
-        ".github/tests" in s.get("run", "") for s in steps
-    ), "test job does not run the .github/tests self-tests"
+        "tests/ci-pipeline" in s.get("run", "") for s in steps
+    ), "test job does not run the tests/ci-pipeline self-tests"
 
 
 def test_concurrency_grouping_unchanged():

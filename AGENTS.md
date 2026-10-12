@@ -190,7 +190,7 @@ python .opencode/scripts/detect_mode.py PRO-373 --show
 2. Traceability script exits non-zero if requirements untraced
 3. Coverage must be ≥90% (combined unit + integration + system)
 
-**CI self-tests (.github/tests/):**
+**CI self-tests (tests/ci-pipeline/):**
 - Run in CI but not in local test suite
 - `ci-pipeline/`: Workflow + script tests
 - `agents/`: Agent orchestration tests (validates `.opencode/agents/` and `.opencode/skills/`)

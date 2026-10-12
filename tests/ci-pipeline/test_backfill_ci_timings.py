@@ -2,7 +2,7 @@
 
 Verifies the historical sweep reuses the same exclusion / dedup rules as
 collect_ci_timings.py and is idempotent on the dataset CSV. Runs in the
-``.github/tests/ci-pipeline`` CI self-test group. Standard-library only.
+``tests/ci-pipeline`` CI self-test group. Standard-library only.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from unittest import mock
 
-_SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
+_SCRIPTS = Path(__file__).resolve().parents[2] / ".github" / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
@@ -353,7 +353,7 @@ def test_main_migrate_flag(tmp_path):
         ],
         capture_output=True,
         text=True,
-        cwd=str(Path(__file__).resolve().parents[2] / "scripts"),
+        cwd=str(Path(__file__).resolve().parents[2] / ".github" / "scripts"),
     )
     assert result.returncode == 0
     assert json_path.exists()

@@ -48,7 +48,7 @@ The issue is in the `ci-timing.yml` workflow configuration. The `workflow_run` t
 
 | Phase | Activity | Files Modified | Tests |
 |-------|----------|----------------|-------|
-| **1: Parallel** | Fix `UPDATE_DATA` env var; add validation tests | `.github/workflows/ci-timing.yml`, `.github/tests/ci-pipeline/test_update_data_default.py` | Unit tests |
+| **1: Parallel** | Fix `UPDATE_DATA` env var; add validation tests | `.github/workflows/ci-timing.yml`, `tests/ci-pipeline/test_update_data_default.py` | Unit tests |
 | **2: Fix** | Add retry logic and error handling to `collect_ci_timings.py` | `.github/scripts/collect_ci_timings.py` | Unit tests |
 | **3: Recovery** | Run backfill to populate missing data | `.github/scripts/backfill_ci_timings.py` | System tests |
 | **4: Verification** | Run full quality gates | N/A | All existing tests |
@@ -103,7 +103,7 @@ The issue is in the `ci-timing.yml` workflow configuration. The `workflow_run` t
 ├── validator.py              # No changes (existing)
 └── ci_stats.py              # No changes (existing)
 
-.github/tests/ci-pipeline/
+tests/ci-pipeline/
 ├── test_update_data_default.py # NEW: validate UPDATE_DATA expression
 ├── test_collect_ci_timings.py  # MODIFY: add error handling tests
 ├── test_aggregate_ci_timings.py # No changes
@@ -147,7 +147,7 @@ UPDATE_DATA: ${{ github.event_name == 'workflow_run' && 'true' || (inputs.update
 
 ### 3.2 Add Workflow Configuration Validation
 
-**File**: `.github/tests/ci-pipeline/test_update_data_default.py`
+**File**: `tests/ci-pipeline/test_update_data_default.py`
 
 ```python
 """Test UPDATE_DATA expression logic (PRO-385)."""

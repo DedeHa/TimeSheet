@@ -2,10 +2,10 @@
 
 ## 📌 Overview: Git Workflow + Agent-Based Development
 
-This document covers **Git workflow** and **code standards**. For information about **agent-based feature development** (using Copilot agents for structured feature planning and implementation), see [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md).
+This document covers **Git workflow** and **code standards**. For information about **agent-based feature development** (using opencode agents for structured feature planning and implementation), see [Agent Team Workflow](.opencode/docs/WORKFLOW.md).
 
 ### Complete Development Process:
-1. **Phase 0 (Pre-Development):** Feature planning with Copilot Agents → User Stories & Architecture (see [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md))
+1. **Phase 0 (Pre-Development):** Feature planning with Copilot Agents → User Stories & Architecture (see [.opencode/docs/WORKFLOW.md](.opencode/docs/WORKFLOW.md))
 2. **Phase 1 (Development):** Feature development on branch → Code & Tests (this document)
 3. **Phase 2 (Integration):** Pull Request to master → Tests + Review (this document)
 4. **Phase 3 (Release):** Release branch → Version bump → Deploy (this document)
@@ -455,7 +455,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 - ✅ **Release Branches** (inherited): Tests already run on Master
 
 ### Quality-Gate Result Publication:
-- ✅ **Master PRs**: a dedicated `publish` job (`if: always()`) publishes a consolidated **quality-gate summary** (regenerated every run) in the job summary and as a sticky PR comment. It opens with the overall result and a status-overview table (Lint + the steps, un-numbered), then sections — **Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **Testing** (split into **Application Tests** (unit/integration/system) and **CI-Pipeline Tests** (`.github/tests/ci-pipeline/` + `.github/tests/agents/`), each with its own pass-rate %, status and test per-level table), **Code Coverage** (% vs. the 90% gate), **Artifacts** (run, matrix, JUnit/coverage, htmlcov).
+- ✅ **Master PRs**: a dedicated `publish` job (`if: always()`) publishes a consolidated **quality-gate summary** (regenerated every run) in the job summary and as a sticky PR comment. It opens with the overall result and a status-overview table (Lint + the steps, un-numbered), then sections — **Traceability** (0–100%; matrix embedded in the job summary, linked in the comment), **Testing** (split into **Application Tests** (unit/integration/system) and **CI-Pipeline Tests** (`tests/ci-pipeline/` + `.opencode/tests/agents/`), each with its own pass-rate %, status and test per-level table), **Code Coverage** (% vs. the 90% gate), **Artifacts** (run, matrix, JUnit/coverage, htmlcov).
 - ✅ Two comments per run (Option C): the full report as a **sticky** comment updated in place (with an `_Updated: … UTC_` timestamp), plus a compact **per-run comment** (overall result + overview table) posted fresh each run for a per-run trail. Because `publish` is separate and `if: always()`, a comment is posted on **every** run — including when `check` (lint/naming) fails and `test` is skipped.
 - ℹ️ The `publish` job is **non-gating** — it only reports results; the merge is still gated by the `check` and `test` jobs. See [TESTING.md](TESTING.md#pull-request-quality-gate-summary).
 

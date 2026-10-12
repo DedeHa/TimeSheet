@@ -11,7 +11,7 @@ import statistics
 import sys
 from pathlib import Path
 
-_SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
+_SCRIPTS = Path(__file__).resolve().parents[2] / ".github" / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
@@ -140,7 +140,7 @@ def test_schema_version():
     import json
     from pathlib import Path
 
-    metrics_path = Path(__file__).resolve().parents[3] / "data" / "metrics.json"
+    metrics_path = Path(__file__).resolve().parents[2] / "data" / "metrics.json"
     if metrics_path.exists():
         with open(metrics_path, encoding="utf-8") as fh:
             data = json.load(fh)

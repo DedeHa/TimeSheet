@@ -9,7 +9,7 @@ checks **declarative, auditable, and testable** by:
    :data:`REQUIRED_STATUS_CHECKS` - the single source of truth for
    :ref:`AC-2` (the ``Naming Conventions & Linting Check`` job must be
    required) and the regression guard in
-   ``.github/tests/ci-pipeline/test_branch_protection.py`` (ref :ref:`AC-3`).
+   ``tests/ci-pipeline/test_branch_protection.py`` (ref :ref:`AC-3`).
 2. Providing a ``verify`` subcommand that queries the GitHub API
    (``GET /repos/{owner}/{repo}/branches/{branch}/protection``) and asserts
    that ``required_status_checks.checks`` is non-empty and contains every

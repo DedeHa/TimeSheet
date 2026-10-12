@@ -1,13 +1,15 @@
 """Generate the requirement-to-architecture-to-code traceability matrix (PRO-368).
 
 This is a *production* CI support script (not a test). It scans
-``doc/REQUIREMENTS.md``, ``doc/ARCHITECTURE.md`` and
-``src_timesheetalgo/TimeSheetAlgo.py`` for requirement identifiers (FR-XX /
-QR-XX) and renders a Markdown + HTML matrix under ``tests/reports/``. The CI
-``test`` job runs this to produce the artifact that the "Comment traceability
-report" step publishes on the pull request; completeness of the matrix is
-asserted separately by
-``.github/tests/ci-pipeline/test_generate_traceability_matrix.py``.
+``doc/REQUIREMENTS.md`` (TimeSheetAlgo / SCRIPT requirements) and
+``.opencode/docs/REQUIREMENTS.md`` (Agent Dev Team requirements),
+``doc/ARCHITECTURE.md`` and ``src_timesheetalgo/TimeSheetAlgo.py`` for
+requirement identifiers (FR-XX / QR-XX, and FR-INTEGRITY-XXX /
+QR-INTEGRITY-XXX for agent-team pipeline requirements) and renders a Markdown
++ HTML matrix under ``tests/reports/``. The CI ``test`` job runs this to
+produce the artifact that the "Comment traceability report" step publishes on
+the pull request; completeness of the matrix is asserted separately by
+``tests/ci-pipeline/test_generate_traceability_matrix.py``.
 
 Standard library only, mirroring the lightweight, dependency-free approach of
 ``generate_pr_summary.py``.
@@ -26,9 +28,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REQUIREMENTS = ROOT / "doc" / "REQUIREMENTS.md"
+AGENT_REQUIREMENTS = ROOT / ".opencode" / "docs" / "REQUIREMENTS.md"
 ARCHITECTURE = ROOT / "doc" / "ARCHITECTURE.md"
 SOURCE = ROOT / "src_timesheetalgo" / "TimeSheetAlgo.py"
-CI_SCRIPTS = ROOT / ".github" / "scripts"
+CI_SCRIPTS = [
+    ROOT / ".github" / "scripts",
+    ROOT / "ci" / "scripts",
+]
 REPORT_PATH = ROOT / "tests" / "reports" / "traceability-matrix.md"
 
 
@@ -36,19 +42,40 @@ REPORT_PATH = ROOT / "tests" / "reports" / "traceability-matrix.md"
 class TraceabilityData:
     """Requirement identifiers discovered in each traceability source."""
 
-    requirement_ids: list[str]
+    script_ids: list[str]
+    agent_ids: list[str]
     architecture_ids: set[str]
     code_ids: set[str]
 
     @property
+    def all_ids(self) -> list[str]:
+        return self.script_ids + self.agent_ids
+
+    @property
     def missing_in_architecture(self) -> list[str]:
         """Requirements absent from the architecture document."""
-        return [r for r in self.requirement_ids if r not in self.architecture_ids]
+        return [r for r in self.all_ids if r not in self.architecture_ids]
 
     @property
     def missing_in_code(self) -> list[str]:
         """Requirements absent from the implementation references."""
-        return [r for r in self.requirement_ids if r not in self.code_ids]
+        return [r for r in self.all_ids if r not in self.code_ids]
+
+    @property
+    def script_missing_in_architecture(self) -> list[str]:
+        return [r for r in self.script_ids if r not in self.architecture_ids]
+
+    @property
+    def agent_missing_in_architecture(self) -> list[str]:
+        return [r for r in self.agent_ids if r not in self.architecture_ids]
+
+    @property
+    def script_missing_in_code(self) -> list[str]:
+        return [r for r in self.script_ids if r not in self.code_ids]
+
+    @property
+    def agent_missing_in_code(self) -> list[str]:
+        return [r for r in self.agent_ids if r not in self.code_ids]
 
 
 def _read_text(path: Path) -> str:
@@ -56,18 +83,38 @@ def _read_text(path: Path) -> str:
 
 
 def extract_requirement_ids(text: str) -> list[str]:
-    """Return every FR-XX / QR-XX identifier found in ``text`` (in order)."""
-    return re.findall(r"\b(FR-\d{2}|QR-\d{2})\b", text)
+    """Return every FR-XX / QR-XX (and FR-INTEGRITY-XXX / QR-INTEGRITY-XXX)
+    identifier found in ``text`` (in order)."""
+    return re.findall(
+        r"\b(FR-(?:\d{2}|INTEGRITY-\d{3})|QR-(?:\d{2}|INTEGRITY-\d{3}))\b", text
+    )
+
+
+def _dedup_preserve_order(items: list[str]) -> list[str]:
+    """Remove duplicates while preserving first-seen order."""
+    seen: set[str] = set()
+    result: list[str] = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
 
 
 def collect_ids() -> TraceabilityData:
     """Read the sources and collect their requirement identifiers."""
     code_text = _read_text(SOURCE)
-    for script in CI_SCRIPTS.iterdir():
-        if script.suffix in (".py",):
-            code_text += "\n" + _read_text(script)
+    for script_dir in CI_SCRIPTS:
+        for script in script_dir.iterdir():
+            if script.suffix in (".py",):
+                code_text += "\n" + _read_text(script)
     return TraceabilityData(
-        requirement_ids=extract_requirement_ids(_read_text(REQUIREMENTS)),
+        script_ids=_dedup_preserve_order(
+            extract_requirement_ids(_read_text(REQUIREMENTS))
+        ),
+        agent_ids=_dedup_preserve_order(
+            extract_requirement_ids(_read_text(AGENT_REQUIREMENTS))
+        ),
         architecture_ids=set(extract_requirement_ids(_read_text(ARCHITECTURE))),
         code_ids=set(extract_requirement_ids(code_text)),
     )
@@ -95,14 +142,16 @@ def build_markdown(data: TraceabilityData) -> str:
 
     lines: list[str] = ["# Traceability Matrix", ""]
 
-    groups = _group_by_type(data.requirement_ids)
+    # ---- Script requirements (TimeSheetAlgo application) ----
+    lines.append("## Script Requirements (TimeSheetAlgo / `doc/REQUIREMENTS.md`)")
+    groups = _group_by_type(data.script_ids)
     for label, reqs in (
         ("Functional Requirements", groups["FR"]),
         ("Quality Requirements", groups["QR"]),
     ):
         if not reqs:
             continue
-        lines.append(f"## {label}")
+        lines.append(f"### {label}")
         header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
         lines.append("| " + " | ".join(header_cols) + " |")
         lines.append("| " + " | ".join(["---"] * len(header_cols)) + " |")
@@ -117,14 +166,41 @@ def build_markdown(data: TraceabilityData) -> str:
             lines.append("| " + " | ".join(row) + " |")
 
         lines.append("")
+        lines.append(
+            f"- Architecture coverage: "
+            f"{_coverage_percent(reqs, data.architecture_ids)}%"
+        )
+        lines.append(f"- Code coverage: {_coverage_percent(reqs, data.code_ids)}%")
 
-    lines.append(
-        f"- Architecture coverage: "
-        f"{_coverage_percent(data.requirement_ids, data.architecture_ids)}%"
-    )
-    lines.append(
-        f"- Code coverage: {_coverage_percent(data.requirement_ids, data.code_ids)}%"
-    )
+    # ---- Agent team requirements ----
+    lines.append("## Agent Team Requirements (`.opencode/docs/REQUIREMENTS.md`)")
+    groups = _group_by_type(data.agent_ids)
+    for label, reqs in (
+        ("Functional Requirements", groups["FR"]),
+        ("Quality Requirements", groups["QR"]),
+    ):
+        if not reqs:
+            continue
+        lines.append(f"### {label}")
+        header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
+        lines.append("| " + " | ".join(header_cols) + " |")
+        lines.append("| " + " | ".join(["---"] * len(header_cols)) + " |")
+
+        for req in reqs:
+            row = [
+                req,
+                "Functional" if req.startswith("FR-") else "Quality",
+                indicator(req in data.architecture_ids),
+                indicator(req in data.code_ids),
+            ]
+            lines.append("| " + " | ".join(row) + " |")
+
+        lines.append("")
+        lines.append(
+            f"- Architecture coverage: "
+            f"{_coverage_percent(reqs, data.architecture_ids)}%"
+        )
+        lines.append(f"- Code coverage: {_coverage_percent(reqs, data.code_ids)}%")
 
     return "\n".join(lines)
 
@@ -134,6 +210,18 @@ def build_html(data: TraceabilityData) -> str:
 
     def cell(val: str) -> str:
         return f"<td>{val}</td>"
+
+    def section_title(text: str) -> str:
+        return f"<h2>{text}</h2>"
+
+    def sub_section(text: str) -> str:
+        return f"<h3>{text}</h3>"
+
+    def group_reqs(requirement_ids: list[str]) -> dict[str, list[str]]:
+        groups: dict[str, list[str]] = {"FR": [], "QR": []}
+        for req in requirement_ids:
+            groups["FR" if req.startswith("FR-") else "QR"].append(req)
+        return groups
 
     html_lines = [
         "<!doctype html>",
@@ -155,39 +243,47 @@ def build_html(data: TraceabilityData) -> str:
         "<h1>Traceability Matrix</h1>",
     ]
 
-    groups = _group_by_type(data.requirement_ids)
-    for title, reqs in (
-        ("Functional Requirements", groups["FR"]),
-        ("Quality Requirements", groups["QR"]),
+    for section_name, requirement_ids in (
+        ("Script Requirements (TimeSheetAlgo)", data.script_ids),
+        ("Agent Team Requirements (opencode)", data.agent_ids),
     ):
-        if not reqs:
-            continue
-        html_lines.append(f"<h2>{title}</h2>")
-        html_lines.append("<table>")
-        header_cols = ["Requirement", "Type", "In Architecture", "In Code"]
-        html_lines.append(
-            "<thead><tr>"
-            + "".join(f"<th>{c}</th>" for c in header_cols)
-            + "</tr></thead>"
-        )
-        html_lines.append("<tbody>")
+        groups = group_reqs(requirement_ids)
+        for title, reqs in (
+            ("Functional Requirements", groups["FR"]),
+            ("Quality Requirements", groups["QR"]),
+        ):
+            if not reqs:
+                continue
+            html_lines.append(section_name)
+            html_lines.append(sub_section(title))
+            html_lines.append("<table>")
+            html_lines.append(
+                "<thead><tr>"
+                + "".join(
+                    f"<th>{c}</th>"
+                    for c in ["Requirement", "Type", "In Architecture", "In Code"]
+                )
+                + "</tr></thead>"
+            )
+            html_lines.append("<tbody>")
+            for req in reqs:
+                row_cells = [
+                    req,
+                    ("Functional" if req.startswith("FR-") else "Quality"),
+                    ("✅" if req in data.architecture_ids else "◯"),
+                    ("✅" if req in data.code_ids else "◯"),
+                ]
+                html_lines.append(
+                    "<tr>" + "".join(cell(c) for c in row_cells) + "</tr>"
+                )
+            html_lines.append("</tbody></table>")
+            arch_cov = _coverage_percent(reqs, data.architecture_ids)
+            code_cov = _coverage_percent(reqs, data.code_ids)
+            html_lines.append(
+                f"<p>Architecture coverage: {arch_cov}%<br/>"
+                f"Code coverage: {code_cov}%</p>"
+            )
 
-        for req in reqs:
-            row_cells = [
-                req,
-                ("Functional" if req.startswith("FR-") else "Quality"),
-                ("✅" if req in data.architecture_ids else "◯"),
-                ("✅" if req in data.code_ids else "◯"),
-            ]
-            html_lines.append("<tr>" + "".join(cell(c) for c in row_cells) + "</tr>")
-
-        html_lines.append("</tbody></table>")
-
-    arch_cov = _coverage_percent(data.requirement_ids, data.architecture_ids)
-    code_cov = _coverage_percent(data.requirement_ids, data.code_ids)
-    html_lines.append(
-        f"<p>Architecture coverage: {arch_cov}%<br/>Code coverage: {code_cov}%</p>"
-    )
     html_lines.append("</body></html>")
     return "\n".join(html_lines)
 
@@ -220,13 +316,19 @@ def main() -> None:
     write_reports(data)
 
     problems: list[str] = []
-    if not data.requirement_ids:
+    if not data.script_ids and not data.agent_ids:
         problems.append("No requirement identifiers were discovered")
     if data.missing_in_architecture:
-        problems.append(f"Missing from architecture: {data.missing_in_architecture}")
-    if data.missing_in_code:
         problems.append(
-            f"Missing from implementation references: {data.missing_in_code}"
+            f"Missing from architecture: script={data.script_missing_in_architecture}, "
+            f"agent={data.agent_missing_in_architecture}"
+        )
+    if data.missing_in_code:
+        script_missing = data.script_missing_in_code
+        agent_missing = data.agent_missing_in_code
+        problems.append(
+            f"Missing from implementation references: "
+            f"script={script_missing}, agent={agent_missing}"
         )
 
     if problems:

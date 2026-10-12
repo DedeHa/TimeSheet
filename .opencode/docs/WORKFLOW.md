@@ -4,17 +4,26 @@ This directory contains the agent team discovered by opencode,
 comprising specialized agents that collaborate to deliver high-quality
 features through a structured, repeatable workflow.
 
-## Documentation Hierarchy
+All Agent Dev Team documentation is located in this `.opencode/agents/` folder:
 
 ```
-AGENTS.md                  ← Top-level guide: project conventions, modes, CI gates
-└── doc/AGENTS_WORKFLOW.md ← This file: agent team workflow, diagrams, quality gates
-    ├── .opencode/agents/   ← Operational agent definitions (4 agents)
-    ├── .opencode/scripts/  ← Pipeline automation (detect_mode.py, pipeline.py)
-    └── .opencode/skills/   ← Workflow reference docs (5 skills)
+AGENTS.md                  ← Top-level guide: project conventions, modes, CI gates (README.md)
+└── .opencode/docs/WORKFLOW.md ← This file: agent team workflow, diagrams, quality gates
+    ├── ARCHITECTURE.md      ← Agent Team architecture and design principles
+    ├── REQUIREMENTS.md      ← Agent Dev Team functional and quality requirements
+    ├── product-owner.agent.md ← Product Owner Agent (YAML config + detailed documentation)
+    ├── architect.agent.md     ← Architect Agent (YAML config + detailed documentation)
+    ├── developer.agent.md     ← Developer Agent (YAML config + detailed documentation)
+    ├── tester.agent.md        ← Tester & Validator Agent (YAML config + detailed documentation)
+    ├── complete-feature/SKILL.md ← Feature completion, AC validation, JIRA closure
+    ├── develop-feature/SKILL.md    ← Feature implementation workflow, implementation steps
+    ├── discover-feature/SKILL.md   ← Feature discovery, JIRA ticket creation, story points, ACs
+    ├── orchestrate-feature/SKILL.md← Pipeline orchestration, dispatch, escalation, handoff tracking
+    ├── refine-feature/SKILL.md     ← Stakeholder review, ticket finalization
+    └── release-project/SKILL.md    ← Release process, versioning, GitHub Release, JIRA version
 ```
 
-## 🚀 Triggering Workflows
+## Triggering Workflows
 
 ### User Messages / Commands
 
@@ -54,19 +63,19 @@ User message "plan a feature"
 │  discover-feature│ ───────────────────▶│ JIRA Story (PRO-XXX) │
 │  (PO)           │                       └──────────┬───────────┘
 └─────────────────┘                                  │
-                                                     │ review + finalize
-                                                     ▼
+                                                      │ review + finalize
+                                                      ▼
+                                         ┌──────────────────────────┐
+                                         │  refine-feature          │
+                                         │  (PO + stakeholders)     │
+                                         └──────────┬───────────────┘
+                                                    │
+                                                    ▼
                                         ┌──────────────────────────┐
-                                        │  refine-feature          │
-                                        │  (PO + stakeholders)     │
+                                        │  Story points assigned   │
+                                        │  before sprint pickup    │
                                         └──────────┬───────────────┘
                                                    │
-                                                   ▼
-                                       ┌──────────────────────────┐
-                                       │  Story points assigned   │
-                                       │  before sprint pickup    │
-                                       └──────────┬───────────────┘
-                                                  │
     "proceed" / PO dispatch                       │
    ┌──────────────────────────────────────────────┘
    ▼
@@ -88,7 +97,7 @@ User message "plan a feature"
 └─────────────────┘
 ```
 
-## 🕹️ Pipeline Commands (orchestration)
+## Pipeline Commands (orchestration)
 
 The pipeline is driven from a shell via `.opencode/scripts/pipeline.py`:
 
@@ -152,7 +161,7 @@ PO ──dispatch──▶ Architect ──plan──▶ Developer ──impl─
 | Tester → PO | `Approve & Complete` | Validation result, AC status, test summary |
 | PO → User | `Final Review` | Complete summary, AC status, PR status |
 
-## 📐 Visual Representation
+## Visual Representation
 
 ### Agent Development Workflow
 
@@ -190,7 +199,7 @@ flowchart TD
     PO_AUTO -->|Blocked| ESC[Escalate to PO]
 ```
 
-## 🧩 Agent Team Overview
+## Agent Team Overview
 
 | Agent | Role | Input | Output | Handoff To |
 |-------|------|-------|--------|-----------|
@@ -199,7 +208,7 @@ flowchart TD
 | **Developer** | Implement features following the plan | Implementation plan, architecture | Code changes, tests, commits | Tester |
 | **Tester** | Validate correctness and quality | Implementation, tests, requirements | Pass/Fail decision with evidence | Product Owner / Developer |
 
-## 📁 File Structure
+## File Structure
 
 This directory contains the opencode-discovered agent team and skills:
 
@@ -227,22 +236,27 @@ This directory contains the opencode-discovered agent team and skills:
 - `.opencode/scripts/detect_mode.py` — Detects and persists the development mode (`interactive`/`automated`) from user chat messages into `~/.opencode/pipeline-state.json`
 - `.opencode/scripts/pipeline.py` — Enhanced pipeline management with resume, continue, proceed, dry-run, check-stuck, what-missed, history, reset, set-mode, and get-mode commands
 
-### Agent Configuration Files (``-agent.md` (YAML config + detailed documentation)`)
+### Agent Configuration Files (`.agent.md`)
+
 These are **operational files** discovered and used by opencode:
-- `.opencode/agents/product-owner-agent.md` (YAML config + detailed documentation) - Product Owner Agent (YAML config + detailed documentation)
-- `.opencode/agents/architect-agent.md` (YAML config + detailed documentation) - Architect Agent (YAML config + detailed documentation)
-- `.opencode/agents/developer-agent.md` (YAML config + detailed documentation) - Developer Agent (YAML config + detailed documentation)
-- `.opencode/agents/tester-agent.md` (YAML config + detailed documentation) - Tester & Validator Agent (YAML config + detailed documentation)
+
+- `.opencode/agents/product-owner.agent.md` (YAML config + detailed documentation) - Product Owner Agent
+- `.opencode/agents/architect.agent.md` (YAML config + detailed documentation) - Architect Agent
+- `.opencode/agents/developer.agent.md` (YAML config + detailed documentation) - Developer Agent
+- `.opencode/agents/tester.agent.md` (YAML config + detailed documentation) - Tester & Validator Agent
 
 Each file contains:
 - **YAML frontmatter** with tool configurations, constraints, handoffs, and skills
 - **Markdown body** with purpose, responsibilities, input/output formats, constraints, and decision rules
 
 ### Reference Documentation
-- `.opencode/skills/*/SKILL.md` - Workflow reference documents used by agents
-- `AGENTS_WORKFLOW.md` (this file) - Strategic overview, workflow diagrams, quality gates, and cross-agent context
 
-## 🔄 Workflow
+- `.opencode/docs/ARCHITECTURE.md` - Agent Team architecture and design principles
+- `.opencode/docs/REQUIREMENTS.md` - Agent Dev Team functional and quality requirements
+- `.opencode/docs/WORKFLOW.md` - This file: strategic overview, workflow diagrams, quality gates, and cross-agent context
+- `.opencode/skills/*/SKILL.md` - Workflow reference documents used by agents
+
+## Workflow
 
 ### Primary Flow: Successful Feature
 
@@ -304,7 +318,7 @@ Requirements Unclear → Tester escalates to Product Owner for clarification
 Acceptance criteria ambiguous → Product Owner clarifies and confirms
 ```
 
-## 📋 Standardized Output Formats
+## Standardized Output Formats
 
 ### Product Owner Output
 
@@ -403,18 +417,18 @@ Acceptance criteria ambiguous → Product Owner clarifies and confirms
 ✅ Ready for Production / ❌ Return to Developer for fixes
 ```
 
-## 🎯 Agent Tools
+## Agent Tools
 
-Each agent is configured with specific permissions in its respective ``-agent.md` (YAML config + detailed documentation)` file:
+Each agent is configured with specific permissions in its respective `.agent.md` file:
 
-- **[product-owner`-agent.md` (YAML config + detailed documentation)](product-owner`-agent.md` (YAML config + detailed documentation))** → default OpenCode permissions
-- **[architect`-agent.md` (YAML config + detailed documentation)](architect`-agent.md` (YAML config + detailed documentation))** → `read`, `grep`, `glob`, `list`
-- **[developer`-agent.md` (YAML config + detailed documentation)](developer`-agent.md` (YAML config + detailed documentation))** → `edit`, `bash`, `task`, `read`, `glob`, `grep`
-- **[tester`-agent.md` (YAML config + detailed documentation)](tester`-agent.md` (YAML config + detailed documentation))** → `task`, `bash`, `read`, `glob`, `grep`
+- **[product-owner.agent.md]** → default OpenCode permissions
+- **[architect.agent.md]** → `read`, `grep`, `glob`, `list`
+- **[developer.agent.md]** → `edit`, `bash`, `task`, `read`, `glob`, `grep`
+- **[tester.agent.md]** → `task`, `bash`, `read`, `glob`, `grep`
 
 See individual agent files for detailed descriptions of tool usage.
 
-## 🚀 Using This Agent Team
+## Using This Agent Team
 
 ### Step 1: Start with Product Owner
 
@@ -452,8 +466,8 @@ Implement the following architecture plan:
 [Architect output]
 
 Constraints:
-- Follow doc/CONTRIBUTING.md
-- Add tests per doc/TESTING.md
+- Follow CONTRIBUTING.md
+- Add tests per TESTING.md
 ```
 
 **Output:** Code changes, tests, commits
@@ -475,7 +489,7 @@ Implementation:
 
 **Output:** Pass/Fail decision with evidence
 
-## 📚 Documentation Foundation
+## Documentation Foundation
 
 All agents operate on shared context from:
 
@@ -483,22 +497,22 @@ All agents operate on shared context from:
    - Used by all agents for domain understanding
    - Referenced for project goals and constraints
 
-2. **doc/ARCHITECTURE.md** - System design and patterns
+2. **ARCHITECTURE.md** - System design and patterns
    - Used by Architect for design decisions
    - Used by Developer for implementation patterns
    - Used by Tester for integration validation
 
-3. **doc/CONTRIBUTING.md** - Coding standards and workflows
+3. **CONTRIBUTING.md** - Coding standards and workflows
    - Used by Developer for code style
    - Used by Tester for quality assessment
    - Used by all agents for commit conventions
 
-4. **doc/TESTING.md** - Testing strategy and requirements
+4. **TESTING.md** - Testing strategy and requirements
    - Used by Architect for test planning
    - Used by Developer for test implementation
    - Used by Tester for coverage validation
 
-## ✅ Quality Gates
+## Quality Gates
 
 ### Product Owner Gate
 ✓ Requirements are testable and unambiguous
@@ -522,7 +536,7 @@ All agents operate on shared context from:
 ✓ No regressions detected
 ✓ Code quality meets standards
 
-## 🔍 Monitoring & Handoff Rules
+## Monitoring & Handoff Rules
 
 ### Handoff Checklist
 
@@ -556,7 +570,7 @@ All agents operate on shared context from:
 - [ ] Root causes identified
 - [ ] Clear path to fixes
 
-## 🛡️ Constraints & Boundaries
+## Constraints & Boundaries
 
 | Agent | Can Do | Cannot Do |
 |-------|--------|-----------|
@@ -565,7 +579,7 @@ All agents operate on shared context from:
 | **Developer** | ✅ Implement code | ❌ Modify architecture |
 | **Tester** | ✅ Validate & approve | ❌ Approve without verification |
 
-## 🎓 Best Practices
+## Best Practices
 
 1. **Clarity First**: Ensure each handoff is complete and unambiguous
 2. **Documentation**: Always reference project documentation
@@ -573,7 +587,7 @@ All agents operate on shared context from:
 4. **Iteration**: If issues found, loop back to relevant agent
 5. **Audit Trail**: Keep all outputs for traceability
 
-## 📊 Workflow Examples
+## Workflow Examples
 
 ### Example 1: Complete Happy Path
 
@@ -607,13 +621,13 @@ Tester: Validate & approve ✅
 Feature complete
 ```
 
-## 🔗 Related Files
+## Related Files
 
 ### Agent Definitions (`.opencode/agents/`)
-- `.opencode/agents/product-owner-agent.md` (YAML config + detailed documentation) - Product Owner Agent configuration
-- `.opencode/agents/architect-agent.md` (YAML config + detailed documentation) - Architect Agent configuration
-- `.opencode/agents/developer-agent.md` (YAML config + detailed documentation) - Developer Agent configuration
-- `.opencode/agents/tester-agent.md` (YAML config + detailed documentation) - Tester & Validator Agent configuration
+- `.opencode/agents/product-owner.agent.md` (YAML config + detailed documentation) - Product Owner Agent configuration
+- `.opencode/agents/architect.agent.md` (YAML config + detailed documentation) - Architect Agent configuration
+- `.opencode/agents/developer.agent.md` (YAML config + detailed documentation) - Developer Agent configuration
+- `.opencode/agents/tester.agent.md` (YAML config + detailed documentation) - Tester & Validator Agent configuration
 
 ### Pipeline Scripts (`.opencode/scripts/`)
 - `.opencode/scripts/detect_mode.py` — Mode detection from user chat messages → persists to `~/.opencode/pipeline-state.json`
@@ -632,10 +646,9 @@ Feature complete
 - `README.md` - Project documentation
 - `doc/ARCHITECTURE.md` - System architecture
 - `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")
-- `doc/AGENTS_WORKFLOW.md` - This file
 - `doc/TESTING.md` - Testing documentation
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Agent Not Responding
 - Verify agent file exists in `.opencode/agents/`
@@ -655,5 +668,5 @@ Feature complete
 ---
 
 **Last Updated:** 2026-04-21
-**Version:** 1.0
+**Version:** 1.1 (consolidated from `doc/AGENTS_WORKFLOW.md` into `.opencode/agents/`)
 **Status:** ✅ Production Ready

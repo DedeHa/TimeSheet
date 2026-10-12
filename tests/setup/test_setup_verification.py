@@ -3,13 +3,14 @@
 This module validates that the project's testing environment is correctly
 configured after the CI workflow and naming-convention changes:
 
-- Unit tests live under ``tests/unit/``
-- Integration tests live under ``tests/integration/``
-- System tests live under ``tests/system/``
+- Application tests live under ``tests/unit/``, ``tests/integration/``,
+  ``tests/system/`` (one folder + one marker per level)
+- CI self-tests live under ``tests/ci-pipeline/`` (CI support scripts)
+- Agent Dev Team / pipeline tests live under ``.opencode/tests/agents/``
 - ``.github/workflows/`` holds workflow definitions only (no ``.py`` scripts)
 - ``.github/scripts/`` holds CI support scripts (``verb_subject``, e.g.
-  ``generate_pr_summary``); ``.github/tests/ci-pipeline/`` holds their unit
-  tests (``test_verb_subject``), and ``.github/tests/agents/`` holds
+  ``generate_pr_summary``); ``tests/ci-pipeline/`` holds their unit tests
+  (``test_verb_subject``), and ``.opencode/tests/agents/`` holds the
   agent-team tests.
 
 Run with::
@@ -30,8 +31,8 @@ EXPECTED_DIRS = [
 GITHUB_DIR = REPO_ROOT / ".github"
 WORKFLOWS_DIR = GITHUB_DIR / "workflows"
 SCRIPTS_DIR = GITHUB_DIR / "scripts"
-TESTS_DIR = GITHUB_DIR / "tests" / "ci-pipeline"
-AGENTS_TESTS_DIR = GITHUB_DIR / "tests" / "agents"
+CI_PIPELINE_TESTS_DIR = REPO_ROOT / "tests" / "ci-pipeline"
+AGENT_TESTS_DIR = REPO_ROOT / ".opencode" / "tests" / "agents"
 
 EXPECTED_CI_FILES = [
     WORKFLOWS_DIR / "python-ci.yml",
@@ -39,10 +40,10 @@ EXPECTED_CI_FILES = [
     SCRIPTS_DIR / "generate_pr_summary.py",
     SCRIPTS_DIR / "generate_traceability_matrix.py",
     SCRIPTS_DIR / "validate_pr.py",
-    TESTS_DIR / "test_generate_pr_summary.py",
-    TESTS_DIR / "test_generate_traceability_matrix.py",
-    TESTS_DIR / "test_validate_pr.py",
-    TESTS_DIR / "test_verify_ci_workflow.py",
+    CI_PIPELINE_TESTS_DIR / "test_generate_pr_summary.py",
+    CI_PIPELINE_TESTS_DIR / "test_generate_traceability_matrix.py",
+    CI_PIPELINE_TESTS_DIR / "test_validate_pr.py",
+    CI_PIPELINE_TESTS_DIR / "test_verify_ci_workflow.py",
 ]
 
 
@@ -74,13 +75,25 @@ def test_workflows_dir_has_only_definitions():
 def test_ci_scripts_are_not_named_as_tests():
     """.github/scripts/ holds production scripts (verb_subject), never test_*."""
     bad = [f.name for f in SCRIPTS_DIR.glob("*.py") if f.name.startswith("test_")]
-    assert not bad, f"Test files must live in .github/tests/, not scripts/: {bad}"
+    assert not bad, f"Test files must live in tests/ci-pipeline/, not scripts/: {bad}"
 
 
 def test_ci_tests_use_test_prefix():
-    """Every Python file in .github/tests/ is a test_* module."""
-    bad = [f.name for f in TESTS_DIR.glob("*.py") if not f.name.startswith("test_")]
-    bad += [
-        f.name for f in AGENTS_TESTS_DIR.glob("*.py") if not f.name.startswith("test_")
+    """Every Python file in tests/ci-pipeline/ and .opencode/tests/agents/ is a test_* module."""
+    bad = [
+        f.name
+        for f in CI_PIPELINE_TESTS_DIR.glob("*.py")
+        if not f.name.startswith("test_")
     ]
-    assert not bad, f".github/tests/ must contain only test_* files: {bad}"
+    bad += [
+        f.name for f in AGENT_TESTS_DIR.glob("*.py") if not f.name.startswith("test_")
+    ]
+    assert not bad, f"Test directories must contain only test_* files: {bad}"
+
+
+def test_no_tests_under_github_tests():
+    """.github/tests/ no longer exists - CI self-tests live under tests/ci-pipeline/."""
+    assert not (REPO_ROOT / ".github" / "tests").is_dir(), (
+        ".github/tests/ has been removed; CI self-tests live under tests/ci-pipeline/ "
+        "and agent-team tests under .opencode/tests/agents/"
+    )

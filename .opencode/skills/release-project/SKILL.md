@@ -63,7 +63,7 @@ gh pr create --base master \
 ## Testing
 - python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
 - python .github/scripts/generate_traceability_matrix.py
-- pytest -q .github/tests/ci-pipeline/
+- pytest -q tests/ci-pipeline/
 
 Refs: PRO-XXX"
 ```
@@ -208,7 +208,7 @@ gh run list --branch vX.Y.Z --limit 1
 ## Related Documents
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
-- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `doc/CONTRIBUTING.md` — Development standards
 - `doc/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/release-project/` — This skill

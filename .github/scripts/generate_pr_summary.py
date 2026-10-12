@@ -58,8 +58,8 @@ APP_TEST_LEVELS: list[tuple[str, str]] = [
     ("System Tests", "system-results.xml"),
 ]
 
-#: CI-pipeline test levels: the .github/tests suite has two groups
-#: (ci-pipeline/ and agents/). Reported separately from the application tests.
+#: CI-pipeline test levels: the tests/ci-pipeline suite (CI support scripts).
+#: Reported separately from the application tests.
 CI_TEST_LEVELS: list[tuple[str, str]] = [
     ("CI Self-Tests", "ci-results.xml"),
 ]
@@ -229,8 +229,9 @@ def read_ci_coverage(reports_dir: Path) -> Optional[float]:
     """Return the CI pipeline code coverage % from ``ci-coverage.json``.
 
     The ``test`` job runs ``coverage json -o tests/reports/ci-coverage.json``
-    on the ``.github/tests`` suite. This reads the combined ``percent_covered``
-    from that file, or ``None`` when it is missing or unparseable.
+    on the ``tests/ci-pipeline`` suite. This reads the combined
+    ``percent_covered`` from that file, or ``None`` when it is missing or
+    unparseable.
     """
     path = reports_dir / "ci-coverage.json"
     if not path.exists():
@@ -281,7 +282,7 @@ def _app_levels(levels: list[LevelStats]) -> list[LevelStats]:
 
 
 def _ci_levels(levels: list[LevelStats]) -> list[LevelStats]:
-    """CI-pipeline test levels: the .github/tests suite (ci-pipeline/ + agents/)."""
+    """CI-pipeline test levels: the tests/ci-pipeline suite."""
     return [level for level in levels if level.name in CI_LEVEL_NAMES]
 
 
@@ -305,7 +306,7 @@ def _status_overview(data: SummaryData) -> list[str]:
     """Return the Step / Status / Summary overview table (no numbering).
 
     Testing is split into two rows: the application (script) tests and the
-    CI-pipeline tests (`.github/tests`).
+    CI-pipeline tests (`tests/ci-pipeline`).
     """
     lint_status = _result_indicator(data.lint_result)
     trace_status = _traceability_status(data.traceability_coverage)
@@ -433,7 +434,7 @@ def render_markdown(data: SummaryData, matrix_md: Optional[str] = None) -> str:
         "",
         *_level_table(_app_levels(data.levels)),
         "",
-        "#### CI Pipeline (`.github/tests`)",
+        "#### CI Pipeline (`tests/ci-pipeline`)",
         "",
         f"- Summary: **{ci_cell}** · Status: {ci_status}",
         "",

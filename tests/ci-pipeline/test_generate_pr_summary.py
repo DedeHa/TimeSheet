@@ -2,12 +2,12 @@
 
 These validate the parsing and rendering logic of ``generate_pr_summary.py`` in
 isolation. Like ``test_generate_traceability_matrix.py`` this file lives under
-``.github/tests/ci-pipeline/`` (not in ``tests/``), so it does not change the
+``tests/ci-pipeline/`` (not in ``tests/``), so it does not change the
 103-test application suite or the coverage gate. This is a developer unit test
 - the CI pipeline runs the generator script itself, not this test - and can
 be run with::
 
-    pytest -q .github/tests/ci-pipeline/test_generate_pr_summary.py
+    pytest -q tests/ci-pipeline/test_generate_pr_summary.py
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[3]
+    Path(__file__).resolve().parents[2]
     / ".github"
     / "scripts"
     / "generate_pr_summary.py"
@@ -142,7 +142,7 @@ def test_ci_pipeline_tests_reported_separately(tmp_path):
     assert "| CI-Pipeline Tests | ✅ Passed | 100.0% (44/44 passed) |" in report
     # Separate subsections, each with its own Total (not a single blended total).
     assert "#### Application (unit + integration + system)" in report
-    assert "#### CI Pipeline (`.github/tests`)" in report
+    assert "#### CI Pipeline (`tests/ci-pipeline`)" in report
     assert "| CI Self-Tests | 44 | 44 | 0 | 0 |" in report
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report  # application total
     assert "| **Total** | 44 | 44 | 0 | 0 |" in report  # CI total
@@ -238,7 +238,7 @@ def test_overall_pass(tmp_path):
     assert "Traceability summary: **100.0%**" in report
     # Testing - separate application / CI subsections; application total row.
     assert "#### Application (unit + integration + system)" in report
-    assert "#### CI Pipeline (`.github/tests`)" in report
+    assert "#### CI Pipeline (`tests/ci-pipeline`)" in report
     assert "| **Total** | 103 | 102 | 0 | 1 |" in report
     # Code Coverage - percentage + gate status.
     assert "Combined line + branch coverage: **99.1%**" in report

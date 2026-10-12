@@ -198,6 +198,43 @@ The system shall record relevant processing information, warnings and errors usi
 
 ---
 
+## FR-INTEGRITY-001 Pre-Closure Validation
+
+**Requirement**
+
+The complete-feature workflow shall validate all critical post-implementation conditions before transitioning a JIRA ticket to "Fertig" (Done). The validation shall include:
+
+* PR merge status verification using `gh pr view`
+* Implementation plan document deletion
+* Working tree cleanliness (no uncommitted changes)
+* Remote branch deletion
+* No unverified PR merge claims in JIRA comments
+
+**Rationale**
+
+Premature JIRA closure corrupts the audit trail and misleads stakeholders about actual delivery state. Automated validation prevents the integrity failure discovered in PRO-380.
+
+**Acceptance Criteria**
+
+* [x] The complete-feature workflow calls `gh pr view` to verify the PR is actually merged before transitioning JIRA to Fertig
+* [x] If the PR is NOT merged, the workflow blocks the transition and reports: "PR #XXX is not merged. Current state: OPEN/CLOSED. Cannot transition to Fertig."
+* [x] The workflow does NOT post a comment claiming PR merge unless `gh pr view` confirms the merge
+* [x] The workflow verifies that the implementation plan document (`doc/02_Implementation_Plan_PRO-XXX.md`) has been deleted before closure
+* [x] The workflow verifies there are no uncommitted changes in the working tree before closure
+* [x] The workflow verifies the remote branch has been deleted (or reports it as a remaining action for the user/PO)
+* [x] If any check fails, the workflow reports the specific failing check and halts — not transition the ticket
+* [x] A pre-closure validation checklist is added to the complete-feature skill, executed automatically before any JIRA transition
+
+**Location**
+
+`.opencode/skills/complete-feature/SKILL.md` (pre-closure validation phase), `ci/scripts/validate_pr_merge.py`, `ci/scripts/validate_filesystem.py`
+
+**Related**
+
+PRO-380 (bug where premature closure was discovered), PRO-383 (fix ticket)
+
+---
+
 # 5. Top-Level Quality Requirements
 
 ## QR-01 Reliability
@@ -239,6 +276,33 @@ Configuration data shall be separated from program code.
 ## QR-07 Traceability
 
 All important processing steps and detected errors shall be logged.
+
+---
+
+## QR-INTEGRITY-002 Pipeline Integrity Validation
+
+**Requirement**
+
+The agent-team pipeline shall provide automated validation of pipeline integrity to prevent premature JIRA closure, with all validation logic covered by a test suite (unit, integration and system tests) that runs as CI self-tests.
+
+**Rationale**
+
+The integrity failure in PRO-380 could not be caught automatically because no tests existed for the complete-feature closure workflow. A dedicated test suite makes validation failures observable in CI before any JIRA transition is permitted.
+
+**Acceptance Criteria**
+
+* [ ] Unit tests cover all validation scenarios (PR merged / not merged / fetch failure, plan deletion, working tree clean / dirty, remote branch present / absent)
+* [ ] Integration tests validate the end-to-end validation sequence with mocked PR states
+* [ ] System tests verify real-world scenarios against the actual repository state
+* [ ] Validation failures are reported with specific error messages identifying the failing check
+
+**Location**
+
+`tests/ci-pipeline/test_complete_feature_validation.py`, `doc/REQUIREMENTS.md`
+
+**Related**
+
+PRO-380 (bug where premature closure was discovered), PRO-383 (fix ticket)
 
 ---
 

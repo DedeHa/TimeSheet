@@ -280,7 +280,7 @@ Before making pass/fail decision:
 - [ ] All critical/medium issues addressed
 - [ ] Decision is data-driven and documented
 - [ ] Traceability matrix generates without errors (`python .github/scripts/generate_traceability_matrix.py`)
-- [ ] CI self-tests pass (`pytest -q .github/tests/`)
+- [ ] CI self-tests pass (`pytest -q tests/ci-pipeline/`)
 
 ## Decision Rules
 
@@ -377,7 +377,7 @@ Expected output format:
 
 This agent definition follows the workflow documented in:
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
-- `doc/AGENTS_WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
+- `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `.opencode/skills/complete-feature/SKILL.md` — Feature completion workflow (final-verification, evaluate-ac, assign-story-points, close-ticket)
 - `doc/TESTING.md` — Test markers and organization
 - `doc/CONTRIBUTING.md` — Contributing guidelines & Git workflow

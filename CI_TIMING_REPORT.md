@@ -1,6 +1,6 @@
 # CI Pipeline Timing Benchmark
 
-Included runs: 137
+Included runs: 138
 
 > ⚠️ GitHub-hosted runners are shared and noisy; per-step times vary run-to-run (often ±10–30%). Read **stddev alongside mean**, prefer **median / p95** for decisions, and treat these as **trend indicators**, not benchmarks of the code itself.
 
@@ -57,7 +57,7 @@ Included runs: 137
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 109 | 31.7 | 7.0 | 33.0 | 44.0 | 18.0 | 47.0 | 25.0 |
+| **Job total** | 110 | 31.7 | 6.9 | 33.0 | 42.0 | 18.0 | 47.0 | 31.0 |
 | Install dependencies and setup environment | 32 | 11.4 | 2.3 | 11.0 | 15.0 | 8.0 | 17.0 | 10.0 |
 | Run ./.github/actions/setup-python-deps | 77 | 9.4 | 6.4 | 7.0 | 21.0 | 2.0 | 24.0 | 3.0 |
 | Run system tests | 109 | 6.2 | 2.0 | 6.0 | 9.0 | 3.0 | 9.0 | 3.0 |
@@ -101,7 +101,7 @@ Included runs: 137
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 82 | 24.4 | 12.0 | 21.5 | 44.0 | 9.0 | 61.0 | 17.0 |
+| **Job total** | 83 | 24.5 | 11.9 | 22.0 | 44.0 | 9.0 | 61.0 | 28.0 |
 | Install dependencies and setup environment | 5 | 13.0 | 1.6 | 13.0 | 15.0 | 11.0 | 15.0 | 12.0 |
 | Pull wagoid/commitlint-github-action:6.2.1 | 27 | 12.2 | 3.3 | 11.0 | 20.0 | 9.0 | 22.0 | 9.0 |
 | Run ./.github/actions/setup-python-deps | 77 | 9.6 | 6.7 | 7.0 | 20.0 | 2.0 | 33.0 | 6.0 |
@@ -121,7 +121,7 @@ Included runs: 137
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 66 | 10.3 | 6.5 | 9.0 | 13.0 | 6.0 | 46.0 | 9.0 |
+| **Job total** | 67 | 10.3 | 6.4 | 9.0 | 13.0 | 6.0 | 46.0 | 10.0 |
 | Run actions/checkout@v5 | 65 | 1.3 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
 | Publish or update sticky PR comment | 66 | 1.2 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 2.0 |
 | Download test reports | 66 | 0.7 | 0.5 | 1.0 | 1.0 | 0.0 | 1.0 | 0.0 |
@@ -132,7 +132,7 @@ Included runs: 137
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 24 | 17.6 | 5.5 | 16.5 | 29.0 | 12.0 | 34.0 | 14.0 |
+| **Job total** | 25 | 17.6 | 5.4 | 16.0 | 29.0 | 12.0 | 34.0 | 16.0 |
 | Run ./.github/actions/setup-python-deps | 24 | 6.5 | 5.2 | 5.0 | 19.0 | 2.0 | 22.0 | 2.0 |
 | Run agent tests | 24 | 3.0 | 0.8 | 3.0 | 4.0 | 1.0 | 4.0 | 3.0 |
 | Run actions/checkout@v5 | 24 | 1.7 | 0.8 | 2.0 | 3.0 | 1.0 | 4.0 | 3.0 |

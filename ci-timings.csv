@@ -3202,3 +3202,7 @@ run_id,run_attempt,pr_number,head_sha,workflow_sha,created_at,job_name,step_name
 38464179482,1,127,1e06b5efb3fd9f0a704b8ccc2395d1ff1cad96e2,,2026-10-13T20:36:35Z,Run all test levels (unit + integration + system),Export CI pipeline coverage,11,0.0,success,unknown,master
 38464179482,1,127,1e06b5efb3fd9f0a704b8ccc2395d1ff1cad96e2,,2026-10-13T20:36:35Z,Run all test levels (unit + integration + system),Combined coverage report and 90% gate,12,0.0,success,unknown,master
 38464179482,1,127,1e06b5efb3fd9f0a704b8ccc2395d1ff1cad96e2,,2026-10-13T20:36:35Z,Run all test levels (unit + integration + system),Upload test results,13,1.0,success,unknown,master
+38467464604,1,127,6d58eed45aeb95e3149f4391bd608eff38740d23,,2026-10-13T21:01:46Z,Agent System Tests,<job total>,0,16.0,success,unknown,master
+38467464604,1,127,6d58eed45aeb95e3149f4391bd608eff38740d23,,2026-10-13T21:01:46Z,Naming Conventions & Linting Check,<job total>,0,28.0,success,unknown,master
+38467464604,1,127,6d58eed45aeb95e3149f4391bd608eff38740d23,,2026-10-13T21:01:46Z,Publish,<job total>,0,10.0,success,unknown,master
+38467464604,1,127,6d58eed45aeb95e3149f4391bd608eff38740d23,,2026-10-13T21:01:46Z,Run all test levels (unit + integration + system),<job total>,0,31.0,success,unknown,master

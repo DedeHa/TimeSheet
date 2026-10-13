@@ -173,7 +173,7 @@ python .github/scripts/generate_traceability_matrix.py
 
 ## Step 3 — Update JIRA Ticket
 
-### 3a. Add Implementation Status Comment
+### 3a. Add Implementation Status Comment (Final Summary)
 
 > **⚠️ GATED BY CHECK 1 — PR merge verification must pass first.**
 >
@@ -188,31 +188,53 @@ python .github/scripts/generate_traceability_matrix.py
 > 2. If the PR is NOT merged (or `gh pr view` fails), do NOT post this comment.
 >    Report the PR state failure and halt the workflow.
 > 3. Only if Check 1 passes, proceed to post the comment below.
+>
+> **This is a mandatory closure artifact.** The final summary comment must be
+> posted to the JIRA ticket before transitioning to Fertig. It serves as the
+> permanent record of what was done, what was verified, and the final state of
+> all acceptance criteria. Without this comment, the ticket closure is
+> incomplete — the summary exists only in the PR body and commit history, not
+> in the JIRA ticket itself.
 
 Post a comprehensive comment using `atlassian_addCommentToJiraIssue`:
 
 ```
-## PRO-XXX Implementation Status Update
+## PRO-XXX Final Summary — Feature Complete
 
-All work for PRO-XXX is complete. Here is the final status:
+All work for PRO-XXX is complete and merged to master. This comment is the
+permanent closure record for the ticket.
 
-### Completed Work
-- List each optimisation/fix with status
+### What Was Done
+<list each optimisation/fix with a one-line description and the commit hash>
 
 ### Acceptance Criteria Status
 | AC | Description | Status |
 |----|-------------|--------|
 | AC1 | ... | ✅ Complete |
-...
+| AC2 | ... | ✅ Complete |
+| ... | ... | ... |
 
 ### Definition of Done
-- [x] All items checked
+- [x] PR #NNN merged to master
+- [x] All ACs checkmarked
+- [x] Story Points: N assigned
+- [x] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
+- [x] Architecture updated: doc/ARCHITECTURE.md lists new FR/QR
+- [x] CI self-tests: N passed
+- [x] Lint checks: ruff, black, pydocstyle, radon
+- [x] Application tests: N passed (≥90% coverage)
+- [x] Implementation plan deleted: doc/02_Implementation_Plan_PRO-XXX.md
+- [x] JIRA description fully checkmarked
 
 ### Test Results
-- Application tests: N passed (100%)
-- CI self-tests: N passed (100%)
+- Application tests: N passed
+- CI self-tests: N passed
 - Traceability: 100%
 - Code coverage: XX% (gate: 90%)
+- Lint: ruff ✅, black ✅, pydocstyle ✅, radon ✅
+
+### Files Changed
+<list key files added/modified/deleted>
 
 Refs: PRO-XXX
 ```
@@ -574,18 +596,24 @@ confirmation; it never auto-executes destructive actions.
 | Order | Step | Section | Command |
 |-------|------|---------|---------|
 | 1 | Delete implementation plan | §3d | `git rm doc/02_Implementation_Plan_PRO-XXX.md` + commit + push |
-| 2 | Merge PR | §3f | `gh pr merge <PR_NUMBER> --merge` |
-| 3 | Transition JIRA to DONE | §3g | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
-| 4 | Delete remote branch | §3h | `git push origin --delete <branch-name>` |
+| 2 | Post JIRA final summary comment | §3a | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
+| 3 | Merge PR | §3f | `gh pr merge <PR_NUMBER> --merge` |
+| 4 | Transition JIRA to DONE | §3g | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
+| 5 | Delete remote branch | §3h | `git push origin --delete <branch-name>` |
 
 **Rationale for this order:**
 1. The implementation plan is a working document that is finalised and marked
    Complete before any destructive action. Deleting it first removes the
    dependency on the plan and lets the merge commit stand on its own.
-2. The PR is merged to `master` so the work is preserved in the mainline before
+2. The JIRA final summary comment is posted before the merge so the ticket
+   has a permanent closure record that includes the PR number, test results,
+   and AC status. This comment is the authoritative summary for stakeholders
+   and must exist before the ticket transitions to Fertig.
+3. The PR is merged to `master` so the work is preserved in the mainline before
    the feature branch is removed.
-3. The JIRA ticket is transitioned to Fertig once the PR is merged and verified.
-4. The remote feature branch is deleted last, after everything else is done, so
+4. The JIRA ticket is transitioned to Fertig once the PR is merged, the
+   summary comment is posted, and all checks are verified.
+5. The remote feature branch is deleted last, after everything else is done, so
    the branch remains available until the final step is confirmed.
 
 **Note:** `gh pr edit` updates only the PR description; it does not merge the PR.

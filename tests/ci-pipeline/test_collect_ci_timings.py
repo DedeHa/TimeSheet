@@ -153,7 +153,7 @@ def test_extract_rows_includes_branch():
 
 
 def test_write_json_creates_file(tmp_path):
-    """write_json() creates ci_runtimes.json with correct schema."""
+    """write_json() creates data/ci_runtimes.json with correct schema."""
     import json
 
     path = tmp_path / "runtimes.json"

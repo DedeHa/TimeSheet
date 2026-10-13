@@ -233,12 +233,12 @@ jobs:
         if: env.UPDATE_DATA == 'true'
         run: |
           set -euo pipefail
-          # Commit ci_runtimes.json and ci_metrics.json to master branch
+          # Commit data/ci_runtimes.json and data/ci_metrics.json to master branch
           # Separate commit from ci-metrics to prevent loop
           # The data files live at the project root on master
-          if [ -f ci_runtimes.json ] || [ -f ci_metrics.json ]; then
+          if [ -f data/ci_runtimes.json ] || [ -f data/ci_metrics.json ]; then
             echo "JSON files exist at project root"
-            git -c user.name=github-actions -c user.email=actions@github.com add ci_runtimes.json ci_metrics.json
+            git -c user.name=github-actions -c user.email=actions@github.com add data/ci_runtimes.json data/ci_metrics.json
             git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update data/ folder with JSON outputs"
             git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin master
           else

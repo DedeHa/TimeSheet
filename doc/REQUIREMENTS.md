@@ -338,11 +338,11 @@ The CI pipeline shall isolate GPG signing setup in a dedicated reusable composit
 
 ## FR-19 CI Timing Statistical Enhancement
 
-The CI timing pipeline shall compute and include rolling window statistics (rolling mean and sample stddev over a configurable window, default 20 runs), Bollinger bands (mean ± k·stddev, default k=2), and normal distribution parameters (μ, σ) per `(job, step)` bucket in `ci_metrics.json`. All statistical computations shall use only the Python standard library (`statistics.stdev` for sample stddev).
+The CI timing pipeline shall compute and include rolling window statistics (rolling mean and sample stddev over a configurable window, default 20 runs), Bollinger bands (mean ± k·stddev, default k=2), and normal distribution parameters (μ, σ) per `(job, step)` bucket in `data/ci_metrics.json`. All statistical computations shall use only the Python standard library (`statistics.stdev` for sample stddev).
 
 ## QR-12 CI Timing Traceability
 
-The CI timing pipeline shall validate that every `ready` entry in `ci_metrics.json` includes the new statistical keys (`rolling`, `bollinger`, `distribution`) via the schema validator, and shall regenerate metrics from the full dataset on every update to ensure idempotent, drift-free output.
+The CI timing pipeline shall validate that every `ready` entry in `data/ci_metrics.json` includes the new statistical keys (`rolling`, `bollinger`, `distribution`) via the schema validator, and shall regenerate metrics from the full dataset on every update to ensure idempotent, drift-free output.
 
 ---
 

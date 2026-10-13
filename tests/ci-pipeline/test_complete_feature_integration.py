@@ -204,15 +204,15 @@ class TestRealFilesystemValidation:
         result = fs_mod.is_working_tree_clean()
         assert isinstance(result, bool)
 
-    def test_implementation_plan_exists_for_this_ticket(self):
-        """The PRO-405 implementation plan exists (it is deleted at closure)."""
-        # The plan must exist during implementation; it is deleted as the final
-        # closure step (Step 3d) once the feature is complete and merged.
+    def test_implementation_plan_deleted_for_this_ticket(self):
+        """The PRO-405 implementation plan is deleted (post-closure state)."""
+        # The plan is a working document that is deleted as the final closure
+        # step (Step 3d) once the feature is complete and merged to master.
         assert (
             fs_mod.is_implementation_plan_deleted(
                 "doc/02_Implementation_Plan_PRO-405.md"
             )
-            is False
+            is True
         )
 
     def test_remote_branch_absent_locally(self):

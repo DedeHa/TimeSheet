@@ -51,7 +51,7 @@ class TestCompleteValidationSequence:
         mock_pr_state = {
             "state": "MERGED",
             "mergeCommit": "abc123def456",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with (
             patch.object(mod, "get_pr_state", return_value=mock_pr_state),
@@ -61,7 +61,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is True
@@ -73,7 +73,7 @@ class TestCompleteValidationSequence:
         mock_pr_state = {
             "state": "OPEN",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with (
             patch.object(mod, "get_pr_state", return_value=mock_pr_state),
@@ -103,7 +103,7 @@ class TestCompleteValidationSequence:
         mock_pr_state = {
             "state": "MERGED",
             "mergeCommit": "abc123",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with (
             patch.object(mod, "get_pr_state", return_value=mock_pr_state),
@@ -113,7 +113,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is False
@@ -124,7 +124,7 @@ class TestCompleteValidationSequence:
         mock_pr_state = {
             "state": "MERGED",
             "mergeCommit": "abc123",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with (
             patch.object(mod, "get_pr_state", return_value=mock_pr_state),
@@ -134,7 +134,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is False
@@ -145,7 +145,7 @@ class TestCompleteValidationSequence:
         mock_pr_state = {
             "state": "MERGED",
             "mergeCommit": "abc123",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with (
             patch.object(mod, "get_pr_state", return_value=mock_pr_state),
@@ -155,7 +155,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is False
@@ -166,7 +166,7 @@ class TestCompleteValidationSequence:
         mock_pr_state = {
             "state": "OPEN",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with (
             patch.object(mod, "get_pr_state", return_value=mock_pr_state),
@@ -176,7 +176,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert pr_valid is False
             assert fs_valid is False
@@ -196,7 +196,7 @@ class TestRealFilesystemValidation:
         """The repository working tree is clean when tests run.
 
         The working tree may contain uncommitted changes during active
-        implementation (e.g. the PRO-383 fix in progress). This test verifies
+        implementation (e.g. the PRO-405 fix in progress). This test verifies
         the check itself behaves correctly — it returns a bool — rather than
         asserting a specific state, since the tree state is environment-
         dependent.
@@ -205,12 +205,12 @@ class TestRealFilesystemValidation:
         assert isinstance(result, bool)
 
     def test_implementation_plan_exists_for_this_ticket(self):
-        """The PRO-383 implementation plan exists (it is deleted at closure)."""
+        """The PRO-405 implementation plan exists (it is deleted at closure)."""
         # The plan must exist during implementation; it is deleted as the final
         # closure step (Step 3d) once the feature is complete and merged.
         assert (
             fs_mod.is_implementation_plan_deleted(
-                "doc/02_Implementation_Plan_PRO-383.md"
+                "doc/02_Implementation_Plan_PRO-405.md"
             )
             is False
         )
@@ -219,19 +219,19 @@ class TestRealFilesystemValidation:
         """The feature branch is not present on the remote origin locally."""
         # In this environment the branch does not exist on origin; the check
         # should return True (branch absent) rather than failing.
-        result = fs_mod.is_remote_branch_deleted("feature/PRO-383")
+        result = fs_mod.is_remote_branch_deleted("feature/PRO-405")
         assert result is True
 
     def test_real_filesystem_validation_sequence(self):
         """End-to-end validation sequence on the real filesystem."""
-        fs_mod.is_implementation_plan_deleted("doc/02_Implementation_Plan_PRO-383.md")
+        fs_mod.is_implementation_plan_deleted("doc/02_Implementation_Plan_PRO-405.md")
         fs_mod.is_working_tree_clean()
-        fs_mod.is_remote_branch_deleted("feature/PRO-383")
+        fs_mod.is_remote_branch_deleted("feature/PRO-405")
         # During implementation the plan exists and the tree may have changes,
         # so the combined result is expected to be False; the individual
         # checks above are verified separately.
         all_passed, message = fs_mod.validate_filesystem(
-            "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+            "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
         )
         assert isinstance(all_passed, bool)
         assert isinstance(message, str)
@@ -251,7 +251,7 @@ class TestCommentGating:
         mock_pr_state = {
             "state": "MERGED",
             "mergeCommit": "abc123",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_pr_state):
             is_valid, _ = mod.validate_pr_merge(383)
@@ -264,7 +264,7 @@ class TestCommentGating:
         mock_pr_state = {
             "state": "OPEN",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_pr_state):
             is_valid, _ = mod.validate_pr_merge(383)
@@ -275,7 +275,7 @@ class TestCommentGating:
         mock_pr_state = {
             "state": "CLOSED",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_pr_state):
             is_valid, _ = mod.validate_pr_merge(383)

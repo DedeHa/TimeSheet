@@ -48,7 +48,7 @@ class TestGetPrState:
 
     def test_get_pr_state_parses_merged_pr(self):
         """get_pr_state returns parsed JSON for a merged PR."""
-        mock_output = '{"mergeCommit": "abc123def456", "state": "MERGED", "headRefName": "feature/PRO-383"}'
+        mock_output = '{"mergeCommit": "abc123def456", "state": "MERGED", "headRefName": "feature/PRO-405"}'
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = mock_output
@@ -57,7 +57,7 @@ class TestGetPrState:
             assert state is not None
             assert state["state"] == "MERGED"
             assert state["mergeCommit"] == "abc123def456"
-            assert state["headRefName"] == "feature/PRO-383"
+            assert state["headRefName"] == "feature/PRO-405"
 
     def test_get_pr_state_returns_none_on_failure(self):
         """get_pr_state returns None when gh pr view fails."""
@@ -106,7 +106,7 @@ class TestValidatePrMerge:
         mock_state = {
             "state": "MERGED",
             "mergeCommit": "abc123def",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_state):
             is_valid, message = mod.validate_pr_merge(123)
@@ -118,7 +118,7 @@ class TestValidatePrMerge:
         mock_state = {
             "state": "OPEN",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_state):
             is_valid, message = mod.validate_pr_merge(123)
@@ -131,7 +131,7 @@ class TestValidatePrMerge:
         mock_state = {
             "state": "CLOSED",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_state):
             is_valid, message = mod.validate_pr_merge(123)
@@ -150,7 +150,7 @@ class TestValidatePrMerge:
         mock_state = {
             "state": "MERGED",
             "mergeCommit": "abc123",
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_state):
             assert mod.main(["123"]) == 0
@@ -160,7 +160,7 @@ class TestValidatePrMerge:
         mock_state = {
             "state": "OPEN",
             "mergeCommit": None,
-            "headRefName": "feature/PRO-383",
+            "headRefName": "feature/PRO-405",
         }
         with patch.object(mod, "get_pr_state", return_value=mock_state):
             assert mod.main(["123"]) == 1
@@ -246,25 +246,25 @@ class TestIsRemoteBranchDeleted:
         """Returns True when the branch is absent from origin."""
         with patch.object(fs_mod.subprocess, "run") as mock_run:
             mock_run.return_value.stdout = ""
-            assert fs_mod.is_remote_branch_deleted("feature/PRO-383") is True
+            assert fs_mod.is_remote_branch_deleted("feature/PRO-405") is True
 
     def test_remote_branch_present_returns_false(self):
         """Returns False when the branch still exists on origin."""
         with patch.object(fs_mod.subprocess, "run") as mock_run:
-            mock_run.return_value.stdout = "abc123\trefs/heads/feature/PRO-383\n"
-            assert fs_mod.is_remote_branch_deleted("feature/PRO-383") is False
+            mock_run.return_value.stdout = "abc123\trefs/heads/feature/PRO-405\n"
+            assert fs_mod.is_remote_branch_deleted("feature/PRO-405") is False
 
     def test_remote_branch_deleted_git_failure_returns_true(self):
         """Returns True when ls-remote fails (branch likely absent)."""
         with patch.object(fs_mod.subprocess, "run") as mock_run:
             mock_run.side_effect = subprocess.CalledProcessError(1, "git")
-            assert fs_mod.is_remote_branch_deleted("feature/PRO-383") is True
+            assert fs_mod.is_remote_branch_deleted("feature/PRO-405") is True
 
     def test_remote_branch_deleted_git_not_found_returns_true(self):
         """Returns True when git is not installed (branch likely absent)."""
         with patch.object(fs_mod.subprocess, "run") as mock_run:
             mock_run.side_effect = FileNotFoundError("git")
-            assert fs_mod.is_remote_branch_deleted("feature/PRO-383") is True
+            assert fs_mod.is_remote_branch_deleted("feature/PRO-405") is True
 
 
 class TestValidateFilesystem:
@@ -278,7 +278,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert all_passed is True
             assert "All filesystem checks passed" in message
@@ -291,7 +291,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert all_passed is False
             assert "Implementation plan not deleted" in message
@@ -304,7 +304,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert all_passed is False
             assert "Uncommitted changes detected" in message
@@ -317,7 +317,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=False),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"
+                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
             )
             assert all_passed is False
             assert "Remote branch" in message and "still exists" in message
@@ -330,7 +330,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted") as mock_branch,
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-383.md", ""
+                "doc/02_Implementation_Plan_PRO-405.md", ""
             )
             assert all_passed is True
             mock_branch.assert_not_called()
@@ -344,7 +344,7 @@ class TestValidateFilesystem:
         ):
             assert (
                 fs_mod.main(
-                    ["doc/02_Implementation_Plan_PRO-383.md", "feature/PRO-383"]
+                    ["doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"]
                 )
                 == 0
             )
@@ -352,7 +352,7 @@ class TestValidateFilesystem:
     def test_validate_filesystem_main_failure(self):
         """main() returns exit code 1 when a check fails."""
         with patch.object(fs_mod, "is_implementation_plan_deleted", return_value=False):
-            assert fs_mod.main(["doc/02_Implementation_Plan_PRO-383.md"]) == 1
+            assert fs_mod.main(["doc/02_Implementation_Plan_PRO-405.md"]) == 1
 
 
 if __name__ == "__main__":

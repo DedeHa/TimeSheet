@@ -28,7 +28,10 @@ sys.modules["validate_pr_merge"] = mod = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(mod)
 
 _FILESYSTEM_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "scripts" / "validate_filesystem.py"
+    Path(__file__).resolve().parents[2]
+    / ".github"
+    / "scripts"
+    / "validate_filesystem.py"
 )
 _FS_SPEC = importlib.util.spec_from_file_location(
     "validate_filesystem", _FILESYSTEM_PATH

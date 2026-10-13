@@ -16,7 +16,7 @@ The checks implemented here are:
      absent via ``git ls-remote --heads origin <branch-name>``.
 
 Usage:
-    python ci/scripts/validate_filesystem.py <BRANCH_NAME>
+    python .github/scripts/validate_filesystem.py <BRANCH_NAME>
 
 Exit codes:
     0  - all filesystem checks passed

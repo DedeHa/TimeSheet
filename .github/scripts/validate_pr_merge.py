@@ -8,7 +8,7 @@ used by the complete-feature workflow (see
 FR-INTEGRITY-001 / QR-INTEGRITY-002 validation gates.
 
 Usage:
-    python ci/scripts/validate_pr_merge.py <PR_NUMBER>
+    python .github/scripts/validate_pr_merge.py <PR_NUMBER>
 
 Exit codes:
     0  - PR is merged (validation passed)

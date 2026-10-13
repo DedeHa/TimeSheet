@@ -50,7 +50,7 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | QR-11 | CI GPG action maintainability | [setup-gpg-signing/action.yml](../.github/actions/setup-gpg-signing/action.yml) - dedicated composite action for GPG signing setup, isolated from Python environment setup |
 | FR-19 | CI timing statistical enhancement | [ci_stats.py](../.github/scripts/ci_stats.py) - `compute_rolling_stats()`, `compute_bollinger_bands()`, `compute_normal_distribution()`; [aggregate_ci_timings.py](../.github/scripts/aggregate_ci_timings.py) - `aggregate()` and `write_metrics()` |
 | QR-12 | CI timing traceability | [validator.py](../.github/scripts/validator.py) - `STAT_KEYS` extended with `rolling`, `bollinger`, `distribution`; [test_validator.py](../tests/ci-pipeline/test_validator.py) - schema validation tests |
-| FR-INTEGRITY-001 | Pre-closure validation | `.opencode/skills/complete-feature/SKILL.md` (pre-closure validation phase), `ci/scripts/validate_pr_merge.py`, `ci/scripts/validate_filesystem.py` |
+| FR-INTEGRITY-001 | Pre-closure validation | `.opencode/skills/complete-feature/SKILL.md` (pre-closure validation phase), `.github/scripts/validate_pr_merge.py`, `.github/scripts/validate_filesystem.py` |
 | QR-INTEGRITY-002 | Pipeline integrity validation | `tests/ci-pipeline/test_complete_feature_validation.py`, `.opencode/docs/REQUIREMENTS.md` |
 
 ## CI Setup Design Decision: Composite Action vs. Inlined Steps (QR-08, QR-09)

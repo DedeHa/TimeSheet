@@ -88,7 +88,7 @@ complete-feature workflow
 
 ### 2.1 PR Merge Verification
 
-**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `ci/scripts/validate_pr_merge.py`
+**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `.github/scripts/validate_pr_merge.py`
 
 **Purpose:** Verify that the associated PR is actually merged to master before allowing JIRA transition.
 
@@ -126,7 +126,7 @@ complete-feature workflow
 
 ### 2.3 Implementation Plan Deletion Check
 
-**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `ci/scripts/validate_filesystem.py`
+**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `.github/scripts/validate_filesystem.py`
 
 **Purpose:** Verify that the implementation plan document has been deleted before closure.
 
@@ -141,7 +141,7 @@ complete-feature workflow
 
 ### 2.4 Working Tree Clean Check
 
-**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `ci/scripts/validate_filesystem.py`
+**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `.github/scripts/validate_filesystem.py`
 
 **Purpose:** Verify there are no uncommitted changes in the working tree before closure.
 
@@ -156,7 +156,7 @@ complete-feature workflow
 
 ### 2.5 Remote Branch Deletion Check
 
-**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `ci/scripts/validate_filesystem.py`
+**Location:** `.opencode/skills/complete-feature/SKILL.md` (§2.5), `.github/scripts/validate_filesystem.py`
 
 **Purpose:** Verify the remote feature branch has been deleted (or report as remaining action).
 

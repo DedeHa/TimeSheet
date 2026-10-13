@@ -13,9 +13,9 @@
 ### 1.1 Problem Summary
 
 The CI Timing Benchmark pipeline (`PRO-369`) is not capturing the most recent successful `pull_request` runs of the `Python CI` workflow. Approximately 10 days of successful PR runs (starting from run_id=35116541292, created_at=2026-09-16T15:37:01Z) are missing from all storage locations:
+* `ci_runtimes.json` (master branch)
 
-* `data/runtimes.json` (master branch)
-* `data/metrics.json` (master branch) 
+* `ci_metrics.json` (master branch)
 * `ci-metrics:ci-timings.csv` (ci-metrics branch)
 
 The most recent run (36229056933, created_at=2026-09-26T08:11:53Z, PR #395) is missing from all three storage locations.
@@ -24,7 +24,7 @@ The most recent run (36229056933, created_at=2026-09-26T08:11:53Z, PR #395) is m
 
 All timing data must be stored in:
 - `ci-metrics` branch: `ci-timings.csv` (CSV format, backward compatibility maintained)
-- `master` branch: `data/runtimes.json`, `data/metrics.json` (JSON format with schema v1.0)
+- `master` branch: `ci_runtimes.json`, `ci_metrics.json` (JSON format with schema v1.0)
 
 ### 1.3 Problem Decomposition
 
@@ -357,7 +357,7 @@ If the fix causes issues:
 
 1. **Pre-deployment validation**: Rigorous testing of UPDATE_DATA expression
 2. **Runtime monitoring**: Log any failures to write JSON data
-3. **Data verification**: Automated checks that data/runtimes.json is being updated
+3. **Data verification**: Automated checks that ci_runtimes.json is being updated
 4. **Rollback capability**: Quick rollback if issues are detected
 
 ---

@@ -1,31 +1,51 @@
-# opencode Agent Team — Complete Team Configuration
+## Simplified Model Context
 
-This directory contains the agent team discovered by opencode,
-comprising specialized agents that collaborate to deliver high-quality
-features through a structured, repeatable workflow.
+This section documents the simplified agent model that hides the complexity of the underlying technical architecture while preserving all functionality.
 
-All Agent Dev Team documentation is located in this `.opencode/agents/` folder:
+### Product Owner as Sole Entry Point
 
-```
-AGENTS.md                  ← Top-level guide: project conventions, modes, CI gates (README.md)
-└── .opencode/docs/WORKFLOW.md ← This file: agent team workflow, diagrams, quality gates
-    ├── ARCHITECTURE.md      ← Agent Team architecture and design principles
-    ├── REQUIREMENTS.md      ← Agent Dev Team functional and quality requirements
-    ├── product-owner.agent.md ← Product Owner Agent (YAML config + detailed documentation)
-    ├── architect.agent.md     ← Architect Agent (YAML config + detailed documentation)
-    ├── developer.agent.md     ← Developer Agent (YAML config + detailed documentation)
-    ├── tester.agent.md        ← Tester & Validator Agent (YAML config + detailed documentation)
-    ├── complete-feature/SKILL.md ← Feature completion, AC validation, JIRA closure
-    ├── develop-feature/SKILL.md    ← Feature implementation workflow, implementation steps
-    ├── discover-feature/SKILL.md   ← Feature discovery, JIRA ticket creation, story points, ACs
-    ├── orchestrate-feature/SKILL.md← Pipeline orchestration, dispatch, escalation, handoff tracking
-    ├── refine-feature/SKILL.md     ← Stakeholder review, ticket finalization
-    └── release-project/SKILL.md    ← Release process, versioning, GitHub Release, JIRA version
-```
+The Product Owner is the **only documented entry point** for all workflow initiation. Users interact exclusively with the Product Owner to start, continue, or validate features. The Product Owner handles all user intent parsing, mode detection, and workflow coordination.
+
+### 3-4 Command User Journey
+
+The simplified user journey consists of only 3-4 main commands:
+
+1. **Run in mode** — Set the development mode
+   - `Run in automated mode` — Full pipeline without user pauses
+   - `Run in interactive mode` — Pause at every handover for confirmation
+
+2. **Start feature** — Begin work on a JIRA ticket
+   - The Product Owner orchestrates the complete pipeline: PO → Architect → Developer → Tester → PO (review)
+
+3. **Continue feature** — Advance to the next pipeline step
+   - The Product Owner dispatches the next agent in the pipeline
+
+4. **Validate feature** — Complete and close the feature
+   - The Product Owner reviews completed work, checks off acceptance criteria, and prepares JIRA closure
+
+### Three-Layer Architecture
+
+The simplified model preserves the underlying technical separation of concerns:
+
+| Layer | Component | Responsibility |
+|-------|-----------|----------------|
+| **Interaction** | Product Owner | Sole entry point, user-facing intent parsing, mode detection, workflow coordination |
+| **Policy** | Skills | Multi-stakeholder review, feature lifecycle management |
+| **Runtime** | Scripts | Pipeline state machine, migration/validation helpers, CI integration |
+
+### Hidden Scripts
+
+The complexity of the underlying system is hidden behind three main scripts:
+
+| Script | Responsibility | Visibility |
+|--------|---------------|------------|
+| `detect_mode.py` | User-facing intent parsing (interactive/automated mode detection) | Behind Product Owner |
+| `pipeline.py` | Workflow state machine (pipeline state, history, interruption recovery) | Behind Product Owner |
+| Migration/Validation helpers | Behind-the-scenes support for pipeline transitions | Behind Product Owner |
+
+The Product Owner agent uses these scripts internally but presents users with a clean, simple interface that hides the complexity of agent YAML files, skill files, script names, and migration helpers.
 
 ## Triggering Workflows
-
-### User Messages / Commands
 
 | Intent | User Message | Triggered By |
 |--------|-------------|--------------|

@@ -1,16 +1,22 @@
 ---
 name: orchestrate-feature
-description: "Orchestrates the complete feature pipeline: reads JIRA state, tracks cycles, dispatches to Architect/Developer/Tester, handles escalations, and coordinates handoffs. Use when starting a feature (PRO-xxxx) or when the pipeline needs rebalancing. NOTE: Story points must be assigned before development pickup or sprint inclusion."
+description: "Central orchestrator for the entire feature pipeline. Reads JIRA state, tracks cycles, dispatches to Architect/Developer/Tester, handles escalations, and coordinates handoffs. This is the engine that makes the agent-team actually chain. Load this skill for any new feature or when the pipeline needs rebalancing. NOTE: Story points must be assigned before development pickup or sprint inclusion."
 ---
 
 # Orchestrate Feature Pipeline
 
 ## Overview
 
-The `orchestrate-feature` skill is the central orchestrator that coordinates
+The `orchestrate-feature` skill is the **central orchestrator** that coordinates
 the entire feature pipeline. It lives in the Product Owner agent and manages
 the flow from **Plan → Develop → Complete**, with built-in cycle tracking,
 state management, and escalation handling.
+
+## Simplified Model Context
+
+In the simplified agent model, the `orchestrate-feature` skill operates **behind the scenes** as part of the Product Owner's workflow coordination. While the Product Owner provides the clean, human-friendly entry point for users, this skill handles the complex pipeline mechanics that make the agent team work together seamlessly.
+
+The skill is **not directly invoked by users** but is automatically loaded by the Product Owner agent to manage the complete feature lifecycle from planning through closure.
 
 ## Discovery
 

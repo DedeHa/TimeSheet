@@ -60,13 +60,18 @@ on:
           - 'false'
           - 'true'
       update_data:
-        description: 'Also write JSON data to the master branch data/ folder. Off = ci-metrics only.'
+        description: 'Reserved for future use — data is no longer written to master.'
         required: false
         default: 'false'
         type: choice
         options:
           - 'false'
           - 'true'
+      max_runs:
+        description: 'Maximum runs to retain in the JSON dataset (0 = unlimited).'
+        required: false
+        default: '0'
+        type: string
 
 # Avoid racing on the same orphan branch when two backfills are dispatched.
 concurrency:
@@ -82,7 +87,7 @@ env:
   MIN_SAMPLES: ${{ inputs.min_samples || '3' }}
   INCLUDE_HOUSEKEEPING: ${{ inputs.include_housekeeping || 'false' }}
   METRICS_BRANCH: ci-metrics
-  UPDATE_DATA: ${{ github.event_name == 'workflow_run' && 'true' || (inputs.update_data || 'false') }}
+  MAX_RUNS: ${{ inputs.max_runs || '0' }}
 
 jobs:
   collect:
@@ -228,22 +233,6 @@ jobs:
           git -c user.name=github-actions -c user.email=actions@github.com add ci-timings.csv CI_TIMING_REPORT.md
           git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update CI timings dataset and report"
           git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin "$METRICS_BRANCH"
-
-      - name: Write data/ to master (conditional)
-        if: env.UPDATE_DATA == 'true'
-        run: |
-          set -euo pipefail
-          # Commit data/ci_runtimes.json and data/ci_metrics.json to master branch
-          # Separate commit from ci-metrics to prevent loop
-          # The data files live at the project root on master
-          if [ -f data/ci_runtimes.json ] || [ -f data/ci_metrics.json ]; then
-            echo "JSON files exist at project root"
-            git -c user.name=github-actions -c user.email=actions@github.com add data/ci_runtimes.json data/ci_metrics.json
-            git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update data/ folder with JSON outputs"
-            git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin master
-          else
-            echo "No JSON files found at project root; skipping commit."
-          fi
 
       - name: Upload report artifact
         if: always()

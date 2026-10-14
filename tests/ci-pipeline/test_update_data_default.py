@@ -1,8 +1,11 @@
-"""Tests for UPDATE_DATA env var expression logic (PRO-385).
+"""Tests for CI-timing data flow (PRO-406).
 
-Validates that the GitHub Actions expression
-    ${{ github.event_name == 'workflow_run' && 'true' || (inputs.update_data || 'false') }}
-evaluates correctly for every trigger type and input combination.
+Validates that:
+1. No data/ files are committed to the master branch from ci-timing.yml
+   (all JSON data lives on the ci-metrics orphan branch only).
+2. A configurable MAX_RUNS env var exists for future rolling-window use.
+3. The update_data input is retained as a no-op placeholder for backward
+   compatibility but no longer triggers a master write.
 """
 
 from __future__ import annotations
@@ -29,14 +32,9 @@ def _env() -> dict:
     return _workflow()["env"]
 
 
-def _update_data_expr() -> str:
-    return _env()["UPDATE_DATA"]
-
-
 def _triggers() -> dict:
     """Get triggers dict, handling PyYAML's on->True boolean alias."""
     raw = _workflow()
-    # PyYAML parses YAML 1.1 `on:` as boolean True
     return raw.get(True) or raw.get("on") or {}
 
 
@@ -44,113 +42,62 @@ def _collect_steps() -> list[dict]:
     return _workflow()["jobs"]["collect"]["steps"]
 
 
-def _evaluate_update_data(event_name: str, inputs: dict) -> str:
-    """Simulate GitHub Actions UPDATE_DATA expression evaluation.
-
-    GitHub Actions expression evaluation rules for this specific pattern:
-    - `github.event_name == 'workflow_run'` → True if event is workflow_run
-    - `&& 'true'` → returns 'true' if left side is truthy
-    - `|| (inputs.update_data || 'false')` → falls back to input or 'false'
-    """
-    if event_name == "workflow_run":
-        return "true"
-    return str(inputs.get("update_data", "false"))
-
-
 # ---------------------------------------------------------------------------
-# Expression correctness
+# PRO-406: No more master writes
 # ---------------------------------------------------------------------------
 
 
-def test_update_data_expression_contains_workflow_run_check():
-    """The expression must check github.event_name == 'workflow_run'."""
-    expr = _update_data_expr()
-    assert (
-        "workflow_run" in expr
-    ), f"UPDATE_DATA expression missing workflow_run check: {expr}"
-    assert (
-        "github.event_name" in expr
-    ), f"UPDATE_DATA expression missing github.event_name: {expr}"
+def test_no_data_commit_step_to_master():
+    """PRO-406: ci-timing.yml must NOT contain a step that commits data/ to master."""
+    steps = _collect_steps()
+    for step in steps:
+        run_script = step.get("run", "")
+        assert (
+            "push --quiet origin master" not in run_script
+        ), f"Step '{step.get('name')}' still pushes to master: {run_script}"
 
 
-def test_update_data_expression_contains_fallback():
-    """The expression must fall back to inputs.update_data || 'false'."""
-    expr = _update_data_expr()
+def test_no_update_data_env_var():
+    """PRO-406: The UPDATE_DATA env var must be removed (no longer needed)."""
+    env = _env()
     assert (
-        "inputs.update_data" in expr
-    ), f"UPDATE_DATA expression missing inputs.update_data: {expr}"
-    assert "'false'" in expr, f"UPDATE_DATA expression missing 'false' default: {expr}"
+        "UPDATE_DATA" not in env
+    ), "UPDATE_DATA env var must be removed — data no longer goes to master"
 
 
-def test_update_data_expression_is_conditional():
-    """The expression must be a conditional expression, not a static value."""
-    expr = _update_data_expr()
+def test_max_runs_env_var_exists():
+    """PRO-406: MAX_RUNS env var must exist for future rolling-window use."""
+    env = _env()
     assert (
-        "${{" in expr
-    ), f"UPDATE_DATA must be a GitHub Actions expression, got: {expr}"
+        "MAX_RUNS" in env
+    ), "MAX_RUNS env var is missing — needed for configurable rolling window"
+
+
+def test_max_runs_defaults_to_unlimited():
+    """PRO-406: MAX_RUNS must default to 0 (unlimited)."""
+    env = _env()
+    expr = env["MAX_RUNS"]
+    assert "0" in expr, f"MAX_RUNS must default to 0 (unlimited), got: {expr}"
+
+
+def test_metrics_branch_env_var_exists():
+    """The orphan branch name must be configurable via METRICS_BRANCH."""
+    env = _env()
+    assert "METRICS_BRANCH" in env, "METRICS_BRANCH env var is missing"
+
+
+def test_metrics_branch_defaults_to_ci_metrics():
+    """METRICS_BRANCH must default to 'ci-metrics'."""
+    env = _env()
+    expr = env["METRICS_BRANCH"]
     assert (
-        "&&" in expr or "||" in expr
-    ), f"UPDATE_DATA must use logical operators: {expr}"
+        "ci-metrics" in expr
+    ), f"METRICS_BRANCH must default to 'ci-metrics', got: {expr}"
 
 
 # ---------------------------------------------------------------------------
-# Expression evaluation (simulated)
+# Regression: workflow_run trigger still present
 # ---------------------------------------------------------------------------
-
-
-def test_update_data_workflow_run_returns_true():
-    """workflow_run trigger → UPDATE_DATA must be 'true'."""
-    _update_data_expr()
-    result = _evaluate_update_data("workflow_run", {})
-    assert result == "true", f"workflow_run should set UPDATE_DATA=true, got {result}"
-
-
-def test_update_data_workflow_dispatch_default_false():
-    """workflow_dispatch without update_data input → UPDATE_DATA must be 'false'."""
-    _update_data_expr()
-    result = _evaluate_update_data("workflow_dispatch", {})
-    assert result == "false", f"workflow_dispatch default should be false, got {result}"
-
-
-def test_update_data_workflow_dispatch_with_true():
-    """workflow_dispatch with update_data='true' → UPDATE_DATA must be 'true'."""
-    _update_data_expr()
-    result = _evaluate_update_data("workflow_dispatch", {"update_data": "true"})
-    assert (
-        result == "true"
-    ), f"workflow_dispatch with update_data=true should be true, got {result}"
-
-
-def test_update_data_workflow_dispatch_with_false():
-    """workflow_dispatch with update_data='false' → UPDATE_DATA must be 'false'."""
-    _update_data_expr()
-    result = _evaluate_update_data("workflow_dispatch", {"update_data": "false"})
-    assert (
-        result == "false"
-    ), f"workflow_dispatch with update_data=false should be false, got {result}"
-
-
-# ---------------------------------------------------------------------------
-# Regression tests
-# ---------------------------------------------------------------------------
-
-
-def test_update_data_not_hardcoded_to_false():
-    """Regression: UPDATE_DATA must NOT be hardcoded to 'false' (the PRO-385 bug)."""
-    expr = _update_data_expr()
-    assert expr.strip() != "'false'", (
-        "UPDATE_DATA is hardcoded to 'false' — this is the PRO-385 bug! "
-        "The expression must check github.event_name == 'workflow_run'."
-    )
-
-
-def test_update_data_not_hardcoded_to_true():
-    """UPDATE_DATA must NOT be hardcoded to 'true' (would break workflow_dispatch)."""
-    expr = _update_data_expr()
-    assert expr.strip() != "'true'", (
-        "UPDATE_DATA is hardcoded to 'true' — this would cause data/ to be "
-        "committed on every workflow_dispatch run, which is incorrect."
-    )
 
 
 def test_workflow_run_trigger_exists():
@@ -179,48 +126,46 @@ def test_workflow_run_triggers_on_completed():
     ), f"workflow_run must trigger on 'completed', got: {wr['types']}"
 
 
-def test_conditional_step_exists():
-    """The data/ commit step must be conditional on env.UPDATE_DATA == 'true'."""
-    steps = _collect_steps()
-    data_steps = [s for s in steps if "data" in s.get("name", "").lower()]
-    assert data_steps, "No step found for data/ commit"
-    for step in data_steps:
-        assert "env.UPDATE_DATA" in step.get(
-            "if", ""
-        ), f"Step '{step.get('name')}' must have 'if: env.UPDATE_DATA == \"true\"'"
-
-
-def test_workflow_dispatch_respects_input():
-    """workflow_dispatch should respect inputs.update_data."""
+def test_workflow_dispatch_max_runs_input():
+    """workflow_dispatch must have a max_runs input."""
     triggers = _triggers()
     wd = triggers["workflow_dispatch"]
     inputs = wd.get("inputs", {})
-    assert "update_data" in inputs, "workflow_dispatch must have update_data input"
+    assert "max_runs" in inputs, "workflow_dispatch must have max_runs input"
     assert (
-        inputs["update_data"]["default"] == "false"
-    ), "update_data input must default to 'false'"
+        inputs["max_runs"]["default"] == "0"
+    ), "max_runs input must default to '0' (unlimited)"
 
 
-def test_data_commit_step_pushes_to_master():
-    """The data/ commit step must push to master, not ci-metrics."""
+def test_update_data_input_retained_as_noop():
+    """PRO-406: update_data input is retained as a no-op placeholder."""
+    triggers = _triggers()
+    wd = triggers["workflow_dispatch"]
+    inputs = wd.get("inputs", {})
+    assert (
+        "update_data" in inputs
+    ), "update_data input must still exist for backward compat"
+
+
+# ---------------------------------------------------------------------------
+# Orphan branch write still present
+# ---------------------------------------------------------------------------
+
+
+def test_commit_and_push_step_targets_orphan_branch():
+    """The ci-metrics commit step must push to the orphan branch, not master."""
     steps = _collect_steps()
-    data_steps = [s for s in steps if "data" in s.get("name", "").lower()]
-    assert data_steps, "No data/ commit step found"
-    for step in data_steps:
+    push_steps = [
+        s
+        for s in steps
+        if "push" in s.get("run", "") and "METRICS_BRANCH" in s.get("run", "")
+    ]
+    assert push_steps, "No step found that pushes to METRICS_BRANCH"
+    for step in push_steps:
         run_script = step.get("run", "")
         assert (
-            "master" in run_script
-        ), f"data/ commit step must push to master: {run_script}"
-
-
-def test_data_commit_step_not_unconditional():
-    """Regression: the data/ commit step must NOT be unconditional."""
-    steps = _collect_steps()
-    data_steps = [s for s in steps if "data" in s.get("name", "").lower()]
-    for step in data_steps:
-        assert (
-            step.get("if") is not None
-        ), f"Step '{step['name']}' has no 'if' condition — it will run on every trigger!"
+            "origin master" not in run_script
+        ), f"Step '{step.get('name')}' pushes to master instead of orphan branch"
 
 
 if __name__ == "__main__":

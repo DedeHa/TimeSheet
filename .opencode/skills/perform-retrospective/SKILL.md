@@ -1,6 +1,12 @@
+---
+name: perform-retrospective
+description: "Use when conducting a feature retrospective or post-mortem with the agent dev team. Orchestrated by the Product Owner in cooperation with Architect, Developer, and Tester. Triggers on requests to 'retrospective', 'post-mortem', 'review the feature', 'what went wrong', 'lessons learned', or any workflow that begins with a completed feature and ends with consolidated JIRA tickets for process improvements. NOTE: The agent-team prepares the retrospective; ticket creation requires explicit final user/PO confirmation in BOTH interactive and automated workflow modes."
+---
+
 # Perform Retrospective Skill
 
-Reusable retrospective workflow for TimeSheetAlgo. Orchestrated by the Product Owner in cooperation with the agent dev team (Architect, Developer, Tester).
+Reusable retrospective workflow for TimeSheetAlgo. Orchestrated by the Product
+Owner in cooperation with the agent dev team (Architect, Developer, Tester).
 
 ## Prerequisites
 
@@ -10,7 +16,9 @@ Reusable retrospective workflow for TimeSheetAlgo. Orchestrated by the Product O
 - Atlassian MCP tools available (Jira, Confluence)
 - Agent team available: Architect, Developer, Tester
 
-## Step 0 — Determine Current State
+---
+
+## Step 1 — Determine Current State
 
 1. Identify the current branch and JIRA ticket:
    ```bash
@@ -23,57 +31,89 @@ Reusable retrospective workflow for TimeSheetAlgo. Orchestrated by the Product O
    git status
    ```
 
-## Step 1 — Gather Agent Feedback
+---
 
-Dispatch parallel feedback requests to all three agent team members:
+## Step 2 — Gather Agent Feedback
 
-### 1a. Architect Feedback
-Prompt: Review the feature lifecycle and provide feedback on architectural/design issues in the closure process, what the Architect should have caught before handoff, root causes of incomplete closure, and recommendations for preventing this in future features.
+Dispatch parallel feedback requests to all three agent team members.
 
-### 1b. Developer Feedback
-Prompt: Review the feature lifecycle and provide feedback on development/process issues in the closure workflow, what the Developer should have verified before handoff, root causes of the incomplete closure, and recommendations for improving the development workflow.
+### Architect
 
-### 1c. Tester Feedback
-Prompt: Review the feature lifecycle and provide feedback on testing/validation gaps in the closure process, what the Tester should have caught during verification, root causes of the complete-feature skill bypass, and recommendations for strengthening validation gates.
+Review the feature lifecycle and provide feedback on:
+- Architectural/design issues in the closure process
+- What the Architect should have caught before handoff
+- Root causes of incomplete closure
+- Recommendations for preventing this in future features
 
-## Step 2 — Synthesize Findings
+### Developer
 
-Consolidate feedback from all three agents into the following structured format:
+Review the feature lifecycle and provide feedback on:
+- Development/process issues in the closure workflow
+- What the Developer should have verified before handoff
+- Root causes of the incomplete closure
+- Recommendations for improving the development workflow
 
-### 2a. Identified Issues
+### Tester
+
+Review the feature lifecycle and provide feedback on:
+- Testing/validation gaps in the closure process
+- What the Tester should have caught during verification
+- Root causes of the complete-feature skill bypass
+- Recommendations for strengthening validation gates
+
+---
+
+## Step 3 — Synthesize Findings
+
+Consolidate feedback from all three agents into the following structured
+format:
+
+### Identified Issues
+
 Table with columns: #, Issue, Severity, Source
 
-### 2b. Agent Feedback Summary
+### Agent Feedback Summary
+
 Table with columns: Agent, Key Feedback
 
-### 2c. Root Causes
+### Root Causes
+
 Table with columns: #, Root Cause, Impact
 
-### 2d. Resolutions
+### Resolutions
+
 Table with columns: #, Resolution, Priority, Owner
 
-## Step 3 — Document on Confluence
+---
+
+## Step 4 — Document on Confluence
 
 1. Read the existing retrospective page:
    ```
-   atlassian_getConfluencePage(cloudId="...", pageId="393223")
+   atlassian_getConfluencePage(cloudId="<cloudId>", pageId="<pageId>")
    ```
-2. Update the page with the synthesized retrospective content using `atlassian_updateConfluencePage`.
-3. Include all sections from Step 2 plus:
+2. Update the page with the synthesized retrospective content using
+   `atlassian_updateConfluencePage`.
+3. Include all sections from Step 3 plus:
    - Executive Summary
    - Action Items (with owner and timeline)
    - Recommendation for ticket consolidation
 
-## Step 4 — Consolidate into Consolidated Tickets
+---
 
-### 4a. Analyze Overhead
-Count the number of unique resolutions and estimate the overhead of creating separate tickets:
+## Step 5 — Consolidate into Consolidated Tickets
+
+### Analyze Overhead
+
+Count the number of unique resolutions and estimate the overhead of creating
+separate tickets:
 - Story point estimations
 - Stakeholder reviews
 - Implementation plans
 - Closure cycles
 
-### 4b. Apply Consolidation Strategy
+### Apply Consolidation Strategy
+
 Group resolutions by ownership and priority:
 
 | Group | Criteria | Ticket Type |
@@ -84,18 +124,23 @@ Group resolutions by ownership and priority:
 
 **Target:** Reduce N tickets to 2 Tasks + 1 Epic (75% overhead reduction).
 
-### 4c. Document Recommendation
-Add a "Ticket Consolidation Recommendation" section to the Confluence page with:
+### Document Recommendation
+
+Add a "Ticket Consolidation Recommendation" section to the Confluence page
+with:
 - Recommended ticket structure
 - Scope breakdown per ticket
 - Overhead reduction metrics
 - Traceability guidelines
 
-## Step 5 — Create Consolidated Tickets (User/PO Confirmed)
+---
+
+## Step 6 — Create Consolidated Tickets (User/PO Confirmed)
 
 > Requires explicit final User / Product-Owner confirmation before execution.
 
-### 5a. Create Epic
+### Create Epic
+
 ```bash
 atlassian_createJiraIssue(
     projectKey="PRO",
@@ -105,7 +150,8 @@ atlassian_createJiraIssue(
 )
 ```
 
-### 5b. Create Tasks
+### Create Tasks
+
 ```bash
 atlassian_createJiraIssue(
     projectKey="PRO",
@@ -115,27 +161,36 @@ atlassian_createJiraIssue(
 )
 ```
 
-### 5c. Link Tasks to Epic
-Use Epic Link (`customfield_10014`) to associate each task with the parent epic.
+### Link Tasks to Epic
+
+Use Epic Link (`customfield_10014`) to associate each task with the parent
+epic.
+
+---
 
 ## Cycle Tracking and Escalation
 
 This skill is invoked by the Product Owner. Each invocation is a cycle.
 
 ### Cycle Limits
+
 - Max cycles per dispatch: 3
 - If cycle = 1, 2: Continue verification
 - If cycle = 3: Stop, prepare handoff to Product Owner with summary
 - If cycle > 3: STOP — escalate immediately
 
 ### When to Escalate
+
 Escalate to Product Owner when:
 1. Agent feedback is inconsistent or conflicting
 2. Confluence page update fails
 3. Ticket creation fails
 4. Process loops — repeated failures without progress
 
+---
+
 ## Related Documents
+
 - AGENTS.md — Top-level guide
 - .opencode/docs/WORKFLOW.md — Agent team workflow
 - doc/CONTRIBUTING.md — Development standards

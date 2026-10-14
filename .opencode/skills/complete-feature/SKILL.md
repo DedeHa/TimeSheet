@@ -27,7 +27,7 @@ Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the c
     git status
     ```
 
-## Step 0.5 — Pre-Closure Validation (New)
+## Step 0b — Pre-Closure Validation
 
 Before proceeding with final verification, validate all critical closure
 conditions. This phase is **mandatory and blocking**: if any check fails,
@@ -130,7 +130,7 @@ not continue to the next check or reach Step 3g (Transition JIRA to DONE).
 
 Step 5 (Verify Final State) performs a post-hoc verification of all 5 checks
 as a safety net, but must not be the only place where these checks occur. The
-pre-closure validation in Step 0.5 is the primary gate.
+pre-closure validation in Step 0b is the primary gate.
 
 ## Step 1 — Run Final Verification
 
@@ -178,7 +178,7 @@ python .github/scripts/generate_traceability_matrix.py
 > **⚠️ GATED BY CHECK 1 — PR merge verification must pass first.**
 >
 > This comment claims that the PR is merged to master. It must be posted
-> **only after** Step 0.5 (Check 1) confirms via `gh pr view` that
+> **only after** Step 0b (Check 1) confirms via `gh pr view` that
 > `state == "MERGED"` and `mergeCommit` is not null. Posting this comment
 > before verification is the exact failure mode of PRO-380.
 >

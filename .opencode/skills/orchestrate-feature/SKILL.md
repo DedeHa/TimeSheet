@@ -102,6 +102,14 @@ Before every dispatch and handoff, the orchestration skill runs:
 
 ## Pipeline Flow
 
+### Step 0 — State Detection & Mode Check
+1. **State Detection**: Reads JIRA to determine current pipeline step
+2. **Mode Check**: Runs `python .opencode/scripts/detect_mode.py <ticket> --show`
+   - If `development_mode: automated` → proceed without user confirmation
+   - If `development_mode: interactive` → pause for user confirmation
+   - If no mode detected → default to `interactive`
+3. **Initialize State**: If no pipeline state exists for this ticket, create one
+
 ### Step 1: Discover Phase
 1. **State Detection**: Checks JIRA for existing PRO-XXXX ticket
 2. **Dispatch**: Routes to PO agent via `discover-feature` skill to draft the ticket
@@ -113,19 +121,19 @@ Before every dispatch and handoff, the orchestration skill runs:
 3. **Dispatch**: Routes to PO agent via `refine-feature` skill for stakeholder review
 4. **Update State**: Sets `current_step: "plan"`
 
-### Step 3: Plan Phase
+### Step 3: Plan Phase (Architect via `develop-feature`)
 1. **State Detection**: Confirms we're in "plan" step
 2. **Cycle Check**: Verifies Architect agent hasn't exceeded 3 cycles
-3. **Dispatch**: Routes to Architect agent via `develop-feature` skill
+3. **Dispatch**: Routes to Architect agent via `develop-feature` skill (Phase 1–2: read ticket, draft/adoption plan)
 4. **Update State**: Sets `current_step: "develop"`, increments Architect cycles
 
-### Step 4: Develop Phase
+### Step 4: Develop Phase (Developer via `develop-feature`)
 1. **State Detection**: Confirms we're in "develop" step
 2. **Cycle Check**: Verifies Developer agent hasn't exceeded 3 cycles
 3. **Story Points Validation**: Confirms PRO-XXX has story points assigned (required for development)
    - If missing → escalate to Product Owner, do NOT proceed to development
    - If present → proceed to Developer agent
-4. **Dispatch**: Routes to Developer agent
+4. **Dispatch**: Routes to Developer agent via `develop-feature` skill (Phase 3–6: branch, implement, verify, PR)
 5. **Update State**: Sets `current_step: "complete"`, increments Developer cycles
 
 ### Step 5: Complete Phase

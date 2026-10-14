@@ -33,7 +33,6 @@ ARCHITECTURE = ROOT / "doc" / "ARCHITECTURE.md"
 SOURCE = ROOT / "src_timesheetalgo" / "TimeSheetAlgo.py"
 CI_SCRIPTS = [
     ROOT / ".github" / "scripts",
-    ROOT / "ci" / "scripts",
 ]
 REPORT_PATH = ROOT / "tests" / "reports" / "traceability-matrix.md"
 

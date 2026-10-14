@@ -302,7 +302,7 @@ def main() -> None:
         new_rows = extract_rows(run_meta, jobs.get("jobs", []))
         merged = dedup_latest_attempt(read_csv(csv_path) + new_rows)
         write_csv(csv_path, merged)
-        write_json(new_rows, run_meta, DATA_DIR / "runtimes.json")
+        write_json(new_rows, run_meta, ROOT / "data/ci_runtimes.json")
         print(
             f"collected {len(new_rows)} rows from run {run_id}; dataset now "
             f"{len(merged)} rows"

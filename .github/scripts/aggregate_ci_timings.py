@@ -257,7 +257,7 @@ def main() -> None:
     report = render_report(agg, {"run_count": len(run_ids)})
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report + "\n", encoding="utf-8")
-    write_metrics(agg, DATA_DIR / "metrics.json")
+    write_metrics(agg, ROOT / "data/ci_metrics.json")
     print(f"aggregated {len(rows)} rows from {len(run_ids)} runs -> {report_path}")
 
 

@@ -65,7 +65,7 @@ def ci_metrics_csv(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def migrated_runtimes(tmp_path_factory, ci_metrics_csv):
-    """Run the migrate step: CSV → data/runtimes.json."""
+    """Run the migrate step: CSV → data/ci_runtimes.json."""
     out = tmp_path_factory.mktemp("migrated")
     json_path = out / "runtimes.json"
     count = bf.migrate_csv_to_json(ci_metrics_csv, json_path)

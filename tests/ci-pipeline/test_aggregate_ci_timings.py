@@ -74,7 +74,7 @@ def test_empty_dataset_renders_placeholder():
 
 
 def test_write_metrics_creates_file(tmp_path):
-    """write_metrics() creates data/metrics.json with correct schema."""
+    """write_metrics() creates data/ci_metrics.json with correct schema."""
     import json
 
     path = tmp_path / "metrics.json"

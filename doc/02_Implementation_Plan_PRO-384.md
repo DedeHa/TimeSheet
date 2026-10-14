@@ -32,14 +32,14 @@ Simplify the user-facing model while preserving the underlying technical separat
 
 | Step | Files Changed | Schema Impact | Workflow / Module Logic | Report / API Shape | Configuration Knobs | Rollout Plan | Non-Goals |
 |------|---------------|---------------|-------------------------|-------------------|---------------------|--------------|-----------|
-| 1 | AGENTS.md, doc/AGENTS_WORKFLOW.md | None | Update documentation structure | Updated user journey documentation | None | Documentation-only rollout | Remove any scripts or tools |
+| 1 | AGENTS.md, .opencode/docs/WORKFLOW.md | None | Update documentation structure | Updated user journey documentation | None | Documentation-only rollout | Remove any scripts or tools |
 | 2 | .opencode/agents/product-owner.agent.md | None | Clarify Product Owner role as sole entry point | Clear entry point documentation | None | Documentation-only rollout | Break technical separation of concerns |
 | 3 | .opencode/skills/orchestrate-feature/SKILL.md | None | Emphasize workflow coordination role | Updated skill documentation | None | Documentation-only rollout | Change core agent, skill, or script functionality |
-| 4 | doc/AGENTS_WORKFLOW.md | None | Document simplified agent model specification | Three-script documentation | None | Documentation-only rollout | Affect existing workflow execution engine |
+| 4 | .opencode/docs/WORKFLOW.md | None | Document simplified agent model specification | Three-script documentation | None | Documentation-only rollout | Affect existing workflow execution engine |
 | 5 | .opencode/agents/product-owner.agent.md | None | Update Product Owner documentation | Enhanced entry point guidance | None | Documentation-only rollout | Alter fundamental architecture |
 | 6 | .opencode/skills/orchestrate-feature/SKILL.md | None | Update workflow coordination documentation | Refined skill guidance | None | Documentation-only rollout | Change agent, skill, or script functionality |
 | 7 | AGENTS.md | None | Update AGENTS.md with simplified model overview | Simplified structure documentation | None | Documentation-only rollout | Update external dependencies |
-| 8 | doc/AGENTS_WORKFLOW.md | None | Update with simplified user journey | Updated journey documentation | None | Documentation-only rollout | Modify configuration files |
+| 8 | .opencode/docs/WORKFLOW.md | None | Update with simplified user journey | Updated journey documentation | None | Documentation-only rollout | Modify configuration files |
 
 **Rollout Steps:**
 1. **Phase 1 (Documentation Only):** Update all documentation files to reflect simplified model
@@ -57,7 +57,7 @@ Simplify the user-facing model while preserving the underlying technical separat
 ### V2 — Content Accuracy
 - Simplified model specification documents the back-end architecture with clear separation of concerns
 - All references to existing tickets (PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365) are updated with simplified model references
-- Updated AGENTS.md and doc/AGENTS_WORKFLOW.md reflect the simplified model
+- Updated AGENTS.md and .opencode/docs/WORKFLOW.md reflect the simplified model
 
 ### V3 — User Experience
 - User can start a feature with only "Run in automated mode" or "Run in interactive mode"
@@ -102,7 +102,7 @@ Simplify the user-facing model while preserving the underlying technical separat
 - [ ] AC-5: User journey documentation shows only 3-4 main commands: run in mode, start feature, continue feature, validate feature
 - [ ] AC-6: Migration helpers are hidden behind Product Owner or pipeline commands
 - [ ] AC-7: All existing functionality is preserved with improved user experience
-- [ ] AC-8: Updated AGENTS.md and doc/AGENTS_WORKFLOW.md reflect the simplified model
+- [ ] AC-8: Updated AGENTS.md and .opencode/docs/WORKFLOW.md reflect the simplified model
 - [ ] AC-9: Product Owner agent's entry point documentation clearly explains its gatekeeper role
 - [ ] AC-10: Orchestrate-feature skill documentation focuses on workflow coordination, not independent workflows
 
@@ -114,7 +114,7 @@ Simplify the user-facing model while preserving the underlying technical separat
 - [ ] Story Points: 13 assigned
 - [ ] Traceability: FR-AGENT-001, QR-AGENT-002 added to doc/REQUIREMENTS.md, doc/ARCHITECTURE.md
 - [ ] CI self-tests: All agent model tests passed
-- [ ] Documentation: Updated AGENTS.md, doc/AGENTS_WORKFLOW.md with simplified model
+- [ ] Documentation: Updated AGENTS.md, .opencode/docs/WORKFLOW.md with simplified model
 - [ ] Developer Guide: Updated with new simplified workflow entry points
 - [ ] Migration plan documented for the simplified model transition
 - [ ] All referenced tickets (PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365) updated with simplified model references
@@ -143,7 +143,7 @@ Simplify the user-facing model while preserving the underlying technical separat
 * [PRO-365](https://mainhatten.atlassian.net/browse/PRO-365): User experience improvement
 * [.opencode/agents/product-owner.agent.md](.opencode/agents/product-owner.agent.md): Current entry point documentation
 * [.opencode/skills/orchestrate-feature/SKILL.md](.opencode/skills/orchestrate-feature/SKILL.md): Current workflow coordination documentation
-* [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md): Development contribution guidelines
+doc/CONTRIBUTING.md
 
 ## Implementation Summary
 
@@ -151,7 +151,7 @@ This is a documentation-only refactor that simplifies the TimeSheetAlgo agent wo
 
 **Key Changes:**
 - Updated AGENTS.md with simplified model overview
-- Updated doc/AGENTS_WORKFLOW.md with simplified user journey
+- Updated .opencode/docs/WORKFLOW.md with simplified user journey
 - Clarified Product Owner role as sole entry point
 - Updated orchestrate-feature skill documentation
 - Documented the three remaining scripts (detect_mode.py, pipeline.py, migration/validation helpers)

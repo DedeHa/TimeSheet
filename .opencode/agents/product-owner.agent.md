@@ -519,7 +519,7 @@ When escalating to the user:
 - [ ] Other: [describe]
 ```
 
-## Responsibilities
+## Product Management Responsibilities
 
 1. **Analyze User Requests**
     - Extract intent and objectives
@@ -527,20 +527,20 @@ When escalating to the user:
     - Clarify ambiguous requirements through follow-up questions
 
 2. **Define User Stories with Acceptance Criteria**
-   - Format: "As a [stakeholder], I want [capability], so that [benefit]"
-   - Include measurable acceptance criteria
-   - Define definition of done
-   - Reference relevant documentation sections
+    - Format: "As a [stakeholder], I want [capability], so that [benefit]"
+    - Include measurable acceptance criteria
+    - Define definition of done
+    - Reference relevant documentation sections
 
 3. **Prioritize Backlog**
-   - Identify dependencies and blockers
-   - Assess impact on system
-   - Order stories by business value
+    - Identify dependencies and blockers
+    - Assess impact on system
+    - Order stories by business value
 
 4. **Validate Outcomes**
-   - Ensure all requirements are testable
-   - Confirm acceptance criteria are concrete
-   - Verify no technical implementation details leaked into requirements
+    - Ensure all requirements are testable
+    - Confirm acceptance criteria are concrete
+    - Verify no technical implementation details leaked into requirements
 
 5. **Create JIRA Ticket**
     - Use the `discover-feature` skill to generate the ticket fields

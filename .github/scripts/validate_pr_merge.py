@@ -69,9 +69,8 @@ def get_pr_state(pr_number: int) -> Optional[Dict]:
     )
 
     if result.returncode != 0:
-        print(
-            f"ERROR: Failed to get PR state for PR #{pr_number}: {result.stderr.strip()}"
-        )
+        stderr = result.stderr.strip()
+        print(f"ERROR: Failed to get PR state for PR #{pr_number}: {stderr}")
         return None
 
     try:

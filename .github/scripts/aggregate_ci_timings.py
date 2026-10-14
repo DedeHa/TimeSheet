@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
 import statistics
 import sys
 from collections import defaultdict
@@ -188,7 +189,7 @@ def _add_withheld_reasons(d: dict) -> dict:
     return result
 
 
-def write_metrics(agg_data: dict, path: Path) -> None:
+def write_metrics(agg_data: dict, path: Path, max_runs: int = 0) -> None:
     """Write aggregated metrics to a JSON file with the v1.0 schema wrapper.
 
     Formats the output from :func:`aggregate` with ``schema_version`` and
@@ -198,6 +199,11 @@ def write_metrics(agg_data: dict, path: Path) -> None:
     For each ready bucket, also computes rolling window statistics,
     Bollinger bands, and normal-distribution parameters from the raw
     duration values.
+
+    Args:
+        agg_data: Output from :func:`aggregate`.
+        path: Destination JSON path.
+        max_runs: Reserved for future use (0 = unlimited).
     """
     raw_values = agg_data.get("values", {})
     ready = agg_data.get("ready", {})
@@ -257,7 +263,8 @@ def main() -> None:
     report = render_report(agg, {"run_count": len(run_ids)})
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report + "\n", encoding="utf-8")
-    write_metrics(agg, ROOT / "data/ci_metrics.json")
+    max_runs = int(os.environ.get("MAX_RUNS", "0"))
+    write_metrics(agg, ROOT / "data/ci_metrics.json", max_runs=max_runs)
     print(f"aggregated {len(rows)} rows from {len(run_ids)} runs -> {report_path}")
 
 

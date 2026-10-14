@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import datetime
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -196,14 +197,22 @@ def _utc_now() -> str:
     )
 
 
-def write_json(rows: list[dict], run_meta: dict, path: Path) -> None:
+def write_json(rows: list[dict], run_meta: dict, path: Path, max_runs: int = 0) -> None:
     """Append run data to a JSON dataset with the v1.0 schema wrapper.
 
     Reads existing JSON data, appends new rows, deduplicates by
     ``(run_id, job_name, step_number)`` with the latest attempt winning,
-    validates the result, and writes it back with ``schema_version`` and
+    optionally trims to the most recent ``max_runs`` unique runs, validates
+    the result, and writes it back with ``schema_version`` and
     ``generated_at``. Validation failures are logged as warnings and the write
     is skipped to preserve the non-gating invariant.
+
+    Args:
+        rows: New timing rows from the current run.
+        run_meta: Run metadata (used for generated_at timestamp fallback).
+        path: Destination JSON path.
+        max_runs: Maximum number of unique runs to retain (0 = unlimited).
+            When set, only the most recent ``max_runs`` runs are kept.
     """
     existing: dict = {"schema_version": "v1.0", "generated_at": "", "runs": []}
     if path.exists():
@@ -220,6 +229,18 @@ def write_json(rows: list[dict], run_meta: dict, path: Path) -> None:
             return
 
     merged = dedup_latest_attempt(existing.get("runs", []) + rows)
+
+    # Rolling window: keep only the most recent max_runs unique runs.
+    if max_runs > 0:
+        seen: set[str] = set()
+        kept: list[dict] = []
+        for row in merged:
+            rid = str(row.get("run_id", ""))
+            if rid and rid not in seen:
+                seen.add(rid)
+                kept.append(row)
+        merged = kept[-max_runs:] if len(kept) > max_runs else kept
+
     payload = {
         "schema_version": "v1.0",
         "generated_at": _utc_now(),
@@ -255,7 +276,7 @@ def _gh_api(path: str, max_retries: int = 3) -> object:
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             if attempt == max_retries - 1:
                 raise
-            time.sleep(2 ** attempt)
+            time.sleep(2**attempt)
 
 
 def main() -> None:
@@ -264,8 +285,6 @@ def main() -> None:
     Usage: ``collect_ci_timings.py <repo> <run_id> <csv_path>``. Run metadata is
     read from the environment where available (GITHUB_* / RUN_* variables).
     """
-    import os
-
     if len(sys.argv) != 4:
         print(
             "usage: collect_ci_timings.py <repo> <run_id> <csv_path>", file=sys.stderr
@@ -302,7 +321,10 @@ def main() -> None:
         new_rows = extract_rows(run_meta, jobs.get("jobs", []))
         merged = dedup_latest_attempt(read_csv(csv_path) + new_rows)
         write_csv(csv_path, merged)
-        write_json(new_rows, run_meta, ROOT / "data/ci_runtimes.json")
+        max_runs = int(os.environ.get("MAX_RUNS", "0"))
+        write_json(
+            new_rows, run_meta, ROOT / "data/ci_runtimes.json", max_runs=max_runs
+        )
         print(
             f"collected {len(new_rows)} rows from run {run_id}; dataset now "
             f"{len(merged)} rows"

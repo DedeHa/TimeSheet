@@ -27,12 +27,18 @@ Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the c
     git status
     ```
 
-## Step 0b — Pre-Closure Validation
+2. **Optional Enhancement**: Read the finalized ticket via Atlassian MCP to verify readiness for closure:
+   ```
+   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["summary", "description", "status", "resolution"])
+   ```
+   (This can be skipped if not needed)
+
+## Step 1 — Pre-Closure Validation
 
 Before proceeding with final verification, validate all critical closure
 conditions. This phase is **mandatory and blocking**: if any check fails,
 the workflow reports the specific failing check and halts — it must not
-reach Step 3g (Transition JIRA to DONE).
+reach Step 4h (Transition JIRA to DONE).
 
 The 5 checks are executed in order. Check 1 (PR merge) must pass before
 Check 2 (comment gating) is even evaluated.
@@ -57,7 +63,7 @@ gh pr view <PR_NUMBER> --json mergeCommit,state,headRefName
 
 Check 1 must pass before any JIRA comment is posted claiming a PR merge.
 
-**Gate:** Step 3a (Add Implementation Status Comment) must be gated so that
+**Gate:** Step 4a (Add Implementation Status Comment) must be gated so that
 the merge comment is posted **only after** Check 1 confirms `state == "MERGED"`.
 
 **If Check 1 fails:** Do NOT post a merge comment. Report the PR state
@@ -118,7 +124,7 @@ descriptive message on stdout.
 
 The checks are executed in the following order. If any check fails, the
 workflow halts immediately and reports the specific failing check — it does
-not continue to the next check or reach Step 3g (Transition JIRA to DONE).
+not continue to the next check or reach Step 4h (Transition JIRA to DONE).
 
 1. **PR merge verification** (Check 1) — blocks all JIRA transitions
 2. **Comment gating** (Check 2) — only posts merge comments after Check 1 passes
@@ -130,9 +136,9 @@ not continue to the next check or reach Step 3g (Transition JIRA to DONE).
 
 Step 5 (Verify Final State) performs a post-hoc verification of all 5 checks
 as a safety net, but must not be the only place where these checks occur. The
-pre-closure validation in Step 0b is the primary gate.
+pre-closure validation in Step 1 is the primary gate.
 
-## Step 1 — Run Final Verification
+## Step 2 — Run Final Verification
 
 Run the full test suite and lint checks to confirm everything passes:
 
@@ -154,7 +160,7 @@ python .github/scripts/generate_traceability_matrix.py
 
 **Gate:** All checks must pass before proceeding. If any fail, fix and re-run.
 
-## Step 2 — Evaluate Acceptance Criteria
+## Step 3 — Evaluate Acceptance Criteria
 
 1. Read the implementation plan document (e.g. `doc/02_Implementation_Plan_PRO-XXX.md`).
 2. Read the JIRA ticket description via Atlassian MCP:
@@ -171,14 +177,14 @@ python .github/scripts/generate_traceability_matrix.py
    - Update the timeline to reflect actual completion
    - Add a final summary noting JIRA closure
 
-## Step 3 — Update JIRA Ticket
+## Step 4 — Update JIRA Ticket
 
-### 3a. Add Implementation Status Comment (Final Summary)
+### 4a. Add Implementation Status Comment (Final Summary)
 
 > **⚠️ GATED BY CHECK 1 — PR merge verification must pass first.**
 >
 > This comment claims that the PR is merged to master. It must be posted
-> **only after** Step 0b (Check 1) confirms via `gh pr view` that
+> **only after** Step 1 (Check 1) confirms via `gh pr view` that
 > `state == "MERGED"` and `mergeCommit` is not null. Posting this comment
 > before verification is the exact failure mode of PRO-380.
 >
@@ -239,7 +245,7 @@ permanent closure record for the ticket.
 Refs: PRO-XXX
 ```
 
-### 3b. Assign Story Points
+### 4b. Assign Story Points
 
 **Critical:** Story points must have been estimated **before sprint inclusion or development pickup** (`customfield_10028`). Before closing, verify they are assigned. If missing, assign them using comparable tickets as reference:
 
@@ -258,7 +264,7 @@ Refs: PRO-XXX
    - 5-8 pts: Significant feature with tests
    - 8+ pts: Large refactor or complex feature
 
-### 3c. Checkmark Acceptance Criteria and Definition of Done in Description
+### 4c. Checkmark Acceptance Criteria and Definition of Done in Description
 
 Update the JIRA ticket description using `atlassian_editJiraIssue` so that
 every AC and every DoD item renders as an actual interactive checkbox in the
@@ -339,186 +345,8 @@ JIRA UI. A comment is **not** a substitute for editing the description.
 | PR number missing or `TBD` | DoD item stays open | Update after PR is opened: `- [x] PR #NNN merged to master` |
 | Original `## Dependencies` / `## Notes` sections dropped | Loses stakeholder context | Preserve all non-AC/DoD sections verbatim |
 
-### 3d. Delete Implementation Plan (User / PO Confirmed)
 
-**First closure step.** The implementation plan is deleted to mark the working
-document as complete. The plan has served its purpose once all work is
-implemented and documented.
-
-> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
-> The agent-team MUST NOT run `git rm` without explicit
-> user/PO confirmation. Plan deletion is permanent and cannot be
-> undone without recreating the plan from scratch.
->
-> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
->
-> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
-
-**What the agent-team DOES:**
-1. Confirm the implementation plan document is finalised and all steps/ACs are marked Complete.
-2. Prepare the deletion command and present it to the user/PO:
-
-   ```bash
-   git rm doc/02_Implementation_Plan_PRO-XXX.md
-   git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
-
-   Remove implementation plan after feature completion.
-   The plan is a working document that is no longer needed.
-
-   Refs: PRO-XXX"
-   ```
-
-3. Warn the user/PO that this is irreversible and that the plan file
-   will be gone from the repository after execution.
-
-**What the user / Product-Owner confirms:**
-- The implementation plan is fully documented and all steps/ACs are marked Complete
-- All work from the plan has been implemented
-- You are ready to delete the implementation plan
-
-**After confirmation, the user / Product-Owner executes:**
-```bash
-git rm doc/02_Implementation_Plan_PRO-XXX.md
-git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
-
-Remove implementation plan after feature completion.
-The plan is a working document that is no longer needed.
-
-Refs: PRO-XXX"
-git push origin <branch-name>
-```
-
-**Verification:** Confirm the plan file is gone from the remote with
-`git ls-remote --heads origin | grep <branch-name>` (should return nothing)
-and `git ls-files doc/02_Implementation_Plan_PRO-XXX.md` returns nothing.
-
-### 3e. Verify CI Checks Passed (User / PO Confirmed)
-
-Before proceeding with closure steps, verify that all CI checks passed.
-
-> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
-> The agent-team MUST NOT proceed without explicit
-> user/PO confirmation after CI verification.
-
-**What the agent-team DOES:**
-1. Check GitHub Actions for the current PR:
-   ```bash
-   gh run list --repo "$GITHUB_REPOSITORY" --head "<branch-name>" --limit 10
-   ```
-2. Verify all required jobs (check, test, publish) have status "success"
-3. If any checks fail, halt and report the failures
-
-**What the user / Product-Owner confirms:**
-- All CI checks have passed
-- GitHub Actions are clean for this PR
-- Ready to proceed with final destructive actions
-
-**After confirmation, the agent-team proceeds.**
-
-### 3f. Merge PR (User / PO Confirmed)
-
-After user/PO confirmation, the agent-team executes the PR merge.
-
-> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
-> The agent-team MUST NOT call `gh pr merge` without explicit
-> user/PO confirmation. PR merge is destructive and irreversible.
->
-> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
->
-> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
-
-**What the agent-team DOES:**
-1. Verify all CI checks passed (Step 3e).
-2. Execute the PR merge:
-   ```bash
-   gh pr merge <PR_NUMBER> --merge
-   ```
-
-**What the user / Product-Owner confirms:**
-- Ready to merge the PR to master
-- All work has been verified and tested
-- Confident in proceeding with merge
-
-**After confirmation, the agent-team executes:**
-```bash
-gh pr merge <PR_NUMBER> --merge
-```
-
-**Verification:** The agent-team verifies the PR is merged.
-
-### 3g. Transition JIRA to DONE (User / PO Confirmed)
-
-This is the final ticket closure step. After user/PO confirmation, the agent-team executes the final transition to DONE.
-
-> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
-> The agent-team MUST NOT call `atlassian_transitionJiraIssue` without explicit
-> user/PO confirmation. JIRA transition is destructive and irreversible.
->
-> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
->
-> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
-
-**What the agent-team DOES:**
-1. Verify the PR is merged (Step 3f verification).
-2. Execute the final transition:
-   ```bash
-   atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
-   ```
-
-**What the user / Product-Owner confirms:**
-- Ready to transition JIRA to DONE
-- All work has been implemented and verified
-- Confident in final JIRA closure
-
-**After confirmation, the agent-team executes:**
-```bash
-atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
-```
-
-**Verification:** The agent-team verifies the JIRA ticket is in "Fertig"
-status and the PR is merged.
-
-### 3h. Delete Remote Branch (User / PO Confirmed)
-
-After the PR is merged, the remote feature branch should be deleted to keep the
-repository clean. This is a **user / Product-Owner responsibility** — the
-agent-team prepares the command but does not execute it.
-
-> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
-> The agent-team MUST NOT run `git push origin --delete` without explicit
-> user/PO confirmation. Remote branch deletion is destructive and cannot be
-> undone without recreating the branch.
->
-> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
->
-> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
-
-**What the agent-team DOES:**
-1. Confirm the PR is merged to `master` (Step 3f verification).
-2. Identify the branch name from `git branch --show-current` or the PR metadata.
-3. Prepare the deletion command and present it to the user/PO:
-
-   ```bash
-   git push origin --delete <branch-name>
-   ```
-
-4. Warn the user/PO that this is irreversible and that the branch will be gone
-   from the remote after execution.
-
-**What the user / Product-Owner confirms:**
-- PR is merged and the branch is no longer needed
-- All work from the branch has been preserved (merged to master)
-- You are ready to delete the remote branch
-
-**After confirmation, the user / Product-Owner executes:**
-```bash
-git push origin --delete <branch-name>
-```
-
-**Verification:** Confirm the branch is gone from the remote with
-`git ls-remote --heads origin | grep <branch-name>` (should return nothing).
-
-### 3i. Update PR Description
+### 4d. Update PR Description
 
 Update the PR description with final status. The PR body must contain **four
 mandatory sections**; `gh pr edit` only updates the description, it does not
@@ -586,7 +414,187 @@ Refs: PRO-XXX
 | `Refs: PRO-XXX` missing | Conventional Commits gate fails | Always include the footer |
 | Inline multi-line body passed to `gh pr edit --body` | Shell-escaping truncates the body | Use `--body-file` instead |
 
-## Step 4 — Closure Sequence (User / PO Confirmed)
+
+### 4e. Delete Implementation Plan (User / PO Confirmed)
+
+**First closure step.** The implementation plan is deleted to mark the working
+document as complete. The plan has served its purpose once all work is
+implemented and documented.
+
+> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
+> The agent-team MUST NOT run `git rm` without explicit
+> user/PO confirmation. Plan deletion is permanent and cannot be
+> undone without recreating the plan from scratch.
+>
+> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
+>
+> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
+
+**What the agent-team DOES:**
+1. Confirm the implementation plan document is finalised and all steps/ACs are marked Complete.
+2. Prepare the deletion command and present it to the user/PO:
+
+   ```bash
+   git rm doc/02_Implementation_Plan_PRO-XXX.md
+   git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
+
+   Remove implementation plan after feature completion.
+   The plan is a working document that is no longer needed.
+
+   Refs: PRO-XXX"
+   ```
+
+3. Warn the user/PO that this is irreversible and that the plan file
+   will be gone from the repository after execution.
+
+**What the user / Product-Owner confirms:**
+- The implementation plan is fully documented and all steps/ACs are marked Complete
+- All work from the plan has been implemented
+- You are ready to delete the implementation plan
+
+**After confirmation, the user / Product-Owner executes:**
+```bash
+git rm doc/02_Implementation_Plan_PRO-XXX.md
+git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
+
+Remove implementation plan after feature completion.
+The plan is a working document that is no longer needed.
+
+Refs: PRO-XXX"
+git push origin <branch-name>
+```
+
+**Verification:** Confirm the plan file is gone from the remote with
+`git ls-remote --heads origin | grep <branch-name>` (should return nothing)
+and `git ls-files doc/02_Implementation_Plan_PRO-XXX.md` returns nothing.
+
+### 4f. Verify CI Checks Passed (User / PO Confirmed)
+
+Before proceeding with closure steps, verify that all CI checks passed.
+
+> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
+> The agent-team MUST NOT proceed without explicit
+> user/PO confirmation after CI verification.
+
+**What the agent-team DOES:**
+1. Check GitHub Actions for the current PR:
+   ```bash
+   gh run list --repo "$GITHUB_REPOSITORY" --head "<branch-name>" --limit 10
+   ```
+2. Verify all required jobs (check, test, publish) have status "success"
+3. If any checks fail, halt and report the failures
+
+**What the user / Product-Owner confirms:**
+- All CI checks have passed
+- GitHub Actions are clean for this PR
+- Ready to proceed with final destructive actions
+
+**After confirmation, the agent-team proceeds.**
+
+### 4g. Merge PR (User / PO Confirmed)
+
+After user/PO confirmation, the agent-team executes the PR merge.
+
+> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
+> The agent-team MUST NOT call `gh pr merge` without explicit
+> user/PO confirmation. PR merge is destructive and irreversible.
+>
+> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
+>
+> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
+
+**What the agent-team DOES:**
+1. Verify all CI checks passed (Step 4f).
+2. Execute the PR merge:
+   ```bash
+   gh pr merge <PR_NUMBER> --merge
+   ```
+
+**What the user / Product-Owner confirms:**
+- Ready to merge the PR to master
+- All work has been verified and tested
+- Confident in proceeding with merge
+
+**After confirmation, the agent-team executes:**
+```bash
+gh pr merge <PR_NUMBER> --merge
+```
+
+**Verification:** The agent-team verifies the PR is merged.
+
+### 4h. Transition JIRA to DONE (User / PO Confirmed)
+
+This is the final ticket closure step. After user/PO confirmation, the agent-team executes the final transition to DONE.
+
+> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
+> The agent-team MUST NOT call `atlassian_transitionJiraIssue` without explicit
+> user/PO confirmation. JIRA transition is destructive and irreversible.
+>
+> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
+>
+> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
+
+**What the agent-team DOES:**
+1. Verify the PR is merged (Step 4g verification).
+2. Execute the final transition:
+   ```bash
+   atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+   ```
+
+**What the user / Product-Owner confirms:**
+- Ready to transition JIRA to DONE
+- All work has been implemented and verified
+- Confident in final JIRA closure
+
+**After confirmation, the agent-team executes:**
+```bash
+atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})
+```
+
+**Verification:** The agent-team verifies the JIRA ticket is in "Fertig"
+status and the PR is merged.
+
+### 4i. Delete Remote Branch (User / PO Confirmed)
+
+After the PR is merged, the remote feature branch should be deleted to keep the
+repository clean. This is a **user / Product-Owner responsibility** — the
+agent-team prepares the command but does not execute it.
+
+> **⚠️ Requires explicit final User / Product-Owner confirmation before execution — in BOTH interactive and automated workflow modes.**
+> The agent-team MUST NOT run `git push origin --delete` without explicit
+> user/PO confirmation. Remote branch deletion is destructive and cannot be
+> undone without recreating the branch.
+>
+> **Interactive mode:** Pause and present the confirmation prompt to the user/PO. Execute only after receiving explicit confirmation.
+>
+> **Automated mode:** Even though no human is expected to intervene, the agent-team MUST pause, present the confirmation prompt, and wait for an explicit confirmation signal before executing. Automated mode never auto-executes destructive actions.
+
+**What the agent-team DOES:**
+1. Confirm the PR is merged to `master` (Step 4g verification).
+2. Identify the branch name from `git branch --show-current` or the PR metadata.
+3. Prepare the deletion command and present it to the user/PO:
+
+   ```bash
+   git push origin --delete <branch-name>
+   ```
+
+4. Warn the user/PO that this is irreversible and that the branch will be gone
+   from the remote after execution.
+
+**What the user / Product-Owner confirms:**
+- PR is merged and the branch is no longer needed
+- All work from the branch has been preserved (merged to master)
+- You are ready to delete the remote branch
+
+**After confirmation, the user / Product-Owner executes:**
+```bash
+git push origin --delete <branch-name>
+```
+
+**Verification:** Confirm the branch is gone from the remote with
+`git ls-remote --heads origin | grep <branch-name>` (should return nothing).
+
+## Step 5 — Closure Sequence (User / PO Confirmed)
 
 The closure sequence is executed in the following order. Each step requires
 explicit final User / Product-Owner confirmation in BOTH interactive and
@@ -595,11 +603,11 @@ confirmation; it never auto-executes destructive actions.
 
 | Order | Step | Section | Command |
 |-------|------|---------|---------|
-| 1 | Delete implementation plan | §3d | `git rm doc/02_Implementation_Plan_PRO-XXX.md` + commit + push |
-| 2 | Post JIRA final summary comment | §3a | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
-| 3 | Merge PR | §3f | `gh pr merge <PR_NUMBER> --merge` |
-| 4 | Transition JIRA to DONE | §3g | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
-| 5 | Delete remote branch | §3h | `git push origin --delete <branch-name>` |
+| 1 | Delete implementation plan | §4e | `git rm doc/02_Implementation_Plan_PRO-XXX.md` + commit + push |
+| 2 | Post JIRA final summary comment | §4a | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
+| 3 | Merge PR | §4g | `gh pr merge <PR_NUMBER> --merge` |
+| 4 | Transition JIRA to DONE | §4h | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
+| 5 | Delete remote branch | §4i | `git push origin --delete <branch-name>` |
 
 **Rationale for this order:**
 1. The implementation plan is a working document that is finalised and marked
@@ -620,7 +628,7 @@ confirmation; it never auto-executes destructive actions.
 The PR body must contain the four mandatory sections (Summary, Acceptance
 Criteria, Definition of Done, Testing) and the `Refs: PRO-XXX` footer.
 
-## Step 5 — Verify Final State
+## Step 6 — Verify Final State
 
 ```bash
 # Working tree clean

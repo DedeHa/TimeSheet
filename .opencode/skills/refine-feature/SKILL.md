@@ -21,6 +21,39 @@ Story Points, Non-Goals, and References already populated by
 
 ---
 
+## Prerequisites
+
+- Working directory: `/workspaces/TimeSheet` (repository root)
+- Virtual environment activated: `source /workspaces/TimeSheet/.venv/bin/activate`
+- `gh` authenticated and `git` configured
+- Atlassian MCP tools available (Jira)
+- A drafted JIRA Story or Bug ticket (status "Zu erledigen") with Intention /
+  Use-Case (stories) or Problem Statement (bugs), Goal, Steps / Implementation
+  Plan, Information, Testing Strategy, Acceptance Criteria, Definition of Done,
+  Priority / Story Points, Non-Goals, and References already populated by
+  `discover-feature`.
+
+---
+
+## Step 0 — Determine Current State
+
+1. Identify the current branch and JIRA ticket:
+   ```bash
+   git branch --show-current
+   git log --oneline -5
+   ```
+2. Extract the PRO-XXX ticket from the branch name or recent commits.
+3. Verify the working tree is clean before proceeding:
+   ```bash
+   git status
+   ```
+4. Read the drafted ticket via Atlassian MCP to confirm it is ready for review:
+   ```
+   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "customfield_10028"])
+   ```
+
+---
+
 ## Step 1 — Multi-Stakeholder Review
 
 After the PO defines the feature, conduct a **multi-stakeholder review** with

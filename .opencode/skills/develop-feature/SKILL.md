@@ -19,6 +19,27 @@ executes the plan in verifiable increments. Follows the conventions in
 - Atlassian MCP tools available (Jira)
 - A clean working tree on the correct base branch
 
+## Step 0 — Determine Current State
+
+1. Identify the current branch and JIRA ticket:
+   ```bash
+   git branch --show-current
+   git log --oneline -5
+   ```
+2. Extract the PRO-XXX ticket from the branch name or recent commits.
+3. Verify the working tree is clean before proceeding:
+   ```bash
+   git status
+   ```
+
+2. **Optional Enhancement**: 1. Read the drafted ticket via Atlassian MCP to confirm it is ready for review (optional):
+   ```
+   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "customfield_10028"])
+   ```
+   (This can be skipped if not needed)
+
+---
+
 ## Step 1 — Read the JIRA Ticket
 
 ### 1a. Resolve the ticket

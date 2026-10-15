@@ -75,6 +75,12 @@ This skill covers the workflow for discovering and documenting new features as w
    git status
    ```
 
+2. **Optional Enhancement**: Read the drafted ticket via Atlassian MCP to confirm it is ready for review:
+   ```
+   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "customfield_10028"])
+   ```
+   (This can be skipped if not needed)
+
 ## Step 1 — Sprint Inclusion Check
 
 When a feature is planned, this does **not** directly trigger development.
@@ -202,27 +208,27 @@ Common items:
 
 ---
 
-## Sample Description (Use as Starting Point)
+### Sample Description (Use as Starting Point)
 
 ```markdown
 **Intention / Use-Case:** As a [role], I want to [action] so that [benefit].
 
-## Goal
+### Goal
 
 [What does success look like? Quantifiable outcomes if possible.]
 
-## Steps / Implementation Plan
+### Steps / Implementation Plan
 
 1. [Step 1]
 2. [Step 2]
 3. [Step 3]
 
-## Information
+### Information
 
 [Why this work needs to happen now. Reference prior PRO-XXX tickets.
 Data sources, constraints, dependencies.]
 
-## Testing Strategy
+### Testing Strategy
 
 1. **Unit Tests:**
 
@@ -237,7 +243,7 @@ Data sources, constraints, dependencies.]
 
     * [Test scope 1]
 
-## Acceptance Criteria
+### Acceptance Criteria
 
 - [ ] AC-1: [Testable condition] — implementation detail
 - [ ] AC-2: [Testable condition] — implementation detail
@@ -245,7 +251,7 @@ Data sources, constraints, dependencies.]
 - [ ] AC-4: [Testable condition] — implementation detail
 - [ ] AC-5: [Testable condition] — implementation detail
 
-## Definition of Done
+### Definition of Done
 
 - [ ] PR #NNN merged to master
 - [ ] JIRA ticket closed (Fertig)
@@ -254,18 +260,18 @@ Data sources, constraints, dependencies.]
 - [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md, doc/ARCHITECTURE.md
 - [ ] CI self-tests: N tests passed
 
-## Priority / Story Points
+### Priority / Story Points
 
 **Priority:** [High|Medium|Low] — [rationale]
 
 **Story Points:** [N] (estimated at planning, required before sprint inclusion or development pickup)
 
-## Non-Goals / Out of Scope
+### Non-Goals / Out of Scope
 
 * [Explicitly excluded item 1]
 * [Explicitly excluded item 2]
 
-## References
+### References
 
 * [PRO-XXX](https://mainhatten.atlassian.net/browse/PRO-XXX): [Title]
 * [.github/workflows/...](link): [context]
@@ -365,41 +371,41 @@ Common items:
 
 ---
 
-## Sample Bug Description (Use as Starting Point)
+### Sample Bug Description (Use as Starting Point)
 
 ```markdown
 **Problem Statement:** When [action/condition], [unexpected result] occurs.
 
-## Steps to Reproduce
+### Steps to Reproduce
 
 1. [Step 1]
 2. [Step 2]
 3. [Step 3]
 
-## Expected Behavior
+### Expected Behavior
 
 [What should happen correctly.]
 
-## Actual Behavior
+### Actual Behavior
 
 [What actually happens. Include error messages or logs.]
 
-## Root Cause Analysis
+### Root Cause Analysis
 
 [What caused the bug. Reference commit, dependency, or configuration change.]
 
-## Information
+### Information
 
 [Why this fix needs to happen now. Severity: blocker/critical/major/minor/trivial.
 Environment affected. Reference prior PRO-XXX tickets.]
 
-## Fix / Implementation Plan
+### Fix / Implementation Plan
 
 1. [Step 1]
 2. [Step 2]
 3. [Step 3]
 
-## Testing Strategy
+### Testing Strategy
 
 1. **Unit Tests:**
 
@@ -414,14 +420,14 @@ Environment affected. Reference prior PRO-XXX tickets.]
 
      * [End-to-end verification]
 
-## Acceptance Criteria
+### Acceptance Criteria
 
 - [ ] AC-1: Bug does not reproduce after fix
 - [ ] AC-2: [Edge case covered] — implementation detail
 - [ ] AC-3: [Regression test passes] — implementation detail
 - [ ] AC-4: [No side effects] — implementation detail
 
-## Definition of Done
+### Definition of Done
 
 - [ ] PR #NNN merged to master
 - [ ] JIRA ticket closed (Fertig)
@@ -431,18 +437,18 @@ Environment affected. Reference prior PRO-XXX tickets.]
 - [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md, doc/ARCHITECTURE.md
 - [ ] CI self-tests: N tests passed
 
-## Priority / Story Points
+### Priority / Story Points
 
 **Priority:** High — [rationale: bug severity and impact]
 
 **Story Points:** [N] (estimated at planning, required before sprint inclusion or development pickup)
 
-## Non-Goals / Out of Scope
+### Non-Goals / Out of Scope
 
 * [Explicitly excluded item 1]
 * [Related issue not addressed in this fix]
 
-## References
+### References
 
 * [PRO-XXX](https://mainhatten.atlassian.net/browse/PRO-XXX): [Title]
 * [Commit hash]: [Description of change that introduced the bug]
@@ -451,7 +457,7 @@ Environment affected. Reference prior PRO-XXX tickets.]
 
 ---
 
-## Patterns Observed Across PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365, PRO-385, PRO-383, PRO-381
+### Patterns Observed Across PRO-370, PRO-369, PRO-368, PRO-367, PRO-366, PRO-365, PRO-385, PRO-383, PRO-381
 
 | Pattern | Frequency | When to Use |
 |---------|-----------|-------------|
@@ -469,7 +475,7 @@ Environment affected. Reference prior PRO-XXX tickets.]
 
 ---
 
-## Story Points Reference (Fibonacci Scale)
+### Story Points Reference (Fibonacci Scale)
 
 | Points | Workload | Examples in PRO Project |
 |--------|----------|-------------------------|
@@ -493,7 +499,7 @@ Environment affected. Reference prior PRO-XXX tickets.]
 
 ---
 
-## Quick-Start Checklist
+### Quick-Start Checklist
 
 ### Story Ticket Checklist
 
@@ -535,7 +541,7 @@ Environment affected. Reference prior PRO-XXX tickets.]
 
 ---
 
-## Handoff to refine-feature
+### Handoff to refine-feature
 
 The ticket is now drafted and ready for stakeholder review.
 

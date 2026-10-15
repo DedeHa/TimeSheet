@@ -51,7 +51,58 @@ Use this skill when:
 2. **Cycle Tracking**: Counts cycles per agent, stops at 3
 3. **Dispatch**: Routes to the right next agent
 4. **Escalation**: Handles blockers and PO evaluations
-5. **Handoff Coordination**: Manages transitions between phases
+5. **Handoff Coordination**: Manages transitions between phases with validation
+
+### Handoff Coordination Metrics
+
+Track these metrics at each handoff for better visibility:
+
+| Metric | Description | Success Threshold |
+|--------|-------------|-------------------|
+| `handoff_complete` | Handoff executed successfully | true |
+| `handoff_duration` | Time between handoff start and completion | < 4h |
+| `validation_passed` | All validation checks passed | true |
+| `escalation_level` | Current escalation level (0-3) | < 3 |
+| `state_transition` | Current to next step transition status | complete |
+
+### Stats Tracking
+
+Maintain these key metrics throughout the pipeline:
+
+```json
+{
+  "PRO-373": {
+    "development_mode": "interactive",
+    "current_step": "plan",
+    "cycle_counts": {
+      "plan": 1,
+      "develop": 0,
+      "complete": 0
+    },
+    "handoff_stats": {
+      "plan_to_develop": {
+        "completed": 1,
+        "duration_ms": 14400000,
+        "validations": ["architect_plan", "story_points", "acceptance_criteria"],
+        "validation_passed": true,
+        "escalation_triggered": false
+      },
+      "develop_to_complete": {
+        "completed": 0,
+        "duration_ms": null,
+        "validations": [],
+        "validation_passed": false,
+        "escalation_triggered": false
+      }
+    },
+    "last_updated": "2025-08-30T14:30:00Z",
+    "status": "in_progress",
+    "blocked": false,
+    "escalation_level": 0,
+    "pipeline_health": "green"  // green/yellow/red
+  }
+}
+```
 
 ## State Management
 
@@ -269,31 +320,60 @@ python .opencode/scripts/pipeline.py resume PRO-373
 python .opencode/scripts/pipeline.py show state PRO-373
 ```
 
-## Integration with Other Skills
+## Handoff Coordination
 
-### Plan → Develop
-The orchestration skill coordinates the transition:
-1. Reads Architect's plan output
-2. Validates completion of acceptance criteria
-3. Updates state to "develop"
-4. Routes to Developer agent
+### Handoff Validation Points
 
-### Develop → Complete
-Manages the handoff:
-1. Reads Developer's PR/implementation output
-2. Validates CI/test pass
-3. Updates state to "complete"
-4. Routes to Tester agent
+Each handoff includes validation at key checkpoints:
 
-### Complete → Done
-Finalizes the pipeline:
-1. Reads Tester's validation output
-2. Updates state to "complete"
-3. Routes to Tester agent
-4. After user/PO confirmation, the agent-team executes the final closure
-   (`atlassian_transitionJiraIssue` and `gh pr merge`) and verifies the
-   JIRA ticket is in "Fertig" status and the PR is merged
-5. Updates state to "done"
+#### Plan → Develop Handoff
+1. **Architect Plan Validation**
+   - Acceptance Criteria checklist completeness
+   - Story points presence
+   - Definition of Done verification
+   - Risk assessment completeness
+
+2. **Developer Readiness Validation**
+   - Branch preparation completeness
+   - PR template validation
+   - CI configuration check
+   - Test coverage requirement check
+
+#### Develop → Complete Handoff
+1. **Code Quality Validation**
+   - Automated test pass rate
+   - Security scan completion
+   - Performance benchmark status
+   - Documentation completeness
+
+2. **Release Readiness Validation**
+   - Release notes preparation
+   - Backout plan existence
+   - Stakeholder approval status
+   - Deployment schedule alignment
+
+#### Handoff Escalation Triggers
+
+| Trigger | Escalation Level | Action |
+|---------|------------------|--------|
+| Missing validation | 1 | Notify and pause for manual review |
+| Failed validation | 2 | Block handoff, require fix and re-validation |
+| Multiple failures | 3 | Immediate escalation to Product Owner |
+
+### Handoff Metrics Dashboard
+
+Monitor these metrics for pipeline health:
+
+```bash
+# Current handoff status
+python .opencode/scripts/pipeline.py show state PRO-373 | grep -A 20 "handoff_stats"
+
+# Recent handoff performance
+python .opencode/scripts/pipeline.py history PRO-373 | grep -E "handoff.*(success|failure|duration)"
+
+# Validation failure trends
+python .opencode/scripts/pipeline.py check cycles PRO-373 | grep -E "(validation|escalation|blocked)"
+```
 
 ## Sample Interaction
 

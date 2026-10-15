@@ -18,7 +18,7 @@ Owner in cooperation with the agent dev team (Architect, Developer, Tester).
 
 ---
 
-## Step 1 — Determine Current State
+## Step 0 — Determine Current State
 
 1. Identify the current branch and JIRA ticket:
    ```bash
@@ -31,9 +31,15 @@ Owner in cooperation with the agent dev team (Architect, Developer, Tester).
    git status
    ```
 
+2. **Optional Enhancement**: 1. Read the retrospective page via Atlassian MCP (optional):
+   ```
+   atlassian_getConfluencePage(cloudId="<cloudId>", pageId="<pageId>")
+   ```
+   (This can be skipped if not needed)
+
 ---
 
-## Step 2 — Gather Agent Feedback
+## Step 1 — Gather Agent Feedback
 
 Dispatch parallel feedback requests to all three agent team members.
 
@@ -63,7 +69,8 @@ Review the feature lifecycle and provide feedback on:
 
 ---
 
-## Step 3 — Synthesize Findings
+
+## Step 2 — Synthesize Findings
 
 Consolidate feedback from all three agents into the following structured
 format:
@@ -86,7 +93,7 @@ Table with columns: #, Resolution, Priority, Owner
 
 ---
 
-## Step 4 — Document on Confluence
+## Step 3 — Document on Confluence
 
 1. Read the existing retrospective page:
    ```
@@ -101,7 +108,7 @@ Table with columns: #, Resolution, Priority, Owner
 
 ---
 
-## Step 5 — Consolidate into Consolidated Tickets
+## Step 4 — Consolidate into Consolidated Tickets
 
 ### Analyze Overhead
 
@@ -135,7 +142,7 @@ with:
 
 ---
 
-## Step 6 — Create Consolidated Tickets (User/PO Confirmed)
+## Step 5 — Create Consolidated Tickets (User/PO Confirmed)
 
 > Requires explicit final User / Product-Owner confirmation before execution.
 

@@ -19,7 +19,28 @@ executes the plan in verifiable increments. Follows the conventions in
 - Atlassian MCP tools available (Jira)
 - A clean working tree on the correct base branch
 
-## Phase 1 — Read the JIRA Ticket
+## Step 0 — Determine Current State
+
+1. Identify the current branch and JIRA ticket:
+   ```bash
+   git branch --show-current
+   git log --oneline -5
+   ```
+2. Extract the PRO-XXX ticket from the branch name or recent commits.
+3. Verify the working tree is clean before proceeding:
+   ```bash
+   git status
+   ```
+
+2. **Optional Enhancement**: 1. Read the drafted ticket via Atlassian MCP to confirm it is ready for review (optional):
+   ```
+   atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "customfield_10028"])
+   ```
+   (This can be skipped if not needed)
+
+---
+
+## Step 1 — Read the JIRA Ticket
 
 ### 1a. Resolve the ticket
 
@@ -83,7 +104,7 @@ if fields["customfield_10028"] is None:
     return
 ```
 
-## Phase 2 — Adopt or Draft the Implementation Plan
+## Step 2 — Adopt or Draft the Implementation Plan
 
 ### 2a. Look for an existing plan
 
@@ -99,7 +120,7 @@ Two layouts are in use:
 
 The newer convention wins. If a plan for PRO-XXX already exists, **adopt it
 as the source of truth** — do not rewrite it. Cross-check the plan against the
-JIRA description (Phase 1b) and note any drift, then proceed to Phase 3.
+JIRA description (Step 1b) and note any drift, then proceed to Step 3.
 
 ### 2b. Draft a new plan (only if none exists)
 
@@ -129,12 +150,12 @@ Header convention: include the JIRA key, parent epic, current status, and
 
 ### 2c. Cross-check the plan against the ticket
 
-Walk every AC in the JIRA description (Phase 1b) and confirm it appears in
+Walk every AC in the JIRA description (Step 1b) and confirm it appears in
 the plan as a step, a verification item, or an explicit non-goal. Walk every
 DoD checkbox the same way. Note discrepancies back to the user before
 proceeding.
 
-## Phase 3 — Prepare the Branch
+## Step 3 — Prepare the Branch
 
 ```bash
 # From a clean working tree
@@ -152,7 +173,7 @@ Reactivate the virtual environment after every branch switch
 (`source /workspaces/TimeSheet/.venv/bin/activate` — see `AGENTS.md` gotcha
 #1).
 
-## Phase 4 — Implement in Rollout Steps
+## Step 4 — Implement in Rollout Steps
 
 The plan's **rollout section** (Part B step 6) is the execution order. Do
 **not** implement everything in one shot. Each rollout step is a discrete,
@@ -197,7 +218,7 @@ For each rollout step:
    `Refs: PRO-XXX` trailer. Keep commits logically grouped (one rollout
    step = one commit, or one logical change = one commit).
 
-## Phase 5 — Final Verification
+## Step 5 — Final Verification
 
 Before opening a PR, run the **full** quality gate. All of these must pass:
 
@@ -223,7 +244,7 @@ If the gate is the **PR quality gate**, also confirm:
   or moved to a non-goal
 - Definition of Done items in the plan match reality
 
-## Phase 6 — Open the PR
+## Step 6 — Open the PR
 
 Branch name and PR title follow `doc/CONTRIBUTING.md` §5:
 - Title: `[<type>][PRO-XXX] <Description>` (e.g. `[feat][PRO-369] …`)
@@ -248,7 +269,7 @@ EOF
 
 After opening, surface the PR URL and let the user drive review.
 
-## Phase 7 — Hand off to `complete-feature`
+## Step 7 — Hand off to `complete-feature`
 
 The `complete-feature` skill takes over from here: it verifies the PR's
 final state, posts the JIRA status comment, assigns story points,
@@ -315,9 +336,7 @@ PR description with the final status.
 This skill was extracted from the PRO-369 (Continuous CI-Pipeline Timing
 Benchmark) work. Useful as a reference for shape, not as a template:
 
-- **Plan**: `doc/01_Implementation_Plan_CI_Timing_Benchmark.md` (older
-  topic-numbered layout — the repo is migrating to
-  `02_Implementation_Plan_PRO-XXX.md`)
+- **Plan**: `doc/02_Implementation_Plan_PRO-XXX.md` (topic-numbered layout)
 - **JIRA**: PRO-368 parent (Fertig), PRO-369 child (In Arbeit),
   parent epic PRO-259
 - **Rollout steps** in the plan: 1) scripts + tests, 2) workflow +

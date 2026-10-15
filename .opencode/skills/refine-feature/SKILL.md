@@ -21,7 +21,7 @@ Story Points, Non-Goals, and References already populated by
 
 ---
 
-## Multi-Stakeholder Review
+## Step 1 — Multi-Stakeholder Review
 
 After the PO defines the feature, conduct a **multi-stakeholder review** with
 the developer, architect, and tester **before** the ticket is finalized.
@@ -47,7 +47,7 @@ the PO updates the feature definition before proceeding.
 
 ---
 
-## Common Stakeholder Review
+## Step 2 — Common Stakeholder Review
 
 After individual reviews pass, hold a **common review with all stakeholders**
 (PO, developer, architect, tester) to finalize the feature definition.

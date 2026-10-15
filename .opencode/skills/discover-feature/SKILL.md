@@ -62,7 +62,20 @@ This skill covers the workflow for discovering and documenting new features as w
 - `gh` authenticated and `git` configured
 - Atlassian MCP tools available (Jira)
 
-## Sprint Inclusion Check
+## Step 0 — Determine Current State
+
+1. Identify the current branch and JIRA ticket:
+   ```bash
+   git branch --show-current
+   git log --oneline -5
+   ```
+2. Extract the PRO-XXX ticket from the branch name or recent commits.
+3. Verify the working tree is clean before proceeding:
+   ```bash
+   git status
+   ```
+
+## Step 1 — Sprint Inclusion Check
 
 When a feature is planned, this does **not** directly trigger development.
 The user / Product-Owner must be actively asked and the feature summary
@@ -114,7 +127,7 @@ Before finalizing the ticket, walk through the complete ticket together:
 
 ---
 
-## Summary (Title)
+## Step 2 — Draft the Ticket Summary & Description
 
 - **Format:** Concise, action-oriented, max 1 line
 - **Pattern:** `[Verb] [Target] [Context/Qualification]`
@@ -126,7 +139,7 @@ Before finalizing the ticket, walk through the complete ticket together:
 
 ---
 
-## Description (Intention / Use-Case Based Structure)
+## Step 3 — Draft the Ticket Description (Intention / Use-Case Based Structure)
 
 Use the following structure (in this order). The whole plan is based on
 a single **intention / use-case** that defines the goal, steps,
@@ -260,7 +273,7 @@ Data sources, constraints, dependencies.]
 
 ---
 
-## Bug Ticket Discovery
+## Step 4 — Bug Ticket Discovery
 
 Bug tickets follow a distinct discovery workflow focused on **observed problems** rather than planned features. The discovery process mirrors the story workflow but adapts the description structure to emphasize reproduction, root cause, and verification.
 

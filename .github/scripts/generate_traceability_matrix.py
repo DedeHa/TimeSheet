@@ -1,9 +1,9 @@
 """Generate the requirement-to-architecture-to-code traceability matrix (PRO-368).
 
 This is a *production* CI support script (not a test). It scans
-`docs/REQUIREMENTS.md`` (TimeSheetAlgo / SCRIPT requirements) and
+`docs/REQUIREMENTS.md` (TimeSheetAlgo / SCRIPT requirements) and
 ``.opencode/docs/REQUIREMENTS.md`` (Agent Dev Team requirements),
-`docs/ARCHITECTURE.md`` and ``src/TimeSheetAlgo.py`` for
+`docs/ARCHITECTURE.md` and ``src/TimeSheetAlgo.py`` for
 requirement identifiers (FR-XX / QR-XX, and FR-INTEGRITY-XXX /
 QR-INTEGRITY-XXX for agent-team pipeline requirements) and renders a Markdown
 + HTML matrix under ``tests/reports/``. The CI ``test`` job runs this to
@@ -27,9 +27,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-REQUIREMENTS = ROOT / "doc" / "REQUIREMENTS.md"
+REQUIREMENTS = ROOT / "docs" / "REQUIREMENTS.md"
 AGENT_REQUIREMENTS = ROOT / ".opencode" / "docs" / "REQUIREMENTS.md"
-ARCHITECTURE = ROOT / "doc" / "ARCHITECTURE.md"
+ARCHITECTURE = ROOT / "docs" / "ARCHITECTURE.md"
 SOURCE = ROOT / "src" / "TimeSheetAlgo.py"
 CI_SCRIPTS = [
     ROOT / ".github" / "scripts",

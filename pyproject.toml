@@ -30,7 +30,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src_timesheetalgo"]
+include = ["src"]
 
 [tool.black]
 line-length = 88
@@ -65,7 +65,7 @@ markers = [
 filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.coverage.run]
-source = ["src_timesheetalgo"]
+source = ["src"]
 branch = true
 
 [tool.coverage.report]

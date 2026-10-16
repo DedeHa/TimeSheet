@@ -317,7 +317,7 @@ When a new requirement or implementation change is introduced, update the tracea
 
 1. Add or update the requirement ID in [doc/REQUIREMENTS.md](REQUIREMENTS.md).
 2. Update the corresponding row in the traceability matrix in [doc/ARCHITECTURE.md](ARCHITECTURE.md).
-3. Add the requirement ID to the relevant implementation function or class in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py).
+3. Add the requirement ID to the relevant implementation function or class in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py).
 4. Re-run the relevant unit tests so the documentation and implementation remain aligned.
 
 This keeps the documentation lightweight and reproducible without introducing external tooling.

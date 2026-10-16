@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import DATE_FORMAT, ROW_OFFSET, parse_date
+from src.TimeSheetAlgo import DATE_FORMAT, ROW_OFFSET, parse_date
 
 pytestmark = pytest.mark.unit
 

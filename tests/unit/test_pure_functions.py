@@ -9,7 +9,7 @@ from datetime import datetime
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     ROW_OFFSET,
     TIMESHEET_SHEETS,
     calculate_default_start_date,

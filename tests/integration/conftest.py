@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import DATE_FORMAT
+from src.TimeSheetAlgo import DATE_FORMAT
 
 
 @pytest.fixture

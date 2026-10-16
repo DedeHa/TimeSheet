@@ -9,7 +9,7 @@ from datetime import datetime
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     _default_input_provider,
     parse_date,
 )

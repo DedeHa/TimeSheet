@@ -5,7 +5,7 @@ import logging
 import openpyxl
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import check_file_existence
+from src.TimeSheetAlgo import check_file_existence
 
 pytestmark = pytest.mark.unit
 
@@ -75,7 +75,7 @@ def test_excel_permission_denied_logs_and_reraises(
         raise PermissionError("Permission denied from load_workbook")
 
     monkeypatch.setattr(
-        "src_timesheetalgo.TimeSheetAlgo.openpyxl.load_workbook", raise_perm
+        "src.TimeSheetAlgo.openpyxl.load_workbook", raise_perm
     )
 
     with caplog.at_level(logging.ERROR):

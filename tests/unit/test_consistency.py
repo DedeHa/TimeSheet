@@ -8,7 +8,7 @@ the in-memory dummy workbook in isolation.
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     YEAR_CHECK_CELL,
     YEAR_CHECK_SHEET,
     ConsistencyError,

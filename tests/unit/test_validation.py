@@ -7,7 +7,7 @@ functions that raise typed exceptions on invalid input.
 import openpyxl
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     TIMESHEET_SHEETS,
     TimelogFormatError,
     TimesheetFormatError,

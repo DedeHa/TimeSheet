@@ -9,7 +9,7 @@ from datetime import datetime
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     _default_clock,
 )
 
@@ -68,7 +68,7 @@ def test_set_default_end_date_does_not_call_real_now(mock_processor, monkeypatch
         called["now"] = True
         return real_now()
 
-    monkeypatch.setattr("src_timesheetalgo.TimeSheetAlgo.dt.now", spy_now)
+    monkeypatch.setattr("src.TimeSheetAlgo.dt.now", spy_now)
     mock_processor._clock = _fixed_clock(datetime(2025, 6, 15))
     mock_processor.set_default_end_date()
     assert called["now"] is False

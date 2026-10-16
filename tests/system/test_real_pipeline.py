@@ -11,7 +11,7 @@ from datetime import datetime
 import openpyxl
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     ROW_OFFSET,
     TimeSheetProcessor,
     check_file_existence,

@@ -138,7 +138,7 @@ Receives from Product Owner:
 - `path/to/new_file.py`: [Purpose and scope]
 
 ### To Modify
-- `src_timesheetalgo/TimeSheetAlgo.py`: [Specific sections]
+- `src.TimeSheetAlgo.py`: [Specific sections]
 - `tests/test_*.py`: [Test additions]
 
 ## Test Strategy

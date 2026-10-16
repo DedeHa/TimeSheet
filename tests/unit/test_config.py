@@ -8,7 +8,7 @@ on the test host never influences the result.
 import pytest
 import yaml
 
-from src_timesheetalgo.TimeSheetAlgo import (
+from src.TimeSheetAlgo import (
     ConfigError,
     _read_yaml,
     detect_environment,
@@ -17,7 +17,7 @@ from src_timesheetalgo.TimeSheetAlgo import (
 
 pytestmark = pytest.mark.unit
 
-_DETECT = "src_timesheetalgo.TimeSheetAlgo.detect_environment"
+_DETECT = "src.TimeSheetAlgo.detect_environment"
 
 
 def _write_config(path, content):

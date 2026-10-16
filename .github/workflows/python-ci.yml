@@ -98,10 +98,10 @@ jobs:
 
       - name: Run lint tools (ruff, black, pydocstyle, radon)
         run: |
-          ruff check src_timesheetalgo tests
-          black --check src_timesheetalgo tests
-          pydocstyle src_timesheetalgo tests
-          radon cc src_timesheetalgo -a
+          ruff check src tests
+          black --check src tests
+          pydocstyle src tests
+          radon cc src -a
 
   test:
     name: Run all test levels (unit + integration + system)
@@ -151,13 +151,13 @@ jobs:
       # per-step --cov-fail-under=0 stops an individual level (which on its own
       # cannot reach 90%) from failing the run prematurely.
       - name: Run unit tests
-        run: pytest -m unit --cov=src_timesheetalgo --cov-branch --cov-report= --cov-fail-under=0 --junitxml=tests/reports/unit-results.xml
+        run: pytest -m unit --cov=src --cov-branch --cov-report= --cov-fail-under=0 --junitxml=tests/reports/unit-results.xml
 
       - name: Run integration tests
-        run: pytest -m integration --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/integration-results.xml
+        run: pytest -m integration --cov=src --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/integration-results.xml
 
       - name: Run system tests
-        run: pytest -m system --cov=src_timesheetalgo --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
+        run: pytest -m system --cov=src --cov-branch --cov-append --cov-report= --cov-fail-under=0 --junitxml=tests/reports/system-results.xml
 
       # CI self-tests: the tests/ci-pipeline suite covers the workflow
       # structure + CI support scripts. Reported as its own "CI Self-Tests"
@@ -245,7 +245,7 @@ jobs:
       - name: Run agent tests
         run: pytest -q .opencode/tests/agents/ --junitxml=tests/reports/agent-results.xml
 
-      # Agent-system tests do not measure coverage for src_timesheetalgo,
+      # Agent-system tests do not measure coverage for src,
       # so coverage json has no data to report; keep this step additive
       # with continue-on-error while still producing the report artifact
       # when coverage is available.

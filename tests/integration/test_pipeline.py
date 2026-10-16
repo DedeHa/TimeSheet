@@ -8,7 +8,7 @@ No real project resources are touched here (that is the system level).
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import ROW_OFFSET
+from src.TimeSheetAlgo import ROW_OFFSET
 
 pytestmark = pytest.mark.integration
 

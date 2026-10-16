@@ -281,7 +281,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert all_passed is True
             assert "All filesystem checks passed" in message
@@ -294,7 +294,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert all_passed is False
             assert "Implementation plan not deleted" in message
@@ -307,7 +307,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert all_passed is False
             assert "Uncommitted changes detected" in message
@@ -320,7 +320,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=False),
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert all_passed is False
             assert "Remote branch" in message and "still exists" in message
@@ -333,7 +333,7 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted") as mock_branch,
         ):
             all_passed, message = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", ""
+                "docs/PRO-405_Implementation_Plan.md", ""
             )
             assert all_passed is True
             mock_branch.assert_not_called()
@@ -346,16 +346,14 @@ class TestValidateFilesystem:
             patch.object(fs_mod, "is_remote_branch_deleted", return_value=True),
         ):
             assert (
-                fs_mod.main(
-                    ["doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"]
-                )
+                fs_mod.main(["docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"])
                 == 0
             )
 
     def test_validate_filesystem_main_failure(self):
         """main() returns exit code 1 when a check fails."""
         with patch.object(fs_mod, "is_implementation_plan_deleted", return_value=False):
-            assert fs_mod.main(["doc/02_Implementation_Plan_PRO-405.md"]) == 1
+            assert fs_mod.main(["docs/PRO-405_Implementation_Plan.md"]) == 1
 
 
 if __name__ == "__main__":

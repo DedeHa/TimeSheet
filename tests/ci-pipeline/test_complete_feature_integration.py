@@ -64,7 +64,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is True
@@ -116,7 +116,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is False
@@ -137,7 +137,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is False
@@ -158,7 +158,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert pr_valid is True
             assert fs_valid is False
@@ -179,7 +179,7 @@ class TestCompleteValidationSequence:
         ):
             pr_valid, pr_msg = mod.validate_pr_merge(383)
             fs_valid, fs_msg = fs_mod.validate_filesystem(
-                "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+                "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
             )
             assert pr_valid is False
             assert fs_valid is False
@@ -212,9 +212,7 @@ class TestRealFilesystemValidation:
         # The plan is a working document that is deleted as the final closure
         # step (Step 3d) once the feature is complete and merged to master.
         assert (
-            fs_mod.is_implementation_plan_deleted(
-                "doc/02_Implementation_Plan_PRO-405.md"
-            )
+            fs_mod.is_implementation_plan_deleted("docs/PRO-405_Implementation_Plan.md")
             is True
         )
 
@@ -227,14 +225,14 @@ class TestRealFilesystemValidation:
 
     def test_real_filesystem_validation_sequence(self):
         """End-to-end validation sequence on the real filesystem."""
-        fs_mod.is_implementation_plan_deleted("doc/02_Implementation_Plan_PRO-405.md")
+        fs_mod.is_implementation_plan_deleted("docs/PRO-405_Implementation_Plan.md")
         fs_mod.is_working_tree_clean()
         fs_mod.is_remote_branch_deleted("feature/PRO-405")
         # During implementation the plan exists and the tree may have changes,
         # so the combined result is expected to be False; the individual
         # checks above are verified separately.
         all_passed, message = fs_mod.validate_filesystem(
-            "doc/02_Implementation_Plan_PRO-405.md", "feature/PRO-405"
+            "docs/PRO-405_Implementation_Plan.md", "feature/PRO-405"
         )
         assert isinstance(all_passed, bool)
         assert isinstance(message, str)

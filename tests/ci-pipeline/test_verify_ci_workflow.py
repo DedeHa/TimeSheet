@@ -24,7 +24,7 @@ WORKFLOW = ROOT / ".github" / "workflows" / "python-ci.yml"
 ACTION = ROOT / ".github" / "actions" / "setup-python-deps" / "action.yml"
 GPG_ACTION = ROOT / ".github" / "actions" / "setup-gpg-signing" / "action.yml"
 COMMITLINT = ROOT / ".commitlintrc.json"
-CONTRIBUTING = ROOT / "doc" / "CONTRIBUTING.md"
+CONTRIBUTING = ROOT / "docs" / "CONTRIBUTING.md"
 
 
 def _workflow() -> dict:

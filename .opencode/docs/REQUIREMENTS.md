@@ -1,6 +1,6 @@
 # Agent Dev Team Requirements
 
-This file defines the requirements for the **Agent Dev Team** (Product Owner, Architect, Developer, Tester) that orchestrate the feature lifecycle. These requirements are separate from the SCRIPT requirements documented in `doc/REQUIREMENTS.md`.
+This file defines the requirements for the **Agent Dev Team** (Product Owner, Architect, Developer, Tester) that orchestrate the feature lifecycle. These requirements are separate from the SCRIPT requirements documented in `docs/REQUIREMENTS.md`.
 
 ---
 
@@ -41,7 +41,7 @@ The Architect translates validated user stories and requirements into detailed t
 | AGENT-REQ-014 | The Architect **must NOT** change validated requirements. | `architect.agent.md` |
 | AGENT-REQ-015 | The Architect **must NOT** implement code. | `architect.agent.md` |
 | AGENT-REQ-016 | The Architect **must minimize complexity**; the simplest design that meets requirements is preferred. | `architect.agent.md` |
-| AGENT-REQ-017 | The Architect **must strictly reference `doc/ARCHITECTURE.md` patterns** for all design decisions. | `architect.agent.md` |
+| AGENT-REQ-017 | The Architect **must strictly reference `docs/ARCHITECTURE.md` patterns** for all design decisions. | `architect.agent.md` |
 | AGENT-REQ-018 | All designs **must align with the existing codebase**; new patterns may only be proposed if justified. | `architect.agent.md` |
 | AGENT-REQ-019 | The Architect **must include all files and changes needed** to satisfy acceptance criteria (Completeness Rule). | `architect.agent.md` |
 | AGENT-REQ-020 | The Architect **must ensure all components have clear, testable interfaces** (Testability Rule). | `architect.agent.md` |
@@ -59,12 +59,12 @@ The Developer implements features following architectural plans precisely, ensur
 | AGENT-REQ-023 | The Developer **must only modify files specified in the implementation plan**. | `developer.agent.md` |
 | AGENT-REQ-024 | The Developer **must NOT make architectural changes** without Architect approval. | `developer.agent.md` |
 | AGENT-REQ-025 | The Developer **must keep changes minimal and scoped**; no refactoring of unrelated code. | `developer.agent.md` |
-| AGENT-REQ-026 | The Developer **must follow `doc/CONTRIBUTING.md` guidelines** (naming conventions, coding style). | `developer.agent.md` |
+| AGENT-REQ-026 | The Developer **must follow `docs/CONTRIBUTING.md` guidelines** (naming conventions, coding style). | `developer.agent.md` |
 | AGENT-REQ-027 | **All code must include docstrings and type hints** on all parameters and returns. | `developer.agent.md` |
 | AGENT-REQ-028 | **Each commit must reference the PRO ticket** and be small, focused, and descriptive (commit format per CONTRIBUTING.md). | `developer.agent.md` |
 | AGENT-REQ-029 | The Developer **must follow the Architect's plan exactly**; if issues arise, flag for Architect review. | `developer.agent.md` |
 | AGENT-REQ-030 | The Developer **must meet the CI gate** in `AGENTS.md`: **≥90% branch+line coverage**. | `developer.agent.md` |
-| AGENT-REQ-031 | The Developer **must add comprehensive tests per `doc/TESTING.md` requirements** (unit, integration). | `developer.agent.md` |
+| AGENT-REQ-031 | The Developer **must add comprehensive tests per `docs/TESTING.md` requirements** (unit, integration). | `developer.agent.md` |
 | AGENT-REQ-032 | The Developer **must run the full test suite before handoff** and verify no pre-existing tests are broken. | `developer.agent.md` |
 
 ---
@@ -122,12 +122,12 @@ These requirements govern the coordination between agents during the feature lif
 
 ## 7. Agent Team Functional & Quality Requirements
 
-These are the functional (`FR-INTEGRITY-XXX`) and quality (`QR-INTEGRITY-XXX`) requirements that apply to the **Agent Dev Team pipeline** (the agent-team orchestration workflow, `complete-feature` skill, JIRA/PR closure gating). They are distinct from the SCRIPT requirements in `doc/REQUIREMENTS.md` (TimeSheetAlgo system functionality).
+These are the functional (`FR-INTEGRITY-XXX`) and quality (`QR-INTEGRITY-XXX`) requirements that apply to the **Agent Dev Team pipeline** (the agent-team orchestration workflow, `complete-feature` skill, JIRA/PR closure gating). They are distinct from the SCRIPT requirements in `docs/REQUIREMENTS.md` (TimeSheetAlgo system functionality).
 
 | ID | Requirement | Source |
 |----|-------------|--------|
-| FR-INTEGRITY-001 | **Pre-Closure Validation** — The complete-feature workflow shall validate all critical post-implementation conditions before transitioning a JIRA ticket to "Fertig" (Done). The validation shall include: PR merge status verification using `gh pr view`; Implementation plan document deletion; Working tree cleanliness (no uncommitted changes); Remote branch deletion; No unverified PR merge claims in JIRA comments. | `doc/02_Implementation_Plan_PRO-383.md`, `.opencode/skills/complete-feature/SKILL.md` |
-| QR-INTEGRITY-002 | **Pipeline Integrity Validation** — The agent-team pipeline shall provide automated validation of pipeline integrity to prevent premature JIRA closure, with all validation logic covered by a test suite (unit, integration and system tests) that runs as CI self-tests. | `doc/REQUIREMENTS.md` (moved from), `tests/ci-pipeline/test_complete_feature_validation.py` |
+ | FR-INTEGRITY-001 | **Pre-Closure Validation** — The complete-feature workflow shall validate all critical post-implementation conditions before transitioning a JIRA ticket to "Fertig" (Done). The validation shall include: PR merge status verification using `gh pr view`; Implementation plan document deletion; Working tree cleanliness (no uncommitted changes); Remote branch deletion; No unverified PR merge claims in JIRA comments. | `docs/PRO-383_Implementation_Plan.md`, `.opencode/skills/complete-feature/SKILL.md` |
+| QR-INTEGRITY-002 | **Pipeline Integrity Validation** — The agent-team pipeline shall provide automated validation of pipeline integrity to prevent premature JIRA closure, with all validation logic covered by a test suite (unit, integration and system tests) that runs as CI self-tests. | `docs/REQUIREMENTS.md` (moved from), `tests/ci-pipeline/test_complete_feature_validation.py` |
 
 **Related:** PRO-380 (bug where premature closure was discovered), PRO-383 (fix ticket)
 
@@ -154,7 +154,7 @@ This requirements document is maintained alongside:
 - `.opencode/agents/tester.agent.md` — Tester agent definition
 - `.opencode/skills/` — Feature pipeline skills
 - `~/.opencode/pipeline-state.json` — Persisted pipeline state per ticket
-- `doc/REQUIREMENTS.md` — SCRIPT requirements (separate; not duplicated here)
+- `docs/REQUIREMENTS.md` — SCRIPT requirements (separate; not duplicated here)
 
 ---
 

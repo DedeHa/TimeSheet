@@ -57,7 +57,7 @@ import sys
 
 # ---------------------------------------------------------------------------
 # Configuration - source of truth for required status checks on protected
-# branches. See doc/02_Implementation_Plan_PRO-386.md.
+# branches.
 # ---------------------------------------------------------------------------
 
 #: Required status check context names (full ``<workflow> / <job>`` context).

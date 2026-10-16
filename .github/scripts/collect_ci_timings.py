@@ -1,7 +1,6 @@
 """Collect per-step timing rows for a CI run from the GitHub Actions API (PRO-368).
 
-Part of the continuous CI-timing benchmark (see
-``doc/01_Implementation_Plan_CI_Timing_Benchmark.md``). This module reads the
+Part of the continuous CI-timing benchmark. This module reads the
 authoritative per-job / per-step timings that GitHub records
 (``started_at`` / ``completed_at`` / ``conclusion``) and turns a single run into
 CSV rows, applying the run / job / step exclusion rules so that only clean,
@@ -32,7 +31,7 @@ from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+DATA_DIR = ROOT / "docs" / "data"
 
 from validator import validate_json  # noqa: E402
 
@@ -322,9 +321,7 @@ def main() -> None:
         merged = dedup_latest_attempt(read_csv(csv_path) + new_rows)
         write_csv(csv_path, merged)
         max_runs = int(os.environ.get("MAX_RUNS", "0"))
-        write_json(
-            new_rows, run_meta, ROOT / "data/ci_runtimes.json", max_runs=max_runs
-        )
+        write_json(new_rows, run_meta, DATA_DIR / "ci_runtimes.json", max_runs=max_runs)
         print(
             f"collected {len(new_rows)} rows from run {run_id}; dataset now "
             f"{len(merged)} rows"

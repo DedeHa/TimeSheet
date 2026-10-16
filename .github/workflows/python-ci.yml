@@ -21,7 +21,7 @@
 #
 # For more information see:
 # - https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-# - doc/CONTRIBUTING.md (Development Workflow section)
+# - docs/CONTRIBUTING.md (Development Workflow section)
 
 name: Python CI
 

@@ -5,7 +5,7 @@ description: "Use when completing a feature and needing to verify acceptance cri
 
 # Feature Complete Skill
 
-Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the conventions in `doc/CONTRIBUTING.md` §3 and §7.
+Reusable end-to-end feature completion workflow for TimeSheetAlgo. Follows the conventions in `docs/CONTRIBUTING.md` §3 and §7.
 
 ## Prerequisites
 
@@ -74,12 +74,12 @@ failure and halt.
 Verify that the implementation plan document has been deleted:
 
 ```bash
-ls doc/02_Implementation_Plan_PRO-XXX.md
+ls docs/PRO-XXX_Implementation_Plan.md
 ```
 
 **Pass condition:** The file does not exist.
 
-**If failed:** Report `Implementation plan not deleted: doc/02_Implementation_Plan_PRO-XXX.md still exists. Delete before proceeding.` and halt the workflow.
+**If failed:** Report `Implementation plan not deleted: docs/PRO-XXX_Implementation_Plan.md still exists. Delete before proceeding.` and halt the workflow.
 
 ### Check 4 — Working Tree Clean
 
@@ -162,7 +162,7 @@ python .github/scripts/generate_traceability_matrix.py
 
 ## Step 3 — Evaluate Acceptance Criteria
 
-1. Read the implementation plan document (e.g. `doc/02_Implementation_Plan_PRO-XXX.md`).
+1. Read the implementation plan document (e.g. `docs/PRO-XXX_Implementation_Plan.md`).
 2. Read the JIRA ticket description via Atlassian MCP:
    ```
    atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["description", "status", "fixVersions", "resolution"])
@@ -224,12 +224,12 @@ permanent closure record for the ticket.
 - [x] PR #NNN merged to master
 - [x] All ACs checkmarked
 - [x] Story Points: N assigned
-- [x] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
-- [x] Architecture updated: doc/ARCHITECTURE.md lists new FR/QR
+- [x] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md
+- [x] Architecture updated: docs/ARCHITECTURE.md lists new FR/QR
 - [x] CI self-tests: N passed
 - [x] Lint checks: ruff, black, pydocstyle, radon
 - [x] Application tests: N passed (≥90% coverage)
-- [x] Implementation plan deleted: doc/02_Implementation_Plan_PRO-XXX.md
+- [x] Implementation plan deleted: docs/PRO-XXX_Implementation_Plan.md
 - [x] JIRA description fully checkmarked
 
 ### Test Results
@@ -290,12 +290,12 @@ JIRA UI. A comment is **not** a substitute for editing the description.
 - [x] PR #NNN merged to master
 - [x] All ACs checkmarked
 - [x] Story Points: N assigned
-- [x] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
-- [x] Architecture updated: doc/ARCHITECTURE.md lists new FR/QR
+- [x] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md
+- [x] Architecture updated: docs/ARCHITECTURE.md lists new FR/QR
 - [x] CI self-tests: N passed
 - [x] Lint checks: ruff, black, pydocstyle, radon
 - [x] Application tests: N passed (≥90% coverage)
-- [x] Implementation plan updated: doc/02_Implementation_Plan_PRO-XXX.md
+- [x] Implementation plan updated: docs/PRO-XXX_Implementation_Plan.md
 - [x] JIRA description fully checkmarked
 
 ## Dependencies
@@ -326,12 +326,12 @@ JIRA UI. A comment is **not** a substitute for editing the description.
 | 1 | `PR #NNN merged to master` |
 | 2 | `All ACs checkmarked` |
 | 3 | `Story Points: N assigned` |
-| 4 | `Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md` |
-| 5 | `Architecture updated: doc/ARCHITECTURE.md lists new FR/QR` |
+| 4 | `Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md` |
+| 5 | `Architecture updated: docs/ARCHITECTURE.md lists new FR/QR` |
 | 6 | `CI self-tests: N passed` |
 | 7 | `Lint checks: ruff, black, pydocstyle, radon` |
 | 8 | `Application tests: N passed (≥90% coverage)` |
-| 9 | `Implementation plan updated: doc/02_Implementation_Plan_PRO-XXX.md` |
+| 9 | `Implementation plan updated: docs/PRO-XXX_Implementation_Plan.md` |
 | 10 | `JIRA description fully checkmarked` |
 
 **Common failure modes (avoid these):**
@@ -371,12 +371,12 @@ merge the PR.
 - [x] PR #NNN merged to master
 - [x] All ACs checkmarked
 - [x] Story Points: N assigned
-- [x] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
-- [x] Architecture updated: doc/ARCHITECTURE.md lists new FR/QR
+- [x] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md
+- [x] Architecture updated: docs/ARCHITECTURE.md lists new FR/QR
 - [x] CI self-tests: N passed
 - [x] Lint checks: ruff, black, pydocstyle, radon
 - [x] Application tests: N passed (≥90% coverage)
-- [x] Implementation plan updated: doc/02_Implementation_Plan_PRO-XXX.md
+- [x] Implementation plan updated: docs/PRO-XXX_Implementation_Plan.md
 - [x] JIRA description fully checkmarked
 
 ## Testing
@@ -435,7 +435,7 @@ implemented and documented.
 2. Prepare the deletion command and present it to the user/PO:
 
    ```bash
-   git rm doc/02_Implementation_Plan_PRO-XXX.md
+   git rm docs/PRO-XXX_Implementation_Plan.md
    git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
 
    Remove implementation plan after feature completion.
@@ -454,7 +454,7 @@ implemented and documented.
 
 **After confirmation, the user / Product-Owner executes:**
 ```bash
-git rm doc/02_Implementation_Plan_PRO-XXX.md
+git rm docs/PRO-XXX_Implementation_Plan.md
 git commit -m "docs(ci): delete stale implementation plan for PRO-XXX
 
 Remove implementation plan after feature completion.
@@ -466,7 +466,7 @@ git push origin <branch-name>
 
 **Verification:** Confirm the plan file is gone from the remote with
 `git ls-remote --heads origin | grep <branch-name>` (should return nothing)
-and `git ls-files doc/02_Implementation_Plan_PRO-XXX.md` returns nothing.
+and `git ls-files docs/PRO-XXX_Implementation_Plan.md` returns nothing.
 
 ### 4f. Verify CI Checks Passed (User / PO Confirmed)
 
@@ -603,7 +603,7 @@ confirmation; it never auto-executes destructive actions.
 
 | Order | Step | Section | Command |
 |-------|------|---------|---------|
-| 1 | Delete implementation plan | §4e | `git rm doc/02_Implementation_Plan_PRO-XXX.md` + commit + push |
+| 1 | Delete implementation plan | §4e | `git rm docs/PRO-XXX_Implementation_Plan.md` + commit + push |
 | 2 | Post JIRA final summary comment | §4a | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
 | 3 | Merge PR | §4g | `gh pr merge <PR_NUMBER> --merge` |
 | 4 | Transition JIRA to DONE | §4h | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` |
@@ -665,7 +665,7 @@ git ls-remote --heads origin | grep <branch-name>  # should return nothing
 | Stage all | `git add -A` |
 | Commit | `git commit -m "docs(ci): finalise PRO-XXX...\n\nRefs: PRO-XXX"` |
 | Push | `git push origin <branch>` |
-| Delete implementation plan | `git rm doc/02_Implementation_Plan_PRO-XXX.md` — **User/PO confirms and executes** (via Step 4, order 1) |
+| Delete implementation plan | `git rm docs/PRO-XXX_Implementation_Plan.md` — **User/PO confirms and executes** (via Step 4, order 1) |
 | Merge PR | `gh pr merge <PR_NUMBER> --merge` — **User/PO confirms and executes** (via Step 4, order 2) |
 | Transition JIRA | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` — **User/PO confirms and executes** (via Step 4, order 3) |
 | Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** (via Step 4, order 4) |
@@ -726,9 +726,9 @@ When escalating, provide:
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `doc/CONTRIBUTING.md` — Development standards
-- `doc/TESTING.md` — Test structure, test markers, test organization
-- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `docs/CONTRIBUTING.md` — Development standards
+- `docs/TESTING.md` — Test structure, test markers, test organization
+- `docs/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/complete-feature/` — This skill
 - `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
 - `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization

@@ -45,7 +45,7 @@ Mapped each level to its folder and marker — unit lives under the `@tests/unit
 
 ## Testing Architecture
 
-Tests mirror the runtime boundaries described in [doc/ARCHITECTURE.md](ARCHITECTURE.md), in three levels — one folder and one marker each.
+Tests mirror the runtime boundaries described in [docs/ARCHITECTURE.md](ARCHITECTURE.md), in three levels — one folder and one marker each.
 
 | Level | Folder | Exercises |
 |-------|--------|-----------|
@@ -57,7 +57,7 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 
 ## Traceability Validation
 
-Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by
+Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [docs/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [docs/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by
 [tests/ci-pipeline/test_generate_traceability_matrix.py](../tests/ci-pipeline/test_generate_traceability_matrix.py),
 which the `check` job runs as part of the CI self-tests
 (`pytest -q tests/ci-pipeline/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.

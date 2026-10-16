@@ -9,7 +9,7 @@ FR-INTEGRITY-001 / QR-INTEGRITY-002 validation gates.
 
 The checks implemented here are:
   1. Implementation plan deletion — verify that the implementation plan
-     document (``doc/02_Implementation_Plan_PRO-XXX.md``) no longer exists.
+     document no longer exists.
   2. Working tree cleanliness — verify that ``git status --porcelain``
      returns an empty string (no uncommitted changes).
   3. Remote branch deletion — verify that the remote feature branch is
@@ -37,7 +37,7 @@ from typing import Optional, Tuple
 
 # Path to the implementation plan document (relative to repository root).
 # The PRO-XXX token is replaced by the caller for the specific ticket.
-IMPLEMENTATION_PLAN_TEMPLATE = "doc/02_Implementation_Plan_PRO-XXX.md"
+IMPLEMENTATION_PLAN_TEMPLATE = "docs/PRO-XXX_Implementation_Plan.md"
 
 
 def is_implementation_plan_deleted(
@@ -51,7 +51,7 @@ def is_implementation_plan_deleted(
 
     Args:
         plan_path: Path to the implementation plan document. Defaults to
-            ``doc/02_Implementation_Plan_PRO-XXX.md``.
+            `docs/PRO-XXX_Implementation_Plan.md``.
 
     Returns:
         ``True`` if the file does NOT exist (i.e. the plan has been deleted),

@@ -1,6 +1,6 @@
 """JSON schema validation for CI timing data (PRO-375).
 
-Validates the structure of data/ci_runtimes.json and data/ci_metrics.json.
+Validates the structure of docs/data/ci_runtimes.json and docs/data/ci_metrics.json.
 Standard library only, non-gating invariant (returns error list, never raises).
 """
 

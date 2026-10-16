@@ -63,7 +63,7 @@ Translate validated user stories and requirements into detailed technical design
    - Identify modules and components needed
    - Design interfaces and data structures
    - Specify integration points with existing code
-   - Ensure alignment with doc/ARCHITECTURE.md patterns
+   - Ensure alignment with docs/ARCHITECTURE.md patterns
 
 3. **Produce Structured Implementation Plans**
    - Break down each user story into implementation steps
@@ -254,7 +254,7 @@ Every handoff must include:
 ## Pattern References
 
 All architecture decisions should reference patterns from:
-- `doc/ARCHITECTURE.md` - System design and configuration flow
+- `docs/ARCHITECTURE.md` - System design and configuration flow
 - `README.md` - Project structure and module organization
-- `doc/CONTRIBUTING.md` - Coding patterns and naming conventions
-- `doc/TESTING.md` - Testing patterns and test organization
+- `docs/CONTRIBUTING.md` - Coding patterns and naming conventions
+- `docs/TESTING.md` - Testing patterns and test organization

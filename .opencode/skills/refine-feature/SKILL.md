@@ -172,9 +172,9 @@ the user asks to stop or if a blocker is hit.
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `doc/CONTRIBUTING.md` — Development standards
-- `doc/REQUIREMENTS.md` — FR / QR requirement IDs
-- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `docs/CONTRIBUTING.md` — Development standards
+- `docs/REQUIREMENTS.md` — FR / QR requirement IDs
+- `docs/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/discover-feature/` — Initial ticket documentation
 - `.opencode/skills/refine-feature/` — This skill
 - `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

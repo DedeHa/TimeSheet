@@ -358,7 +358,7 @@ Every handoff must include:
 ## Test Execution Patterns
 
 Use these testing patterns from project docs:
-- `doc/TESTING.md` - Test markers and organization (@pytest.mark.unit, @pytest.mark.integration)
+- `docs/TESTING.md` - Test markers and organization (@pytest.mark.unit, @pytest.mark.integration)
 - `tests/test_unit.py` - Unit test patterns and fixtures
 - `tests/test_integration.py` - Integration test patterns
 - `tests/test_system.py` - System verification patterns
@@ -379,5 +379,5 @@ This agent definition follows the workflow documented in:
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
 - `.opencode/skills/complete-feature/SKILL.md` — Feature completion workflow (final-verification, evaluate-ac, assign-story-points, close-ticket)
-- `doc/TESTING.md` — Test markers and organization
-- `doc/CONTRIBUTING.md` — Contributing guidelines & Git workflow
+- `docs/TESTING.md` — Test markers and organization
+- `docs/CONTRIBUTING.md` — Contributing guidelines & Git workflow

@@ -1,6 +1,6 @@
 # CI Pipeline Timing Benchmark
 
-Included runs: 145
+Included runs: 146
 
 > ⚠️ GitHub-hosted runners are shared and noisy; per-step times vary run-to-run (often ±10–30%). Read **stddev alongside mean**, prefer **median / p95** for decisions, and treat these as **trend indicators**, not benchmarks of the code itself.
 
@@ -57,29 +57,29 @@ Included runs: 145
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 117 | 32.0 | 7.0 | 33.0 | 44.0 | 18.0 | 49.0 | 42.0 |
+| **Job total** | 118 | 32.0 | 7.0 | 33.0 | 44.0 | 18.0 | 49.0 | 31.0 |
 | Install dependencies and setup environment | 32 | 11.4 | 2.3 | 11.0 | 15.0 | 8.0 | 17.0 | 10.0 |
-| Run ./.github/actions/setup-python-deps | 84 | 9.5 | 6.4 | 7.0 | 21.0 | 2.0 | 24.0 | 16.0 |
-| Run CI self-tests (tests/ci-pipeline) | 9 | 6.3 | 0.5 | 6.0 | 7.0 | 6.0 | 7.0 | 6.0 |
-| Run system tests | 116 | 6.1 | 2.0 | 5.5 | 9.0 | 3.0 | 9.0 | 4.0 |
-| Run unit tests | 116 | 3.6 | 0.8 | 3.0 | 5.0 | 3.0 | 6.0 | 4.0 |
+| Run ./.github/actions/setup-python-deps | 85 | 9.5 | 6.4 | 7.0 | 21.0 | 2.0 | 24.0 | 7.0 |
+| Run CI self-tests (tests/ci-pipeline) | 10 | 6.3 | 0.5 | 6.0 | 7.0 | 6.0 | 7.0 | 6.0 |
+| Run system tests | 117 | 6.0 | 2.1 | 5.0 | 9.0 | 1.0 | 9.0 | 1.0 |
+| Run unit tests | 117 | 3.6 | 0.8 | 3.0 | 5.0 | 3.0 | 6.0 | 6.0 |
 | Run CI self-tests (.github/tests) | 61 | 1.7 | 1.4 | 1.0 | 3.0 | 0.0 | 7.0 | 6.0 |
-| Run actions/checkout@v5 | 83 | 1.7 | 0.8 | 2.0 | 3.0 | 1.0 | 5.0 | 4.0 |
+| Run actions/checkout@v5 | 84 | 1.7 | 0.8 | 2.0 | 3.0 | 1.0 | 5.0 | 1.0 |
 | Run actions/checkout@v4 | 32 | 1.3 | 0.7 | 1.0 | 2.0 | 1.0 | 4.0 | 1.0 |
-| Upload test results | 116 | 1.1 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
-| Run integration tests | 116 | 1.0 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 0.0 |
+| Upload test results | 117 | 1.1 | 0.5 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
+| Run integration tests | 117 | 1.0 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
 | Publish or update sticky PR comment | 33 | 0.9 | 0.2 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
 | Validate documentation traceability | 37 | 0.7 | 0.5 | 1.0 | 1.0 | 0.0 | 2.0 | 1.0 |
 | Comment traceability report on PR | 37 | 0.6 | 0.5 | 1.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Combined coverage report and 90% gate | 116 | 0.5 | 0.6 | 0.0 | 1.0 | 0.0 | 2.0 | 1.0 |
+| Combined coverage report and 90% gate | 117 | 0.5 | 0.6 | 0.0 | 1.0 | 0.0 | 2.0 | 1.0 |
 | Run actions/setup-python@v5 | 16 | 0.4 | 0.5 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Validate PR quality-gate summary generator | 30 | 0.3 | 0.5 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
 | Run actions/setup-python@v6 | 16 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Export machine-readable coverage | 108 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
-| Export CI pipeline coverage | 23 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
-| Generate and validate traceability matrix | 78 | 0.1 | 0.2 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Export machine-readable coverage | 109 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
+| Export CI pipeline coverage | 24 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| Generate and validate traceability matrix | 79 | 0.1 | 0.2 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Generate PR quality-gate summary | 33 | 0.0 | 0.2 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
-| Prepare report directory | 116 | 0.0 | 0.1 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
+| Prepare report directory | 117 | 0.0 | 0.1 | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 |
 
 ## Job: Lint and Format Check
 
@@ -102,44 +102,44 @@ Included runs: 145
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 90 | 24.3 | 11.6 | 21.5 | 44.0 | 9.0 | 61.0 | 32.0 |
+| **Job total** | 91 | 24.2 | 11.6 | 21.0 | 44.0 | 9.0 | 61.0 | 18.0 |
 | Install dependencies and setup environment | 5 | 13.0 | 1.6 | 13.0 | 15.0 | 11.0 | 15.0 | 12.0 |
 | Pull wagoid/commitlint-github-action:6.2.1 | 27 | 12.2 | 3.3 | 11.0 | 20.0 | 9.0 | 22.0 | 9.0 |
-| Run ./.github/actions/setup-python-deps | 84 | 9.7 | 6.8 | 7.0 | 21.0 | 2.0 | 33.0 | 21.0 |
+| Run ./.github/actions/setup-python-deps | 85 | 9.7 | 6.7 | 7.0 | 21.0 | 2.0 | 33.0 | 7.0 |
+| Run lint tools (ruff, black, pydocstyle, radon) | 90 | 2.0 | 0.7 | 2.0 | 3.0 | 1.0 | 4.0 | 3.0 |
 | Setup Node.js | 5 | 2.0 | 1.9 | 1.0 | 4.0 | 0.0 | 4.0 | 0.0 |
-| Run lint tools (ruff, black, pydocstyle, radon) | 89 | 2.0 | 0.7 | 2.0 | 3.0 | 1.0 | 4.0 | 3.0 |
-| Run actions/checkout@v5 | 83 | 1.9 | 1.0 | 2.0 | 3.0 | 1.0 | 7.0 | 2.0 |
+| Run actions/checkout@v5 | 84 | 1.9 | 1.0 | 2.0 | 3.0 | 1.0 | 7.0 | 2.0 |
 | Validate commit messages | 22 | 1.7 | 0.6 | 2.0 | 3.0 | 1.0 | 3.0 | 2.0 |
 | Run actions/checkout@v4 | 5 | 1.6 | 0.9 | 1.0 | 3.0 | 1.0 | 3.0 | 1.0 |
-| Validate PR | 62 | 1.0 | 0.9 | 1.0 | 2.0 | 0.0 | 4.0 | 1.0 |
+| Validate PR | 63 | 1.0 | 0.9 | 1.0 | 2.0 | 0.0 | 4.0 | 1.0 |
 | Validate Jira reference in commits | 22 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Validate PR Title | 22 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Validate PR Body | 22 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 | Run actions/setup-python@v6 | 5 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Print GitHub Context Information and setup environment | 89 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| Print GitHub Context Information and setup environment | 90 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 
 ## Job: Publish
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 74 | 10.4 | 6.1 | 9.0 | 13.0 | 6.0 | 46.0 | 9.0 |
-| Run actions/checkout@v5 | 72 | 1.3 | 0.6 | 1.0 | 2.0 | 0.0 | 3.0 | 1.0 |
-| Publish or update sticky PR comment | 73 | 1.2 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
-| Download test reports | 73 | 0.7 | 0.5 | 1.0 | 1.0 | 0.0 | 2.0 | 1.0 |
-| Show build information | 73 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
-| Generate PR quality-gate summary | 73 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| **Job total** | 75 | 10.4 | 6.1 | 9.0 | 13.0 | 6.0 | 46.0 | 10.0 |
+| Run actions/checkout@v5 | 73 | 1.3 | 0.6 | 1.0 | 2.0 | 0.0 | 3.0 | 2.0 |
+| Publish or update sticky PR comment | 74 | 1.2 | 0.4 | 1.0 | 2.0 | 0.0 | 2.0 | 2.0 |
+| Download test reports | 74 | 0.7 | 0.5 | 1.0 | 1.0 | 0.0 | 2.0 | 0.0 |
+| Generate PR quality-gate summary | 74 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
+| Show build information | 74 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 
 ## Job: Agent System Tests
 
 | Step | n | mean (s) | stddev | median | p95 | min | max | last |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Job total** | 32 | 18.6 | 6.3 | 17.0 | 31.0 | 11.0 | 34.0 | 31.0 |
-| Run ./.github/actions/setup-python-deps | 31 | 7.5 | 6.0 | 5.0 | 20.0 | 2.0 | 22.0 | 20.0 |
-| Run agent tests | 31 | 2.9 | 0.8 | 3.0 | 4.0 | 1.0 | 4.0 | 2.0 |
-| Run actions/checkout@v5 | 31 | 1.7 | 0.7 | 2.0 | 3.0 | 1.0 | 4.0 | 1.0 |
-| Upload agent test results | 31 | 0.9 | 0.6 | 1.0 | 2.0 | 0.0 | 2.0 | 0.0 |
-| Export machine-readable coverage | 31 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
-| Prepare report directory | 31 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
+| **Job total** | 33 | 18.7 | 6.2 | 17.0 | 31.0 | 11.0 | 34.0 | 21.0 |
+| Run ./.github/actions/setup-python-deps | 32 | 7.6 | 5.9 | 5.0 | 20.0 | 2.0 | 22.0 | 11.0 |
+| Run agent tests | 32 | 2.8 | 0.9 | 3.0 | 4.0 | 1.0 | 4.0 | 1.0 |
+| Run actions/checkout@v5 | 32 | 1.8 | 0.7 | 2.0 | 3.0 | 1.0 | 4.0 | 2.0 |
+| Upload agent test results | 32 | 0.9 | 0.6 | 1.0 | 2.0 | 0.0 | 2.0 | 1.0 |
+| Export machine-readable coverage | 32 | 0.2 | 0.4 | 0.0 | 1.0 | 0.0 | 1.0 | 1.0 |
+| Prepare report directory | 32 | 0.1 | 0.3 | 0.0 | 1.0 | 0.0 | 1.0 | 0.0 |
 
 ## Appendix: keys with < 3 samples (withheld)
 

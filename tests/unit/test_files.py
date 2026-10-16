@@ -74,9 +74,7 @@ def test_excel_permission_denied_logs_and_reraises(
     def raise_perm(*args, **kwargs):
         raise PermissionError("Permission denied from load_workbook")
 
-    monkeypatch.setattr(
-        "src.TimeSheetAlgo.openpyxl.load_workbook", raise_perm
-    )
+    monkeypatch.setattr("src.TimeSheetAlgo.openpyxl.load_workbook", raise_perm)
 
     with caplog.at_level(logging.ERROR):
         with pytest.raises(PermissionError):

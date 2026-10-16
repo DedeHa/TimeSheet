@@ -33,7 +33,7 @@ from collect_ci_timings import JOB_TOTAL, read_csv
 from validator import validate_json
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+DATA_DIR = ROOT / "docs" / "data"
 
 #: Minimum successful samples before a key's stats are considered meaningful.
 MIN_SAMPLES = 3
@@ -264,7 +264,7 @@ def main() -> None:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report + "\n", encoding="utf-8")
     max_runs = int(os.environ.get("MAX_RUNS", "0"))
-    write_metrics(agg, ROOT / "data/ci_metrics.json", max_runs=max_runs)
+    write_metrics(agg, DATA_DIR / "ci_metrics.json", max_runs=max_runs)
     print(f"aggregated {len(rows)} rows from {len(run_ids)} runs -> {report_path}")
 
 

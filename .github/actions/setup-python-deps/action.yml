@@ -10,8 +10,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Cache virtual environment
-      uses: actions/cache@v4
+- name: Cache virtual environment
+        uses: actions/cache@v5
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('pyproject.toml') }}

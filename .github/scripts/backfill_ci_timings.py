@@ -34,7 +34,7 @@ from validator import validate_json  # noqa: E402
 TARGET_WORKFLOW = "Python CI"
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+DATA_DIR = ROOT / "docs" / "data"
 
 
 def _gh_api(path: str) -> object:
@@ -280,7 +280,7 @@ def backfill(
 
     merged = c.dedup_latest_attempt(list(existing_by_key.values()) + new_rows)
     c.write_csv(csv_path, merged)
-    _write_json(new_rows, ROOT / "data/ci_runtimes.json")
+    _write_json(new_rows, DATA_DIR / "ci_runtimes.json")
     print(
         f"backfilled {runs_seen} qualifying runs; added {len(new_rows)} new rows; "
         f"dataset now {len(merged)}"
@@ -293,7 +293,7 @@ def main() -> None:
 
     Optional flags:
       --migrate: migrate CSV to JSON instead of running the backfill
-      --json-path: destination for JSON migration (default: data/ci_runtimes.json)
+      --json-path: destination for JSON migration (default: docs/data/ci_runtimes.json)
       --since-run-id: only backfill runs newer than this run ID
       --since-date: only backfill runs created on or after this date (ISO 8601)
     """
@@ -316,8 +316,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--json-path",
-        default="data/ci_runtimes.json",
-        help="destination for JSON migration (default: data/ci_runtimes.json)",
+        default="docs/data/ci_runtimes.json",
+        help="destination for JSON migration (default: docs/data/ci_runtimes.json)",
     )
     parser.add_argument(
         "--since-run-id",

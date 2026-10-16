@@ -1,9 +1,9 @@
 """Generate the requirement-to-architecture-to-code traceability matrix (PRO-368).
 
 This is a *production* CI support script (not a test). It scans
-``doc/REQUIREMENTS.md`` (TimeSheetAlgo / SCRIPT requirements) and
+`docs/REQUIREMENTS.md`` (TimeSheetAlgo / SCRIPT requirements) and
 ``.opencode/docs/REQUIREMENTS.md`` (Agent Dev Team requirements),
-``doc/ARCHITECTURE.md`` and ``src/TimeSheetAlgo.py`` for
+`docs/ARCHITECTURE.md`` and ``src/TimeSheetAlgo.py`` for
 requirement identifiers (FR-XX / QR-XX, and FR-INTEGRITY-XXX /
 QR-INTEGRITY-XXX for agent-team pipeline requirements) and renders a Markdown
 + HTML matrix under ``tests/reports/``. The CI ``test`` job runs this to
@@ -142,7 +142,7 @@ def build_markdown(data: TraceabilityData) -> str:
     lines: list[str] = ["# Traceability Matrix", ""]
 
     # ---- Script requirements (TimeSheetAlgo application) ----
-    lines.append("## Script Requirements (TimeSheetAlgo / `doc/REQUIREMENTS.md`)")
+    lines.append("## Script Requirements (TimeSheetAlgo / docs/REQUIREMENTS.md`)")
     groups = _group_by_type(data.script_ids)
     for label, reqs in (
         ("Functional Requirements", groups["FR"]),

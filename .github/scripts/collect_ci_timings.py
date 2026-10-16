@@ -1,7 +1,6 @@
 """Collect per-step timing rows for a CI run from the GitHub Actions API (PRO-368).
 
-Part of the continuous CI-timing benchmark (see
-``doc/01_Implementation_Plan_CI_Timing_Benchmark.md``). This module reads the
+Part of the continuous CI-timing benchmark. This module reads the
 authoritative per-job / per-step timings that GitHub records
 (``started_at`` / ``completed_at`` / ``conclusion``) and turns a single run into
 CSV rows, applying the run / job / step exclusion rules so that only clean,

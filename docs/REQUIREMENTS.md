@@ -219,7 +219,7 @@ Premature JIRA closure corrupts the audit trail and misleads stakeholders about 
 * [x] The complete-feature workflow calls `gh pr view` to verify the PR is actually merged before transitioning JIRA to Fertig
 * [x] If the PR is NOT merged, the workflow blocks the transition and reports: "PR #XXX is not merged. Current state: OPEN/CLOSED. Cannot transition to Fertig."
 * [x] The workflow does NOT post a comment claiming PR merge unless `gh pr view` confirms the merge
-* [x] The workflow verifies that the implementation plan document (`doc/02_Implementation_Plan_PRO-XXX.md`) has been deleted before closure
+* [x] The workflow verifies that the implementation plan document (`docs/PRO-XXX_Implementation_Plan.md`) has been deleted before closure
 * [x] The workflow verifies there are no uncommitted changes in the working tree before closure
 * [x] The workflow verifies the remote branch has been deleted (or reports it as a remaining action for the user/PO)
 * [x] If any check fails, the workflow reports the specific failing check and halts — not transition the ticket
@@ -298,7 +298,7 @@ The integrity failure in PRO-380 could not be caught automatically because no te
 
 **Location**
 
-`tests/ci-pipeline/test_complete_feature_validation.py`, `doc/REQUIREMENTS.md`
+`tests/ci-pipeline/test_complete_feature_validation.py`, `docs/REQUIREMENTS.md`
 
 **Related**
 

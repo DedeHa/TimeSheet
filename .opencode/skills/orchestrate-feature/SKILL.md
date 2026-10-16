@@ -488,9 +488,9 @@ The pipeline state is stored in `~/.opencode/pipeline-state.json` (encrypted if 
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `doc/CONTRIBUTING.md` — Development standards
-- `doc/TESTING.md` — Test structure, test markers, test organization
-- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `docs/CONTRIBUTING.md` — Development standards
+- `docs/TESTING.md` — Test structure, test markers, test organization
+- `docs/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/orchestrate-feature/` — This skill
 - `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
 - `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization

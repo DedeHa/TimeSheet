@@ -200,7 +200,7 @@ Escalate to Product Owner when:
 
 - AGENTS.md — Top-level guide
 - .opencode/docs/WORKFLOW.md — Agent team workflow
-- doc/CONTRIBUTING.md — Development standards
+- docs/CONTRIBUTING.md — Development standards
 - .opencode/skills/complete-feature/ — Feature completion workflow
 - .opencode/skills/discover-feature/ — Feature discovery
 - .opencode/skills/refine-feature/ — Stakeholder review

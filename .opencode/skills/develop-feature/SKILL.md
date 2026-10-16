@@ -8,7 +8,7 @@ description: "Use when starting a new feature, bugfix, refactor, or docs change 
 End-to-end feature development workflow for TimeSheetAlgo. Begins with the
 JIRA ticket, cross-references or drafts the Implementation Plan document, then
 executes the plan in verifiable increments. Follows the conventions in
-`doc/CONTRIBUTING.md` §1–§3 and the project lifecycle documented in
+`docs/CONTRIBUTING.md` §1–§3 and the project lifecycle documented in
 `AGENTS.md` §"Development Workflow".
 
 ## Prerequisites
@@ -108,15 +108,15 @@ if fields["customfield_10028"] is None:
 
 ### 2a. Look for an existing plan
 
-Check `doc/` for an existing implementation plan:
+Check `docs/` for an existing implementation plan:
 
 ```bash
-ls doc/*Implementation_Plan*.md doc/*PLAN*.md 2>/dev/null
+ls docs/*Implementation_Plan*.md docs/*PLAN*.md 2>/dev/null
 ```
 
 Two layouts are in use:
-- `doc/02_Implementation_Plan_PRO-XXX.md` (current convention — one file per ticket)
-- `doc/NN_Implementation_Plan_<Topic>.md` (older convention — topic-numbered)
+- `docs/PRO-XXX_Implementation_Plan.md` (current convention — one file per ticket)
+- `docs/NN_Implementation_Plan_<Topic>.md` (older convention — topic-numbered)
 
 The newer convention wins. If a plan for PRO-XXX already exists, **adopt it
 as the source of truth** — do not rewrite it. Cross-check the plan against the
@@ -124,7 +124,7 @@ JIRA description (Step 1b) and note any drift, then proceed to Step 3.
 
 ### 2b. Draft a new plan (only if none exists)
 
-If no plan exists, draft one in `doc/02_Implementation_Plan_PRO-XXX.md` with
+If no plan exists, draft one in `docs/PRO-XXX_Implementation_Plan.md` with
 three parts. Use the file as the **single source of truth** for the rest of
 the workflow; every step below refers back to it.
 
@@ -189,7 +189,7 @@ reversible, verifiable increment that ends in a passing gate. Typical shape:
    Run the manual trigger once and inspect the result.
 4. **Enable the continuous trigger** (`workflow_run`, schedule, etc.) only
    after step 3 looks right.
-5. **Document** in `AGENTS.md` and `doc/CONTRIBUTING.md` — where the artefact
+5. **Document** in `AGENTS.md` and `docs/CONTRIBUTING.md` — where the artefact
    lives, that it is non-gating, what the no-loop invariants are.
 
 For each rollout step:
@@ -246,7 +246,7 @@ If the gate is the **PR quality gate**, also confirm:
 
 ## Step 6 — Open the PR
 
-Branch name and PR title follow `doc/CONTRIBUTING.md` §5:
+Branch name and PR title follow `docs/CONTRIBUTING.md` §5:
 - Title: `[<type>][PRO-XXX] <Description>` (e.g. `[feat][PRO-369] …`)
 - Body: `## Summary` + `## Testing` sections, `Refs: PRO-XXX`, no TODO/TBD
   placeholders (the naming validator blocks merge on these)
@@ -317,8 +317,8 @@ PR description with the final status.
 | Fetch ticket comments | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["comment"])` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="…")` |
 | Close JIRA ticket | `atlassian_transitionJiraIssue(issueIdOrKey="PRO-XXX", transition={"id": "31"})` — **after user/PO confirmation** |
-| Adopt plan | read `doc/02_Implementation_Plan_PRO-XXX.md` |
-| Draft plan | write `doc/02_Implementation_Plan_PRO-XXX.md` with Parts A/B/C |
+| Adopt plan | read `docs/PRO-XXX_Implementation_Plan.md` |
+| Draft plan | write `docs/PRO-XXX_Implementation_Plan.md` with Parts A/B/C |
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |
 | Create branch | `git switch -c <type>/PRO-XXX-<desc> master` |
 | Run CI self-tests | `pytest -q tests/ci-pipeline/` |
@@ -328,7 +328,7 @@ PR description with the final status.
 | Commit | `git commit -m "<type>(<scope>): <subject>\n\nRefs: PRO-XXX"` |
 | Push | `git push -u origin <branch>` |
 | Delete remote branch | `git push origin --delete <branch-name>` — **User/PO confirms and executes** (via complete-feature Step 5.6) |
-| Delete implementation plan | `git rm doc/02_Implementation_Plan_PRO-XXX.md` — **User/PO confirms and executes** (via complete-feature Step 5.5) |
+| Delete implementation plan | `git rm docs/PRO-XXX_Implementation_Plan.md` — **User/PO confirms and executes** (via complete-feature Step 5.5) |
 | Open PR | `gh pr create --base master --title "[<type>][PRO-XXX] …" --body "…"` |
 
 ## Reference: Worked Example — PRO-369
@@ -336,7 +336,7 @@ PR description with the final status.
 This skill was extracted from the PRO-369 (Continuous CI-Pipeline Timing
 Benchmark) work. Useful as a reference for shape, not as a template:
 
-- **Plan**: `doc/02_Implementation_Plan_PRO-XXX.md` (topic-numbered layout)
+- **Plan**: `docs/PRO-XXX_Implementation_Plan.md` (topic-numbered layout)
 - **JIRA**: PRO-368 parent (Fertig), PRO-369 child (In Arbeit),
   parent epic PRO-259
 - **Rollout steps** in the plan: 1) scripts + tests, 2) workflow +
@@ -406,9 +406,9 @@ When escalating, provide:
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `doc/CONTRIBUTING.md` — Development standards
-- `doc/TESTING.md` — Test structure, test markers, test organization
-- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `docs/CONTRIBUTING.md` — Development standards
+- `docs/TESTING.md` — Test structure, test markers, test organization
+- `docs/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/develop-feature/` — This skill
 - `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
 - `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization

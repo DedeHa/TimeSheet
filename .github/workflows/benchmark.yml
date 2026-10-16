@@ -11,8 +11,7 @@
 # run-to-run noise. The goal is to *demonstrate statistical equivalence*, not
 # to pick a winner.
 #
-# Design (see doc/00_Implementation_Plan_PRO-368.md, Post-Implementation
-# Addendum B):
+# Design notes:
 # - Metric: warm-cache setup time (a `warmup` job primes the shared pip cache;
 #   both variants use an identical cache key, so both then hit a warm cache).
 # - Timing: in-workflow `date +%s.%N` around the setup window, one CSV row per

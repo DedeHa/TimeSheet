@@ -110,7 +110,7 @@ default_environment: "development"
 - `logging`: Log level and format for each environment
 - `default_environment`: Default environment to use when not specified
 
-See [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) for detailed configuration flow diagrams and validation logic.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed configuration flow diagrams and validation logic.
 
 ## Usage
 
@@ -135,9 +135,9 @@ The application will:
 
 | Document | Description |
 |----------|-------------|
-| [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
-| [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
-| [`doc/TESTING.md`](doc/TESTING.md) | Testing documentation, CI validation, and traceability checks |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System architecture, configuration flow, and class diagrams |
+| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Contributing guidelines and naming conventions |
+| [`docs/TESTING.md`](docs/TESTING.md) | Testing documentation, CI validation, and traceability checks |
 
 ## Development
 
@@ -177,7 +177,7 @@ When switching between Git branches, **always reactivate the virtual environment
     # .venv\Scripts\activate           # Windows
 ```
 
-For detailed instructions on branch switching, shell aliases, and environment management, see [`doc/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management`](doc/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management).
+For detailed instructions on branch switching, shell aliases, and environment management, see [`docs/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management`](docs/CONTRIBUTING.md#phase-1a-switching-between-branches--environment-management).
 
 ### Running Tests
 
@@ -197,14 +197,14 @@ python -m pytest -m "not system"
 ### Test Coverage
 
 - **103 tests** across three levels (unit 79 · integration 17 · system 7; 1 `xfail`), ~99% branch+line coverage of `src` (CI gate: 90%)
-- Every PR to `master` gets one consolidated **quality-gate summary** (regenerated each run) in the job summary and as a sticky PR comment, in four sections: **1 Traceability** (%), **2 Testing** (pass-rate %, status, per-level counts), **3 Code Coverage** (% vs. the 90% gate), **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov). See [`doc/TESTING.md`](doc/TESTING.md#pull-request-quality-gate-summary).
+- Every PR to `master` gets one consolidated **quality-gate summary** (regenerated each run) in the job summary and as a sticky PR comment, in four sections: **1 Traceability** (%), **2 Testing** (pass-rate %, status, per-level counts), **3 Code Coverage** (% vs. the 90% gate), **4 Artifacts** (run, matrix, JUnit/coverage, htmlcov). See [`docs/TESTING.md`](docs/TESTING.md#pull-request-quality-gate-summary).
 - Traceability between requirements, architecture, and implementation is generated and validated in CI by [.github/scripts/generate_traceability_matrix.py](.github/scripts/generate_traceability_matrix.py) (it fails the build if any requirement is untraced), and published as a markdown matrix in the workflow summary and artifacts.
 - Unit: individual functions/methods in isolation
 - Integration: the `TimeSheetProcessor` pipeline on an in-memory workbook
 - System: black-box runs against real-file copies (skipped when data is absent)
 - Boundary-value & equivalence-class rationale: [`tests/boundary_equivalence_analysis.md`](tests/boundary_equivalence_analysis.md)
 
-See [`doc/TESTING.md`](doc/TESTING.md) for detailed testing documentation.
+See [`docs/TESTING.md`](docs/TESTING.md) for detailed testing documentation.
 
 ### Project Structure
 
@@ -218,17 +218,12 @@ TimeSheet/
 │   ├── unit/                # Unit tests
 │   ├── integration/         # Integration tests
 │   └── system/              # System tests (real resources)
-├── doc/                     # Documentation and diagrams
-│   ├── TESTING.md           # Test docs: layout, levels, fixtures, configuration
-│   ├── conftest.py          # Shared fixtures
-│   ├── unit/                # Unit tests
-│   ├── integration/         # Integration tests
-│   └── system/              # System tests (real resources)
-├── doc/                     # Documentation and diagrams
+├── docs/                    # Documentation and diagrams
 │   ├── ARCHITECTURE.md      # Architecture documentation
-│   └── CONTRIBUTING.md      # Contributing guidelines
-├── sup/                     # Support files and test data
+│   ├── CONTRIBUTING.md      # Contributing guidelines
+│   ├── TESTING.md           # Test docs: layout, levels, fixtures, configuration
+│   └── data/                # CI metrics data
 └── pyproject.toml          # Project metadata, deps, and all tool config (pytest, coverage, black, ruff)
 ```
 
-See [`doc/CONTRIBUTING.md`](doc/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details. 
+See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) for complete guidelines including branch naming, commit standards, pull request format, JIRA requirements, and Git workflow details. 

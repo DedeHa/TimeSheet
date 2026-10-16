@@ -1,8 +1,6 @@
 ---
 # PRO-369 / O8: Continuous CI-Pipeline Timing Benchmark.
 #
-# See doc/01_Implementation_Plan_CI_Timing_Benchmark.md for the full plan.
-#
 # Behaviour
 # ---------
 # Collects per-job / per-step execution times from the GitHub Actions REST API

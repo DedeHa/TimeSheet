@@ -664,9 +664,9 @@ Feature complete
 ### Project Documentation
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `README.md` - Project documentation
-- `doc/ARCHITECTURE.md` - System architecture
-- `doc/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")
-- `doc/TESTING.md` - Testing documentation
+- `docs/ARCHITECTURE.md` - System architecture
+- `docs/CONTRIBUTING.md` - Contributing guidelines & Git workflow (see "Phase 0: Agent-Based Feature Development")
+- `docs/TESTING.md` - Testing documentation
 
 ## Troubleshooting
 
@@ -688,5 +688,5 @@ Feature complete
 ---
 
 **Last Updated:** 2026-04-21
-**Version:** 1.1 (consolidated from `doc/AGENTS_WORKFLOW.md` into `.opencode/agents/`)
+**Version:** 1.1 (consolidated from `docs/AGENTS_WORKFLOW.md` into `.opencode/agents/`)
 **Status:** ✅ Production Ready

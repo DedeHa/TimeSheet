@@ -68,7 +68,7 @@ body:
       placeholder: |
         1. Update `.github/workflows/ci-timing.yml` for historical data collection
         2. Add `ci_timing_aggregator.py` in `.github/scripts/`
-        3. Update `doc/ARCHITECTURE.md` with new component
+        3. Update `docs/ARCHITECTURE.md` with new component
         4. Add unit tests in `tests/unit/`
     validations:
       required: false
@@ -94,7 +94,7 @@ body:
         - [ ] JIRA ticket closed (Fertig)
         - [ ] All ACs checkmarked
         - [ ] Story Points: N assigned
-        - [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
+        - [ ] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md
         - [ ] CI self-tests pass
     validations:
       required: true

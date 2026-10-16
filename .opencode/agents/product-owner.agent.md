@@ -31,7 +31,7 @@ handoffs:
       Constraints:
       - Do not change the requirements
       - Minimize complexity
-      - Reference doc/ARCHITECTURE.md patterns
+      - Reference docs/ARCHITECTURE.md patterns
       - If you cannot resolve an architectural question, report it as a blocker with specific questions
       
       Cycle tracking:
@@ -661,6 +661,6 @@ This agent definition follows the workflow documented in:
 - `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review, ticket finalization
 - `.opencode/skills/orchestrate-feature/SKILL.md` — Pipeline orchestration, dispatch, escalation, handoff tracking
 - `.opencode/skills/complete-feature/SKILL.md` — Feature completion, AC validation, JIRA closure
-- `doc/CONTRIBUTING.md` — Contributing guidelines & Git workflow
+- `docs/CONTRIBUTING.md` — Contributing guidelines & Git workflow
 
 The Architect will translate these stories into technical design and implementation plans.

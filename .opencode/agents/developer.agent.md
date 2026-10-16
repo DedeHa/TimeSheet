@@ -78,7 +78,7 @@ Implement features following architectural plans precisely, ensuring code qualit
 
 2. **Follow Project Standards**
    - Apply CONTRIBUTING.md naming conventions and patterns
-   - Follow code style in doc/CONTRIBUTING.md
+   - Follow code style in docs/CONTRIBUTING.md
    - Add comprehensive docstrings and type hints
    - Reference PRO ticket in all commits
 
@@ -297,7 +297,7 @@ Every handoff must include:
 ## Implementation Patterns
 
 Reference these patterns from project docs:
-- `doc/CONTRIBUTING.md` - Coding style, naming conventions, commit format
-- `doc/TESTING.md` - Test structure, test markers, test organization
-- `doc/ARCHITECTURE.md` - Module patterns, configuration flow, class design
+- `docs/CONTRIBUTING.md` - Coding style, naming conventions, commit format
+- `docs/TESTING.md` - Test structure, test markers, test organization
+- `docs/ARCHITECTURE.md` - Module patterns, configuration flow, class design
 - `README.md` - Project structure and module dependencies

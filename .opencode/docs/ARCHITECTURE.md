@@ -10,7 +10,7 @@ The Agent Team Architecture operates at the project level, not the application l
 User → Product Owner (intake) → Architect → Developer → Tester → Product Owner (review) → User
 ```
 
-This architecture is distinct from the TimeSheetAlgo application architecture (described in doc/ARCHITECTURE.md) and provides the meta-automation layer that coordinates the human-agent workflow.
+This architecture is distinct from the TimeSheetAlgo application architecture (described in docs/ARCHITECTURE.md) and provides the meta-automation layer that coordinates the human-agent workflow.
 
 ## Core Components
 
@@ -32,7 +32,7 @@ This architecture is distinct from the TimeSheetAlgo application architecture (d
   - Analyzes user stories and acceptance criteria
   - Defines system architecture and integration points
   - Produces structured implementation plans
-  - Follows patterns from doc/ARCHITECTURE.md when relevant
+  - Follows patterns from docs/ARCHITECTURE.md when relevant
   - Validates architectural decisions against existing codebase
 
 **Developer Agent**
@@ -139,7 +139,7 @@ The Product Owner detects development mode from user chat patterns and persists 
 - **Naming validation**: CI blocks merge entirely for naming violations
 
 #### Agent-Level Validation
-- **Architect**: Must reference doc/ARCHITECTURE.md patterns, minimize complexity
+- **Architect**: Must reference docs/ARCHITECTURE.md patterns, minimize complexity
 - **Developer**: Must follow CONTRIBUTING.md, add tests per TESTING.md, reference PRO ticket
 - **Tester**: Must verify ACs, run CI self-tests, check traceability matrix
 
@@ -161,7 +161,7 @@ The Product Owner monitors all agent cycles and escalates when:
 - Operates **above** the TimeSheetAlgo application layer
 - Concerned with **human-agent interaction**, **code review**, **testing**
 
-**Application Architecture** (`doc/ARCHITECTURE.md`):
+**Application Architecture** (`docs/ARCHITECTURE.md`):
 - Focuses on **system design**, **component structure**, and **data flow**
 - Defines **how** TimeSheetAlgo works internally
 - Operates **below** the agent layer as the implementation target
@@ -175,7 +175,7 @@ The Product Owner monitors all agent cycles and escalates when:
 - Quality validation and enforcement
 - Project governance and review
 
-**Application Level** (`doc/ARCHITECTURE.md`):
+**Application Level** (`docs/ARCHITECTURE.md`):
 - System design and implementation
 - Technical architecture and data modeling
 - Runtime behavior and error handling
@@ -186,7 +186,7 @@ The Product Owner monitors all agent cycles and escalates when:
 Agent team components reference application architecture patterns:
 
 ```
- Architect → References patterns from `doc/ARCHITECTURE.md`
+ Architect → References patterns from `docs/ARCHITECTURE.md`
     ↓
     Ensures designs align with existing codebase constraints
     ↓
@@ -212,7 +212,7 @@ Agent team components reference application architecture patterns:
 
 ### Cross-References
 - **From**: `.opencode/docs/REQUIREMENTS.md` → `.opencode/skills/complete-feature/SKILL.md`
-- **From**: `architect.agent.md` → `doc/ARCHITECTURE.md` (pattern references)
+- **From**: `architect.agent.md` → `docs/ARCHITECTURE.md` (pattern references)
 - **From**: `product-owner.agent.md` → `AGENTS.md` (top-level workflow)
 - **From**: CI scripts → `.opencode/docs/REQUIREMENTS.md` (agent-team quality gates)
 
@@ -258,14 +258,14 @@ The Product Owner parses user chat for mode keywords:
 | Traceability matrix | CI script | All requirements traced to architecture/code | Non-zero exit |
 | Coverage threshold | CI + test suite | ≥90% combined coverage | Gates PR merge |
 | CI self-tests | CI test suite | `pytest -q tests/ci-pipeline/` | Must pass |
-| Architecture alignment | Agent validation | References doc/ARCHITECTURE.md patterns | Pass/fail decision |
+| Architecture alignment | Agent validation | References docs/ARCHITECTURE.md patterns | Pass/fail decision |
 | Code quality | CI linting + CI lint checks | ruff, black, pydocstyle, radon | Must pass |
 
 ## Integration with Application Architecture
 
 The Agent Team Architecture integrates with TimeSheetAlgo architecture through:
 
-1. **Reference patterns**: Architect agents reference `doc/ARCHITECTURE.md`
+1. **Reference patterns**: Architect agents reference `docs/ARCHITECTURE.md`
 2. **Implementation targeting**: All changes target specific files in TimeSheetAlgo
 3. **Quality gate validation**: CI tests validate changes align with existing patterns
 4. **Cross-file traceability**: Requirements ID mapping from agent team to application files
@@ -304,7 +304,7 @@ This architecture document explains:
 1. **Focus**: Development process automation vs. application design
 2. **Scope**: Meta-automation layer vs. application layer
 3. **Validation**: Process and quality gates vs. technical correctness
-4. **References**: doc/ARCHITECTURE.md patterns vs. direct implementation
+4. **References**: docs/ARCHITECTURE.md patterns vs. direct implementation
 5. **Role**: Orchestrator and validator vs. application developer
 
 This separation allows the TimeSheetAlgo project to maintain a clear distinction between:

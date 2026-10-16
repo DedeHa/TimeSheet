@@ -9,11 +9,11 @@ detection; there is no database or network dependency.
 This document covers the system context, the runtime processing pipeline, the
 data model, and the configuration subsystem.
 
-Testing details, including the suite layout and the traceability validation workflow, are documented in [doc/TESTING.md](TESTING.md).
+Testing details, including the suite layout and the traceability validation workflow, are documented in [docs/TESTING.md](TESTING.md).
 
 ## Traceability Approach
 
-The repository uses lightweight requirement identifiers in the form FR-XX and QR-XX. These IDs are used in [doc/REQUIREMENTS.md](REQUIREMENTS.md), the implementation in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py), and the traceability entries below so that design, code, and tests remain aligned.
+The repository uses lightweight requirement identifiers in the form FR-XX and QR-XX. These IDs are used in [docs/REQUIREMENTS.md](REQUIREMENTS.md), the implementation in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py), and the traceability entries below so that design, code, and tests remain aligned.
 
 ## Traceability Matrix
 

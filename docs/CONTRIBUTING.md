@@ -315,8 +315,8 @@ switch-branch master
 
 When a new requirement or implementation change is introduced, update the traceability chain in the same change:
 
-1. Add or update the requirement ID in [doc/REQUIREMENTS.md](REQUIREMENTS.md).
-2. Update the corresponding row in the traceability matrix in [doc/ARCHITECTURE.md](ARCHITECTURE.md).
+1. Add or update the requirement ID in [docs/REQUIREMENTS.md](REQUIREMENTS.md).
+2. Update the corresponding row in the traceability matrix in [docs/ARCHITECTURE.md](ARCHITECTURE.md).
 3. Add the requirement ID to the relevant implementation function or class in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py).
 4. Re-run the relevant unit tests so the documentation and implementation remain aligned.
 
@@ -467,7 +467,7 @@ The CI/CD pipeline (`.github/workflows/python-ci.yml`) enforces these naming val
 ### CI Timing Benchmark:
 - A separate `ci-timing.yml` workflow continuously captures per-job / per-step execution
   times from successful `python-ci.yml` runs and persists them on the orphan
-  `ci-metrics` branch (see `doc/01_Implementation_Plan_CI_Timing_Benchmark.md`).
+  `ci-metrics` branch (see `docs/01_Implementation_Plan_CI_Timing_Benchmark.md`).
 - **Non-gating**: it never fails a PR. Results are purely observational.
 - **No CI loop**: `python-ci.yml` does not trigger on push to `ci-metrics`.
 - Data source: GitHub Actions API (`started_at` / `completed_at`), no instrumentation.

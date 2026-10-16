@@ -5,7 +5,7 @@ description: Use when releasing a new version of the TimeSheetAlgo project. Trig
 
 # Release Project Skill
 
-Reusable end-to-end release workflow for TimeSheetAlgo. Follows the conventions in `doc/CONTRIBUTING.md` §5 and §7.
+Reusable end-to-end release workflow for TimeSheetAlgo. Follows the conventions in `docs/CONTRIBUTING.md` §5 and §7.
 
 ## Prerequisites
 
@@ -209,8 +209,8 @@ gh run list --branch vX.Y.Z --limit 1
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `doc/CONTRIBUTING.md` — Development standards
-- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `docs/CONTRIBUTING.md` — Development standards
+- `docs/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/release-project/` — This skill
 - `.opencode/skills/discover-feature/SKILL.md` — Feature discovery and ticket creation
 - `.opencode/skills/refine-feature/SKILL.md` — Stakeholder review and finalization

@@ -88,7 +88,7 @@ body:
         - [ ] JIRA ticket closed (Fertig)
         - [ ] All ACs checkmarked
         - [ ] Story Points: N assigned
-        - [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md
+        - [ ] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md
         - [ ] CI self-tests pass
     validations:
       required: true

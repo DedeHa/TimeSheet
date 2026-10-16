@@ -257,7 +257,7 @@ Data sources, constraints, dependencies.]
 - [ ] JIRA ticket closed (Fertig)
 - [ ] All ACs checkmarked
 - [ ] Story Points: N assigned
-- [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md, doc/ARCHITECTURE.md
+- [ ] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md, docs/ARCHITECTURE.md
 - [ ] CI self-tests: N tests passed
 
 ### Priority / Story Points
@@ -434,7 +434,7 @@ Environment affected. Reference prior PRO-XXX tickets.]
 - [ ] Bug does not reproduce (AC-1 checkmarked)
 - [ ] Regression test added
 - [ ] Story Points: N assigned
-- [ ] Traceability: FR-XX, QR-XX added to doc/REQUIREMENTS.md, doc/ARCHITECTURE.md
+- [ ] Traceability: FR-XX, QR-XX added to docs/REQUIREMENTS.md, docs/ARCHITECTURE.md
 - [ ] CI self-tests: N tests passed
 
 ### Priority / Story Points
@@ -570,9 +570,9 @@ confirmation before starting refinement.
 
 - `AGENTS.md` — Top-level guide: project conventions, modes, CI gates
 - `.opencode/docs/WORKFLOW.md` — Agent team workflow, diagrams, quality gates, handoff labels
-- `doc/CONTRIBUTING.md` — Development standards
-- `doc/REQUIREMENTS.md` — FR / QR requirement IDs
-- `doc/ARCHITECTURE.md` — System architecture and design decisions
+- `docs/CONTRIBUTING.md` — Development standards
+- `docs/REQUIREMENTS.md` — FR / QR requirement IDs
+- `docs/ARCHITECTURE.md` — System architecture and design decisions
 - `.opencode/skills/discover-feature/` — This skill
 - `.opencode/skills/refine-feature/` — Stakeholder review and ticket finalization
 - `.opencode/skills/develop-feature/SKILL.md` — Workflow for developing a feature

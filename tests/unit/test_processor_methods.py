@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import openpyxl
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import DATE_FORMAT, TimeSheetProcessor
+from src.TimeSheetAlgo import DATE_FORMAT, TimeSheetProcessor
 
 pytestmark = pytest.mark.unit
 

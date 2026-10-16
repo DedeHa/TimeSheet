@@ -121,7 +121,7 @@ Receives from Architect:
 - `path/to/new_file.py`: [Purpose, key functions/classes]
 
 ### Modified Files
-- `src_timesheetalgo/TimeSheetAlgo.py`:
+- `src.TimeSheetAlgo.py`:
   - [Function/class modified]: [Changes made]
   - [Function/class modified]: [Changes made]
 

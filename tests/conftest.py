@@ -14,7 +14,7 @@ import pytest
 # Ensure repository root is on sys.path so tests can import the local package
 # `src_timesheetalgo` regardless of where pytest is invoked from.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src_timesheetalgo.TimeSheetAlgo import (  # noqa: E402
+from src.TimeSheetAlgo import (  # noqa: E402
     ROW_OFFSET,
     TIMESHEET_SHEETS,
     TimeSheetProcessor,

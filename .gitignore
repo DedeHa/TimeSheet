@@ -113,5 +113,5 @@ GitHub.sublime-settings
 .history
 
 # Production data (Timealarm folder contains real timesheets/timelogs)
-# Test fixtures (sup/2025_*.csv, src_timesheetalgo/2025_*.xlsm) are committed for CI
+# Test fixtures (sup/2025_*.csv, src/2025_*.xlsm) are committed for CI
 Timealarm/

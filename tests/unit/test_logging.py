@@ -7,7 +7,7 @@ root logger already has handlers).
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import configure_logging
+from src.TimeSheetAlgo import configure_logging
 
 pytestmark = pytest.mark.unit
 

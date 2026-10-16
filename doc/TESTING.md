@@ -5,7 +5,7 @@
 `freezegun`, etc.).
 
 This is the single reference for the test suite of
-`src_timesheetalgo/TimeSheetAlgo.py` — its layout, the intent of each level, the
+`src/TimeSheetAlgo.py` — its layout, the intent of each level, the
 fixtures, and the configuration behind them.
 
 ## Layout
@@ -57,7 +57,7 @@ Mapping back to the architecture: the **configuration subsystem** is verified at
 
 ## Traceability Validation
 
-Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src_timesheetalgo/TimeSheetAlgo.py](../src_timesheetalgo/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by
+Requirement-to-architecture-to-code traceability is generated and validated by [.github/scripts/generate_traceability_matrix.py](../.github/scripts/generate_traceability_matrix.py). The script scans [doc/REQUIREMENTS.md](REQUIREMENTS.md) for FR-XX / QR-XX identifiers, checks that each requirement appears in [doc/ARCHITECTURE.md](ARCHITECTURE.md), confirms implementation references in [src/TimeSheetAlgo.py](../src/TimeSheetAlgo.py), and exits non-zero (failing the build) when any requirement is missing a mapping — so the script is itself the CI quality gate. Its parsing/rendering logic is unit-tested by
 [tests/ci-pipeline/test_generate_traceability_matrix.py](../tests/ci-pipeline/test_generate_traceability_matrix.py),
 which the `check` job runs as part of the CI self-tests
 (`pytest -q tests/ci-pipeline/`). The generated markdown matrix is published in the GitHub Actions job summary and stored as an artifact for pull requests.
@@ -186,7 +186,7 @@ Defined in `tests/conftest.py` (shared) and cascading into each level's `conftes
 - `make_processor(timelog=…, timesheet_cells=…, year=2025)` — factory building a processor over a fresh dummy workbook with optional pre-populated cells.
 - `clean_root_logger` (unit) — clears/restores root logging handlers so `configure_logging` is observable.
 - `processor_with_timelog(timelog, start, end, …)` (integration) — `make_processor` plus parsed date boundaries.
-- `real_resource_copy` (system) — copies `sup/2025_extract.csv` + `src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm` into `tmp_path`, or `None` when missing.
+- `real_resource_copy` (system) — copies `sup/2025_extract.csv` + `src/2025_FDTech_Dennis_Hartel.xlsm` into `tmp_path`, or `None` when missing.
 - `cli_runner(answers)` (system) — drives `run()` in-process against the copies, feeding `answers` to `input()`.
 
 ## Configuration
@@ -208,14 +208,14 @@ markers = [
 ```
 
 The repository root is placed on `sys.path` by `tests/conftest.py`, so the
-`src_timesheetalgo` package imports regardless of the invocation directory (no
+`src` package imports regardless of the invocation directory (no
 `pythonpath` setting is needed).
 
 ### Coverage (`pyproject.toml`)
 
 ```toml
 [tool.coverage.run]
-source = ["src_timesheetalgo"]
+source = ["src"]
 branch = true
 
 [tool.coverage.report]
@@ -238,7 +238,7 @@ python -m pytest                          # full suite
 python -m pytest tests/unit               # one level by path
 python -m pytest -m unit                  # one level by marker
 python -m pytest -m "not system"          # fast set (PR CI)
-python -m pytest --cov=src_timesheetalgo --cov-report=term-missing
+python -m pytest --cov=src --cov-report=term-missing
 ```
 
 CI (`.github/workflows/python-ci.yml`): PRs to `master` run the full suite with
@@ -250,7 +250,7 @@ files are committed to the repo.
 The system tests rely on two real data files committed to the repository:
 
 - **`sup/2025_extract.csv`** — 93 sample timelog entries from 2025 (dates, start/end times).
-- **`src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm`** — real timesheet workbook (12 month sheets, VBA macros preserved).
+- **`src/2025_FDTech_Dennis_Hartel.xlsm`** — real timesheet workbook (12 month sheets, VBA macros preserved).
 
 These files **are committed to version control** (not gitignored) to ensure:
 
@@ -266,7 +266,7 @@ If you don't have the real files locally:
 ```bash
 git lfs pull  # If the files are stored with Git LFS (unlikely)
 # or
-git checkout sup/2025_extract.csv src_timesheetalgo/2025_FDTech_Dennis_Hartel.xlsm  # Restore from repo
+git checkout sup/2025_extract.csv src/2025_FDTech_Dennis_Hartel.xlsm  # Restore from repo
 ```
 
 If system tests skip with a message like `"Real resource files not available"`, you can:
@@ -276,4 +276,4 @@ If system tests skip with a message like `"Real resource files not available"`, 
 ---
 
 **Counts:** unit 79 · integration 17 · system 7 · total 103 (1 `xfail`).
-Branch+line coverage of `src_timesheetalgo` ≈ 99% (gate 90%).
+Branch+line coverage of `src` ≈ 99% (gate 90%).

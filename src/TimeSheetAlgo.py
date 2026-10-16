@@ -101,7 +101,7 @@ def detect_environment(base_path: str) -> str:
 
     Traceability: FR-02.
     """
-    if os.path.basename(base_path) == "src_timesheetalgo":
+    if os.path.basename(base_path) == "src":
         return "development"
     elif os.path.isdir(os.path.join(base_path, "Timealarm")):
         return "production"

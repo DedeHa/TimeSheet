@@ -21,7 +21,7 @@ echo "✅ venv activated: $VIRTUAL_ENV"  # Must show /.venv path
 **Run different test suites:**
 ```bash
 # Full test suite with coverage (CI requirement)
-python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
+python -m pytest tests/ --cov=src --cov-report=term-missing
 
 # Fast CI mode (what actual PRs run)
 python -m pytest -m "not system"
@@ -35,10 +35,10 @@ python -m pytest tests/system -m system      # System tests (real files required
 **Code quality checks (gates PRs):**
 ```bash
 # Order matters - run in sequence
-ruff check src_timesheetalgo tests
-black --check src_timesheetalgo tests
-pydocstyle src_timesheetalgo tests
-radon cc src_timesheetalgo -a
+ruff check src tests
+black --check src tests
+pydocstyle src tests
+radon cc src -a
 
 # Traceability - CI gate, exits non-zero if incomplete
 python .github/scripts/generate_traceability_matrix.py
@@ -47,7 +47,7 @@ python .github/scripts/generate_traceability_matrix.py
 ## Architecture & Configuration
 
 **Package structure:**
-- `src_timesheetalgo/` - Main package (tested, covered)
+- `src/` - Main package (tested, covered)
   - `TimeSheetAlgo.py` - Entrypoint application
   - `config.yaml` - Configuration file
 - `src_azesheetalgo/` - Separate package (AZE sheet functionality, NOT packaged, NOT tested)
@@ -60,7 +60,7 @@ python .github/scripts/generate_traceability_matrix.py
 ## Environment Detection Rules
 
 **Environment detection logic:**
-- Development: Running from `src_timesheetalgo/` directory
+- Development: Running from `src/` directory
 - Production: Contains `Timealarm/` subfolder in path
 - Fallback: Always development
 

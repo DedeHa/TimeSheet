@@ -2,7 +2,7 @@
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import ROW_OFFSET
+from src.TimeSheetAlgo import ROW_OFFSET
 
 pytestmark = pytest.mark.integration
 

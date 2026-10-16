@@ -10,7 +10,7 @@ import logging
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import ROW_OFFSET, TimeSheetProcessor
+from src.TimeSheetAlgo import ROW_OFFSET, TimeSheetProcessor
 
 pytestmark = pytest.mark.unit
 

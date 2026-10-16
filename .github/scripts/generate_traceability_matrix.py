@@ -3,7 +3,7 @@
 This is a *production* CI support script (not a test). It scans
 ``doc/REQUIREMENTS.md`` (TimeSheetAlgo / SCRIPT requirements) and
 ``.opencode/docs/REQUIREMENTS.md`` (Agent Dev Team requirements),
-``doc/ARCHITECTURE.md`` and ``src_timesheetalgo/TimeSheetAlgo.py`` for
+``doc/ARCHITECTURE.md`` and ``src/TimeSheetAlgo.py`` for
 requirement identifiers (FR-XX / QR-XX, and FR-INTEGRITY-XXX /
 QR-INTEGRITY-XXX for agent-team pipeline requirements) and renders a Markdown
 + HTML matrix under ``tests/reports/``. The CI ``test`` job runs this to
@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REQUIREMENTS = ROOT / "doc" / "REQUIREMENTS.md"
 AGENT_REQUIREMENTS = ROOT / ".opencode" / "docs" / "REQUIREMENTS.md"
 ARCHITECTURE = ROOT / "doc" / "ARCHITECTURE.md"
-SOURCE = ROOT / "src_timesheetalgo" / "TimeSheetAlgo.py"
+SOURCE = ROOT / "src" / "TimeSheetAlgo.py"
 CI_SCRIPTS = [
     ROOT / ".github" / "scripts",
 ]

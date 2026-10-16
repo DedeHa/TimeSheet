@@ -144,12 +144,12 @@ Run the full test suite and lint checks to confirm everything passes:
 
 ```bash
 # Lint checks
-ruff check src_timesheetalgo tests .github
-black --check src_timesheetalgo tests .github
-pydocstyle src_timesheetalgo tests .github
+ruff check src tests .github
+black --check src tests .github
+pydocstyle src tests .github
 
 # Application tests
-python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
+python -m pytest tests/ --cov=src --cov-report=term-missing
 
 # CI self-tests
 python -m pytest tests/ci-pipeline/ -q
@@ -651,9 +651,9 @@ git ls-remote --heads origin | grep <branch-name>  # should return nothing
 
 | Action | Command |
 |--------|---------|
-| Run tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
+| Run tests | `python -m pytest tests/ --cov=src --cov-report=term-missing` |
 | Run CI self-tests | `python -m pytest tests/ci-pipeline/ -q` |
-| Run lint | `ruff check src_timesheetalgo tests .github` |
+| Run lint | `ruff check src tests .github` |
 | Check traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Add JIRA comment | `atlassian_addCommentToJiraIssue(issueIdOrKey="PRO-XXX", commentBody="...")` |
 | Get JIRA issue | `atlassian_getJiraIssue(issueIdOrKey="PRO-XXX", fields=["*all"])` |

@@ -227,12 +227,12 @@ Before opening a PR, run the **full** quality gate. All of these must pass:
 pytest -q tests/ci-pipeline/
 
 # Application tests
-python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing
+python -m pytest tests/ --cov=src --cov-report=term-missing
 
 # Lint
-ruff check src_timesheetalgo tests .github
-black --check src_timesheetalgo tests .github
-pydocstyle src_timesheetalgo tests .github
+ruff check src tests .github
+black --check src tests .github
+pydocstyle src tests .github
 
 # Traceability
 python .github/scripts/generate_traceability_matrix.py
@@ -322,8 +322,8 @@ PR description with the final status.
 | Reactivate venv | `source /workspaces/TimeSheet/.venv/bin/activate` |
 | Create branch | `git switch -c <type>/PRO-XXX-<desc> master` |
 | Run CI self-tests | `pytest -q tests/ci-pipeline/` |
-| Run application tests | `python -m pytest tests/ --cov=src_timesheetalgo --cov-report=term-missing` |
-| Lint | `ruff check src_timesheetalgo tests .github && black --check src_timesheetalgo tests .github && pydocstyle src_timesheetalgo tests .github` |
+| Run application tests | `python -m pytest tests/ --cov=src --cov-report=term-missing` |
+| Lint | `ruff check src tests .github && black --check src tests .github && pydocstyle src tests .github` |
 | Traceability | `python .github/scripts/generate_traceability_matrix.py` |
 | Commit | `git commit -m "<type>(<scope>): <subject>\n\nRefs: PRO-XXX"` |
 | Push | `git push -u origin <branch>` |

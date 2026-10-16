@@ -6,7 +6,7 @@
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import StoreResult
+from src.TimeSheetAlgo import StoreResult
 
 pytestmark = pytest.mark.unit
 

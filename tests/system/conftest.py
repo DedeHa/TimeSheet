@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from src_timesheetalgo.TimeSheetAlgo import run
+from src.TimeSheetAlgo import run
 
 # Real resources, resolved relative to the repository root (pytest rootdir).
 _TIMELOG_SRC = Path("sup/2025_extract.csv")

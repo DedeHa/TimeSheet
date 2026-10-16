@@ -11,8 +11,8 @@ import csv
 import openpyxl
 import pytest
 
-import src_timesheetalgo.TimeSheetAlgo as tsa
-from src_timesheetalgo.TimeSheetAlgo import ROW_OFFSET
+import src.TimeSheetAlgo as tsa
+from src.TimeSheetAlgo import ROW_OFFSET
 
 pytestmark = pytest.mark.system
 

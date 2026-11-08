@@ -195,14 +195,14 @@ class TestDashboardData:
         assert "refreshInterval:" in content
 
     def test_workflow_file_structure(self):
-        """Test that publish-dashboard.yml has required structure"""
-        workflow_path = Path(".github/workflows/publish-dashboard.yml")
+        """Test that ci-timing.yml (merged) has required structure"""
+        workflow_path = Path(".github/workflows/ci-timing.yml")
 
         with open(workflow_path) as f:
             content = f.read()
 
         # Check for required workflow elements
-        assert "name: Publish Dashboard" in content
+        assert "name: CI Timing Benchmark" in content
         assert "on:" in content
         assert "workflow_run:" in content
         assert "jobs:" in content
@@ -339,20 +339,20 @@ class TestWorkflowInvariants:
             return fh.read()
 
     def test_publish_dashboard_has_workflow_run_and_dispatch(self):
-        """publish-dashboard.yml triggers on CI Timing Benchmark completion."""
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        """ci-timing.yml (merged) triggers on CI Timing Benchmark completion."""
+        content = self._read(".github/workflows/ci-timing.yml")
         assert "CI Timing Benchmark" in content
         assert "workflow_run:" in content
         assert "workflow_dispatch:" in content
 
     def test_publish_dashboard_commit_has_skip_ci(self):
         """No-loop invariant: the commit message contains [skip ci]."""
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        content = self._read(".github/workflows/ci-timing.yml")
         assert "[skip ci]" in content
 
     def test_publish_dashboard_copy_sources_match_producer_paths(self):
         """Copy step source paths must match where the producers write."""
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        content = self._read(".github/workflows/ci-timing.yml")
         # The producers resolve their output directory relative to the worktree
         # (see .github/scripts/ci_paths.py), so the JSON payloads live in
         # metrics/docs/data/ - not in metrics/ directly.
@@ -370,7 +370,7 @@ class TestWorkflowInvariants:
         (e.g. "sha100" / "wf1" test fixtures), so the publish path must run
         the sanitizer instead of copying the file verbatim.
         """
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        content = self._read(".github/workflows/ci-timing.yml")
         assert "sanitize_dashboard_data.py" in content
         assert '--output "docs/data/runtimes.json"' in content
         # The raw payload must NOT be copied verbatim to the served location.
@@ -378,7 +378,7 @@ class TestWorkflowInvariants:
 
     def test_publish_dashboard_validates_payloads(self):
         """The publish path validates both source and published payloads."""
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        content = self._read(".github/workflows/ci-timing.yml")
         assert "Validate JSON payloads" in content
         assert "validator.py" in content
         assert "docs/data/metrics.json" in content
@@ -386,7 +386,7 @@ class TestWorkflowInvariants:
 
     def test_publish_dashboard_and_seed_use_same_run_limit(self):
         """The publish path and the seed script agree on the 50-run limit."""
-        workflow = self._read(".github/workflows/publish-dashboard.yml")
+        workflow = self._read(".github/workflows/ci-timing.yml")
         seed = self._read(".github/scripts/seed_dashboard_data.py")
         sanitize = self._read(".github/scripts/sanitize_dashboard_data.py")
 
@@ -522,14 +522,14 @@ class TestWorkflowInvariants:
 
     def test_publish_dashboard_graceful_missing_branch(self):
         """A missing ci-metrics branch is skipped, not a hard failure."""
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        content = self._read(".github/workflows/ci-timing.yml")
         assert "does not exist on the remote" in content
         assert "available=false" in content
         assert "::notice::" in content
 
     def test_publish_dashboard_graceful_missing_files(self):
         """Missing JSON payloads on the branch are skipped with a warning."""
-        content = self._read(".github/workflows/publish-dashboard.yml")
+        content = self._read(".github/workflows/ci-timing.yml")
         assert "::warning::" in content
         assert "published=false" in content
 

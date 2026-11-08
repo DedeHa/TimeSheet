@@ -314,26 +314,14 @@ class TestDashboardData:
         # Check that AC-8 is addressed (Bollinger bands on rolling mean chart)
         assert "bollinger-bands" in html_content
 
-    def test_implementation_plan_exists(self):
-        """Test that implementation plan exists and is comprehensive"""
+    def test_implementation_plan_deleted_for_pro_379(self):
+        """PRO-379's implementation plan is deleted in the post-closure state."""
+        # The plan is a working document deleted as the final closure step
+        # (Step 3d) once the feature is complete and merged to master.
         plan_path = Path("docs/PRO-379_Implementation_Plan.md")
-        assert plan_path.exists(), "Implementation plan not found"
-
-        with open(plan_path) as f:
-            plan_content = f.read()
-
-        # Check for required sections
-        assert "Part A — Preanalysis" in plan_content
-        assert "Part B — Implementation Plan" in plan_content
-        assert "Part C — Verification Definition" in plan_content
-        assert "Acceptance Criteria" in plan_content
-        assert "Definition of Done" in plan_content
-
-        # Check for rollout steps
-        assert "Step 1: Pure Code" in plan_content
-        assert "Step 2: Workflow" in plan_content
-        assert "Step 3: Data Seeding" in plan_content
-        assert "Step 4: Continuous Trigger" in plan_content
+        assert (
+            not plan_path.exists()
+        ), "Implementation plan not deleted: docs/PRO-379_Implementation_Plan.md"
 
 
 class TestWorkflowInvariants:

@@ -1,8 +1,6 @@
 ---
-# PRO-369 / O8: Continuous CI-Pipeline Timing Benchmark.
+# PRO-369: Continuous CI-Pipeline Timing Benchmark.
 #
-# Behaviour
-# ---------
 # Collects per-job / per-step execution times from the GitHub Actions REST API
 # (authoritative - no workflow instrumentation required) for successful
 # pull_request runs of the `Python CI` workflow (python-ci.yml), appends one row
@@ -11,15 +9,14 @@
 # CI_TIMING_REPORT.md to the same branch. The aggregated JSON payloads
 # (docs/data/ci_metrics.json and docs/data/ci_runtimes.json) are also written to
 # the worktree by the producer scripts (see ci_paths.py) so they land on the
-# ci-metrics branch alongside the CSV and report; publish-dashboard.yml mirrors
-# them to docs/data/ on master.
+# ci-metrics branch alongside the CSV and report; dashboard publish steps
+# (merged from the former publish-dashboard.yml workflow) mirror them to
+# docs/data/ on master.
 #
 # Triggers
 # --------
-# Phase 1 (initial): workflow_dispatch only - `inputs.backfill` drives a sweep
-# of historical successful PR runs; an empty backfill captures only the most
-# recent successful PR run. Phase 2 adds `workflow_run` (see B.6 step 3) once
-# the seeded report is verified.
+# - workflow_run: fires after ci-timing.yml completes
+# - workflow_dispatch: manual trigger for testing
 #
 # Invariants
 # ----------
@@ -32,9 +29,6 @@
 name: CI Timing Benchmark
 
 on:
-  # Continuous capture: fires once per completed `Python CI` run. We read
-  # that run's timings via the API, append to ci-metrics, and regenerate the
-  # report. workflow_run runs in default-branch context with repo secrets.
   workflow_run:
     workflows: ["Python CI"]
     types: [completed]
@@ -101,20 +95,11 @@ jobs:
           fetch-depth: 0
           ref: master
 
-      # No Python deps required: collect_ci_timings.py and
-      # aggregate_ci_timings.py are standard-library only. We use the
-      # repository's pre-installed `gh` CLI for API access.
-
       - name: Ensure ci-metrics orphan branch exists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          # Note: `git -c key=value` must be on the same line as the git command;
-          # the YAML `run:` block is passed to bash as a single multiline string,
-          # so a backslash continuation does NOT carry -c across newlines on
-          # the GitHub-hosted runner. Putting them on one line avoids a
-          # "command not found" error from the leading -c.
           if ! gh api --silent "repos/${{ github.repository }}/branches/$METRICS_BRANCH" >/dev/null 2>&1; then
             echo "Creating orphan branch $METRICS_BRANCH"
             git switch --orphan "$METRICS_BRANCH"
@@ -123,10 +108,6 @@ jobs:
             git add README.md
             git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): initialise orphan ci-metrics branch"
             git -c user.name=github-actions -c user.email=actions@github.com push --quiet -u origin "$METRICS_BRANCH"
-            # Verify the push actually landed on origin. Without this the step
-            # can silently report success while the orphan branch is still
-            # absent from the remote, and every later step then operates on
-            # a phantom branch.
             if ! gh api --silent "repos/${{ github.repository }}/branches/$METRICS_BRANCH" >/dev/null 2>&1; then
               echo "FATAL: push did not create branch $METRICS_BRANCH on origin"
               exit 1
@@ -154,10 +135,6 @@ jobs:
         run: |
           set -euo pipefail
           cd metrics
-          # workflow_run -> collect the just-completed run (if it was a
-          # successful pull_request run).
-          # workflow_dispatch with backfill=true -> sweep all history.
-          # workflow_dispatch with backfill=false -> most recent successful PR run.
           if [ "$EVENT_NAME" = "workflow_run" ]; then
             conclusion=$(gh api \
               --method GET \
@@ -179,9 +156,6 @@ jobs:
                 "$REPO" "$TRIGGERING_RUN_ID" ci-timings.csv
           elif [ "${{ inputs.backfill }}" = "true" ]; then
             echo "Backfill mode: sweeping all successful PR runs of Python CI"
-            # --include-housekeeping is a store_true flag (no value).
-            # Only pass it when the input is true; omitting it when false
-            # avoids 'unrecognized arguments: false' from argparse.
             HK_FLAG=""
             if [ "$INCLUDE_HOUSEKEEPING" = "true" ]; then
               HK_FLAG="--include-housekeeping"
@@ -222,24 +196,10 @@ jobs:
         run: |
           set -euo pipefail
           cd metrics
-          # Use --porcelain: unlike `git diff --quiet` it also sees untracked
-          # files. On the first backfill run ci-timings.csv and
-          # CI_TIMING_REPORT.md are brand-new, so `git diff` alone would
-          # silently skip the commit even though data was collected.
-          #
-          # The aggregated JSON payloads (docs/data/ci_metrics.json and
-          # docs/data/ci_runtimes.json) are written by the producer scripts
-          # relative to the worktree (see ci_paths.py) so they land here in
-          # the ci-metrics branch and are committed alongside the CSV and
-          # report. publish-dashboard.yml mirrors them to master.
           if [ -z "$(git status --porcelain)" ]; then
             echo "No changes to ci-timings dataset; skipping commit."
             exit 0
           fi
-          # See the orphan-branch step above: `git -c` must be on the same line
-          # as the git command, or the runner treats -c as a standalone command.
-          # Guard each file with `test -f` so a missing payload is skipped
-          # instead of failing the whole step (the producers are best-effort).
           if [ -f ci-timings.csv ]; then
             git -c user.name=github-actions -c user.email=actions@github.com add \
               ci-timings.csv
@@ -266,3 +226,89 @@ jobs:
         with:
           name: ci-timing-report
           path: metrics/CI_TIMING_REPORT.md
+
+  publish:
+    name: Publish Dashboard Data
+    needs: [collect]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: master
+
+      - name: Checkout ci-metrics branch
+        id: metrics
+        run: |
+          set -euo pipefail
+          if ! git ls-remote --exit-code --heads origin "$METRICS_BRANCH" >/dev/null 2>&1; then
+            echo "::notice::Branch $METRICS_BRANCH does not exist on the remote; skipping dashboard publish."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --depth=1 origin "$METRICS_BRANCH":"$METRICS_BRANCH"
+          git worktree add --force -f metrics "$METRICS_BRANCH"
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Copy data files to docs/data/
+        id: copy
+        if: steps.metrics.outputs.available == 'true'
+        run: |
+          set -euo pipefail
+          src="metrics/docs/data"
+          missing=0
+          for f in "$src/ci_metrics.json" "$src/ci_runtimes.json"; do
+            if [ ! -f "$f" ]; then
+              echo "::warning::$f is missing on the ci-metrics branch - skipping dashboard publish."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mkdir -p docs/data
+          cp "$src/ci_metrics.json" docs/data/metrics.json
+          python3 .github/scripts/sanitize_dashboard_data.py \
+            --root "metrics/docs/data" \
+            --runs 50 \
+            --output "docs/data/runtimes.json" \
+            --fresh-timestamp
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate JSON payloads
+        id: validate
+        if: steps.metrics.outputs.available == 'true'
+        run: |
+          set -euo pipefail
+          src="metrics/docs/data"
+          python3 .github/scripts/validator.py "$src/ci_metrics.json" metrics
+          python3 .github/scripts/validator.py "$src/ci_runtimes.json" runtimes
+          python3 .github/scripts/validator.py docs/data/metrics.json metrics
+          python3 .github/scripts/validator.py docs/data/runtimes.json runtimes
+          echo "validation=passed" >> "$GITHUB_OUTPUT"
+
+      - name: Commit & push if changed
+        if: steps.copy.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to dashboard data; skipping commit."
+            exit 0
+          fi
+          git -c user.name=github-actions -c user.email=actions@github.com add docs/data/metrics.json docs/data/runtimes.json
+          git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(dashboard): update dashboard data [skip ci]"
+          git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin HEAD:dashboard-data-update
+          if ! gh pr view --repo "$GITHUB_REPOSITORY" --head dashboard-data-update --json number -q .number > /dev/null 2>&1; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base master --head dashboard-data-update --title "chore(dashboard): update dashboard data [skip ci]" --body "Automated dashboard data update from CI Timing Benchmark.\n\nRefs: PRO-379"
+          fi
+
+      - name: Upload dashboard artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-data
+          path: docs/data/

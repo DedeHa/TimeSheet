@@ -2,7 +2,7 @@
 
 The dashboard (docs/frontend/) consumes ``docs/data/metrics.json`` and
 ``docs/data/runtimes.json``. Those files are refreshed automatically by the
-``publish-dashboard.yml`` workflow, but the repository must ship a valid,
+``ci-timing.yml`` workflow, but the repository must ship a valid,
 populated seed so the dashboard is meaningful from the moment the branch is
 merged.
 

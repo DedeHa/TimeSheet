@@ -2,7 +2,10 @@
 # action versions (surfacing runtime deprecations such as the Node.js 20 -> 24
 # migration) so we do not have to track them by hand. Dependabot PRs are exempt
 # from the PRO-XXX naming validators in python-ci.yml (they carry no Jira
-# ticket) via the `github.actor != 'dependabot[bot]'` guards on those steps.
+# ticket) via the `startsWith(github.head_ref, 'dependabot/')` guards on those
+# steps. The head-ref key is used instead of `github.actor` because the actor
+# changes to the pusher when a maintainer pushes to the branch, which would
+# un-exempt the PR from validation.
 version: 2
 updates:
   - package-ecosystem: "github-actions"

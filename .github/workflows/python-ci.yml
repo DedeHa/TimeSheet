@@ -86,7 +86,7 @@ jobs:
       # steps (commit messages, Jira ref, PR title, PR body) with a single
       # Python script that produces a unified, actionable error report.
       - name: Validate PR
-        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'dependabot/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}

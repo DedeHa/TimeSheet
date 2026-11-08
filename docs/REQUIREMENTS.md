@@ -344,6 +344,14 @@ The CI timing pipeline shall compute and include rolling window statistics (roll
 
 The CI timing pipeline shall validate that every `ready` entry in `data/ci_metrics.json` includes the new statistical keys (`rolling`, `bollinger`, `distribution`) via the schema validator, and shall regenerate metrics from the full dataset on every update to ensure idempotent, drift-free output.
 
+## FR-20 CI Dashboard Visualization
+
+The project shall publish a statically served GitHub Pages dashboard under `docs/` that renders CI pipeline timing history with Chart.js visualizations. The dashboard shall read `docs/data/metrics.json` and `docs/data/runtimes.json`, and shall display a summary panel, a rolling mean and P95 chart computed over a 20-run window, a normal distribution curve, Bollinger bands on the rolling mean, a historical trend chart, a per-job breakdown, and a table of the most recent runs.
+
+## QR-13 CI Dashboard Data Freshness
+
+The CI pipeline shall refresh the dashboard data within 5 minutes of a CI timing benchmark run completing, by mirroring the `ci-metrics` dataset into `docs/data/` on the `master` branch through a dedicated publish workflow. The publish workflow shall commit with a `[skip ci]` marker so that the data refresh never re-triggers the Python CI workflow, and shall leave pull requests unaffected.
+
 ---
 
 # 6. Business Rules

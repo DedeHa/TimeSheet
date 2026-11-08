@@ -8,7 +8,11 @@
 # pull_request runs of the `Python CI` workflow (python-ci.yml), appends one row
 # per successful step to ci-timings.csv on the orphan `ci-metrics` branch, then
 # recomputes running statistics (mean, stddev, median, p95, n, last) and writes
-# CI_TIMING_REPORT.md to the same branch.
+# CI_TIMING_REPORT.md to the same branch. The aggregated JSON payloads
+# (docs/data/ci_metrics.json and docs/data/ci_runtimes.json) are also written to
+# the worktree by the producer scripts (see ci_paths.py) so they land on the
+# ci-metrics branch alongside the CSV and report; publish-dashboard.yml mirrors
+# them to docs/data/ on master.
 #
 # Triggers
 # --------
@@ -222,14 +226,38 @@ jobs:
           # files. On the first backfill run ci-timings.csv and
           # CI_TIMING_REPORT.md are brand-new, so `git diff` alone would
           # silently skip the commit even though data was collected.
+          #
+          # The aggregated JSON payloads (docs/data/ci_metrics.json and
+          # docs/data/ci_runtimes.json) are written by the producer scripts
+          # relative to the worktree (see ci_paths.py) so they land here in
+          # the ci-metrics branch and are committed alongside the CSV and
+          # report. publish-dashboard.yml mirrors them to master.
           if [ -z "$(git status --porcelain)" ]; then
-            echo "No changes to ci-timings.csv or CI_TIMING_REPORT.md; skipping commit."
+            echo "No changes to ci-timings dataset; skipping commit."
             exit 0
           fi
           # See the orphan-branch step above: `git -c` must be on the same line
           # as the git command, or the runner treats -c as a standalone command.
-          git -c user.name=github-actions -c user.email=actions@github.com add ci-timings.csv CI_TIMING_REPORT.md
-          git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(ci-timing): update CI timings dataset and report"
+          # Guard each file with `test -f` so a missing payload is skipped
+          # instead of failing the whole step (the producers are best-effort).
+          if [ -f ci-timings.csv ]; then
+            git -c user.name=github-actions -c user.email=actions@github.com add \
+              ci-timings.csv
+          fi
+          if [ -f CI_TIMING_REPORT.md ]; then
+            git -c user.name=github-actions -c user.email=actions@github.com add \
+              CI_TIMING_REPORT.md
+          fi
+          if [ -f docs/data/ci_metrics.json ]; then
+            git -c user.name=github-actions -c user.email=actions@github.com add \
+              docs/data/ci_metrics.json
+          fi
+          if [ -f docs/data/ci_runtimes.json ]; then
+            git -c user.name=github-actions -c user.email=actions@github.com add \
+              docs/data/ci_runtimes.json
+          fi
+          git -c user.name=github-actions -c user.email=actions@github.com commit --quiet \
+            -m "chore(ci-timing): update CI timings dataset, report, and dashboard JSON [skip ci]"
           git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin "$METRICS_BRANCH"
 
       - name: Upload report artifact

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="https://DedeHa.github.io/TimeSheet/">
+    <link rel="alternate" href="https://DedeHa.github.io/TimeSheet/" type="text/html">
+    <title>CI Pipeline Timing Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>CI Pipeline Timing Dashboard</h1>
+            <p>Monitor CI performance trends with real-time visualizations</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-grid">
+            <!-- Summary Panel -->
+            <div class="summary-panel">
+                <h2>Latest Run Summary</h2>
+                <div class="summary-content">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Runs:</span>
+                        <span class="summary-value" id="total-runs">--</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Latest Mean:</span>
+                        <span class="summary-value" id="latest-mean">--</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Latest P95:</span>
+                        <span class="summary-value" id="latest-p95">--</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Latest Run:</span>
+                        <span class="summary-value" id="latest-run">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rolling Statistics Chart -->
+            <div class="chart-container">
+                <h2>Rolling Statistics (20-run window)</h2>
+                <canvas id="rolling-chart"></canvas>
+            </div>
+
+            <!-- Normal Distribution -->
+            <div class="chart-container">
+                <h2>Normal Distribution Curve</h2>
+                <canvas id="normal-distribution"></canvas>
+            </div>
+
+            <!-- Historical Trends -->
+            <div class="chart-container">
+                <h2>Historical Trends</h2>
+                <canvas id="historical-trends"></canvas>
+            </div>
+
+            <!-- Job Breakdown -->
+            <div class="chart-container">
+                <h2>Job Breakdown</h2>
+                <canvas id="job-breakdown"></canvas>
+            </div>
+
+            <!-- Bollinger Bands -->
+            <div class="chart-container">
+                <h2>Rolling Mean with Bollinger Bands</h2>
+                <canvas id="bollinger-bands"></canvas>
+            </div>
+
+            <!-- Data Table -->
+            <div class="data-table-container">
+                <h2>Latest CI Run Details</h2>
+                <div class="table-controls">
+                    <button id="refresh-data" class="btn-primary">Refresh Data</button>
+                    <span class="last-updated">Last updated: <span id="last-updated">--</span></span>
+                </div>
+                <div class="table-wrapper">
+                    <table id="runs-table">
+                        <thead>
+                            <tr>
+                                <th>Run ID</th>
+                                <th>PR Number</th>
+                                <th>Created At</th>
+                                <th>Job Name</th>
+                                <th>Duration (s)</th>
+                                <th>Conclusion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>CI Pipeline Timing Dashboard - Updated Structure</p>
+        <p>Auto-updates within 5 minutes of workflow completion</p>
+    </footer>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

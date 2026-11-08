@@ -30,10 +30,11 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "docs" / "data"
+from ci_paths import resolve_data_dir
+from sanitize_dashboard_data import filter_synthetic_rows
+from validator import validate_json
 
-from validator import validate_json  # noqa: E402
+DATA_DIR = resolve_data_dir()
 
 #: CSV column order (kept stable; consumers rely on it).
 FIELDS = [
@@ -228,6 +229,10 @@ def write_json(rows: list[dict], run_meta: dict, path: Path, max_runs: int = 0) 
             return
 
     merged = dedup_latest_attempt(existing.get("runs", []) + rows)
+    # PRO-379: strip synthetic placeholder rows (e.g. "sha100"/"wf1" test fixtures)
+    # so they never reach the published dashboard. This is a defensive gate on
+    # top of the API-sourced data, which is itself expected to be clean.
+    merged = filter_synthetic_rows(merged)
 
     # Rolling window: keep only the most recent max_runs unique runs.
     if max_runs > 0:

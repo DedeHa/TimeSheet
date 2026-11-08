@@ -28,13 +28,13 @@ if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
 import collect_ci_timings as c  # noqa: E402
+from ci_paths import resolve_data_dir  # noqa: E402
 from validator import validate_json  # noqa: E402
 
 #: Target workflow name; runs of any other workflow are out of scope.
 TARGET_WORKFLOW = "Python CI"
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "docs" / "data"
+DATA_DIR = resolve_data_dir()
 
 
 def _gh_api(path: str) -> object:

@@ -2,9 +2,22 @@
 
 Validates the structure of docs/data/ci_runtimes.json and docs/data/ci_metrics.json.
 Standard library only, non-gating invariant (returns error list, never raises).
+
+The module doubles as a command-line tool so the publish workflow can validate
+JSON payloads before copying them to the served location::
+
+    python3 .github/scripts/validator.py docs/data/ci_metrics.json metrics
+    python3 .github/scripts/validator.py docs/data/ci_runtimes.json runtimes
+
+The CLI reads the file, validates it against the appropriate schema, and exits
+with status ``0`` on success or ``1`` if the payload is invalid.
 """
 
 from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
 
 REQUIRED_ROOT_KEYS = {"schema_version", "generated_at", "runs"}
 REQUIRED_RUN_KEYS = {
@@ -112,3 +125,47 @@ def validate_json(data: dict, schema: str = "runtimes") -> list[str]:
     elif schema == "metrics":
         _validate_metrics(data, errors)
     return errors
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Validate a JSON file against the CI timing schema.
+
+    Usage::
+
+        validator.py <file> <schema>
+
+    Returns:
+        ``0`` on success, ``1`` if the payload is invalid.
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+    if len(argv) != 2:
+        print(f"usage: {Path(__file__).name} <file> <schema>", file=sys.stderr)
+        return 1
+
+    file_path, schema = argv
+    path = Path(file_path)
+    if not path.is_file():
+        print(f"ERROR: file not found: {path}", file=sys.stderr)
+        return 1
+
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"ERROR: failed to read {path}: {exc}", file=sys.stderr)
+        return 1
+
+    errors = validate_json(data, schema)
+    if errors:
+        print(f"ERROR: invalid {schema} payload {path}:", file=sys.stderr)
+        for err in errors:
+            print(f"  {err}", file=sys.stderr)
+        return 1
+
+    print(f"OK: {path} is valid {schema} payload")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

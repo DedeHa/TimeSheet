@@ -1,7 +1,8 @@
 """Aggregate the CI-timing dataset into a Markdown report (PRO-368).
 
 Implements FR-19 (rolling stats, Bollinger bands, normal distribution)
-and QR-12 (CI timing traceability via schema validation).
+and QR-12 (CI timing traceability via schema validation), and produces the
+metrics payload consumed by the GitHub Pages dashboard (FR-20, QR-13).
 
 Reads the ``ci-timings.csv`` produced by ``collect_ci_timings.py`` and renders
 running statistics per ``(job, step)`` — count, mean, sample standard deviation,
@@ -24,6 +25,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
+from ci_paths import resolve_data_dir
 from ci_stats import (
     compute_bollinger_bands,
     compute_normal_distribution,
@@ -32,8 +34,7 @@ from ci_stats import (
 from collect_ci_timings import JOB_TOTAL, read_csv
 from validator import validate_json
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "docs" / "data"
+DATA_DIR = resolve_data_dir()
 
 #: Minimum successful samples before a key's stats are considered meaningful.
 MIN_SAMPLES = 3

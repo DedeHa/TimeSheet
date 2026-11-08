@@ -119,7 +119,10 @@ jobs:
           fi
           git -c user.name=github-actions -c user.email=actions@github.com add docs/data/metrics.json docs/data/runtimes.json
           git -c user.name=github-actions -c user.email=actions@github.com commit --quiet -m "chore(dashboard): update dashboard data [skip ci]"
-          git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin master
+          git -c user.name=github-actions -c user.email=actions@github.com push --quiet origin HEAD:dashboard-data-update
+          if ! gh pr view --repo "$GITHUB_REPOSITORY" --head dashboard-data-update --json number -q .number > /dev/null 2>&1; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base master --head dashboard-data-update --title "chore(dashboard): update dashboard data [skip ci]" --body "Automated dashboard data update from CI Timing Benchmark.\n\nRefs: PRO-379"
+          fi
 
       - name: Upload dashboard artifact
         if: always()

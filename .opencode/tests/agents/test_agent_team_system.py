@@ -29,6 +29,12 @@ _DETECT_MODE = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_DETECT_MODE)
 
 
+@pytest.fixture(autouse=True)
+def _isolate_detect_mode_state(tmp_path, monkeypatch):
+    """Redirect detect_mode state to tmp_path so tests never write ~/.opencode."""
+    monkeypatch.setattr(_DETECT_MODE, "STATE_PATH", tmp_path / "pipeline-state.json")
+
+
 def _parse_agent_frontmatter(path: Path) -> dict:
     content = path.read_text()
     m = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)

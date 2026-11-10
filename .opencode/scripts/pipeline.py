@@ -485,6 +485,81 @@ class PipelineManager:
         mode = entry.get("development_mode", "interactive")
         print(f"Mode for {ticket}: {mode}")
 
+    def record_handoff(
+        self,
+        ticket: str,
+        from_agent: str,
+        to_agent: str,
+        step: str,
+        status: str,
+        artifacts: Optional[List[str]] = None,
+        accomplishments: Optional[List[str]] = None,
+        issues: Optional[List[str]] = None,
+        next_steps: Optional[List[str]] = None,
+        mode: Optional[str] = None,
+        cycle: Optional[int] = None,
+        max_cycles: int = 3,
+    ) -> Dict[str, Any]:
+        """Record a handoff in pipeline history and return its JIRA comment body.
+
+        The script has no JIRA client. The caller posts the returned markdown
+        through the Atlassian MCP (atlassian_addCommentToJiraIssue).
+        """
+        missing = [name for name, value in (("from", from_agent), ("to", to_agent), ("status", status)) if not value]
+        if missing:
+            raise ValueError(f"handoff requires non-empty fields: {', '.join(missing)}")
+
+        entry = self._get_entry(ticket)
+        handoff = {
+            "ticket": ticket,
+            "from": from_agent,
+            "to": to_agent,
+            "step": step,
+            "status": status,
+            "artifacts": list(artifacts or []),
+            "accomplishments": list(accomplishments or []),
+            "issues": list(issues or []),
+            "next_steps": list(next_steps or []),
+            "mode": mode or entry.get("development_mode", "interactive"),
+            "cycle": cycle,
+            "max_cycles": max_cycles,
+        }
+        self._record_history(ticket, "handoff", handoff)
+        return handoff
+
+    @staticmethod
+    def render_handoff_comment(handoff: Dict[str, Any]) -> str:
+        """Render a handoff as the standard JIRA comment (PRO-407 template)."""
+
+        def bullets(items: List[str], empty: str) -> List[str]:
+            return [f"* {item}" for item in items] if items else [empty]
+
+        cycle_part = (
+            f"Cycle: {handoff['cycle']}/{handoff['max_cycles']}"
+            if handoff.get("cycle") is not None
+            else "Cycle: n/a"
+        )
+        lines = [
+            f"Handoff: {handoff['from']} → {handoff['to']} (Step: {handoff.get('step') or 'n/a'})",
+            "",
+            "Artifacts:",
+            *bullets(handoff["artifacts"], "* None"),
+            "",
+            f"Status: {handoff['status']}",
+            "",
+            "Accomplishments:",
+            *bullets(handoff["accomplishments"], "* None"),
+            "",
+            "Issues / Blockers:",
+            *bullets(handoff["issues"], "* None"),
+            "",
+            "Next Steps:",
+            *bullets(handoff["next_steps"], "* None"),
+            "",
+            f"Metadata: Mode: {handoff['mode']} | {cycle_part}",
+        ]
+        return "\n".join(lines)
+
 
 def main():
     """Main entry point for pipeline management tool."""
@@ -561,6 +636,40 @@ def main():
     get_mode_parser = subparsers.add_parser("get-mode", help="Get persisted mode")
     get_mode_parser.add_argument("ticket", help="JIRA ticket key")
     get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
+
+    handoff_parser = subparsers.add_parser("handoff", help="Record an agent handoff and print its JIRA comment")
+    handoff_parser.add_argument("ticket", help="JIRA ticket key")
+    handoff_parser.add_argument("--from", dest="from_agent", required=True, help="Sending agent")
+    handoff_parser.add_argument("--to", dest="to_agent", required=True, help="Receiving agent")
+    handoff_parser.add_argument("--step", default="", help="Pipeline step name")
+    handoff_parser.add_argument("--status", required=True, help="Work status, e.g. COMPLETED or BLOCKED")
+    handoff_parser.add_argument("--artifact", action="append", default=[], help="Artifact path (repeatable)")
+    handoff_parser.add_argument("--accomplishment", action="append", default=[], help="Accomplishment (repeatable)")
+    handoff_parser.add_argument("--issue", action="append", default=[], help="Issue or blocker (repeatable)")
+    handoff_parser.add_argument("--next-step", dest="next_steps", action="append", default=[], help="Next step (repeatable)")
+    handoff_parser.add_argument("--mode", default=None, help="Override mode (default: persisted mode)")
+    handoff_parser.add_argument("--cycle", type=int, default=None, help="Current cycle number")
+    handoff_parser.add_argument("--max-cycles", type=int, default=3, help="Maximum cycles")
+    handoff_parser.set_defaults(
+        func=lambda args: print(
+            PipelineManager.render_handoff_comment(
+                manager.record_handoff(
+                    args.ticket,
+                    args.from_agent,
+                    args.to_agent,
+                    args.step,
+                    args.status,
+                    artifacts=args.artifact,
+                    accomplishments=args.accomplishment,
+                    issues=args.issue,
+                    next_steps=args.next_steps,
+                    mode=args.mode,
+                    cycle=args.cycle,
+                    max_cycles=args.max_cycles,
+                )
+            )
+        )
+    )
 
     # Parse and execute
     args = parser.parse_args(clean_args)

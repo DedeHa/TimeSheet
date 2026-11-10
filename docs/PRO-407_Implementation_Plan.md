@@ -94,11 +94,11 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 
 | Step | Description | Status |
 |------|-------------|--------|
-| 1 | Pure code (handoff) + tests | Pending |
-| 2 | Skill/agent docs (DoR, reconciliation, handoff) | Pending |
-| 3 | `docs/decisions/`, `docs/changes/` | Pending |
-| 4 | Cleanup and AGENTS.md | Pending |
-| 5 | Full quality gate | Pending |
+| 1 | Pure code (handoff) + tests | Done (commit 49e4eb2) |
+| 2 | Skill/agent docs (DoR, reconciliation, handoff) | Done |
+| 3 | `docs/decisions/`, `docs/changes/` | Done |
+| 4 | Cleanup and AGENTS.md | Done |
+| 5 | Full quality gate | Done (agents 167, ci-pipeline 269, app 409 passed; lint, traceability OK) |
 
 ## Part C: Verification Definition
 
@@ -117,12 +117,12 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 
 ### C.3 Acceptance criteria
 
-- [ ] AC-1: Decision record workflow (ADR/PDR/TDR/BDR/ODR) in `docs/decisions/` with template and index.
-- [ ] AC-2: Pipeline state management: interruption recovery, stuck detection, dry-run, history implemented and tested (existing plus handoff recording).
-- [ ] AC-3: DoR gate documented and enforced in `develop-feature` before development.
-- [ ] AC-4: Doc reconciliation step in `complete-feature`.
-- [ ] AC-5: Artifact-first layout `docs/changes/` documented and linked.
-- [ ] AC-6: Handoff protocol recorded via `pipeline.py handoff` and rendered as JIRA comment.
+- [x] AC-1: Decision record workflow (ADR/PDR/TDR/BDR/ODR) in `docs/decisions/` with template and index.
+- [x] AC-2: Pipeline state management: interruption recovery, stuck detection, dry-run, history implemented and tested (existing plus handoff recording).
+- [x] AC-3: DoR gate documented and enforced in `develop-feature` before development.
+- [x] AC-4: Doc reconciliation step in `complete-feature`.
+- [x] AC-5: Artifact-first layout `docs/changes/` documented and linked.
+- [x] AC-6: Handoff protocol recorded via `pipeline.py handoff` and rendered as JIRA comment.
 
 ### C.4 Definition of Done
 
@@ -131,5 +131,5 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 - [ ] All ACs checked
 - [ ] Story points: 8 (set)
 - [ ] Traceability updated for any new FR/QR entries in `docs/REQUIREMENTS.md`
-- [ ] Agent test suite passes
+- [x] Agent test suite passes
 - [ ] Implementation plan deleted after merge (per decision A.1-3)

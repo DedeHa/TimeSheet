@@ -68,7 +68,7 @@ python .github/scripts/generate_traceability_matrix.py
 ```python
 # From TimeSheetAlgo.py:96-110
 def detect_environment(base_path: str) -> str:
-    if os.path.basename(base_path) == "src_timesheetalgo":
+    if os.path.basename(base_path) == "src":
         return "development"
     elif os.path.isdir(os.path.join(base_path, "Timealarm")):
         return "production"
@@ -292,6 +292,15 @@ The simplified model maintains the underlying technical separation of concerns:
 | `detect_mode.py` | Parse user intent for interactive/automated mode | Hidden (Product Owner only) |
 | `pipeline.py` | Manage workflow state, interruption recovery, history | Hidden (Product Owner only) |
 | Migration/Validation helpers | Support pipeline transitions and validation | Hidden (Product Owner only) |
+
+## Governance Artifacts (PRO-407)
+
+- **Decision records:** `docs/decisions/` holds ADR / PDR / TDR / BDR / ODR records. Start from `docs/decisions/TEMPLATE.md`. Index in `docs/decisions/README.md`.
+- **Change artifacts:** `docs/changes/YYYY-MM/PRO-XXX/` holds `spec.md`, `plan.md`, `test-plan.md`, `pm-notes.md` when applicable. Layout in `docs/changes/README.md`.
+- **Active plan:** `docs/PRO-XXX_Implementation_Plan.md` is deleted after merge and JIRA closure (user / PO confirmed).
+- **Definition of Ready:** enforced in `develop-feature` Step 1f before branch creation.
+- **Doc reconciliation:** `complete-feature` Step 4.5 updates living docs before closure.
+- **Handoff record:** `python .opencode/scripts/pipeline.py handoff PRO-XXX --from <agent> --to <agent> --status <status> ...` records the handoff and prints the JIRA comment to post.
 
 ## Handoff Gates
 

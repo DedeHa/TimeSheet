@@ -50,6 +50,14 @@ Feasible within 8 SP. Agent and skill changes are documentation and workflow edi
 | `docs/decisions/TEMPLATE.md` | Decision record template | New |
 | `docs/changes/README.md` | Artifact-first layout (`docs/changes/YYYY-MM/PRO-XXX/`) | New |
 | `.opencode/tests/agents/test_governance_docs.py` | Tests that DoR gate, reconciliation, and decision/change layout are documented | New |
+| `.opencode/tests/agents/test_pipeline_recovery.py` | Recovery command tests (`what-missed`, `check-stuck`, `dry-run`, `resume`, `history`) | New |
+| `docs/decisions/ODR-0001-agent-team-governance.md` | First decision record (accepted) | New |
+| `docs/changes/2026-11/PRO-407/` | Artifact folder: `plan.md`, `test-plan.md`, `pm-notes.md` | New |
+| `docs/REQUIREMENTS.md` | FR-21 to FR-25 and QR-14 | Modified |
+| `docs/ARCHITECTURE.md` | Traceability rows and agent governance design section | Modified |
+| `.github/scripts/generate_traceability_matrix.py` | Scans `.opencode/scripts` and `.opencode/tests/agents` for implementation references | Modified |
+| `.opencode/agents/architect.agent.md`, `developer.agent.md`, `tester.agent.md`, `product-owner.agent.md` | Decision records, change artifacts, `pipeline.py handoff` | Modified |
+| `.opencode/skills/orchestrate-feature/SKILL.md`, `refine-feature/SKILL.md` | DoR gate and handoff references | Modified |
 | `AGENTS.md` | Document decisions folder, artifact layout, handoff command | Modified |
 | `.opencode/skills/plan-feature/` | Empty directory, removed (repo hygiene) | Removed |
 
@@ -99,7 +107,7 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 | 2 | Skill/agent docs (DoR, reconciliation, handoff) | Done |
 | 3 | `docs/decisions/`, `docs/changes/` | Done |
 | 4 | Cleanup and AGENTS.md | Done |
-| 5 | Full quality gate | Done (agents 167, ci-pipeline 269, app 409 passed; lint, traceability OK) |
+| 5 | Full quality gate | Done (agents 198, ci-pipeline 269, app 409 passed, coverage 98.53%; ruff and black clean; traceability exit 0) |
 
 ### B.6 Audit gap closure
 
@@ -110,7 +118,7 @@ Gaps found in the post-rollout audit, closed in this order.
 | 1 | AC-1: decision records wired into Architect and PO agents; ODR-0001 written | DONE |
 | 2 | AC-2: recovery tests for `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`. Real bug fixed: `resume --force` left interrupted pipelines reported as interrupted | DONE |
 | 3 | AC-3: DoR gate referenced in `orchestrate-feature` and `refine-feature`; adversarial reviewer recorded as follow-up (B.4) | DONE |
-| 4 | AC-5: artifact-first folder `docs/changes/2026-11/PRO-407/` and agent references (`test-plan.md` written after gate run) | In progress |
+| 4 | AC-5: artifact-first folder `docs/changes/2026-11/PRO-407/` (plan, test-plan, pm-notes) and Architect/Developer references | DONE |
 | 5 | AC-6: `pipeline.py handoff` referenced in all four agents and orchestrator | DONE |
 | 6 | DoD: FR-21 to FR-25 and QR-14 in `docs/REQUIREMENTS.md`, mapped in `docs/ARCHITECTURE.md`; traceability gate scans `.opencode/scripts` and `.opencode/tests/agents` for implementation references | DONE |
 | 7 | Non-goal: tracker-agnostic `workItemRef` kept as follow-up (not implemented) | Pending |
@@ -146,6 +154,6 @@ Gaps found in the post-rollout audit, closed in this order.
 - [ ] JIRA ticket transitioned to Fertig (after user/PO confirmation)
 - [ ] All ACs checked
 - [ ] Story points: 8 (set)
-- [ ] Traceability updated for any new FR/QR entries in `docs/REQUIREMENTS.md`
+- [x] Traceability updated for any new FR/QR entries in `docs/REQUIREMENTS.md`
 - [x] Agent test suite passes
 - [ ] Implementation plan deleted after merge (per decision A.1-3)

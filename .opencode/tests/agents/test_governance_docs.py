@@ -137,3 +137,23 @@ def test_governance_requirements_are_defined_and_traced():
         assert f"## {req_id} " in requirements, f"{req_id} not defined in REQUIREMENTS.md"
         assert f"| {req_id} |" in architecture, f"{req_id} not mapped in ARCHITECTURE.md"
     assert "## Agent Governance Design (PRO-407" in architecture
+
+
+PRO407_CHANGE_DIR = "docs/changes/2026-11/PRO-407"
+
+
+@pytest.mark.parametrize("artifact", ["plan.md", "test-plan.md", "pm-notes.md"])
+def test_pro407_change_folder_has_artifacts(artifact):
+    """AC-5: PRO-407 has its artifact-first change folder with plan, test plan, and PM notes."""
+    assert (ROOT / PRO407_CHANGE_DIR / artifact).is_file(), f"missing {PRO407_CHANGE_DIR}/{artifact}"
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [".opencode/agents/architect.agent.md", ".opencode/agents/developer.agent.md"],
+)
+def test_architect_and_developer_write_change_artifacts(rel):
+    """AC-5: Architect and Developer write artifacts to docs/changes/YYYY-MM/PRO-XXX/."""
+    text = _read(rel)
+    assert "docs/changes/YYYY-MM/PRO-XXX/" in text
+    assert "Change Artifacts (PRO-407, AC-5)" in text

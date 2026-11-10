@@ -265,6 +265,19 @@ python .opencode/scripts/pipeline.py handoff PRO-XXX \
 Use `--status BLOCKED` with `--issue "<blocker>"` when the agent cannot finish. Do not
 hand off silently. Shared rules: `.opencode/agents/product-owner.agent.md`, Handoff Recording.
 
+## Change Artifacts (PRO-407, AC-5)
+
+The Architect writes the design to the change folder `docs/changes/YYYY-MM/PRO-XXX/`
+(month the work started), following `docs/changes/README.md`:
+
+- `plan.md` — pointer to and summary of the implementation plan (Parts A/B/C). Do not
+  duplicate the plan in full.
+- `spec.md` — what is built and why, when the ticket needs a spec beyond the plan.
+- `pm-notes.md` — decisions taken and waivers of DoR items. Link the JIRA ticket instead
+  of copying handoff comments.
+
+Architectural decisions go to `docs/decisions/`, not into these files.
+
 ## Decision Records (PRO-407, AC-1)
 
 When the implementation plan (Part A) resolves an architectural question, the

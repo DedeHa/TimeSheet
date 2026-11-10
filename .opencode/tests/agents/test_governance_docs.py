@@ -88,3 +88,20 @@ def test_odr_0001_record_is_accepted_and_indexed():
     for heading in ("## Context", "## Options considered", "## Decision", "## Consequences"):
         assert heading in text
     assert "| ODR-0001 |" in _read("docs/decisions/README.md")
+
+
+def test_orchestrator_dispatches_developer_only_after_dor_gate():
+    """AC-3: orchestrate-feature references the DoR gate before the Developer dispatch."""
+    text = _read(".opencode/skills/orchestrate-feature/SKILL.md")
+    assert "Definition of Ready (DoR) gate" in text
+    assert "develop-feature" in text and "Step 1f" in text
+    assert text.index("Definition of Ready (DoR) gate") < text.index("**Dispatch**: Routes to Developer agent")
+
+
+def test_refine_feature_produces_dor_inputs_d1_to_d7():
+    """AC-3: refine-feature maps its finalization output to DoR inputs D1-D7."""
+    text = _read(".opencode/skills/refine-feature/SKILL.md")
+    assert "Definition of Ready (DoR) gate" in text
+    assert "Step 1f" in text
+    for check in ("D1", "D2", "D3", "D4", "D5", "D6", "D7"):
+        assert f"| {check} " in text

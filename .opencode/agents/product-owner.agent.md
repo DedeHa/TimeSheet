@@ -440,6 +440,17 @@ The command records the handoff in `~/.opencode/pipeline-history.json` and print
 markdown comment. Post that output with `atlassian_addCommentToJiraIssue`. Use
 `--status BLOCKED` with `--issue "<blocker>"` for escalations.
 
+### Decision Records (PRO-407, AC-1)
+
+When a user decision changes scope or process during intake, discovery, or
+review, the Product Owner drafts the matching record in `docs/decisions/`:
+
+- **PDR** for product scope and behaviour decisions.
+- **BDR** for ways-of-working, release, and budget decisions.
+
+Use `docs/decisions/TEMPLATE.md` and the index in `docs/decisions/README.md`.
+Record the decision before the feature's PR merges (rule 5 of the index).
+
 ---
 
 ## Responsibilities

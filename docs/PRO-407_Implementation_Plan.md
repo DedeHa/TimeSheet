@@ -100,6 +100,21 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 | 4 | Cleanup and AGENTS.md | Done |
 | 5 | Full quality gate | Done (agents 167, ci-pipeline 269, app 409 passed; lint, traceability OK) |
 
+### B.6 Audit gap closure
+
+Gaps found in the post-rollout audit, closed in this order.
+
+| Gap | Item | Status |
+|-----|------|--------|
+| 1 | AC-1: decision records wired into Architect and PO agents; ODR-0001 written | DONE |
+| 2 | AC-2: recovery tests for `what-missed`, `check-stuck`, `dry-run`, `resume`, `history` | Pending |
+| 3 | AC-3: DoR gate referenced in `orchestrate-feature` and `refine-feature` | Pending |
+| 4 | AC-5: artifact-first folder `docs/changes/2026-11/PRO-407/` and agent references | Pending |
+| 5 | AC-6: `pipeline.py handoff` referenced in all four agents and orchestrator | Pending |
+| 6 | DoD: FR/QR IDs in `docs/REQUIREMENTS.md`, architecture section, traceability gate | Pending |
+| 7 | Non-goal: tracker-agnostic `workItemRef` kept as follow-up (not implemented) | Pending |
+| 8 | Status tables kept current | Ongoing |
+
 ## Part C: Verification Definition
 
 ### C.1 Unit-level

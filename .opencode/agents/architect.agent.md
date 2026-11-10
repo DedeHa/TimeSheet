@@ -251,6 +251,19 @@ Every handoff must include:
 3. **Next-step request** — what the Developer should do
 4. **Constraints** — what must not change or be exceeded
 
+## Decision Records (PRO-407, AC-1)
+
+When the implementation plan (Part A) resolves an architectural question, the
+Architect drafts a decision record in `docs/decisions/` before handing off:
+
+- **ADR** for technical design of the application (persistence, module structure).
+- **TDR** for test strategy, tooling, or coverage gates.
+
+Use `docs/decisions/TEMPLATE.md`, name the file `<PREFIX>-NNNN-<kebab-title>.md`
+(next free number per prefix), set `Ticket: PRO-XXX`, and list the record under
+the index in `docs/decisions/README.md`. Reference the record from the
+implementation plan. Do not record decisions only in chat or change artifacts.
+
 ## Pattern References
 
 All architecture decisions should reference patterns from:

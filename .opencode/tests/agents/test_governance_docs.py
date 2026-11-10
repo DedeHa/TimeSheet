@@ -66,3 +66,25 @@ def test_agents_md_links_governance_folders():
     text = _read("AGENTS.md")
     assert "docs/decisions/" in text
     assert "docs/changes/" in text
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [".opencode/agents/architect.agent.md", ".opencode/agents/product-owner.agent.md"],
+)
+def test_decision_owner_agents_reference_decision_folder(rel):
+    """AC-1: Architect drafts ADR/TDR and PO drafts PDR/BDR in docs/decisions/."""
+    text = _read(rel)
+    assert "docs/decisions/" in text
+    assert "docs/decisions/TEMPLATE.md" in text
+
+
+def test_odr_0001_record_is_accepted_and_indexed():
+    """AC-1: ODR-0001 exists from the template, is Accepted, and is in the index."""
+    rel = "docs/decisions/ODR-0001-agent-team-governance.md"
+    text = _read(rel)
+    assert "- **Status:** Accepted" in text
+    assert "- **Ticket:** PRO-407" in text
+    for heading in ("## Context", "## Options considered", "## Decision", "## Consequences"):
+        assert heading in text
+    assert "| ODR-0001 |" in _read("docs/decisions/README.md")

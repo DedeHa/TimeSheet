@@ -52,6 +52,12 @@ The repository uses lightweight requirement identifiers in the form FR-XX and QR
 | QR-12 | CI timing traceability | [validator.py](../.github/scripts/validator.py) - `STAT_KEYS` extended with `rolling`, `bollinger`, `distribution`; [test_validator.py](../tests/ci-pipeline/test_validator.py) - schema validation tests |
 | FR-20 | CI dashboard visualization | [docs/frontend/index.html](../docs/frontend/index.html) - dashboard shell with summary panel and chart containers; [docs/frontend/js/dashboard.js](../docs/frontend/js/dashboard.js) - `loadData()`, `renderRollingChart()`, `renderNormalDistributionChart()`, `renderBollingerBandsChart()`, `renderHistoricalTrendsChart()`, `renderJobBreakdownChart()`; [docs/frontend/css/dashboard.css](../docs/frontend/css/dashboard.css) - layout and table styling; [docs/index.html](../docs/index.html) - site-root entry point |
 | QR-13 | CI dashboard data freshness | [ci-timing.yml](../.github/workflows/ci-timing.yml) - collects timings and publishes dashboard data |
+| FR-21 | Agent decision records | [docs/decisions/](decisions/README.md) - numbered ADR/PDR/TDR/BDR/ODR records and index; [test_governance_docs.py](../.opencode/tests/agents/test_governance_docs.py) - agent references and ODR-0001 checks |
+| FR-22 | Pipeline recovery commands | [pipeline.py](../.opencode/scripts/pipeline.py) - `what_missed()`, `check_stuck()`, `dry_run()`, `resume()`, `get_history()`; [test_pipeline_recovery.py](../.opencode/tests/agents/test_pipeline_recovery.py) - recovery tests on `tmp_path` state |
+| FR-23 | Definition of Ready gate | [develop-feature SKILL](../.opencode/skills/develop-feature/SKILL.md) - Step 1f checks D1-D7; [orchestrate-feature SKILL](../.opencode/skills/orchestrate-feature/SKILL.md) - dispatch after gate; [test_governance_docs.py](../.opencode/tests/agents/test_governance_docs.py) |
+| FR-24 | Documentation reconciliation before closure | [complete-feature SKILL](../.opencode/skills/complete-feature/SKILL.md) - Step 4.5 Documentation Reconciliation; [test_governance_docs.py](../.opencode/tests/agents/test_governance_docs.py) |
+| FR-25 | Agent handoff recording | [pipeline.py](../.opencode/scripts/pipeline.py) - `record_handoff()`, `render_handoff_comment()`, `handoff` subcommand; [test_record_handoff.py](../.opencode/tests/agents/test_record_handoff.py) |
+| QR-14 | Artifact-first change layout | [docs/changes/](changes/README.md) - `docs/changes/YYYY-MM/PRO-XXX/` artifacts; [test_governance_docs.py](../.opencode/tests/agents/test_governance_docs.py) - PRO-407 folder checks |
 | FR-INTEGRITY-001 | Pre-closure validation | `.opencode/skills/complete-feature/SKILL.md` (pre-closure validation phase), `.github/scripts/validate_pr_merge.py`, `.github/scripts/validate_filesystem.py` |
 | QR-INTEGRITY-002 | Pipeline integrity validation | `tests/ci-pipeline/test_complete_feature_validation.py`, `.opencode/docs/REQUIREMENTS.md` |
 
@@ -118,6 +124,29 @@ perform repository checkout itself. The `deploy` job therefore runs
 **Signing verification:** the action includes a verification step that checks
 for `gh-gpgsign` availability and validates GitHub CLI authentication status
 before the job proceeds.
+
+## Agent Governance Design (PRO-407, FR-21 to FR-25, QR-14)
+
+The agent team (Product Owner, Architect, Developer, Tester) is governed by four
+components. Agent definitions live in `.opencode/agents/`, skills in
+`.opencode/skills/`, and the runtime in `.opencode/scripts/pipeline.py`. The
+application code under `src/` is not affected.
+
+| Component | Responsibility | Where |
+|-----------|----------------|-------|
+| Decision records | Durable ADR/PDR/TDR/BDR/ODR records, one decision per file | `docs/decisions/` (FR-21) |
+| Definition of Ready gate | Checks D1-D7 before branch creation; orchestrator dispatches to the Developer only after it passes | `develop-feature` Step 1f (FR-23) |
+| Recovery and handoff state | `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`; `handoff` records the transition and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
+| Artifact-first change layout | Per-ticket spec, plan, test plan, and PM notes | `docs/changes/YYYY-MM/PRO-XXX/` (QR-14) |
+
+Design choices:
+
+- The script has no JIRA client. `pipeline.py handoff` records the handoff in the
+  local pipeline history and prints the comment. The agent posts that comment to JIRA.
+- Interruption is derived from state (`status == in_progress` with zero cycles). A
+  forced resume moves the status to `resumed` so the interruption is cleared.
+- Documentation reconciliation (`complete-feature` Step 4.5) runs before closure, so
+  decisions and living docs stay current when the working plan is deleted.
 
 ## System-Level Diagrams
 

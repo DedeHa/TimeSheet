@@ -7,6 +7,9 @@ This tool provides commands to:
 - Preview pipeline actions (dry-run)
 - Detect and alert on stuck pipelines
 - Manage pipeline history and transitions
+- Record agent handoffs and render the JIRA handoff comment (FR-25)
+
+Recovery commands implement FR-22. Handoff recording implements FR-25.
 
 Usage:
     python pipeline.py <command> <ticket> [options]

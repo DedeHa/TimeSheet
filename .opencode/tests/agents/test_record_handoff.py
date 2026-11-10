@@ -1,4 +1,4 @@
-"""Unit tests for pipeline.py handoff recording (PRO-407, AC-6)."""
+"""Unit tests for pipeline.py handoff recording (PRO-407, AC-6; FR-25)."""
 
 from __future__ import annotations
 

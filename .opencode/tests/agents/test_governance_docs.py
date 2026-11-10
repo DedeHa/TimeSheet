@@ -1,4 +1,4 @@
-"""Governance documentation tests for PRO-407 (AC-3, AC-4, AC-5, AC-6)."""
+"""Governance documentation tests for PRO-407 (AC-1 to AC-6; FR-21, FR-23, FR-24, FR-25, QR-14)."""
 
 from __future__ import annotations
 
@@ -124,3 +124,16 @@ def test_every_handoff_owner_uses_pipeline_handoff(rel):
     assert "pipeline.py handoff" in text, f"{rel} does not record handoffs"
     assert "atlassian_addCommentToJiraIssue" in text, f"{rel} does not post handoff comments"
     assert "--status BLOCKED" in text, f"{rel} does not document blocked escalations"
+
+
+GOVERNANCE_IDS = ("FR-21", "FR-22", "FR-23", "FR-24", "FR-25", "QR-14")
+
+
+def test_governance_requirements_are_defined_and_traced():
+    """DoD: governance IDs are defined in REQUIREMENTS.md and mapped in ARCHITECTURE.md."""
+    requirements = _read("docs/REQUIREMENTS.md")
+    architecture = _read("docs/ARCHITECTURE.md")
+    for req_id in GOVERNANCE_IDS:
+        assert f"## {req_id} " in requirements, f"{req_id} not defined in REQUIREMENTS.md"
+        assert f"| {req_id} |" in architecture, f"{req_id} not mapped in ARCHITECTURE.md"
+    assert "## Agent Governance Design (PRO-407" in architecture

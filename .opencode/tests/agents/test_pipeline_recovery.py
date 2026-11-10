@@ -1,4 +1,4 @@
-"""Recovery command tests for pipeline.py (PRO-407, AC-2).
+"""Recovery command tests for pipeline.py (PRO-407, AC-2; FR-22).
 
 Covers what-missed, check-stuck, dry-run, resume, and history. STATE_PATH and
 HISTORY_PATH are redirected to tmp_path so the real ~/.opencode is never touched.

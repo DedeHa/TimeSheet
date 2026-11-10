@@ -33,6 +33,9 @@ ARCHITECTURE = ROOT / "docs" / "ARCHITECTURE.md"
 SOURCE = ROOT / "src" / "TimeSheetAlgo.py"
 CI_SCRIPTS = [
     ROOT / ".github" / "scripts",
+    # Agent-team runtime and its tests carry FR/QR references (PRO-407).
+    ROOT / ".opencode" / "scripts",
+    ROOT / ".opencode" / "tests" / "agents",
 ]
 REPORT_PATH = ROOT / "tests" / "reports" / "traceability-matrix.md"
 

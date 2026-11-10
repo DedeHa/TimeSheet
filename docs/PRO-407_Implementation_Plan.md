@@ -110,9 +110,9 @@ Gaps found in the post-rollout audit, closed in this order.
 | 1 | AC-1: decision records wired into Architect and PO agents; ODR-0001 written | DONE |
 | 2 | AC-2: recovery tests for `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`. Real bug fixed: `resume --force` left interrupted pipelines reported as interrupted | DONE |
 | 3 | AC-3: DoR gate referenced in `orchestrate-feature` and `refine-feature`; adversarial reviewer recorded as follow-up (B.4) | DONE |
-| 4 | AC-5: artifact-first folder `docs/changes/2026-11/PRO-407/` and agent references | Pending |
+| 4 | AC-5: artifact-first folder `docs/changes/2026-11/PRO-407/` and agent references (`test-plan.md` written after gate run) | In progress |
 | 5 | AC-6: `pipeline.py handoff` referenced in all four agents and orchestrator | DONE |
-| 6 | DoD: FR/QR IDs in `docs/REQUIREMENTS.md`, architecture section, traceability gate | Pending |
+| 6 | DoD: FR-21 to FR-25 and QR-14 in `docs/REQUIREMENTS.md`, mapped in `docs/ARCHITECTURE.md`; traceability gate scans `.opencode/scripts` and `.opencode/tests/agents` for implementation references | DONE |
 | 7 | Non-goal: tracker-agnostic `workItemRef` kept as follow-up (not implemented) | Pending |
 | 8 | Status tables kept current | Ongoing |
 

@@ -221,7 +221,8 @@ class PipelineManager:
         
         # Check for interruption
         interruption = self._detect_interruption(ticket)
-        if interruption and interruption.get("interrupted"):
+        was_interrupted = bool(interruption and interruption.get("interrupted"))
+        if was_interrupted:
             print(f"⚠️  Pipeline was interrupted at step: {interruption['interrupted_step']}")
             print(f"   What was missed:")
             missed = interruption['what_was_missed']
@@ -236,11 +237,15 @@ class PipelineManager:
         
         print(f"Resuming pipeline at step: {current_step}")
         
-        # Clear interruption flag if present
-        if entry.get("interrupted"):
+        # Clear the interruption. Detection is derived from status == in_progress with
+        # zero cycles, so a forced resume must move the status off in_progress or the
+        # pipeline would still be reported as interrupted (PRO-407, AC-2).
+        if was_interrupted or entry.get("interrupted"):
             entry["interrupted"] = False
             entry["interrupted_step"] = None
             entry["interrupted_at"] = None
+            if was_interrupted:
+                entry["status"] = "resumed"
             entry["last_updated"] = datetime.now(timezone.utc).isoformat()
             self._save_state()
             self._record_history(ticket, "interruption_cleared", entry)

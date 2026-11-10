@@ -594,6 +594,28 @@ git push origin --delete <branch-name>
 **Verification:** Confirm the branch is gone from the remote with
 `git ls-remote --heads origin | grep <branch-name>` (should return nothing).
 
+## Step 4.5 — Documentation Reconciliation (PRO-407, AC-4)
+
+Run before the closure sequence. Documentation must describe the code as merged.
+
+1. Diff the feature against `master`:
+   ```bash
+   git diff --name-only master...HEAD
+   ```
+2. For each changed area, check the matching living document is updated:
+
+   | Changed area | Document to reconcile |
+   |--------------|------------------------|
+   | `src/`, public behaviour | `docs/ARCHITECTURE.md`, `docs/REQUIREMENTS.md` |
+   | `tests/`, `.opencode/tests/` | `docs/TESTING.md` |
+   | `.opencode/scripts/`, `.opencode/skills/`, `.opencode/agents/` | `AGENTS.md`, `docs/CONTRIBUTING.md` |
+   | Architecture decisions | new or updated record in `docs/decisions/` |
+
+3. Fix stale statements. Do not leave "not yet implemented" text in a living document.
+4. Record the reconciliation in the PR description under `## Testing` or a
+   `## Documentation` line listing the files touched.
+5. Commit with `docs(PRO-XXX): reconcile documentation` and `Refs: PRO-XXX`.
+
 ## Step 5 — Closure Sequence (User / PO Confirmed)
 
 The closure sequence is executed in the following order. Each step requires

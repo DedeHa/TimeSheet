@@ -104,6 +104,25 @@ if fields["customfield_10028"] is None:
     return
 ```
 
+### 1f. Definition of Ready (DoR) gate (PRO-407, AC-3)
+
+Enforced here, before any code is written. Development does not start unless
+every item passes. Record the result in the plan's Part C.
+
+| # | DoR check | Pass condition |
+|---|-----------|----------------|
+| D1 | Story points | `customfield_10028` is set (Step 1e) |
+| D2 | Acceptance criteria | At least one AC exists and each is testable (has a verifiable check) |
+| D3 | Definition of Done | DoD checklist present and contains no unfilled placeholders (`PR #NNN`, `N tests`, `FR-XX`) |
+| D4 | Stakeholder review | `refine-feature` completed, or PO confirmed the ticket is ready |
+| D5 | Scope | Non-goals / out-of-scope section present |
+| D6 | Drift | No unresolved drift signals from Step 1d |
+| D7 | Decisions | Open decisions recorded in the ticket or plan Part A are resolved |
+
+If any check fails: stop, post a handoff with `Status: BLOCKED` (see
+`pipeline.py handoff`), and escalate to the Product Owner. Do not create the
+branch in Step 3 until the gate passes.
+
 ## Step 2 — Adopt or Draft the Implementation Plan
 
 ### 2a. Look for an existing plan

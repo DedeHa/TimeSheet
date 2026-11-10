@@ -18,7 +18,7 @@ Additional tests added by the audit gap closure (not in V1-V7 but covering AC-1 
 
 | Area | Test file | Covers |
 |------|-----------|--------|
-| Recovery commands (AC-2) | `test_pipeline_recovery.py` (14 tests) | `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`, CLI dispatch. Includes the forced-resume fix. |
+| Recovery commands (AC-2) | `test_pipeline_recovery.py` (15 tests) | `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`, CLI dispatch. Includes the forced-resume fix. |
 | Decision records (AC-1) | `test_governance_docs.py` | Architect and PO reference `docs/decisions/`; ODR-0001 is Accepted and indexed |
 | DoR references (AC-3) | `test_governance_docs.py` | Orchestrator and refine-feature reference the DoR gate and D1-D7 |
 | Handoff references (AC-6) | `test_governance_docs.py` | Four agents and orchestrator use `pipeline.py handoff` and post the comment |

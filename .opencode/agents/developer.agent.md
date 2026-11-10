@@ -294,6 +294,20 @@ Every handoff must include:
 3. **Next-step request** — what the Tester should do
 4. **Constraints** — what must not change or be exceeded
 
+### Handoff Recording (PRO-407, AC-6)
+
+Record every handoff with `pipeline.py handoff` and post the printed markdown as a
+JIRA comment with `atlassian_addCommentToJiraIssue` (contentFormat `markdown`):
+
+```bash
+python .opencode/scripts/pipeline.py handoff PRO-XXX \
+  --from developer --to tester --step implementation --status COMPLETED \
+  --artifact docs/PRO-XXX_Implementation_Plan.md --accomplishment "..." --next-step "..." --cycle N
+```
+
+Use `--status BLOCKED` with `--issue "<blocker>"` when the agent cannot finish. Do not
+hand off silently. Shared rules: `.opencode/agents/product-owner.agent.md`, Handoff Recording.
+
 ## Implementation Patterns
 
 Reference these patterns from project docs:

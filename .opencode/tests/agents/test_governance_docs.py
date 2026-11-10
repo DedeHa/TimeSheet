@@ -105,3 +105,22 @@ def test_refine_feature_produces_dor_inputs_d1_to_d7():
     assert "Step 1f" in text
     for check in ("D1", "D2", "D3", "D4", "D5", "D6", "D7"):
         assert f"| {check} " in text
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        ".opencode/agents/architect.agent.md",
+        ".opencode/agents/developer.agent.md",
+        ".opencode/agents/tester.agent.md",
+        ".opencode/agents/product-owner.agent.md",
+        ".opencode/skills/orchestrate-feature/SKILL.md",
+    ],
+)
+def test_every_handoff_owner_uses_pipeline_handoff(rel):
+    """AC-6: each agent and the orchestrator records handoffs with pipeline.py handoff
+    and posts the rendered comment to JIRA."""
+    text = _read(rel)
+    assert "pipeline.py handoff" in text, f"{rel} does not record handoffs"
+    assert "atlassian_addCommentToJiraIssue" in text, f"{rel} does not post handoff comments"
+    assert "--status BLOCKED" in text, f"{rel} does not document blocked escalations"

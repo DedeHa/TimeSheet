@@ -326,6 +326,21 @@ python .opencode/scripts/pipeline.py show state PRO-373
 
 ## Handoff Coordination
 
+### Handoff Recording (PRO-407, AC-6)
+
+Every agent handoff (PO → Architect → Developer → Tester → PO) and every escalation is
+recorded with `pipeline.py handoff` and posted as a JIRA comment:
+
+```bash
+python .opencode/scripts/pipeline.py handoff PRO-XXX --from developer --to tester \
+  --step implementation --status COMPLETED --artifact docs/changes/YYYY-MM/PRO-XXX/plan.md \
+  --accomplishment "..." --next-step "..." --cycle 1
+```
+
+The command appends a `handoff` entry to `~/.opencode/pipeline-history.json` and prints
+the comment. Post it with `atlassian_addCommentToJiraIssue`. Escalations use `--status BLOCKED`.
+
+
 ### Handoff Validation Points
 
 Each handoff includes validation at key checkpoints:

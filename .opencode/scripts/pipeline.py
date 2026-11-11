@@ -332,11 +332,14 @@ class PipelineManager:
         cleaned: Dict[str, str] = {}
         for dor_id, value in values.items():
             if dor_id not in DOR_IDS:
-                raise ValueError(f"unknown DoR item {dor_id!r}; expected one of {', '.join(DOR_IDS)}")
+                raise ValueError(
+                    f"unknown DoR item {dor_id!r}; expected one of {', '.join(DOR_IDS)}"
+                )
             normalised = str(value).strip().lower()
             if normalised not in DOR_VALUES:
                 raise ValueError(
-                    f"DoR item {dor_id} must be pass or fail (use 'waive' for waivers), got {value!r}"
+                    f"DoR item {dor_id} must be pass or fail "
+                    f"(use 'waive' for waivers), got {value!r}"
                 )
             cleaned[dor_id] = normalised
 
@@ -816,7 +819,9 @@ def main():
     get_mode_parser.add_argument("ticket", help="JIRA ticket key")
     get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
 
-    dor_parser = subparsers.add_parser("dor", help="Record or show the Definition of Ready checklist")
+    dor_parser = subparsers.add_parser(
+        "dor", help="Record or show the Definition of Ready checklist"
+    )
     dor_parser.add_argument("ticket", help="JIRA ticket key")
     dor_parser.add_argument("--json", dest="json_values", default=None,
                             help='Checklist as JSON, e.g. \'{"D1": "pass", "D2": "fail"}\'')

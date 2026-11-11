@@ -44,6 +44,8 @@ HISTORY_PATH = Path.home() / ".opencode" / "pipeline-history.json"
 
 STEP_ORDER = ["plan", "develop", "complete"]
 HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
+DOR_IDS = ("D1", "D2", "D3", "D4", "D5", "D6", "D7")
+DOR_VALUES = ("pass", "fail")
 
 
 class PipelineManager:
@@ -313,6 +315,81 @@ class PipelineManager:
         print(f"  Cycles: {entry.get('cycle_counts')}")
         print(f"  Status: {entry.get('status')}")
 
+    @staticmethod
+    def _dor_missing(entry: Dict[str, Any]) -> List[str]:
+        """Return the D1-D7 items that are neither pass nor waived (PRO-407, AC-3)."""
+        checklist = entry.get("dor", {})
+        return [dor_id for dor_id in DOR_IDS if checklist.get(dor_id) not in ("pass", "waived")]
+
+    def record_dor(self, ticket: str, values: Any) -> Dict[str, Any]:
+        """Record pass or fail for D1-D7 items. Waivers go through waive().
+
+        Raises ValueError for unknown IDs, values other than pass or fail, or a payload
+        that is not a mapping. Nothing is written when validation fails.
+        """
+        if not isinstance(values, dict):
+            raise ValueError("DoR checklist must be a JSON object such as {\"D1\": \"pass\"}")
+        cleaned: Dict[str, str] = {}
+        for dor_id, value in values.items():
+            if dor_id not in DOR_IDS:
+                raise ValueError(f"unknown DoR item {dor_id!r}; expected one of {', '.join(DOR_IDS)}")
+            normalised = str(value).strip().lower()
+            if normalised not in DOR_VALUES:
+                raise ValueError(
+                    f"DoR item {dor_id} must be pass or fail (use 'waive' for waivers), got {value!r}"
+                )
+            cleaned[dor_id] = normalised
+
+        entry = self._get_entry(ticket)
+        checklist = entry.setdefault("dor", {})
+        waivers = entry.setdefault("dor_waivers", {})
+        for dor_id, value in cleaned.items():
+            checklist[dor_id] = value
+            if value == "pass":
+                waivers.pop(dor_id, None)
+        entry["last_updated"] = datetime.now(timezone.utc).isoformat()
+        self._save_state()
+        self._record_history(ticket, "dor_recorded", {"values": cleaned})
+        return checklist
+
+    def waive(self, ticket: str, dor_id: str, reason: str, by: str) -> None:
+        """Waive one DoR item. A non-empty reason and owner are required (PRO-407, AC-3)."""
+        if dor_id not in DOR_IDS:
+            raise ValueError(f"unknown DoR item {dor_id!r}; expected one of {', '.join(DOR_IDS)}")
+        reason = (reason or "").strip()
+        by = (by or "").strip()
+        if not reason:
+            raise ValueError("a waiver requires a non-empty --reason")
+        if not by:
+            raise ValueError("a waiver requires a non-empty --by (the waiving owner)")
+
+        entry = self._get_entry(ticket)
+        entry.setdefault("dor", {})[dor_id] = "waived"
+        entry.setdefault("dor_waivers", {})[dor_id] = {
+            "waiver_reason": reason,
+            "waived_by": by,
+        }
+        entry["last_updated"] = datetime.now(timezone.utc).isoformat()
+        self._save_state()
+        self._record_history(ticket, "dor_waiver", {"dor_id": dor_id, "waiver_reason": reason,
+                                                    "waived_by": by})
+        print(f"✓ {dor_id} waived for {ticket} by {by}: {reason}")
+
+    def show_dor(self, ticket: str) -> None:
+        """Print the recorded DoR checklist without changing state."""
+        entry = self._peek_entry(ticket)
+        checklist = entry.get("dor", {})
+        waivers = entry.get("dor_waivers", {})
+        print(f"=== Definition of Ready: {ticket} ===\n")
+        for dor_id in DOR_IDS:
+            value = checklist.get(dor_id, "missing")
+            line = f"{dor_id}: {value}"
+            if dor_id in waivers:
+                line += f" (by {waivers[dor_id]['waived_by']}: {waivers[dor_id]['waiver_reason']})"
+            print(line)
+        missing = self._dor_missing(entry)
+        print(f"\nGate: {'passed' if not missing else 'not passed (' + ', '.join(missing) + ')'}")
+
     def _last_handoff(self, ticket: str) -> Optional[Dict[str, Any]]:
         """Return the most recent handoff recorded in the current run, if any.
 
@@ -337,6 +414,10 @@ class PipelineManager:
             reasons.append("no handoff recorded for this run")
         elif str(last.get("status", "")).upper() != "COMPLETED":
             reasons.append(f"last handoff status is {last.get('status')}, not COMPLETED")
+        if next_step == "develop":
+            missing = self._dor_missing(entry)
+            if missing:
+                reasons.append(f"DoR gate not passed: {', '.join(missing)}")
         return reasons
 
     def continue_step(self, ticket: str, force: bool = False) -> None:
@@ -363,6 +444,15 @@ class PipelineManager:
         next_step = STEP_ORDER[current_index + 1]
 
         blockers = self._advance_blockers(ticket, entry, next_step)
+        if next_step == "develop":
+            missing = self._dor_missing(entry)
+            result = "passed" if not missing else ("forced" if force else "refused")
+            self._record_history(ticket, "dor_gate", {
+                "from": current_step,
+                "to": next_step,
+                "result": result,
+                "missing": missing,
+            })
         if blockers and not force:
             print(f"   ❌ Cannot continue from {current_step} to {next_step}:")
             for reason in blockers:
@@ -725,6 +815,29 @@ def main():
     get_mode_parser = subparsers.add_parser("get-mode", help="Get persisted mode")
     get_mode_parser.add_argument("ticket", help="JIRA ticket key")
     get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
+
+    dor_parser = subparsers.add_parser("dor", help="Record or show the Definition of Ready checklist")
+    dor_parser.add_argument("ticket", help="JIRA ticket key")
+    dor_parser.add_argument("--json", dest="json_values", default=None,
+                            help='Checklist as JSON, e.g. \'{"D1": "pass", "D2": "fail"}\'')
+
+    def run_dor(args) -> None:
+        if args.json_values is None:
+            manager.show_dor(args.ticket)
+        else:
+            manager.record_dor(args.ticket, json.loads(args.json_values))
+            print(f"✓ DoR checklist recorded for {args.ticket}")
+
+    dor_parser.set_defaults(func=run_dor)
+
+    waive_parser = subparsers.add_parser("waive", help="Waive one Definition of Ready item")
+    waive_parser.add_argument("ticket", help="JIRA ticket key")
+    waive_parser.add_argument("dor_id", help="DoR item to waive (D1-D7)")
+    waive_parser.add_argument("--reason", required=True, help="Why the item is waived")
+    waive_parser.add_argument("--by", required=True, help="Who waives it (for example PO)")
+    waive_parser.set_defaults(
+        func=lambda args: manager.waive(args.ticket, args.dor_id, args.reason, args.by)
+    )
 
     handoff_parser = subparsers.add_parser("handoff", help="Record an agent handoff and print its JIRA comment")
     handoff_parser.add_argument("ticket", help="JIRA ticket key")

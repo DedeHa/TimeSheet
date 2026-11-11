@@ -16,14 +16,18 @@ from pathlib import Path
 
 import pytest
 
-PIPELINE_PATH = Path(__file__).resolve().parents[3] / ".opencode" / "scripts" / "pipeline.py"
+PIPELINE_PATH = (
+    Path(__file__).resolve().parents[3] / ".opencode" / "scripts" / "pipeline.py"
+)
 TICKET = "PRO-407"
 
 
 @pytest.fixture
 def pipeline(tmp_path, monkeypatch):
     """Load pipeline.py with state and history redirected to tmp_path."""
-    spec = importlib.util.spec_from_file_location("pipeline_status_under_test", PIPELINE_PATH)
+    spec = importlib.util.spec_from_file_location(
+        "pipeline_status_under_test", PIPELINE_PATH
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     monkeypatch.setattr(module, "STATE_PATH", tmp_path / "state.json")
@@ -44,6 +48,14 @@ def _handoff(mgr, status: str, step: str = "plan"):
     return mgr.record_handoff(TICKET, "architect", "developer", step, status)
 
 
+def _pass_dor(mgr) -> None:
+    """Record a fully passing DoR checklist so the develop gate does not interfere."""
+    mgr.record_dor(
+        TICKET,
+        {dor_id: "pass" for dor_id in ("D1", "D2", "D3", "D4", "D5", "D6", "D7")},
+    )
+
+
 def test_default_entry_has_no_stored_interrupted_flag(pipeline, tmp_path):
     """The dead stored interrupted flag is gone; detection is the only definition."""
     mgr = pipeline.PipelineManager()
@@ -60,6 +72,7 @@ def test_continue_sets_status_in_progress_for_new_step(pipeline, tmp_path, capsy
     mgr = pipeline.PipelineManager()
     mgr.set_mode(TICKET, "automated")
     _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
     mgr.continue_step(TICKET)
     entry = _entry(tmp_path)
     assert entry["current_step"] == "develop"
@@ -100,10 +113,13 @@ def test_in_progress_handoff_sets_status_without_clearing_block(pipeline, tmp_pa
     assert entry["blocked"] is True
 
 
-def test_interrupted_detected_for_in_progress_step_without_completion(pipeline, tmp_path):
+def test_interrupted_detected_for_in_progress_step_without_completion(
+    pipeline, tmp_path
+):
     """After continue, the new step is in progress with no completion: interrupted."""
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
     mgr.continue_step(TICKET)
     interruption = mgr._detect_interruption(TICKET)
     assert interruption is not None
@@ -112,15 +128,20 @@ def test_interrupted_detected_for_in_progress_step_without_completion(pipeline, 
     assert mgr._detect_interruption(TICKET) is None
 
 
-def test_what_missed_reports_actual_status_not_hardcoded_text(pipeline, tmp_path, capsys):
+def test_what_missed_reports_actual_status_not_hardcoded_text(
+    pipeline, tmp_path, capsys
+):
     """The not-interrupted message reflects the stored status."""
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
     mgr.continue_step(TICKET)
     _handoff(mgr, "COMPLETED", step="develop")
     capsys.readouterr()
     mgr.what_missed(TICKET)
-    assert "Pipeline status: in_progress, but not interrupted" in capsys.readouterr().out
+    assert (
+        "Pipeline status: in_progress, but not interrupted" in capsys.readouterr().out
+    )
 
 
 def test_show_state_reports_blocked_pipeline(pipeline, tmp_path, capsys):
@@ -157,11 +178,24 @@ def test_resume_force_clears_block_and_status(pipeline, tmp_path, capsys):
     assert "interruption_cleared" in _actions(tmp_path)
 
 
-def test_cli_handoff_blocked_then_completed_round_trip(pipeline, tmp_path, monkeypatch, capsys):
+def test_cli_handoff_blocked_then_completed_round_trip(
+    pipeline, tmp_path, monkeypatch, capsys
+):
     """The handoff CLI drives the same transitions as the manager."""
-    base = ["pipeline.py", "handoff", TICKET, "--from", "developer", "--to", "tester",
-            "--step", "develop"]
-    monkeypatch.setattr(sys, "argv", [*base, "--status", "BLOCKED", "--issue", "tests fail"])
+    base = [
+        "pipeline.py",
+        "handoff",
+        TICKET,
+        "--from",
+        "developer",
+        "--to",
+        "tester",
+        "--step",
+        "develop",
+    ]
+    monkeypatch.setattr(
+        sys, "argv", [*base, "--status", "BLOCKED", "--issue", "tests fail"]
+    )
     pipeline.main()
     assert _entry(tmp_path)["blocked"] is True
     monkeypatch.setattr(sys, "argv", [*base, "--status", "COMPLETED"])

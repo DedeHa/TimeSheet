@@ -48,6 +48,14 @@ def _handoff(mgr, status: str, step: str = "plan"):
     return mgr.record_handoff(TICKET, "architect", "developer", step, status)
 
 
+def _pass_dor(mgr) -> None:
+    """Record a fully passing DoR checklist so only the handoff gate is under test."""
+    mgr.record_dor(
+        TICKET,
+        {dor_id: "pass" for dor_id in ("D1", "D2", "D3", "D4", "D5", "D6", "D7")},
+    )
+
+
 @pytest.mark.parametrize("bad", ["DONE", "APPROVED", "", "in progress", "COMPLETE"])
 def test_handoff_rejects_unknown_status(pipeline, tmp_path, bad):
     """Only COMPLETED, BLOCKED, and IN_PROGRESS are accepted; nothing is recorded."""
@@ -107,6 +115,7 @@ def test_continue_accepted_after_completed_handoff(pipeline, tmp_path, capsys):
     """Last handoff COMPLETED: the step advances and records step_advance."""
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
     capsys.readouterr()
     mgr.continue_step(TICKET)
     assert "Pipeline advanced to: develop" in capsys.readouterr().out
@@ -120,6 +129,7 @@ def test_continue_uses_most_recent_handoff_only(pipeline, tmp_path, capsys):
     _handoff(mgr, "COMPLETED", step="plan")
     _handoff(mgr, "BLOCKED", step="plan")
     _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
     capsys.readouterr()
     mgr.continue_step(TICKET)
     assert _step(tmp_path) == "develop"
@@ -156,6 +166,7 @@ def test_force_advance_not_recorded_when_gate_passes(pipeline, tmp_path, capsys)
     """--force with a satisfied gate does not claim a bypass."""
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
     mgr.continue_step(TICKET, force=True)
     assert "forced_advance" not in [a["action"] for a in _history_actions(tmp_path)]
 
@@ -168,6 +179,7 @@ def test_cli_continue_refuses_then_accepts(pipeline, tmp_path, monkeypatch, caps
     pipeline.main()
     assert "Cannot continue" in capsys.readouterr().out
     _handoff(pipeline.PipelineManager(), "COMPLETED", step="plan")
+    _pass_dor(pipeline.PipelineManager())
     monkeypatch.setattr(sys, "argv", ["pipeline.py", "continue", TICKET])
     pipeline.main()
     assert _step(tmp_path) == "develop"

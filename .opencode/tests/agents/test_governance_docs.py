@@ -201,6 +201,16 @@ def test_dor_d1_is_documented_as_not_waivable(rel):
 
 @pytest.mark.parametrize(
     "rel",
+    ["docs/REQUIREMENTS.md", "docs/ARCHITECTURE.md"],
+)
+def test_fr23_gate_states_d1_exception(rel):
+    """B2: the DoR gate description in REQUIREMENTS (FR-23) and ARCHITECTURE excepts D1."""
+    text = _read(rel)
+    assert "(D1 excepted: story points cannot be waived)" in text, rel
+
+
+@pytest.mark.parametrize(
+    "rel",
     [".opencode/skills/develop-feature/SKILL.md", ".opencode/skills/readiness-review/SKILL.md"],
 )
 def test_dor_d3_excludes_closure_placeholders(rel):

@@ -187,3 +187,87 @@ def test_cli_continue_refuses_then_accepts(pipeline, tmp_path, monkeypatch, caps
     monkeypatch.setattr(sys, "argv", ["pipeline.py", "continue", TICKET])
     pipeline.main()
     assert _step(tmp_path) == "develop"
+
+
+def _in_develop_with_completed_cycle(mgr) -> None:
+    """Advance to develop, then complete one develop cycle, so develop has cycles > 0.
+
+    Only the latest-handoff rule can then refuse a continue. The zero-cycle rule cannot,
+    which isolates the rule under test (PRO-407, tester finding 2).
+    """
+    _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
+    assert mgr.continue_step(TICKET) == 0
+    _handoff(mgr, "COMPLETED", step="develop")
+
+
+def _cycles(tmp_path, step: str) -> int:
+    return json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))[TICKET][
+        "cycle_counts"
+    ][step]
+
+
+def test_completed_cycle_then_continue_advances(pipeline, tmp_path, capsys):
+    """Control: with cycles > 0 and a COMPLETED latest handoff, continue advances (exit 0)."""
+    mgr = pipeline.PipelineManager()
+    _in_develop_with_completed_cycle(mgr)
+    assert _cycles(tmp_path, "develop") == 1
+    assert mgr.continue_step(TICKET) == 0
+    assert _step(tmp_path) == "complete"
+
+
+def test_blocked_after_completed_cycle_refuses_continue(pipeline, tmp_path, capsys):
+    """(1) COMPLETED in develop, then BLOCKED: continue is refused with exit 1 though cycles > 0."""
+    mgr = pipeline.PipelineManager()
+    _in_develop_with_completed_cycle(mgr)
+    _handoff(mgr, "BLOCKED", step="develop")
+    assert _cycles(tmp_path, "develop") == 1
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET) == 1
+    out = capsys.readouterr().out
+    assert "last handoff status is BLOCKED, not COMPLETED" in out
+    assert "0 completed cycles" not in out
+    assert _step(tmp_path) == "develop"
+
+
+def test_in_progress_after_completed_cycle_refuses_continue(pipeline, tmp_path, capsys):
+    """(2) COMPLETED in develop, then IN_PROGRESS: continue is refused with exit 1 though cycles > 0."""
+    mgr = pipeline.PipelineManager()
+    _in_develop_with_completed_cycle(mgr)
+    _handoff(mgr, "IN_PROGRESS", step="develop")
+    assert _cycles(tmp_path, "develop") == 1
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET) == 1
+    out = capsys.readouterr().out
+    assert "last handoff status is IN_PROGRESS, not COMPLETED" in out
+    assert _step(tmp_path) == "develop"
+
+
+def test_zero_cycle_force_after_completed_handoff_records_only_the_cycle(
+    pipeline, tmp_path, capsys
+):
+    """(3) COMPLETED -> continue --force: allowed, and forced_advance records the bypass.
+
+    The latest handoff (plan, COMPLETED) satisfies the handoff rule. The only reason
+    bypassed is that develop has no completed cycle yet, and the record shows that.
+    """
+    mgr = pipeline.PipelineManager()
+    _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
+    assert mgr.continue_step(TICKET) == 0
+    assert _cycles(tmp_path, "develop") == 0
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET, force=True) == 0
+    assert _step(tmp_path) == "complete"
+    forced = [a for a in _history_actions(tmp_path) if a["action"] == "forced_advance"]
+    assert len(forced) == 1
+    bypassed = forced[0]["details"]["bypassed"]
+    assert bypassed == ["develop has 0 completed cycles"]
+
+
+def test_force_with_satisfied_handoff_rule_records_nothing(pipeline, tmp_path, capsys):
+    """--force after a completed cycle bypasses nothing, so no forced_advance is recorded."""
+    mgr = pipeline.PipelineManager()
+    _in_develop_with_completed_cycle(mgr)
+    assert mgr.continue_step(TICKET, force=True) == 0
+    assert "forced_advance" not in [a["action"] for a in _history_actions(tmp_path)]

@@ -216,3 +216,31 @@ def test_successful_write_leaves_only_the_target_files(pipeline, tmp_path, monke
     assert sorted(p.name for p in tmp_path.iterdir()) == ["history.json", "state.json"]
     state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
     assert state["PRO-999"]["development_mode"] == "automated"
+
+
+def test_read_commands_do_not_create_the_home_directory(tmp_path, monkeypatch, capsys):
+    """J (tester 4): read commands never create ~/.opencode; the first write does.
+
+    HOME points at a directory that does not exist, and the module is loaded under it
+    without redirecting STATE_PATH, so the real default paths are exercised.
+    """
+    home = tmp_path / "fresh-home"
+    monkeypatch.setenv("HOME", str(home))
+    spec = importlib.util.spec_from_file_location("pipeline_home_under_test", PIPELINE_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.STATE_PATH == home / ".opencode" / "pipeline-state.json"
+
+    for argv in READ_COMMANDS:
+        monkeypatch.setattr(sys, "argv", ["pipeline.py", *argv])
+        try:
+            module.main()
+        except SystemExit:
+            pass  # reset without --force exits 1 by design; the point is no directory
+    capsys.readouterr()
+    assert not (home / ".opencode").exists()
+
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "set-mode", UNKNOWN, "automated"])
+    module.main()
+    capsys.readouterr()
+    assert (home / ".opencode" / "pipeline-state.json").is_file()

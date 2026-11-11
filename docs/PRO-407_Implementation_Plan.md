@@ -121,6 +121,7 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 | 5 | Full quality gate (first round) | Done (agents 198, ci-pipeline 269, app 409 passed, coverage 98.53%; ruff and black clean; traceability exit 0) |
 | 6 | Completion round (items 1 to 10 of the 2026-11-11 instruction, see B.7) | Done. Gate results in `docs/changes/2026-11/PRO-407/test-plan.md` |
 | 7 | Fix round for the independent architect and tester reviews (items A to K, see B.8) | Done. Gate results in `docs/changes/2026-11/PRO-407/test-plan.md` |
+| 8 | Round-3 blockers (items F1, B1, B2, F3, docs; see B.8 round 3) | Done. Gate results in `docs/changes/2026-11/PRO-407/test-plan.md` |
 
 ### B.6 Audit gap closure
 
@@ -185,6 +186,16 @@ with `Refs: PRO-407`). No new PR was opened; the work is on PR #138.
 | J6 | `continue --force` help text describes the handoff-only bypass | 60e567f | DONE |
 | K | Accepted risks and follow-ups recorded in pm-notes; waiver commands and status recorded; V18 to V27 in the test plan | see git log (`docs:` commits after 60e567f) | DONE |
 
+#### B.8 round 3 (final blockers, 2026-11-11)
+
+| Item | Change | Commit | Status |
+|------|--------|--------|--------|
+| F1 (tester) | `detect_mode.py` loads `pipeline.py` from its own directory and reuses `_read_json_object` (fail closed, exit 1, bytes unchanged) and `_write_json_atomic` (unique temp file, `os.replace`). Reads never create `~/.opencode`. V28 | fffe457 | DONE |
+| B1 (architect) | Lowercase JIRA-shaped references (`pro-12`) are rejected as malformed (exit 2 through the normaliser). `feat-login` stays generic. ARCHITECTURE work-item section updated. V29 | 4655d76 | DONE |
+| B2 (architect) | FR-23 and the ARCHITECTURE gate row say "(D1 excepted: story points cannot be waived)", pinned by a test (704b20d). The skill text `develop-feature/SKILL.md` has the same unqualified wording; it is outside this item and is open (see pm-notes) | c40f714, 704b20d | DONE |
+| F3 (tester, LOW) | Duplicate `INTERRUPT_AFTER_HOURS`: checked. `pipeline.py` has one definition, and the git history has no second one. No change was needed | none | DONE (verified, nothing to remove) |
+| Docs | pm-notes: D3 pass (waiver removed), D4 waiver kept, D1 pass, round-3 follow-ups, handoff comment note (decision 4). V28 to V30 in the test plan | 036ef98 and the docs commit that follows it | DONE |
+
 Deviations from the brief, with reasons:
 
 - **`interrupt` command (D):** the marker needs a setter, and no command set it. `interrupt` is new CLI surface. It is recorded in pm-notes decision 10.
@@ -230,6 +241,9 @@ Deviations from the brief, with reasons:
 - **V25:** Exit-code contract 0/1/2 across one flow (`test_pipeline_integration.py`).
 - **V26:** Latest-handoff rule isolated with completed cycles; mutation check (`test_handoff_gate.py`).
 - **V27:** `--base` validation, blank `--changed`, atomic write, no home directory created by reads (`test_reconcile.py`, `test_pipeline_read_only.py`).
+- **V28:** `detect_mode.py` shares the fail-closed reader and atomic writer; corrupt state gives exit 1 with bytes unchanged; reads do not create the directory; the write uses `os.replace` (`test_detect_mode_state.py`).
+- **V29:** Lowercase JIRA-shaped references are malformed; `continue pro-407` exits 2 and creates no state; `feat-login` stays generic (`test_work_item_ref.py`).
+- **V30:** D1 cannot be waived is stated in FR-23 and the ARCHITECTURE gate row (`test_governance_docs.py`).
 
 ### C.3 Acceptance criteria
 

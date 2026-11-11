@@ -1,6 +1,6 @@
 # PRO-407 Test Plan
 
-Verification items V1 to V27 from the implementation plan (`docs/PRO-407_Implementation_Plan.md`, Part C). V1 to V7 come from the first rollout. V8 to V17 cover the completion round. V18 to V27 cover the fix round for the architect and tester review findings (plan B.8, items A to J). Each V item maps to the test that checks it. Results are from the gate runs listed at the end; a row is PASS only after its command ran.
+Verification items V1 to V30 from the implementation plan (`docs/PRO-407_Implementation_Plan.md`, Part C). V1 to V7 come from the first rollout. V8 to V17 cover the completion round. V18 to V27 cover the fix round for the architect and tester review findings (plan B.8, items A to K). V28 to V30 cover the round-3 blockers (plan B.8 round 3). Each V item maps to the test that checks it. Results are from the gate runs listed at the end; a row is PASS only after its command ran.
 
 ## Verification items
 
@@ -33,6 +33,9 @@ Verification items V1 to V27 from the implementation plan (`docs/PRO-407_Impleme
 | V25 | Exit-code contract: 0 for success and read-only commands, 1 for a refusal or error, 2 for an argparse usage error. A table drives one flow through 19 command states, plus the refused `continue` after the final step, the reconcile gap, and the usage error | `test_pipeline_integration.py::test_exit_code_contract` (19 cases), `::test_exit_code_contract_reconcile_and_final_step`, `::test_argparse_usage_error_exits_two`; `test_pipeline_read_only.py` (reset without `--force` exits 1) | PASS |
 | V26 | The latest-handoff rule is isolated from the zero-cycle rule: with a completed develop cycle, a BLOCKED or IN_PROGRESS latest handoff refuses `continue` (exit 1); a control advances; a zero-cycle forced continue after COMPLETED records only the zero-cycle reason. Mutation check: with the latest-handoff check disabled, the BLOCKED and IN_PROGRESS tests fail (2 failures) | `test_handoff_gate.py::test_blocked_after_completed_cycle_refuses_continue`, `::test_in_progress_after_completed_cycle_refuses_continue`, `::test_completed_cycle_then_continue_advances`, `::test_zero_cycle_force_after_completed_handoff_records_only_the_cycle`, `::test_force_with_satisfied_handoff_rule_records_nothing` | PASS (mutation: 2 failed, file restored) |
 | V27 | Cheap hardening: `reconcile --base` rejects unsafe refs and refs starting with `-` before git runs; blank `--changed` entries are not counted; a failed write keeps the old file and leaves no temp file; a successful write leaves only the target files; read commands never create `~/.opencode` (HOME-based test) | `test_reconcile.py::test_reconcile_rejects_unsafe_base_ref` (6 cases), `::test_validate_base_ref_accepts_normal_refs` (5 cases), `::test_reconcile_ignores_blank_changed_entries`, `::test_reconcile_with_only_blank_entries_has_nothing_to_do`; `test_pipeline_read_only.py::test_failed_write_keeps_existing_file_and_leaves_no_temp`, `::test_successful_write_leaves_only_the_target_files`, `::test_read_commands_do_not_create_the_home_directory` | PASS |
+| V28 | `detect_mode.py` reuses `pipeline.py`'s fail-closed reader and atomic writer: `--show` and a mode write on a corrupt state exit 1 with bytes unchanged and no temp file (4 corrupt contents per check); a fresh HOME read does not create `~/.opencode`; a mode write uses `os.replace` from a unique temp file in the same directory; a failed replace keeps the previous state | `test_detect_mode_state.py` (13 tests) | PASS (13 passed) |
+| V29 | Lowercase JIRA-shaped references (`pro-12`, `pro-407`, `abc-9`, `p2-12`) are malformed; `continue pro-407` exits 2 and creates no state or history; `feat-login` and `my-feature-2` stay generic | `test_work_item_ref.py::test_parse_work_item_ref_rejects_invalid_references` (new cases), `::test_parse_work_item_ref_classifies_each_tracker` (generic cases), `::test_continue_rejects_lowercase_jira_key_without_state` (51 tests in the file) | PASS (51 passed) |
+| V30 | FR-23 and the ARCHITECTURE gate row state that D1 is excepted from waiving (story points cannot be waived) | `test_governance_docs.py::test_fr23_gate_states_d1_exception` (2 cases: REQUIREMENTS and ARCHITECTURE); `::test_dor_d1_is_documented_as_not_waivable` (skills) | PASS (see gate runs) |
 
 Existing test changed for V16: `tests/setup/test_setup_verification.py::test_ci_tests_use_test_prefix` now accepts pytest's `conftest.py` in the agent test directory. The check still requires every other module to be named `test_*`.
 
@@ -42,7 +45,7 @@ Run after the last code commit of the fix round. The documentation commits that 
 
 | Gate | Command | Result |
 |------|---------|--------|
-| Agent tests | `python -m pytest -q .opencode/tests/agents/` | 568 passed |
+| Agent tests | `python -m pytest -q .opencode/tests/agents/` | 589 passed (568 before round 3, plus 13 V28, 6 V29 and 2 V30) |
 | CI self-tests | `python -m pytest -q tests/ci-pipeline/` | 269 passed |
 | Application tests and coverage | `COVERAGE_FILE=/tmp/cov-d python -m pytest -m "not system" -q --cov=src --cov-branch` | 409 passed, 16 deselected; total coverage 98.53% (threshold 90%) |
 | Lint | `ruff check src tests .github` | All checks passed |
@@ -70,5 +73,8 @@ Before the fix round the same gates reported 325 agent tests and 269 CI self-tes
 | `continue " PRO-5 "` created a separate entry; `PRO-`/`GH-` were accepted as generic references | Architect finding 7, tester finding 6, architect minor | One normaliser for every command, malformed tracker keys rejected (V23, commit `7088106`) |
 | `waive D1` was accepted; the D3 pass condition made the template DoD fail | Architect finding 8 | D1 not waivable; D3 narrowed (V24, commit `e2fefd9`) |
 | Refusals exited 0; `set-mode` with an invalid mode wrote a state entry first | Tester finding 1 | Exit code contract 0/1/2, documented in AGENTS.md (V25, commit `a277ebc`) |
+| `detect_mode.py` had its own loader and saver: a corrupt state was treated as empty, reads created the home directory, and writes used a fixed temp name | Tester finding F1 (blocker) | Reuses `pipeline.py`'s reader and writer (V28, commit `fffe457`) |
+| `pro-12` was accepted as a generic reference | Architect finding B1 (blocker) | Rejected as malformed (V29, commit `4655d76`) |
+| The ARCHITECTURE and REQUIREMENTS DoR text did not say that D1 cannot be waived | Architect finding B2 (blocker) | Wording added (V30, commit `c40f714`) |
 | The latest-handoff rule was untested with a completed cycle | Tester finding 2 | Isolated tests and mutation check (V26, commit `a1ab42f`) |
 | `--base` went to git unchecked; blank `--changed` entries were counted; the save used a fixed temp name without fsync; read commands could create the home directory | Architect minor findings 9, 8 and 14; tester finding 4 | V27, commits `036aecc`, `8871002`, `b676fee`, `6614e1b` |

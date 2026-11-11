@@ -135,8 +135,9 @@ application code under `src/` is not affected.
 | Component | Responsibility | Where |
 |-----------|----------------|-------|
 | Decision records | Durable ADR/PDR/TDR/BDR/ODR records, one decision per file | `docs/decisions/` (FR-21) |
-| Definition of Ready gate | Checks D1-D7 before branch creation; orchestrator dispatches to the Developer only after it passes | `develop-feature` Step 1f (FR-23) |
-| Recovery and handoff state | `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`; `handoff` records the transition and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
+| Definition of Ready gate | Checks D1-D7 before branch creation, with an adversarial review; `pipeline.py continue` into develop refuses unless every item is pass or waived | `develop-feature` Step 1f and `readiness-review` skill; `pipeline.py dor`, `waive` (FR-23) |
+| Documentation reconciliation gate | Maps changed paths to the living documents that must move with them | `pipeline.py reconcile` (FR-24) |
+| Recovery and handoff state | Read-only `show`, `what-missed`, `check-stuck`, `dry-run`, `history`; CLI-owned status; `handoff` validates status and tracker, records the transition, and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
 | Artifact-first change layout | Per-ticket spec, plan, test plan, and PM notes | `docs/changes/YYYY-MM/PRO-XXX/` (QR-14) |
 
 ### Work item references (PRO-407, FR-25)

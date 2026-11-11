@@ -48,9 +48,14 @@ automation), not the product or the application architecture.
 - Negative / trade-offs: agents must create and link a record for each decision.
   Discipline is enforced by convention and by `complete-feature` Step 4.5, not by a
   script.
-- Follow-up work: tracker-agnostic `workItemRef` (ticket Step 6) is not in scope for
-  PRO-407 and is tracked as a follow-up. The adversarial readiness reviewer for DoR is
-  also a follow-up (see `docs/PRO-407_Implementation_Plan.md`, B.4).
+- Follow-up work (superseded on 2026-11-11): the tracker-agnostic `workItemRef` and the
+  adversarial readiness reviewer were first deferred. The user then put all ticket
+  features in scope. Both are implemented: `parse_work_item_ref` with the handoff
+  tracker field, and the `readiness-review` skill (see `docs/PRO-407_Implementation_Plan.md`, B.7).
+- The DoR gate is enforced in code (`pipeline.py dor`, `waive`, and `continue`), not only
+  by convention. Waivers need a reason and an owner. The documentation reconciliation
+  gate is also a command (`pipeline.py reconcile`). It checks which living documents
+  changed, not whether their content is correct.
 
 ## Links
 

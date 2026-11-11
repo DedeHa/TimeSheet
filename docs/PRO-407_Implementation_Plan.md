@@ -60,6 +60,17 @@ Feasible within 8 SP. Agent and skill changes are documentation and workflow edi
 | `.opencode/skills/orchestrate-feature/SKILL.md`, `refine-feature/SKILL.md` | DoR gate and handoff references | Modified |
 | `AGENTS.md` | Document decisions folder, artifact layout, handoff command | Modified |
 | `.opencode/skills/plan-feature/` | Empty directory, removed (repo hygiene) | Removed |
+| `.opencode/scripts/pipeline.py` (completion round) | Read-only paths (`_peek_entry`), CLI-owned status and blocking, handoff gate on `continue`, `dor` / `waive` DoR gate, `reconcile`, `parse_work_item_ref` | Modified |
+| `.opencode/tests/agents/test_pipeline_read_only.py` | FR-22 read-only guarantee (byte-identical or absent files) | New |
+| `.opencode/tests/agents/test_pipeline_status.py` | Status transitions and derived interruption | New |
+| `.opencode/tests/agents/test_handoff_gate.py` | Handoff status validation and the `continue` gate | New |
+| `.opencode/tests/agents/test_dor_gate.py` | DoR checklist, waivers, and the develop gate | New |
+| `.opencode/tests/agents/test_reconcile.py` | Reconciliation mapping and the git diff path | New |
+| `.opencode/tests/agents/test_work_item_ref.py` | Tracker classification and handoff tracker field | New |
+| `.opencode/tests/agents/test_pipeline_integration.py` | End-to-end CLI flow (`integration` marker) | New |
+| `.opencode/tests/agents/conftest.py`, `test_isolation.py` | HOME isolation and the session guard against real-home writes | New |
+| `.opencode/skills/readiness-review/SKILL.md` | Adversarial DoR reviewer (ticket Step 3) | New |
+| `tests/setup/test_setup_verification.py` | Allow pytest `conftest.py` in agent test directories | Modified |
 
 ### B.2 Handoff data schema
 
@@ -95,9 +106,9 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 - Multi-tool support (OpenCode + Claude Code).
 - Autonomous CEO delivery loop and batch delivery scripts.
 - Replacing the 4-agent model.
-- Tracker-agnostic `workItemRef` (Step 6 of ticket). Not in the confirmed AC list; moved to a follow-up ticket.
+- ~~Tracker-agnostic `workItemRef` (Step 6 of ticket)~~. Back in scope on 2026-11-11 (user decision: all ticket features are in scope). Implemented, see B.6 gap 7.
 - Changes to application code under `src/`.
-- Adversarial readiness reviewer for the DoR gate (ticket scope item). Follow-up ticket; the gate in this release is a checklist run by the Developer agent in `develop-feature` Step 1f.
+- ~~Adversarial readiness reviewer for the DoR gate (ticket Step 3)~~. Back in scope on 2026-11-11. Implemented as the `readiness-review` skill, see B.6 gap 3.
 
 ### B.5 Rollout status
 
@@ -107,7 +118,8 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 | 2 | Skill/agent docs (DoR, reconciliation, handoff) | Done |
 | 3 | `docs/decisions/`, `docs/changes/` | Done |
 | 4 | Cleanup and AGENTS.md | Done |
-| 5 | Full quality gate | Done (agents 198, ci-pipeline 269, app 409 passed, coverage 98.53%; ruff and black clean; traceability exit 0) |
+| 5 | Full quality gate (first round) | Done (agents 198, ci-pipeline 269, app 409 passed, coverage 98.53%; ruff and black clean; traceability exit 0) |
+| 6 | Completion round (items 1 to 10 of the 2026-11-11 instruction, see B.7) | Done. Gate results in `docs/changes/2026-11/PRO-407/test-plan.md` |
 
 ### B.6 Audit gap closure
 
@@ -117,12 +129,35 @@ Gaps found in the post-rollout audit, closed in this order.
 |-----|------|--------|
 | 1 | AC-1: decision records wired into Architect and PO agents; ODR-0001 written | DONE |
 | 2 | AC-2: recovery tests for `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`. Real bug fixed: `resume --force` left interrupted pipelines reported as interrupted | DONE |
-| 3 | AC-3: DoR gate referenced in `orchestrate-feature` and `refine-feature`; adversarial reviewer recorded as follow-up (B.4) | DONE |
+| 3 | AC-3 and ticket Step 3: DoR gate referenced in `orchestrate-feature` and `refine-feature`; adversarial reviewer implemented as `readiness-review` (B.7 items 6) | DONE |
 | 4 | AC-5: artifact-first folder `docs/changes/2026-11/PRO-407/` (plan, test-plan, pm-notes) and Architect/Developer references | DONE |
 | 5 | AC-6: `pipeline.py handoff` referenced in all four agents and orchestrator | DONE |
 | 6 | DoD: FR-21 to FR-25 and QR-14 in `docs/REQUIREMENTS.md`, mapped in `docs/ARCHITECTURE.md`; traceability gate scans `.opencode/scripts` and `.opencode/tests/agents` for implementation references | DONE |
-| 7 | Non-goal: tracker-agnostic `workItemRef` kept as follow-up (not implemented) | Pending |
-| 8 | Status tables kept current | Ongoing |
+| 7 | Ticket Step 6: tracker-agnostic `workItemRef` (`parse_work_item_ref`, handoff tracker field, ARCHITECTURE section) | DONE (B.7 item 7) |
+| 8 | Status tables kept current | DONE (this section and B.7) |
+
+### B.7 Completion round (2026-11-11 instruction)
+
+Items in the order the user set them. Each item has its own commit and tests.
+
+| Item | Change | Commit | Status |
+|------|--------|--------|--------|
+| 1 | FR-22: read-only commands create no state or history (`_peek_entry`) | b1c4c4b | DONE |
+| 2 | Interruption model: CLI owns status; BLOCKED blocks and raises escalation; COMPLETED clears and counts a cycle; stored flag removed | 87262cf | DONE |
+| 3 | Handoffs feed the state machine: `continue` needs a COMPLETED latest handoff; status validated; `--force` records `forced_advance` | b7f4c32 | DONE |
+| 4 | DoR gate in code: `dor`, `waive`, develop gate, `dor_gate` history, `--force` recorded | 15772c0 (style fix a5e8c2a) | DONE |
+| 5 | Documentation reconciliation gate: `reconcile` with injectable `--changed` list | f951da7 | DONE |
+| 6 | Adversarial readiness reviewer: `.opencode/skills/readiness-review/SKILL.md`, linked from develop-feature Step 1f and refine-feature | 6785f97 | DONE |
+| 7 | Tracker-agnostic `workItemRef`: `parse_work_item_ref`, handoff tracker in history and comment; ARCHITECTURE section | d9547c5 (code), 12547cf (docs) | DONE |
+| 8 | End-to-end CLI integration test (`integration` marker) | 22f36b9 | DONE |
+| 9 | Isolation guard: HOME on a session temp directory; session fails on real-home writes | 12576ae (style 6d5a822); test naming allowance 5299a29 | DONE |
+| 10 | Documentation alignment (this section, test plan, pm-notes, AGENTS.md, ODR-0001, ARCHITECTURE, REQUIREMENTS) | see git log | DONE |
+
+Deviations from the instruction, with reasons:
+
+- **Item 8 flow:** the first `continue` is preceded by a COMPLETED plan handoff. The handoff gate (item 3) and the completed-cycle rule both require it. The test records the sequence and states why.
+- **Item 2 interruption:** a step that is `in_progress` with no COMPLETED handoff is reported as interrupted until its completion handoff is recorded or the step is forced. The CLI cannot tell a live agent from a dead one.
+- **Item 4 waivers:** `dor` accepts only `pass` and `fail`. A waiver goes through `waive`, which requires a reason and an owner. The PRO-407 waivers are not yet recorded in the shared pipeline state (see `docs/changes/2026-11/PRO-407/pm-notes.md`).
 
 ## Part C: Verification Definition
 
@@ -138,12 +173,22 @@ Gaps found in the post-rollout audit, closed in this order.
 - **V5:** `.opencode/tests/agents/` passes in full (`pytest -q .opencode/tests/agents/`).
 - **V6:** `develop-feature/SKILL.md` contains a DoR gate section with the checklist; asserted by test.
 - **V7:** `complete-feature/SKILL.md` contains a doc reconciliation step; asserted by test.
+- **V8:** FR-22 read-only commands on an unknown ticket create no state or history (`test_pipeline_read_only.py`).
+- **V9:** CLI-owned status and blocking; interruption derived in one place (`test_pipeline_status.py`).
+- **V10:** `continue` requires a COMPLETED latest handoff; `--force` records `forced_advance` (`test_handoff_gate.py`).
+- **V11:** DoR gate refuses, allows, records waivers with reason and owner, and records `dor_gate` (`test_dor_gate.py`).
+- **V12:** `reconcile` flags changed areas without their living document (`test_reconcile.py`).
+- **V13:** `readiness-review` is adversarial, lists D1-D7, and is linked from the DoR workflows (`test_governance_docs.py`).
+- **V14:** `parse_work_item_ref` classifies JIRA, GitHub, and generic references (`test_work_item_ref.py`).
+- **V15:** End-to-end CLI flow through `pipeline.main()` (`test_pipeline_integration.py`, `integration` marker).
+- **V16:** Isolation guard fails the session on real-home writes (`conftest.py`, `test_isolation.py`).
+- **V17:** Traceability gate exits 0; test plan and pm-notes carry the current results.
 
 ### C.3 Acceptance criteria
 
 - [x] AC-1: Decision record workflow (ADR/PDR/TDR/BDR/ODR) in `docs/decisions/` with template and index.
 - [x] AC-2: Pipeline state management: interruption recovery, stuck detection, dry-run, history implemented and tested (existing plus handoff recording).
-- [x] AC-3: DoR gate documented and enforced in `develop-feature` before development.
+- [x] AC-3: DoR gate documented in `develop-feature` and enforced in code by `pipeline.py continue` (develop step), with waivers that need a reason and an owner.
 - [x] AC-4: Doc reconciliation step in `complete-feature`.
 - [x] AC-5: Artifact-first layout `docs/changes/` documented and linked.
 - [x] AC-6: Handoff protocol recorded via `pipeline.py handoff` and rendered as JIRA comment.
@@ -152,8 +197,8 @@ Gaps found in the post-rollout audit, closed in this order.
 
 - [ ] PR merged to master
 - [ ] JIRA ticket transitioned to Fertig (after user/PO confirmation)
-- [ ] All ACs checked
-- [ ] Story points: 8 (set)
+- [x] All ACs checked (AC-1 to AC-6, see C.3)
+- [x] Story points: 8 (set)
 - [x] Traceability updated for any new FR/QR entries in `docs/REQUIREMENTS.md`
 - [x] Agent test suite passes
 - [ ] Implementation plan deleted after merge (per decision A.1-3)

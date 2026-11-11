@@ -298,9 +298,13 @@ The simplified model maintains the underlying technical separation of concerns:
 - **Decision records:** `docs/decisions/` holds ADR / PDR / TDR / BDR / ODR records. Start from `docs/decisions/TEMPLATE.md`. Index in `docs/decisions/README.md`.
 - **Change artifacts:** `docs/changes/YYYY-MM/PRO-XXX/` holds `spec.md`, `plan.md`, `test-plan.md`, `pm-notes.md` when applicable. Layout in `docs/changes/README.md`.
 - **Active plan:** `docs/PRO-XXX_Implementation_Plan.md` is deleted after merge and JIRA closure (user / PO confirmed).
-- **Definition of Ready:** enforced in `develop-feature` Step 1f before branch creation.
-- **Doc reconciliation:** `complete-feature` Step 4.5 updates living docs before closure.
-- **Handoff record:** `python .opencode/scripts/pipeline.py handoff PRO-XXX --from <agent> --to <agent> --status <status> ...` records the handoff and prints the JIRA comment to post.
+- **Definition of Ready:** checked in `develop-feature` Step 1f before branch creation, with an adversarial review in `.opencode/skills/readiness-review/SKILL.md`. The gate is enforced in code: `pipeline.py continue` into the develop step refuses unless D1-D7 are all `pass` or `waived`.
+  - `pipeline.py dor PRO-XXX --json '{"D1":"pass", ..., "D7":"pass"}'` records the checklist (`pass` or `fail`). `pipeline.py dor PRO-XXX` shows it.
+  - `pipeline.py waive PRO-XXX D3 --reason "<why>" --by "<owner>"` records a waiver. Both `--reason` and `--by` must be non-empty.
+- **Doc reconciliation:** `complete-feature` Step 4.5 updates living docs before closure. `pipeline.py reconcile PRO-XXX [--base master] [--changed PATH]...` checks the diff and exits 1 when a changed area has no matching living-document change (src/ to ARCHITECTURE or REQUIREMENTS; tests to TESTING; agent-team files to AGENTS or CONTRIBUTING).
+- **Handoff record:** `python .opencode/scripts/pipeline.py handoff <ref> --from <agent> --to <agent> --status COMPLETED|BLOCKED|IN_PROGRESS ...` records the handoff and prints the comment to post. `<ref>` is a JIRA key (`PRO-123`), a GitHub reference (`GH-456` or `owner/repo#456`), or a generic identifier; the tracker is recorded (see `docs/ARCHITECTURE.md`, "Work item references").
+- **Status and gates:** `continue` advances only when the latest handoff is COMPLETED. A BLOCKED handoff blocks the pipeline until `resume --force`. `--force` on `continue` or `resume` is recorded in the history (`forced_advance`, `interruption_cleared`).
+- **Read-only commands:** `show state`, `what-missed`, `check-stuck`, `dry-run`, `history`, and `get-mode` never create state or history for an unknown ticket (FR-22).
 
 ## Handoff Gates
 
@@ -371,6 +375,16 @@ python .opencode/scripts/pipeline.py set-mode PRO-384 interactive
 
 # Show persisted mode
 python .opencode/scripts/pipeline.py get-mode PRO-384
+
+# Record or show the Definition of Ready checklist (D1-D7), and waive one item
+python .opencode/scripts/pipeline.py dor PRO-384 --json '{"D1":"pass"}'
+python .opencode/scripts/pipeline.py waive PRO-384 D3 --reason "<why>" --by "<owner>"
+
+# Check that changed areas have their living documents in the diff (exit 1 on a gap)
+python .opencode/scripts/pipeline.py reconcile PRO-384 --base master
+
+# Record a handoff (JIRA key, GitHub ref, or generic id) and print the comment to post
+python .opencode/scripts/pipeline.py handoff PRO-384 --from developer --to tester --status COMPLETED
 ```
 
 ### Interruption Recovery Workflow

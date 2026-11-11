@@ -363,11 +363,11 @@ The agent pipeline state tool shall provide recovery commands for interrupted or
 
 ## FR-23 Definition of Ready Gate
 
-The Developer agent shall not create a feature branch or write code until the Definition of Ready gate in `develop-feature` (checks D1 to D7) passes. The orchestrator shall dispatch to the Developer only after the gate passes, and `refine-feature` shall produce the inputs for checks D1 to D7.
+The Developer agent shall not create a feature branch or write code until the Definition of Ready gate in `develop-feature` (checks D1 to D7) passes. The orchestrator shall dispatch to the Developer only after the gate passes, and `refine-feature` shall produce the inputs for checks D1 to D7. The gate shall be enforced by `pipeline.py continue` into the develop step, which refuses unless every item is `pass` or `waived`; a waiver shall require a reason and an owner. An adversarial reviewer shall try to refute each item before the gate is recorded.
 
 ## FR-24 Documentation Reconciliation Before Closure
 
-Before a feature is closed, the complete-feature workflow shall reconcile living documentation (architecture, requirements, testing, and decision records) with the delivered change, and shall verify that decisions taken during the feature are recorded in `docs/decisions/`.
+Before a feature is closed, the complete-feature workflow shall reconcile living documentation (architecture, requirements, testing, and decision records) with the delivered change, and shall verify that decisions taken during the feature are recorded in `docs/decisions/`. `pipeline.py reconcile` shall report every changed area that has no matching living-document change in the diff and exit non-zero.
 
 ## FR-25 Agent Handoff Recording
 

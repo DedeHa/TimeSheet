@@ -89,6 +89,11 @@ def _seed_known_ticket(tmp_path) -> None:
     (tmp_path / "history.json").write_text(json.dumps(history), encoding="utf-8")
 
 
+def _expected_exit(argv: list[str]) -> int:
+    """Read commands exit 0. `reset` without --force is a refused confirmation: exit 1."""
+    return 1 if argv[0] == "reset" else 0
+
+
 def _run_cli(pipeline, monkeypatch, argv: list[str]) -> int:
     """Run one CLI invocation and return its exit code (0 when it returns normally)."""
     monkeypatch.setattr(sys, "argv", ["pipeline.py", *argv])
@@ -106,7 +111,7 @@ def test_read_command_on_unknown_ticket_creates_nothing(
     """FR-22: a read command on an unknown ticket leaves no state or history behind."""
     before = _snapshot(tmp_path)
     assert before == {"state.json": None, "history.json": None}
-    assert _run_cli(pipeline, monkeypatch, argv) == 0
+    assert _run_cli(pipeline, monkeypatch, argv) == _expected_exit(argv)
     capsys.readouterr()
     assert _snapshot(tmp_path) == before
 
@@ -118,7 +123,7 @@ def test_read_command_on_unknown_ticket_keeps_existing_files_byte_identical(
     """FR-22: with files present for another ticket, the bytes do not change."""
     _seed_known_ticket(tmp_path)
     before = _snapshot(tmp_path)
-    assert _run_cli(pipeline, monkeypatch, argv) == 0
+    assert _run_cli(pipeline, monkeypatch, argv) == _expected_exit(argv)
     capsys.readouterr()
     assert _snapshot(tmp_path) == before
 

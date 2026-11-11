@@ -254,3 +254,61 @@ def test_reconcile_gate_runs_without_state(pipeline, tmp_path, monkeypatch, caps
     )
     assert "reconciled" in capsys.readouterr().out
     assert _files(tmp_path) == {"state.json": None, "history.json": None}
+
+
+EXIT_CONTRACT = [
+    # (argv, expected exit code): 0 success, 1 refused or error (PRO-407, tester finding 1)
+    (["set-mode", TICKET, "automated"], 0),
+    (["set-mode", TICKET, "bogus"], 1),
+    (["continue", TICKET], 1),  # no handoff recorded yet: refused
+    (["continue", TICKET, "--force"], 1),  # --force does not bypass the DoR gate
+    (["resume", TICKET], 0),  # healthy, not interrupted: resumes without --force
+    (["resume", TICKET, "--force"], 0),
+    (["reset", TICKET], 1),  # reset needs --force
+    (["reset", TICKET, "--force"], 0),
+    (["dor", TICKET, "--json", '{"D8": "pass"}'], 1),  # unknown DoR item
+    (["dor", TICKET, "--json", ALL_PASS], 0),
+    (["waive", TICKET, "D1", "--reason", "later", "--by", "PO"], 1),  # story points
+    (["waive", TICKET, "D3", "--reason", "closure", "--by", "PO"], 0),
+    (["handoff", TICKET, "--from", "a", "--to", "b", "--step", "develop", "--status", "COMPLETED"], 1),
+    (["handoff", TICKET, "--from", "a", "--to", "b", "--step", "plan", "--status", "COMPLETED"], 0),
+    (["show", "state", TICKET], 0),
+    (["what-missed", TICKET], 0),
+    (["check-stuck", TICKET], 0),
+    (["history", TICKET], 0),
+    (["get-mode", TICKET], 0),
+]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("argv,expected", EXIT_CONTRACT, ids=lambda v: " ".join(v) if isinstance(v, list) else str(v))
+def test_exit_code_contract(pipeline, tmp_path, monkeypatch, capsys, argv, expected):
+    """H: 0 for success and read-only commands, 1 for a refusal or error, on one flow."""
+    assert run(pipeline, monkeypatch, *argv) == expected, capsys.readouterr().out
+    capsys.readouterr()
+
+
+@pytest.mark.integration
+def test_exit_code_contract_reconcile_and_final_step(pipeline, tmp_path, monkeypatch, capsys):
+    """H: a reconcile gap exits 1; continue past the final step is not an advance and exits 1."""
+    assert run(pipeline, monkeypatch, "reconcile", TICKET, "--changed", "src/x.py") == 1
+    capsys.readouterr()
+    assert run(pipeline, monkeypatch, "set-mode", TICKET, "automated") == 0
+    assert run(pipeline, monkeypatch, "handoff", TICKET, "--from", "a", "--to", "b",
+               "--step", "plan", "--status", "COMPLETED") == 0
+    assert run(pipeline, monkeypatch, "dor", TICKET, "--json", ALL_PASS) == 0
+    assert run(pipeline, monkeypatch, "continue", TICKET) == 0
+    assert run(pipeline, monkeypatch, "handoff", TICKET, "--from", "a", "--to", "b",
+               "--step", "develop", "--status", "COMPLETED") == 0
+    assert run(pipeline, monkeypatch, "continue", TICKET) == 0
+    assert run(pipeline, monkeypatch, "handoff", TICKET, "--from", "a", "--to", "b",
+               "--step", "complete", "--status", "COMPLETED") == 0
+    assert run(pipeline, monkeypatch, "continue", TICKET) == 1
+    capsys.readouterr()
+
+
+@pytest.mark.integration
+def test_argparse_usage_error_exits_two(pipeline, tmp_path, monkeypatch, capsys):
+    """Usage errors are argparse's exit 2, not the refusal code 1."""
+    assert run(pipeline, monkeypatch, "waive", TICKET, "D3", "--by", "PO") == 2
+    capsys.readouterr()

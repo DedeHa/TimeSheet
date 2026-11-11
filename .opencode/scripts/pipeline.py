@@ -14,6 +14,12 @@ Recovery commands implement FR-22. Handoff recording implements FR-25.
 Usage:
     python pipeline.py <command> <ticket> [options]
 
+Exit codes (PRO-407, finding tester 1):
+    0   success, or a read-only command that ran
+    1   refused or error: a gate refused, a confirmation is missing, a handoff step does
+        not match the current step, a state file is corrupt, or a command raised
+    2   usage error from argparse (missing or invalid arguments, invalid work item reference)
+
 Commands:
     show state <ticket>              Show current pipeline state (read-only)
     resume <ticket>                   Resume pipeline at current step (--force clears a block)
@@ -837,8 +843,8 @@ class PipelineManager:
         else:
             print(f"✅ No stuck pipelines detected")
 
-    def reset(self, ticket: str, force: bool = False) -> None:
-        """Reset pipeline to initial state."""
+    def reset(self, ticket: str, force: bool = False) -> int:
+        """Reset pipeline to initial state. Returns 1 (refused) without --force, else 0."""
         if not force:
             entry = self._peek_entry(ticket)
             print(f"⚠️  WARNING: This will delete all pipeline progress for {ticket}")
@@ -847,7 +853,7 @@ class PipelineManager:
             print(f"   - Cycles: {entry.get('cycle_counts')}")
             print(f"   - Status: {entry.get('status')}")
             print(f"\n   Use --force to confirm reset")
-            return
+            return 1
         
         entry = self._get_entry(ticket)
         print(f"=== Resetting Pipeline: {ticket} ===\n")
@@ -861,6 +867,7 @@ class PipelineManager:
         print(f"   ✓ Pipeline reset to initial state")
         print(f"   - Step: plan")
         print(f"   - Status: not_started")
+        return 0
 
     def get_history(self, ticket: str) -> None:
         """Show pipeline history."""
@@ -880,19 +887,18 @@ class PipelineManager:
         for i, action in enumerate(self.history[ticket]["actions"][-10:], 1):
             print(f"  {i}. {action['timestamp'][:19]} - {action['action']}")
 
-    def set_mode(self, ticket: str, mode: str) -> None:
-        """Set development mode for a ticket."""
-        entry = self._get_entry(ticket)
-        
+    def set_mode(self, ticket: str, mode: str) -> int:
+        """Set development mode for a ticket. Returns 1 for an invalid mode (nothing written)."""
         if mode not in ["interactive", "automated"]:
             print(f"❌ Invalid mode: {mode}. Must be 'interactive' or 'automated'")
-            return
-        
+            return 1
+        entry = self._get_entry(ticket)
         entry["development_mode"] = mode
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()
         
         print(f"✓ Development mode set to: {mode} for {ticket}")
+        return 0
 
     def get_mode(self, ticket: str) -> None:
         """Get persisted mode for a ticket."""

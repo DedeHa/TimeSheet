@@ -101,9 +101,6 @@ class PipelineManager:
             "status": "not_started",
             "blocked": False,
             "escalation_level": 0,
-            "interrupted": False,
-            "interrupted_step": None,
-            "interrupted_at": None,
         }
 
     def _get_entry(self, ticket: str) -> Dict[str, Any]:
@@ -142,14 +139,18 @@ class PipelineManager:
         self._save_history()
 
     def _detect_interruption(self, ticket: str) -> Optional[Dict[str, Any]]:
-        """Detect if a pipeline was interrupted and what was missed."""
+        """Detect if a pipeline was interrupted and what was missed.
+
+        This is the single definition of interruption (PRO-407, AC-2): the status is
+        in_progress and the current step has no completed cycle, i.e. the step was
+        entered but no COMPLETED handoff was recorded for it. The CLI sets the status
+        (see continue_step and record_handoff), so nothing is stored separately.
+        """
         entry = self._peek_entry(ticket)
-        
-        # Check if pipeline is stuck in a step
+
         current_step = entry.get("current_step")
         cycle_count = entry.get("cycle_counts", {}).get(current_step, 0)
-        
-        # If current step has zero cycles but status is in_progress, pipeline is interrupted
+
         if cycle_count == 0 and entry.get("status") == "in_progress":
             return {
                 "interrupted": True,
@@ -204,7 +205,10 @@ class PipelineManager:
         print(f"Status: {entry.get('status', 'N/A')}")
         print(f"Development Mode: {entry.get('development_mode', 'interactive')}")
         print(f"Last Updated: {entry.get('last_updated', 'N/A')}")
-        
+        if entry.get("blocked"):
+            level = entry.get("escalation_level", 0)
+            print(f"\n⛔ PIPELINE BLOCKED by a handoff (escalation level {level})")
+
         cycle_counts = entry.get("cycle_counts", {})
         print(f"\nCycle Counts:")
         print(f"  Plan: {cycle_counts.get('plan', 0)} (max: 3)")
@@ -231,44 +235,46 @@ class PipelineManager:
         print(f"Blocked: {entry.get('blocked', False)}")
 
     def resume(self, ticket: str, force: bool = False) -> None:
-        """Resume pipeline at the current step with validation."""
+        """Resume pipeline at the current step with validation.
+
+        An interrupted or blocked pipeline needs --force. A forced resume moves the
+        status to resumed and clears the block, so the pipeline is no longer reported
+        as interrupted (PRO-407, AC-2).
+        """
         entry = self._get_entry(ticket)
         current_step = entry.get("current_step")
-        
+
         print(f"=== Resuming Pipeline: {ticket} ===\n")
-        
-        # Check for interruption
+
         interruption = self._detect_interruption(ticket)
         was_interrupted = bool(interruption and interruption.get("interrupted"))
+        was_blocked = bool(entry.get("blocked"))
+
         if was_interrupted:
             print(f"⚠️  Pipeline was interrupted at step: {interruption['interrupted_step']}")
             print(f"   What was missed:")
             missed = interruption['what_was_missed']
             print(f"   - {missed['step']}: {missed['expected_work']}")
             print(f"   - Cycles: {missed['current_cycles']}/{missed['expected_cycles']}")
-            
-            if not force:
-                print(f"\n   ⚠️  Pipeline needs to be reset or completed before resuming.")
-                print(f"   Use 'reset' to clear all progress and start over.")
-                print(f"   Or provide --force to skip validation.")
-                return
-        
+        if was_blocked:
+            print(f"⛔ Pipeline is BLOCKED (escalation level {entry.get('escalation_level', 0)})")
+
+        if (was_interrupted or was_blocked) and not force:
+            print(f"\n   ⚠️  Pipeline needs to be reset or completed before resuming.")
+            print(f"   Use 'reset' to clear all progress and start over.")
+            print(f"   Or provide --force to skip validation.")
+            return
+
         print(f"Resuming pipeline at step: {current_step}")
-        
-        # Clear the interruption. Detection is derived from status == in_progress with
-        # zero cycles, so a forced resume must move the status off in_progress or the
-        # pipeline would still be reported as interrupted (PRO-407, AC-2).
-        if was_interrupted or entry.get("interrupted"):
-            entry["interrupted"] = False
-            entry["interrupted_step"] = None
-            entry["interrupted_at"] = None
-            if was_interrupted:
-                entry["status"] = "resumed"
+
+        if was_interrupted or was_blocked:
+            entry["status"] = "resumed"
+            entry["blocked"] = False
             entry["last_updated"] = datetime.now(timezone.utc).isoformat()
             self._save_state()
             self._record_history(ticket, "interruption_cleared", entry)
             print(f"   ✓ Interruption flag cleared")
-        
+
         print(f"\n✅ Pipeline resumed successfully")
 
     def what_missed(self, ticket: str) -> None:
@@ -276,7 +282,8 @@ class PipelineManager:
         interruption = self._detect_interruption(ticket)
         if not interruption or not interruption.get("interrupted"):
             print(f"No interrupted pipeline found for {ticket}")
-            print(f"Pipeline status: in_progress, but not interrupted")
+            entry = self._peek_entry(ticket)
+            print(f"Pipeline status: {entry.get('status', 'N/A')}, but not interrupted")
             return
         
         entry = self._peek_entry(ticket)
@@ -339,6 +346,7 @@ class PipelineManager:
         
         # Update state
         entry["current_step"] = next_step
+        entry["status"] = "in_progress"
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()
         self._record_history(ticket, "step_advance", {
@@ -431,6 +439,10 @@ class PipelineManager:
             print(f"   - 'resume' to attempt to complete the stuck step")
             print(f"   - 'reset' to clear all progress and start over")
             print(f"   - 'escalate' to get help from the Product Owner")
+        elif entry.get("blocked"):
+            print(f"⛔ BLOCKED PIPELINE: a handoff reported BLOCKED")
+            print(f"   Escalation level: {entry.get('escalation_level', 0)}")
+            print(f"   Use 'resume --force' after the Product Owner resolves the blocker")
         else:
             print(f"✅ No stuck pipelines detected")
 
@@ -450,18 +462,7 @@ class PipelineManager:
         print(f"=== Resetting Pipeline: {ticket} ===\n")
         
         # Reset to initial state
-        self.state[ticket] = {
-            "development_mode": "interactive",
-            "current_step": "plan",
-            "cycle_counts": {"plan": 0, "develop": 0, "complete": 0},
-            "last_updated": datetime.now(timezone.utc).isoformat(),
-            "status": "not_started",
-            "blocked": False,
-            "escalation_level": 0,
-            "interrupted": False,
-            "interrupted_step": None,
-            "interrupted_at": None,
-        }
+        self.state[ticket] = self._default_entry()
         
         self._record_history(ticket, "pipeline_reset", self.state[ticket])
         self._save_state()
@@ -547,8 +548,33 @@ class PipelineManager:
             "cycle": cycle,
             "max_cycles": max_cycles,
         }
+        self._apply_handoff(entry, handoff)
         self._record_history(ticket, "handoff", handoff)
         return handoff
+
+    def _apply_handoff(self, entry: Dict[str, Any], handoff: Dict[str, Any]) -> None:
+        """Apply a recorded handoff to the pipeline state (PRO-407, AC-2).
+
+        BLOCKED blocks the pipeline and raises the escalation level. COMPLETED clears
+        the block and counts one completed cycle for the current step. IN_PROGRESS
+        marks the step in progress.
+        """
+        status = str(handoff["status"]).upper()
+        step = entry.get("current_step")
+        if status == "BLOCKED":
+            entry["blocked"] = True
+            entry["status"] = "blocked"
+            entry["escalation_level"] = int(entry.get("escalation_level", 0)) + 1
+        elif status == "COMPLETED":
+            entry["blocked"] = False
+            if entry.get("status") == "blocked":
+                entry["status"] = "in_progress"
+            cycle_counts = entry.setdefault("cycle_counts", {})
+            cycle_counts[step] = cycle_counts.get(step, 0) + 1
+        elif status == "IN_PROGRESS":
+            entry["status"] = "in_progress"
+        entry["last_updated"] = datetime.now(timezone.utc).isoformat()
+        self._save_state()
 
     @staticmethod
     def render_handoff_comment(handoff: Dict[str, Any]) -> str:

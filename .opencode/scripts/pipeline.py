@@ -1118,7 +1118,10 @@ def main():
 
     continue_parser = subparsers.add_parser("continue", help="Advance to next pipeline step")
     continue_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
-    continue_parser.add_argument("--force", action="store_true", help="Force advance without validation")
+    continue_parser.add_argument(
+        "--force", action="store_true",
+        help="Bypass the handoff rule only (the DoR gate still applies)",
+    )
     continue_parser.set_defaults(func=lambda args: manager.continue_step(args.ticket, args.force))
 
     proceed_parser = subparsers.add_parser("proceed", help="Proceed with current step execution")

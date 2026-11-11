@@ -15,17 +15,21 @@ Usage:
     python pipeline.py <command> <ticket> [options]
 
 Commands:
-    show state <ticket>              Show current pipeline state
-    resume <ticket>                   Resume pipeline at current step
-    continue <ticket>                 Continue to next pipeline step
+    show state <ticket>              Show current pipeline state (read-only)
+    resume <ticket>                   Resume pipeline at current step (--force clears a block)
+    continue <ticket>                 Continue to next pipeline step (--force bypasses gates)
     proceed <ticket>                  Proceed with current step execution
-    what-missed <ticket>              Show what work was missed in interrupted pipeline
-    dry-run <ticket> <command>        Preview action without executing
-    check-stuck <ticket>              Detect and alert on stuck pipelines
+    what-missed <ticket>              Show what work was missed in interrupted pipeline (read-only)
+    dry-run <ticket> <command>        Preview action without executing (read-only)
+    check-stuck <ticket>              Detect and alert on stuck pipelines (read-only)
     reset <ticket>                    Reset all cycles and state
-    history <ticket>                  Show pipeline history
+    history <ticket>                  Show pipeline history (read-only)
     set-mode <ticket> <mode>           Set interactive/automated mode
-    get-mode <ticket>                  Show persisted mode
+    get-mode <ticket>                  Show persisted mode (read-only)
+    dor <ticket> [--json ...]         Record or show the Definition of Ready checklist (D1-D7)
+    waive <ticket> <DOR_ID>           Waive one DoR item (--reason and --by required)
+    reconcile <ticket> [--base B]     Check changed areas have their living documents
+    handoff <ref> --from --to ...     Record a handoff and print its comment (any work item ref)
 """
 
 from __future__ import annotations

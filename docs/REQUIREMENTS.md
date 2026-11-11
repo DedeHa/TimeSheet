@@ -359,7 +359,7 @@ The agent team shall record each architectural, product, test, and process decis
 
 ## FR-22 Pipeline Recovery Commands
 
-The agent pipeline state tool shall provide recovery commands for interrupted or stuck pipelines: `what-missed` reports the step whose work was not completed, `check-stuck` reports how long a pipeline has been stalled, `dry-run` previews a `resume` without writing state, `resume` requires `--force` for an interrupted pipeline and, when forced, clears the interruption, and `history` lists the recorded actions. Recovery commands shall write only to the state file they are given.
+The agent pipeline state tool shall provide recovery commands for interrupted or stuck pipelines: `what-missed` reports the step whose work was not completed, `check-stuck` reports how long a pipeline has been stalled, `dry-run` previews a `resume` without writing state, `resume` requires `--force` for an interrupted pipeline and, when forced, clears the interruption, and `history` lists the recorded actions. A pipeline is interrupted when it is BLOCKED by a handoff, when an operator marks it with `interrupt` (cleared by `resume` or a successful `continue`), or when its step is in progress with no update for 24 hours (`INTERRUPT_AFTER_HOURS`) and the step has not been reported complete. A step that has just started is not interrupted. Recovery commands shall write only to the state file they are given.
 
 ## FR-23 Definition of Ready Gate
 

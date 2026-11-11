@@ -38,10 +38,14 @@ def pipeline(tmp_path, monkeypatch):
     return module
 
 
-def run(pipeline, monkeypatch, *argv: str) -> None:
-    """Run one CLI invocation exactly as a shell would."""
+def run(pipeline, monkeypatch, *argv: str) -> int:
+    """Run one CLI invocation exactly as a shell would and return its exit code."""
     monkeypatch.setattr(sys, "argv", ["pipeline.py", *argv])
-    pipeline.main()
+    try:
+        pipeline.main()
+    except SystemExit as exc:
+        return exc.code if isinstance(exc.code, int) else 1
+    return 0
 
 
 def _state(tmp_path) -> dict:
@@ -85,11 +89,13 @@ def test_full_cli_flow_blocks_resumes_and_records_history(
     run(pipeline, monkeypatch, "dor", TICKET, "--json", ALL_PASS)
     capsys.readouterr()
 
-    run(pipeline, monkeypatch, "continue", TICKET)
+    assert run(pipeline, monkeypatch, "continue", TICKET) == 0
     assert _state(tmp_path)["current_step"] == "develop"
     assert _state(tmp_path)["status"] == "in_progress"
     run(pipeline, monkeypatch, "show", "state", TICKET)
-    assert "INTERRUPTED PIPELINE DETECTED" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "INTERRUPTED PIPELINE DETECTED" not in out
+    assert "Pipeline is not interrupted" in out
 
     run(
         pipeline,
@@ -130,16 +136,16 @@ def test_full_cli_flow_blocks_resumes_and_records_history(
     out = capsys.readouterr().out
     assert "PIPELINE BLOCKED" in out
     assert "Escalation Level: 1" in out
-    assert "INTERRUPTED PIPELINE DETECTED" not in out
+    assert "Reason: blocked by a handoff" in out
     assert _state(tmp_path)["blocked"] is True
 
-    run(pipeline, monkeypatch, "resume", TICKET)
+    assert run(pipeline, monkeypatch, "resume", TICKET) == 1
     out = capsys.readouterr().out
     assert "needs to be reset or completed" in out
     assert _state(tmp_path)["blocked"] is True
     assert "interruption_cleared" not in _action_names(tmp_path)
 
-    run(pipeline, monkeypatch, "resume", TICKET, "--force")
+    assert run(pipeline, monkeypatch, "resume", TICKET, "--force") == 0
     out = capsys.readouterr().out
     assert "Pipeline resumed successfully" in out
     assert _state(tmp_path)["blocked"] is False
@@ -200,7 +206,7 @@ def test_full_cli_flow_history_is_ordered(pipeline, tmp_path, monkeypatch, capsy
         "--status",
         "BLOCKED",
     )
-    run(pipeline, monkeypatch, "resume", TICKET, "--force")
+    assert run(pipeline, monkeypatch, "resume", TICKET, "--force") == 0
     capsys.readouterr()
 
     assert _action_names(tmp_path) == [

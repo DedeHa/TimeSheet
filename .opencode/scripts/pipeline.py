@@ -17,6 +17,7 @@ Usage:
 Commands:
     show state <ticket>              Show current pipeline state (read-only)
     resume <ticket>                   Resume pipeline at current step (--force clears a block)
+    interrupt <ticket> [--reason]     Mark a pipeline interrupted until it is resumed
     continue <ticket>                 Continue to next pipeline step (--force bypasses the handoff rule, never the DoR gate)
     proceed <ticket>                  Proceed with current step execution
     what-missed <ticket>              Show what work was missed in interrupted pipeline (read-only)
@@ -40,7 +41,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -48,6 +49,8 @@ STATE_PATH = Path.home() / ".opencode" / "pipeline-state.json"
 HISTORY_PATH = Path.home() / ".opencode" / "pipeline-history.json"
 
 STEP_ORDER = ["plan", "develop", "complete"]
+# An in_progress step with no update for this many hours counts as interrupted (FR-22).
+INTERRUPT_AFTER_HOURS = 24
 JIRA_REF_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d+")
 GITHUB_ISSUE_PATTERN = re.compile(r"(?:GH-\d+|[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#\d+)")
 GENERIC_REF_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
@@ -114,6 +117,44 @@ def parse_work_item_ref(ref: str) -> Dict[str, str]:
     if GENERIC_REF_PATTERN.fullmatch(value):
         return {"tracker": "generic", "key": value}
     raise ValueError(f"invalid work item reference: {ref!r}")
+
+
+def _utc_now() -> datetime:
+    """Return the current time in UTC. Tests pass an explicit `now` instead."""
+    return datetime.now(timezone.utc)
+
+
+def _parse_timestamp(value: Any) -> Optional[datetime]:
+    """Parse an ISO 8601 timestamp as an aware UTC datetime, or None when unreadable."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def interruption_reason(entry: Dict[str, Any], now: datetime) -> Optional[str]:
+    """Return why a pipeline entry counts as interrupted, or None (PRO-407, AC-2).
+
+    The single definition, shared by show, what-missed, check-stuck, dry-run and resume:
+    - the pipeline is BLOCKED by a handoff, or
+    - an operator marked it interrupted (the `interrupt` command; `resume` clears it), or
+    - the status is in_progress, the step has not been reported complete, and nothing
+      was recorded for INTERRUPT_AFTER_HOURS. A fresh in_progress step (for example just
+      after `continue`) is not interrupted, and neither is a step whose COMPLETED
+      handoff is waiting for `continue`.
+    """
+    if entry.get("blocked") or entry.get("status") == "blocked":
+        return "blocked by a handoff"
+    if entry.get("interrupted"):
+        return "marked interrupted"
+    if entry.get("status") == "in_progress" and not entry.get("step_reported_complete"):
+        stamp = _parse_timestamp(entry.get("last_updated"))
+        if stamp is None or now - stamp > timedelta(hours=INTERRUPT_AFTER_HOURS):
+            return f"in progress with no update for over {INTERRUPT_AFTER_HOURS} hours"
+    return None
 
 
 def _normalise_path(path: str) -> str:
@@ -244,28 +285,26 @@ class PipelineManager:
         self.history[ticket]["last_updated"] = timestamp
         self._save_history()
 
-    def _detect_interruption(self, ticket: str) -> Optional[Dict[str, Any]]:
-        """Detect if a pipeline was interrupted and what was missed.
+    def _detect_interruption(
+        self, ticket: str, now: Optional[datetime] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Return what was missed when the pipeline is interrupted, else None.
 
-        This is the single definition of interruption (PRO-407, AC-2): the status is
-        in_progress and the current step has no completed cycle, i.e. the step was
-        entered but no COMPLETED handoff was recorded for it. The CLI sets the status
-        (see continue_step and record_handoff), so nothing is stored separately.
+        Interruption is defined once, in interruption_reason(). `now` is injectable so
+        tests can use a fixed clock.
         """
         entry = self._peek_entry(ticket)
-
+        reason = interruption_reason(entry, now or _utc_now())
+        if reason is None:
+            return None
         current_step = entry.get("current_step")
-        cycle_count = entry.get("cycle_counts", {}).get(current_step, 0)
-
-        if cycle_count == 0 and entry.get("status") == "in_progress":
-            return {
-                "interrupted": True,
-                "interrupted_step": current_step,
-                "interrupted_at": entry.get("last_updated"),
-                "what_was_missed": self._get_missed_work(ticket, entry)
-            }
-        
-        return None
+        return {
+            "interrupted": True,
+            "reason": reason,
+            "interrupted_step": current_step,
+            "interrupted_at": entry.get("last_updated"),
+            "what_was_missed": self._get_missed_work(ticket, entry),
+        }
 
     def _get_missed_work(self, ticket: str, entry: Dict[str, Any]) -> Dict[str, Any]:
         """Determine what work was missed in an interrupted pipeline."""
@@ -301,7 +340,7 @@ class PipelineManager:
             "work_status": "INCOMPLETE" if expectation.get("current_cycles", 0) == 0 else "COMPLETE"
         }
 
-    def show_state(self, ticket: str) -> None:
+    def show_state(self, ticket: str, now: Optional[datetime] = None) -> None:
         """Show current pipeline state with interruption detection."""
         entry = self._peek_entry(ticket)
         
@@ -322,9 +361,10 @@ class PipelineManager:
         print(f"  Complete: {cycle_counts.get('complete', 0)} (max: 3)")
         
         # Check for interruption
-        interruption = self._detect_interruption(ticket)
+        interruption = self._detect_interruption(ticket, now)
         if interruption and interruption.get("interrupted"):
             print(f"\n⚠️  INTERRUPTED PIPELINE DETECTED!")
+            print(f"   Reason: {interruption['reason']}")
             print(f"   Step: {interruption['interrupted_step']}")
             print(f"   Interrupted at: {interruption['interrupted_at']}")
             print(f"\n   What was missed:")
@@ -340,24 +380,25 @@ class PipelineManager:
         print(f"\nEscalation Level: {entry.get('escalation_level', 0)}")
         print(f"Blocked: {entry.get('blocked', False)}")
 
-    def resume(self, ticket: str, force: bool = False) -> None:
-        """Resume pipeline at the current step with validation.
+    def resume(self, ticket: str, force: bool = False, now: Optional[datetime] = None) -> int:
+        """Resume pipeline at the current step. Returns 0 when resumed, 1 when refused.
 
         An interrupted or blocked pipeline needs --force. A forced resume moves the
-        status to resumed and clears the block, so the pipeline is no longer reported
-        as interrupted (PRO-407, AC-2).
+        status to resumed, clears the block and any interrupted marker, so the pipeline
+        is no longer reported as interrupted (PRO-407, AC-2).
         """
         entry = self._get_entry(ticket)
         current_step = entry.get("current_step")
 
         print(f"=== Resuming Pipeline: {ticket} ===\n")
 
-        interruption = self._detect_interruption(ticket)
+        interruption = self._detect_interruption(ticket, now)
         was_interrupted = bool(interruption and interruption.get("interrupted"))
         was_blocked = bool(entry.get("blocked"))
 
         if was_interrupted:
             print(f"⚠️  Pipeline was interrupted at step: {interruption['interrupted_step']}")
+            print(f"   Reason: {interruption['reason']}")
             print(f"   What was missed:")
             missed = interruption['what_was_missed']
             print(f"   - {missed['step']}: {missed['expected_work']}")
@@ -365,27 +406,46 @@ class PipelineManager:
         if was_blocked:
             print(f"⛔ Pipeline is BLOCKED (escalation level {entry.get('escalation_level', 0)})")
 
-        if (was_interrupted or was_blocked) and not force:
+        if was_interrupted and not force:
             print(f"\n   ⚠️  Pipeline needs to be reset or completed before resuming.")
             print(f"   Use 'reset' to clear all progress and start over.")
             print(f"   Or provide --force to skip validation.")
-            return
+            return 1
 
         print(f"Resuming pipeline at step: {current_step}")
 
-        if was_interrupted or was_blocked:
+        if was_interrupted:
             entry["status"] = "resumed"
             entry["blocked"] = False
-            entry["last_updated"] = datetime.now(timezone.utc).isoformat()
+            entry.pop("interrupted", None)
+            entry.pop("interrupted_reason", None)
+            entry["last_updated"] = (now or _utc_now()).isoformat()
             self._save_state()
             self._record_history(ticket, "interruption_cleared", entry)
             print(f"   ✓ Interruption flag cleared")
 
         print(f"\n✅ Pipeline resumed successfully")
+        return 0
 
-    def what_missed(self, ticket: str) -> None:
+    def interrupt(self, ticket: str, reason: str = "") -> int:
+        """Mark the pipeline interrupted until it is resumed (FR-22).
+
+        This is the explicit marker in interruption_reason(). `resume` clears it, and so
+        does a successful `continue`.
+        """
+        reason = (reason or "").strip() or "marked interrupted by an operator"
+        entry = self._get_entry(ticket)
+        entry["interrupted"] = True
+        entry["interrupted_reason"] = reason
+        self._save_state()
+        self._record_history(ticket, "interruption_marked", {"reason": reason})
+        print(f"✓ {ticket} marked interrupted: {reason}")
+        print(f"  'resume' clears the marker (use --force to resume an interrupted pipeline)")
+        return 0
+
+    def what_missed(self, ticket: str, now: Optional[datetime] = None) -> None:
         """Show what work was missed in an interrupted pipeline."""
-        interruption = self._detect_interruption(ticket)
+        interruption = self._detect_interruption(ticket, now)
         if not interruption or not interruption.get("interrupted"):
             print(f"No interrupted pipeline found for {ticket}")
             entry = self._peek_entry(ticket)
@@ -396,6 +456,7 @@ class PipelineManager:
         print(f"=== What Was Missed: {ticket} ===\n")
         
         print(f"⚠️  Pipeline interrupted at: {interruption['interrupted_at']}")
+        print(f"   Reason: {interruption['reason']}")
         print(f"   Step: {interruption['interrupted_step']}\n")
         
         missed = interruption['what_was_missed']
@@ -635,6 +696,9 @@ class PipelineManager:
         entry["current_step"] = next_step
         entry["status"] = "in_progress"
         entry["blocked"] = False
+        entry["step_reported_complete"] = False
+        entry.pop("interrupted", None)
+        entry.pop("interrupted_reason", None)
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()
         self._record_history(ticket, "step_advance", {
@@ -646,7 +710,10 @@ class PipelineManager:
         print(f"   ✓ Pipeline advanced to: {next_step}")
         return 0
 
-    def dry_run(self, ticket: str, action: str, params: Optional[Dict] = None) -> None:
+    def dry_run(
+        self, ticket: str, action: str, params: Optional[Dict] = None,
+        now: Optional[datetime] = None,
+    ) -> None:
         """Preview pipeline action without executing."""
         print(f"=== Dry Run: {ticket} - {action} ===\n")
         
@@ -660,7 +727,7 @@ class PipelineManager:
         if action == "show_state":
             print(f"\nWould show pipeline state")
         elif action == "resume":
-            interruption = self._detect_interruption(ticket)
+            interruption = self._detect_interruption(ticket, now)
             if interruption and interruption.get("interrupted"):
                 print(f"\nWould resume at step: {entry.get('current_step')}")
                 print(f"  ⚠️  What was missed:")
@@ -669,7 +736,7 @@ class PipelineManager:
             else:
                 print(f"\nWould resume at step: {entry.get('current_step')}")
         elif action == "what_missed":
-            interruption = self._detect_interruption(ticket)
+            interruption = self._detect_interruption(ticket, now)
             if interruption and interruption.get("interrupted"):
                 print(f"\nWould show what was missed:")
                 missed = interruption['what_was_missed']
@@ -687,51 +754,45 @@ class PipelineManager:
         
         print(f"\n✅ Dry run completed - no changes made")
 
-    def check_stuck(self, ticket: str) -> None:
-        """Detect and alert on stuck pipelines."""
+    def check_stuck(self, ticket: str, now: Optional[datetime] = None) -> None:
+        """Detect and alert on stuck pipelines. Uses the same rule as show and resume."""
         print(f"=== Checking for Stuck Pipelines: {ticket} ===\n")
-        
-        entry = self._peek_entry(ticket)
-        
-        # Check if pipeline is stuck in a step
-        interruption = self._detect_interruption(ticket)
+
+        now = now or _utc_now()
+        interruption = self._detect_interruption(ticket, now)
         if interruption and interruption.get("interrupted"):
             print(f"⚠️  STUCK PIPELINE DETECTED!")
+            print(f"   Reason: {interruption['reason']}")
             print(f"   Step: {interruption['interrupted_step']}")
             print(f"   Interrupted at: {interruption['interrupted_at']}")
-            
+
             # Calculate how long it's been stuck
-            try:
-                interrupted_time = datetime.fromisoformat(interruption['interrupted_at'])
-                current_time = datetime.now(timezone.utc)
-                stuck_duration = current_time - interrupted_time
-                
-                hours_stuck = stuck_duration.total_seconds() / 3600
+            interrupted_time = _parse_timestamp(interruption['interrupted_at'])
+            if interrupted_time is None:
+                print(f"   ❌ Could not calculate stuck duration")
+            else:
+                hours_stuck = (now - interrupted_time).total_seconds() / 3600
                 print(f"   Stuck for: {hours_stuck:.1f} hours")
-                
+
                 if hours_stuck > 24:
                     print(f"   🚨 CRITICAL: Pipeline has been stuck for over 24 hours!")
                 elif hours_stuck > 12:
                     print(f"   ⚠️  WARNING: Pipeline has been stuck for over 12 hours!")
                 elif hours_stuck > 1:
                     print(f"   ⚠️  WARNING: Pipeline has been stuck for over 1 hour!")
-            except Exception:
-                print(f"   ❌ Could not calculate stuck duration")
-            
+
             print(f"\n   What was missed:")
             missed = interruption['what_was_missed']
             print(f"   - Step: {missed['step']}")
             print(f"   - Expected work: {missed['expected_work']}")
             print(f"   - Status: {missed['work_status']}")
-            
+
             print(f"\n   🔄 Suggested actions:")
             print(f"   - 'resume' to attempt to complete the stuck step")
+            if interruption['reason'].startswith("blocked"):
+                print(f"   - 'resume --force' after the Product Owner resolves the blocker")
             print(f"   - 'reset' to clear all progress and start over")
             print(f"   - 'escalate' to get help from the Product Owner")
-        elif entry.get("blocked"):
-            print(f"⛔ BLOCKED PIPELINE: a handoff reported BLOCKED")
-            print(f"   Escalation level: {entry.get('escalation_level', 0)}")
-            print(f"   Use 'resume --force' after the Product Owner resolves the blocker")
         else:
             print(f"✅ No stuck pipelines detected")
 
@@ -868,10 +929,13 @@ class PipelineManager:
             entry["blocked"] = False
             if entry.get("status") == "blocked":
                 entry["status"] = "in_progress"
+            entry["step_reported_complete"] = True
             cycle_counts = entry.setdefault("cycle_counts", {})
             cycle_counts[step] = cycle_counts.get(step, 0) + 1
-        elif status == "IN_PROGRESS" and not entry.get("blocked"):
-            entry["status"] = "in_progress"
+        elif status == "IN_PROGRESS":
+            entry["step_reported_complete"] = False
+            if not entry.get("blocked"):
+                entry["status"] = "in_progress"
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()
 
@@ -951,6 +1015,13 @@ def main():
     resume_parser.add_argument("ticket", help="JIRA ticket key")
     resume_parser.add_argument("--force", action="store_true", help="Force resume without validation")
     resume_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
+
+    interrupt_parser = subparsers.add_parser(
+        "interrupt", help="Mark a pipeline interrupted until it is resumed"
+    )
+    interrupt_parser.add_argument("ticket", help="JIRA ticket key")
+    interrupt_parser.add_argument("--reason", default="", help="Why the pipeline is interrupted")
+    interrupt_parser.set_defaults(func=lambda args: manager.interrupt(args.ticket, args.reason))
 
     continue_parser = subparsers.add_parser("continue", help="Advance to next pipeline step")
     continue_parser.add_argument("ticket", help="JIRA ticket key")

@@ -4,7 +4,8 @@ The CLI sets the pipeline status: `continue` moves a step to in_progress, a
 BLOCKED handoff blocks the pipeline and raises the escalation level, and a
 COMPLETED handoff clears the block and counts a completed cycle for the step. An
 IN_PROGRESS handoff does not clear a block (PRO-407, architect finding 4).
-Interruption is derived in one place: in_progress with no completed cycle.
+Interruption is derived in one place (interruption_reason): BLOCKED, a marker, or a
+stale in_progress step.
 STATE_PATH and HISTORY_PATH are redirected to tmp_path.
 """
 
@@ -13,6 +14,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -159,19 +161,26 @@ def test_refused_continue_keeps_block(pipeline, tmp_path, capsys):
     assert entry["current_step"] == "plan"
 
 
-def test_interrupted_detected_for_in_progress_step_without_completion(
-    pipeline, tmp_path
-):
-    """After continue, the new step is in progress with no completion: interrupted."""
+def test_fresh_in_progress_step_is_not_interrupted(pipeline, tmp_path):
+    """After continue, a just-started step is in progress but not interrupted (PRO-407, D).
+
+    The earlier rule (in_progress with zero cycles) reported every new step as
+    interrupted. The clock decides now: a step is interrupted only after
+    INTERRUPT_AFTER_HOURS without an update.
+    """
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "COMPLETED", step="plan")
     _pass_dor(mgr)
     mgr.continue_step(TICKET)
-    interruption = mgr._detect_interruption(TICKET)
+    assert mgr._detect_interruption(TICKET) is None
+    stamp = datetime.fromisoformat(_entry(tmp_path)["last_updated"])
+    later = stamp + timedelta(hours=pipeline.INTERRUPT_AFTER_HOURS + 1)
+    interruption = mgr._detect_interruption(TICKET, now=later)
     assert interruption is not None
     assert interruption["interrupted_step"] == "develop"
+    assert "no update" in interruption["reason"]
     _handoff(mgr, "COMPLETED", step="develop")
-    assert mgr._detect_interruption(TICKET) is None
+    assert mgr._detect_interruption(TICKET, now=later) is None
 
 
 def test_what_missed_reports_actual_status_not_hardcoded_text(
@@ -248,3 +257,22 @@ def test_cli_handoff_blocked_then_completed_round_trip(
     pipeline.main()
     assert _entry(tmp_path)["blocked"] is False
     capsys.readouterr()
+
+
+def test_completed_step_awaiting_continue_is_not_interrupted(pipeline, tmp_path):
+    """A COMPLETED step is not stale even when old: its work is reported done (PRO-407, D).
+
+    An IN_PROGRESS handoff after the completion re-opens the step, so the stale rule
+    applies to it again.
+    """
+    mgr = pipeline.PipelineManager()
+    _handoff(mgr, "COMPLETED", step="plan")
+    _pass_dor(mgr)
+    mgr.continue_step(TICKET)
+    _handoff(mgr, "COMPLETED", step="develop")
+    later = datetime.fromisoformat(_entry(tmp_path)["last_updated"]) + timedelta(
+        hours=pipeline.INTERRUPT_AFTER_HOURS + 5
+    )
+    assert mgr._detect_interruption(TICKET, now=later) is None
+    _handoff(mgr, "IN_PROGRESS", step="develop")
+    assert mgr._detect_interruption(TICKET, now=later + timedelta(minutes=1)) is not None

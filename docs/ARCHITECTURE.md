@@ -137,7 +137,7 @@ application code under `src/` is not affected.
 | Decision records | Durable ADR/PDR/TDR/BDR/ODR records, one decision per file | `docs/decisions/` (FR-21) |
 | Definition of Ready gate | Checks D1-D7 before branch creation, with an adversarial review; `pipeline.py continue` into develop refuses unless every item is pass or waived, and `--force` does not override it | `develop-feature` Step 1f and `readiness-review` skill; `pipeline.py dor`, `waive` (FR-23) |
 | Documentation reconciliation gate | Maps changed paths to the living documents that must move with them | `pipeline.py reconcile` (FR-24) |
-| Recovery and handoff state | Read-only `show`, `what-missed`, `check-stuck`, `dry-run`, `history`; CLI-owned status; `handoff` validates status and tracker, records the transition, and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
+| Recovery and handoff state | Read-only `show`, `what-missed`, `check-stuck`, `dry-run`, `history`; CLI-owned status; `interrupt` marks a pipeline; `handoff` validates status, tracker, and step, records the transition, and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
 | Artifact-first change layout | Per-ticket spec, plan, test plan, and PM notes | `docs/changes/YYYY-MM/PRO-XXX/` (QR-14) |
 
 ### Work item references (PRO-407, FR-25)
@@ -163,6 +163,12 @@ Design choices:
 - The DoR gate is not bypassed by `continue --force`. `--force` bypasses only the
   handoff rule (latest handoff COMPLETED and a completed cycle for the current step),
   records `forced_advance` with the bypassed reasons, and clears a BLOCKED state.
+- Interruption is defined once in `interruption_reason()` and used by `show`,
+  `what-missed`, `check-stuck`, `dry-run`, and `resume`. A pipeline is interrupted when
+  it is BLOCKED, when it is marked with `interrupt`, or when its in_progress step has had
+  no update for `INTERRUPT_AFTER_HOURS` (24) and has not been reported complete. The
+  clock is injectable (`now`), so tests do not depend on the wall clock. A fresh
+  `continue` is not interrupted.
 - A BLOCKED handoff holds the pipeline blocked. An IN_PROGRESS handoff does not clear
   the block. Only a COMPLETED handoff, a forced `continue`, or a forced `resume` clears
   it, and a forced `continue` records `forced_advance` with `cleared_block`.

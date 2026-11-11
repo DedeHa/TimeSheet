@@ -47,6 +47,11 @@ def _write_state(tmp_path, entry: dict) -> None:
     (tmp_path / "state.json").write_text(json.dumps({TICKET: base}), encoding="utf-8")
 
 
+def _stale(hours: int = 30) -> str:
+    """A last_updated timestamp older than the interruption threshold."""
+    return (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+
+
 def _read_state(tmp_path) -> dict:
     return json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))[TICKET]
 
@@ -60,9 +65,9 @@ def test_what_missed_reports_no_interruption_for_healthy_pipeline(pipeline, tmp_
 
 
 def test_what_missed_reports_interrupted_step_with_zero_cycles(pipeline, tmp_path, capsys):
-    """what-missed names the step that never ran when status is in_progress."""
+    """what-missed names the step that never ran once in_progress has gone stale."""
     _write_state(tmp_path, {"status": "in_progress", "current_step": "develop",
-                            "cycle_counts": {"develop": 0}})
+                            "cycle_counts": {"develop": 0}, "last_updated": _stale()})
     pipeline.PipelineManager().what_missed(TICKET)
     out = capsys.readouterr().out
     assert "=== What Was Missed: PRO-407 ===" in out
@@ -101,9 +106,10 @@ def test_dry_run_resume_does_not_change_state(pipeline, tmp_path, capsys):
 
 
 def test_resume_without_force_refuses_interrupted_pipeline(pipeline, tmp_path, capsys):
-    """Without --force a interrupted pipeline is not resumed and state is unchanged."""
-    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 0}})
-    pipeline.PipelineManager().resume(TICKET, force=False)
+    """Without --force a stale in_progress pipeline is not resumed (exit 1, state unchanged)."""
+    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 0},
+                            "last_updated": _stale()})
+    assert pipeline.PipelineManager().resume(TICKET, force=False) == 1
     out = capsys.readouterr().out
     assert "needs to be reset or completed" in out
     assert "Pipeline resumed successfully" not in out
@@ -112,9 +118,10 @@ def test_resume_without_force_refuses_interrupted_pipeline(pipeline, tmp_path, c
 
 def test_resume_with_force_clears_interruption(pipeline, tmp_path, capsys):
     """resume --force must leave the pipeline no longer reported as interrupted."""
-    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 0}})
+    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 0},
+                            "last_updated": _stale()})
     mgr = pipeline.PipelineManager()
-    mgr.resume(TICKET, force=True)
+    assert mgr.resume(TICKET, force=True) == 0
     assert "Pipeline resumed successfully" in capsys.readouterr().out
     assert mgr._detect_interruption(TICKET) is None
     history = json.loads((tmp_path / "history.json").read_text(encoding="utf-8"))
@@ -172,3 +179,75 @@ def test_cli_show_state_alias_resolves(pipeline, tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["pipeline.py", "show", "state", TICKET])
     pipeline.main()
     assert "=== Pipeline State: PRO-407 ===" in capsys.readouterr().out
+
+
+def test_fresh_in_progress_pipeline_resumes_without_force(pipeline, tmp_path, capsys):
+    """A just-continued step is not interrupted: resume needs no --force and no banner shows."""
+    _write_state(tmp_path, {"status": "in_progress", "current_step": "develop",
+                            "cycle_counts": {"develop": 0}})
+    mgr = pipeline.PipelineManager()
+    assert mgr.resume(TICKET) == 0
+    out = capsys.readouterr().out
+    assert "interrupted" not in out
+    assert "Pipeline resumed successfully" in out
+    mgr.check_stuck(TICKET)
+    assert "CRITICAL" not in capsys.readouterr().out
+
+
+def test_check_stuck_fresh_step_is_not_stuck(pipeline, tmp_path, capsys):
+    """check-stuck uses the same rule: a fresh step with zero cycles is not stuck."""
+    _write_state(tmp_path, {"status": "in_progress", "current_step": "develop",
+                            "cycle_counts": {"develop": 0}})
+    pipeline.PipelineManager().check_stuck(TICKET)
+    out = capsys.readouterr().out
+    assert "No stuck pipelines detected" in out
+    assert "STUCK" not in out
+
+
+def test_interruption_threshold_uses_fake_clock(pipeline, tmp_path):
+    """The threshold is INTERRUPT_AFTER_HOURS, judged against an injected now."""
+    last = datetime(2026, 11, 10, 9, 0, tzinfo=timezone.utc)
+    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 0},
+                            "last_updated": last.isoformat()})
+    mgr = pipeline.PipelineManager()
+    limit = pipeline.INTERRUPT_AFTER_HOURS
+    assert mgr._detect_interruption(TICKET, now=last + timedelta(hours=limit - 1)) is None
+    interruption = mgr._detect_interruption(TICKET, now=last + timedelta(hours=limit + 1))
+    assert interruption is not None
+    assert interruption["reason"].startswith("in progress with no update")
+
+
+def test_interruption_threshold_is_configurable(pipeline, tmp_path, monkeypatch):
+    """INTERRUPT_AFTER_HOURS is a module constant; lowering it changes the verdict."""
+    last = datetime(2026, 11, 10, 9, 0, tzinfo=timezone.utc)
+    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 0},
+                            "last_updated": last.isoformat()})
+    monkeypatch.setattr(pipeline, "INTERRUPT_AFTER_HOURS", 1)
+    mgr = pipeline.PipelineManager()
+    assert mgr._detect_interruption(TICKET, now=last + timedelta(hours=2)) is not None
+
+
+def test_interrupt_marker_is_set_and_blocks_resume_until_forced(pipeline, tmp_path, capsys):
+    """interrupt marks a fresh pipeline; resume refuses (exit 1) until --force clears it."""
+    _write_state(tmp_path, {"status": "in_progress", "cycle_counts": {"develop": 1}})
+    mgr = pipeline.PipelineManager()
+    assert mgr.interrupt(TICKET, reason="session crashed") == 0
+    assert _read_state(tmp_path)["interrupted"] is True
+    assert mgr._detect_interruption(TICKET)["reason"] == "marked interrupted"
+    assert mgr.resume(TICKET) == 1
+    assert mgr.resume(TICKET, force=True) == 0
+    assert "interrupted" not in _read_state(tmp_path)
+    assert mgr._detect_interruption(TICKET) is None
+
+
+def test_continue_clears_interrupt_marker(pipeline, tmp_path, capsys):
+    """A successful continue moves past the marked step, so the marker is cleared."""
+    _write_state(tmp_path, {"status": "in_progress", "current_step": "plan",
+                            "cycle_counts": {"plan": 1}})
+    mgr = pipeline.PipelineManager()
+    mgr.interrupt(TICKET)
+    mgr.record_dor(TICKET, {f"D{i}": "pass" for i in range(1, 8)})
+    mgr.record_handoff(TICKET, "architect", "developer", "plan", "COMPLETED")
+    assert mgr.continue_step(TICKET) == 0
+    assert "interrupted" not in _read_state(tmp_path)
+    assert mgr._detect_interruption(TICKET) is None

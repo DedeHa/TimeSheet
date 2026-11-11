@@ -111,9 +111,9 @@ every item passes. Record the result in the plan's Part C.
 
 | # | DoR check | Pass condition |
 |---|-----------|----------------|
-| D1 | Story points | `customfield_10028` is set (Step 1e) |
+| D1 | Story points | `customfield_10028` is set (Step 1e). Cannot be waived. |
 | D2 | Acceptance criteria | At least one AC exists and each is testable (has a verifiable check) |
-| D3 | Definition of Done | DoD checklist present and contains no unfilled placeholders (`PR #NNN`, `N tests`, `FR-XX`) |
+| D3 | Definition of Done | DoD checklist present, and no unfilled placeholders (`PR #NNN`, `N tests`, `FR-XX`, `XX`) in the ACs or Steps. Closure items in the DoD (PR number, test count, JIRA transition, plan deletion) are checked at closure, not here. |
 | D4 | Stakeholder review | `refine-feature` completed, or PO confirmed the ticket is ready |
 | D5 | Scope | Non-goals / out-of-scope section present |
 | D6 | Drift | No unresolved drift signals from Step 1d |
@@ -126,7 +126,7 @@ Record the checklist and the gate in state, then check it:
 
 ```bash
 python .opencode/scripts/pipeline.py dor PRO-XXX --json '{"D1":"pass", ..., "D7":"pass"}'
-python .opencode/scripts/pipeline.py waive PRO-XXX D3 --reason "<why>" --by "<owner>"   # only if waived
+python .opencode/scripts/pipeline.py waive PRO-XXX D3 --reason "<why>" --by "<owner>"   # only if waived (never D1)
 python .opencode/scripts/pipeline.py dor PRO-XXX        # show the checklist and gate result
 ```
 

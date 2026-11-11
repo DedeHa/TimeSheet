@@ -168,6 +168,36 @@ def test_waiver_rejects_unknown_item(pipeline, tmp_path):
         pipeline.PipelineManager().waive(TICKET, "D9", reason="x", by="PO")
 
 
+def test_waiver_rejects_story_points(pipeline, tmp_path, monkeypatch, capsys):
+    """G: D1 (story points) is not waivable. The CLI exits 1 and writes nothing."""
+    with pytest.raises(ValueError, match="cannot be waived"):
+        pipeline.PipelineManager().waive(TICKET, "D1", reason="later", by="PO")
+    assert not (tmp_path / "state.json").exists()
+    monkeypatch.setattr(
+        sys, "argv", ["pipeline.py", "waive", TICKET, "D1", "--reason", "x", "--by", "PO"]
+    )
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == 1
+    assert "cannot be waived" in capsys.readouterr().out
+    assert not (tmp_path / "state.json").exists()
+
+
+def test_stored_d1_waiver_does_not_pass_the_gate(pipeline, tmp_path, capsys):
+    """G: a D1 waiver written before this rule is treated as missing, so develop is refused."""
+    mgr = pipeline.PipelineManager()
+    _completed_plan(mgr)
+    mgr.record_dor(TICKET, _all_pass())
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
+    state[TICKET]["dor"]["D1"] = "waived"
+    state[TICKET]["dor_waivers"] = {"D1": {"waiver_reason": "old", "waived_by": "PO"}}
+    (tmp_path / "state.json").write_text(json.dumps(state), encoding="utf-8")
+    capsys.readouterr()
+    assert pipeline.PipelineManager().continue_step(TICKET) == 1
+    assert "DoR gate not passed: D1" in capsys.readouterr().out
+    assert _entry(tmp_path)["current_step"] == "plan"
+
+
 def test_dor_record_pass_clears_earlier_waiver(pipeline, tmp_path, capsys):
     """Re-recording an item as pass removes its waiver record."""
     mgr = pipeline.PipelineManager()

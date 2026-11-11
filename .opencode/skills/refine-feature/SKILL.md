@@ -113,7 +113,7 @@ after that gate passes:
 |-----------|---------------------------|
 | D1 Story points | "Story Points assigned" item below |
 | D2 Acceptance criteria | Numbered, testable AC items |
-| D3 Definition of Done | DoD `- [ ]` checklist with no placeholders |
+| D3 Definition of Done | DoD `- [ ]` checklist; no placeholders in the ACs or Steps (closure items exempt until closure) |
 | D4 Stakeholder review | Multi-stakeholder review (Step 1) and common review (Step 2) completed |
 | D5 Scope | "Non-goals documented" item below |
 | D6 Drift | No unresolved drift signals from the `develop-feature` Step 1d drift check |

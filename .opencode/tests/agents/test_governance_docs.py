@@ -179,3 +179,32 @@ def test_readiness_review_skill_is_adversarial_and_lists_dor_items():
 def test_readiness_review_is_linked_from_dor_workflows(rel):
     """Ticket Step 3: develop-feature Step 1f and refine-feature reference the reviewer."""
     assert "readiness-review" in _read(rel)
+
+
+def _table_row(text: str, check: str) -> str:
+    """Return the markdown table row for one DoR item (for example '| D3 |')."""
+    for line in text.splitlines():
+        if line.startswith(f"| {check} "):
+            return line
+    raise AssertionError(f"no table row for {check}")
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [".opencode/skills/develop-feature/SKILL.md", ".opencode/skills/readiness-review/SKILL.md"],
+)
+def test_dor_d1_is_documented_as_not_waivable(rel):
+    """G: story points cannot be waived, in every place the DoR gate is described."""
+    row = _table_row(_read(rel), "D1").lower()
+    assert "cannot be waived" in row or "not waivable" in row, row
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [".opencode/skills/develop-feature/SKILL.md", ".opencode/skills/readiness-review/SKILL.md"],
+)
+def test_dor_d3_excludes_closure_placeholders(rel):
+    """G: D3 checks placeholders in the ACs and Steps; closure items are checked at closure."""
+    row = _table_row(_read(rel), "D3")
+    assert "ACs" in row and "Steps" in row, row
+    assert "closure" in row, row

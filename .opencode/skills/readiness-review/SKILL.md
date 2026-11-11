@@ -41,9 +41,11 @@ verdict.
 
 1. **State the claim.** Quote the pass condition from the table below.
 2. **Attack it.** Try to find a concrete reason the claim is false. Look for:
-   placeholders left in the text (`PR #NNN`, `N tests`, `FR-XX`), ACs that cannot be
-   observed by a test, DoD items that cannot be verified, non-goals that contradict an
-   AC, open questions still in the text, and drift between the ticket and the plan.
+   placeholders left in the ACs or Steps (`PR #NNN`, `N tests`, `FR-XX`), ACs that
+   cannot be observed by a test, DoD items that cannot be verified, non-goals that
+   contradict an AC, open questions still in the text, and drift between the ticket and
+   the plan. Closure items in the DoD (PR number, test count) are not placeholders for
+   D3; they are checked at closure.
 3. **Cite the evidence.** Each finding names the exact source (ticket field, plan
    section, file path, or line). A finding without a source does not count.
 4. **Verdict.** PASS only if no counter-evidence was found after step 2. Otherwise FAIL
@@ -51,9 +53,9 @@ verdict.
 
 | # | DoR item | Pass condition the reviewer tries to refute |
 |---|----------|---------------------------------------------|
-| D1 | Story points | The story points field is set and is a number (not empty, not 0) |
+| D1 | Story points | The story points field is set and is a number (not empty, not 0). Not waivable. |
 | D2 | Acceptance criteria | Each AC is numbered and has an observable check (a test, a command, or a measurable outcome) |
-| D3 | Definition of Done | The DoD is a `- [ ]` checklist with no unfilled placeholders (`PR #NNN`, `N tests`, `FR-XX`, `XX`) |
+| D3 | Definition of Done | The DoD is a `- [ ]` checklist, and no unfilled placeholders (`PR #NNN`, `N tests`, `FR-XX`, `XX`) remain in the ACs or Steps. Closure items in the DoD are exempt until closure. |
 | D4 | Stakeholder review | `refine-feature` ran, or the PO confirmed the ticket is ready (name the confirmation) |
 | D5 | Scope | A non-goals or out-of-scope section exists and does not contradict an AC |
 | D6 | Drift | No unresolved drift between the ticket, the plan, and the repository (`develop-feature` Step 1d) |
@@ -70,7 +72,7 @@ under a heading `## Readiness review (adversarial)`. Use this table:
 | # | Verdict | Counter-evidence attempted | Source | Smallest fix (FAIL only) |
 |---|---------|----------------------------|--------|--------------------------|
 | D1 | PASS | Searched for empty or zero story points | JIRA customfield_10028 = 8 | - |
-| D3 | FAIL | DoD contains `PR #NNN` placeholder | JIRA description, DoD list | Replace with the PR link at closure, or waive D3 with a reason |
+| D3 | FAIL | AC-2 still reads `FR-XX` | JIRA description, AC-2 | Replace `FR-XX` with the requirement ID, or waive D3 with a reason |
 ```
 
 Then record the gate with the CLI. The `dor` command accepts only `pass` and `fail`.
@@ -78,7 +80,7 @@ A waiver is recorded separately with `waive`, which needs a reason and an owner:
 
 ```bash
 python .opencode/scripts/pipeline.py dor PRO-XXX --json '{"D1":"pass","D2":"pass","D3":"fail", "D4":"pass","D5":"pass","D6":"pass","D7":"pass"}'
-python .opencode/scripts/pipeline.py waive PRO-XXX D3 --reason "PR link cannot exist before the PR" --by "PO"
+python .opencode/scripts/pipeline.py waive PRO-XXX D3 --reason "<why>" --by "PO"   # never D1
 ```
 
 Post the handoff to JIRA as usual (see `develop-feature` Step 1f):

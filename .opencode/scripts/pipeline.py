@@ -61,6 +61,8 @@ TRACKER_MALFORMED_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d\S*")
 
 HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
 DOR_IDS = ("D1", "D2", "D3", "D4", "D5", "D6", "D7")
+# Story points must be set before development: D1 cannot be waived (PRO-407, FR-23).
+NON_WAIVABLE_DOR_IDS = ("D1",)
 DOR_VALUES = ("pass", "fail")
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -502,9 +504,20 @@ class PipelineManager:
 
     @staticmethod
     def _dor_missing(entry: Dict[str, Any]) -> List[str]:
-        """Return the D1-D7 items that are neither pass nor waived (PRO-407, AC-3)."""
+        """Return the D1-D7 items that are neither pass nor a permitted waiver (PRO-407, AC-3).
+
+        A stored waiver of a non-waivable item (D1) does not count.
+        """
         checklist = entry.get("dor", {})
-        return [dor_id for dor_id in DOR_IDS if checklist.get(dor_id) not in ("pass", "waived")]
+        missing: List[str] = []
+        for dor_id in DOR_IDS:
+            value = checklist.get(dor_id)
+            if value == "pass":
+                continue
+            if value == "waived" and dor_id not in NON_WAIVABLE_DOR_IDS:
+                continue
+            missing.append(dor_id)
+        return missing
 
     def record_dor(self, ticket: str, values: Any) -> Dict[str, Any]:
         """Record pass or fail for D1-D7 items. Waivers go through waive().
@@ -541,9 +554,14 @@ class PipelineManager:
         return checklist
 
     def waive(self, ticket: str, dor_id: str, reason: str, by: str) -> None:
-        """Waive one DoR item. A non-empty reason and owner are required (PRO-407, AC-3)."""
+        """Waive one DoR item. A non-empty reason and owner are required (PRO-407, AC-3).
+
+        D1 (story points) cannot be waived. Set the story points instead.
+        """
         if dor_id not in DOR_IDS:
             raise ValueError(f"unknown DoR item {dor_id!r}; expected one of {', '.join(DOR_IDS)}")
+        if dor_id in NON_WAIVABLE_DOR_IDS:
+            raise ValueError(f"{dor_id} (story points) cannot be waived; set the story points instead")
         reason = (reason or "").strip()
         by = (by or "").strip()
         if not reason:

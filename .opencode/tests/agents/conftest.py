@@ -53,7 +53,8 @@ def pytest_sessionfinish(session, exitstatus):
     shutil.rmtree(SESSION_HOME, ignore_errors=True)
     if changed:
         sys.stderr.write(
-            "\nISOLATION FAILURE: agent tests modified the real home during this session:\n"
+            "\nISOLATION FAILURE: agent tests modified the real home "
+            "during this session:\n"
             + "".join(f"  - {path}\n" for path in changed)
             + "Tests must redirect STATE_PATH and HISTORY_PATH to tmp_path.\n"
         )

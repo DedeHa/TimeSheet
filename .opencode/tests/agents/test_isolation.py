@@ -1,4 +1,4 @@
-"""Checks that the agent suite runs under the isolated HOME (PRO-407, tester finding 1)."""
+"""Checks that the agent suite runs under the isolated HOME (PRO-407, finding 1)."""
 
 from __future__ import annotations
 

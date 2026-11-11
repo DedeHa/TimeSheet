@@ -105,16 +105,16 @@ application suite or the coverage gate.
 | `test_agent_outputs.py` | Output format | Required markdown sections for each agent's output template |
 | `test_skill_workflows.py` | Skill workflow | Phase execution order for orchestrate/plan/develop/complete/release skills |
 | `test_pipeline_flow.py` | Pipeline simulation | Full PO→Architect→Developer→Tester flow, cycle escalation, error propagation |
-| `test_pipeline_recovery.py` | Recovery commands (FR-22) | Interruption, stuck detection, dry-run, forced resume, history |
-| `test_pipeline_read_only.py` | Read-only guarantee (FR-22) | Every inspection command on an unknown ticket leaves the state and history files absent or byte-identical |
-| `test_pipeline_status.py` | State machine | CLI-set status, BLOCKED and COMPLETED transitions, derived interruption, blocked resume |
-| `test_handoff_gate.py` | Handoff gate | Status validation, `continue` refusal and acceptance, `--force` recorded as `forced_advance` |
-| `test_dor_gate.py` | DoR gate (AC-3) | `dor` and `waive` validation, develop gate pass, refuse, waiver, and force |
+| `test_pipeline_recovery.py` | Recovery commands (FR-22) | Interruption from the clock (fake `now`), the `interrupt` marker, stuck detection, dry-run, forced resume, history |
+| `test_pipeline_read_only.py` | Read-only guarantee (FR-22), fail-closed files | Every inspection command on an unknown ticket leaves the state and history files absent or byte-identical; corrupt state or history exits 1 with the bytes unchanged; atomic writes; no home directory created by reads |
+| `test_pipeline_status.py` | State machine | CLI-set status, BLOCKED kept by IN_PROGRESS and cleared by COMPLETED or a forced continue, interruption from the clock, blocked resume |
+| `test_handoff_gate.py` | Handoff gate | Status validation, `continue` refusal and acceptance, the latest-handoff rule with completed cycles (isolated from the zero-cycle rule), `--force` bypasses the handoff rule only and is recorded as `forced_advance` |
+| `test_dor_gate.py` | DoR gate (AC-3) | `dor` and `waive` validation, D1 not waivable, develop gate pass, refuse, waiver, and that `--force` never bypasses the gate |
 | `test_reconcile.py` | Reconciliation gate (AC-4) | Path-to-document mapping with an injected file list, and the git diff path in a temporary repository |
-| `test_work_item_ref.py` | Work item references | Parametrised classification table, invalid references, tracker in handoff history and comment |
+| `test_work_item_ref.py` | Work item references | Parametrised classification table, malformed tracker keys, one normaliser (`work_item_arg`) for every command, tracker in handoff history and comment |
 | `test_record_handoff.py` | Handoff recording (AC-6) | Handoff schema, rendered comment sections, `handoff` CLI |
 | `test_governance_docs.py` | Governance documents | DoR, reconciliation, handoff, decision records, readiness reviewer, traceability IDs |
-| `test_pipeline_integration.py` | Integration (`integration` marker) | set-mode, dor, continue, BLOCKED, resume, read-only commands, and exact history order, all on `tmp_path` |
+| `test_pipeline_integration.py` | Integration (`integration` marker) | set-mode, dor, continue, BLOCKED, resume, read-only commands, exact history order, and the exit-code contract (0, 1, 2), all on `tmp_path` |
 | `test_isolation.py` | Isolation | HOME is the session temp directory and pipeline paths resolve under it |
 | `conftest.py` | Isolation guard | Sets HOME before any import; at session end fails if the original home's pipeline files changed |
 

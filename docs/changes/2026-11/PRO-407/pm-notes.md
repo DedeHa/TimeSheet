@@ -14,26 +14,41 @@
 | 5 | **Scope (2026-11-11, user):** all features in ticket PRO-407 are in scope. The tracker-agnostic `workItemRef` (ticket Step 6) is implemented: `parse_work_item_ref` and the `handoff` command. This replaces the earlier decision to defer it. | plan B.4, B.6 gap 7 |
 | 6 | **Scope (2026-11-11, user):** the adversarial readiness reviewer (ticket Step 3) is implemented as the `readiness-review` skill. This replaces the earlier decision to defer it. | plan B.4, B.6 gap 3 |
 | 7 | The DoR waivers are recorded with `pipeline.py waive` (reason and owner required), not only in prose. | Section "DoR waivers" |
+| 8 | `continue --force` never overrides the DoR gate. It bypasses only the handoff rule (latest handoff COMPLETED and a completed cycle), records `forced_advance`, and clears a BLOCKED state. | plan B.8 item A, ARCHITECTURE, FR-23 |
+| 9 | Interruption is one rule: BLOCKED, an explicit `interrupt` marker, or an in_progress step with no update for 24 hours that has not been reported complete. A fresh `continue` is not interrupted. | plan B.8 item D, ARCHITECTURE, FR-22 |
+| 10 | A new `interrupt` command sets the marker. It is new CLI surface, added so the marker can be set. `resume` and a successful `continue` clear it. | plan B.8 item D |
+| 11 | D1 (story points) cannot be waived. D3 checks placeholders in the ACs and Steps only. DoD closure items (PR number, test count, JIRA transition, plan deletion) are checked at closure. | plan B.8 item G, FR-23 |
+| 12 | A corrupt state or history file fails closed: every command exits 1 and the file is left unchanged. | plan B.8 item B, ARCHITECTURE |
 
 ## DoR waivers
 
-The `develop-feature` Step 1f gate was run for this change. Two items are waived for
+The `develop-feature` Step 1f gate was run for this change. Two items were waived for
 PRO-407. The user, acting as Product Owner, gave the waiver in the automated run instruction.
-The waivers are recorded here, and the commands below record the same waivers in the
-pipeline state. They were not run against the shared state file during the
-implementation round, so the Product Owner runs them once before closure:
+The waivers are recorded here, and the commands below record the same checklist and
+waivers in the pipeline state. They were not run against the shared state file during the
+implementation rounds, so the Product Owner runs them once before closure.
+
+Read-only check (fix round, 2026-11-11): the shared state for PRO-407 holds no DoR
+checklist, no waivers, and `current_step` is `plan`. Nothing recorded here is in the
+state yet.
 
 ```bash
+python .opencode/scripts/pipeline.py dor PRO-407 --json '{"D1":"pass","D2":"pass","D3":"fail","D4":"fail","D5":"pass","D6":"pass","D7":"pass"}'
 python .opencode/scripts/pipeline.py waive PRO-407 D3 \
-  --reason "The DoD closure items (PR merged, JIRA transition, plan deletion) cannot be filled before the PR exists; they are tracked in plan C.4." \
+  --reason "The DoD closure items (PR merged, JIRA transition, plan deletion) cannot be filled before the PR exists; they are tracked in plan C.4. D3 is now checked against the ACs and Steps only." \
   --by "Product Owner (user)"
 python .opencode/scripts/pipeline.py waive PRO-407 D4 \
   --reason "The user reviewed the ticket in the intake and confirmation step (decisions 1-6) instead of a full refine-feature round. Architect, Developer and Tester review happened inside the pipeline." \
   --by "Product Owner (user)"
+python .opencode/scripts/pipeline.py dor PRO-407        # shows the checklist and the gate result
 ```
 
-- **D3 (Definition of Done has no unfilled placeholders): waived.** See the first command.
-- **D4 (Stakeholder review): waived.** See the second command.
+- **D3 (Definition of Done): waived, unless the re-check under the narrowed rule passes.**
+  Before running the commands, the PO checks the ACs and Steps for placeholders. If none
+  remain, record `"D3":"pass"` and skip the D3 waiver. Closure items are not a failure.
+- **D4 (Stakeholder review): waived.** See the second waiver command.
+- **D1 (Story points): not waived.** Story points are 8, so `"D1":"pass"`. A waiver is
+  refused by the tool.
 
 Other DoR checks (D1, D2, D5, D6, D7) pass. Story points are set to 8, the ACs are
 testable (plan C.3), non-goals are in plan B.4, and there are no open drift signals.
@@ -42,13 +57,13 @@ The adversarial review of D1-D7 is recorded in the section below.
 ## Readiness review (adversarial)
 
 Run with `.opencode/skills/readiness-review/SKILL.md` against the ticket text. The
-review tried to refute each item. Verdicts:
+review tried to refute each item. Verdicts (before the fix round):
 
 | # | Verdict | Counter-evidence attempted | Source | Smallest fix (FAIL only) |
 |---|---------|----------------------------|--------|--------------------------|
 | D1 | PASS | Story points field is empty or zero | JIRA PRO-407, Story Points: 8 (plan C.4) | - |
 | D2 | PASS | An AC without an observable check | Plan C.3 AC-1 to AC-6, each mapped to a V item | - |
-| D3 | FAIL (waived) | DoD contains `PR #NNN`, `N tests`, `FR-XX` | JIRA description, Definition of Done | Waived above, because the closure items cannot exist before the PR |
+| D3 | FAIL (waived) | DoD contains `PR #NNN`, `N tests`, `FR-XX` | JIRA description, Definition of Done | Waived above, because the closure items cannot exist before the PR. Re-check under the narrowed D3 rule (decision 11). |
 | D4 | FAIL (waived) | No `refine-feature` round and no written stakeholder sign-off | Intake and confirmation step (decisions 1-6) | Waived above |
 | D5 | PASS | Non-goals contradict an AC | JIRA Non-Goals, plan B.4 (now only multi-tool, autonomous loop, full 11-phase model, app code under `src/`) | - |
 | D6 | PASS | Unresolved drift between ticket, plan and repository | Drift from the ticket text: docs path (`doc/` to `docs/`, decision 1) and the two scope changes (decisions 5 and 6) are recorded | - |
@@ -56,8 +71,33 @@ review tried to refute each item. Verdicts:
 
 ## Open items for user confirmation (not done by the agent team)
 
+- **Waivers (before closure):** the PO runs the `dor` and `waive` commands in "DoR waivers" above, or accepts the waivers from this file. The state has no DoR record for PRO-407 yet. `continue` into develop is refused until the checklist is recorded (the gate is enforced in code).
 - Merge PR #138.
 - Transition PRO-407 to Fertig.
-- Run the two `waive` commands above against the shared pipeline state, or accept the waivers from this file.
 - Delete `docs/PRO-407_Implementation_Plan.md` after merge.
 - Delete remote branch `feature/PRO-407-agent-governance` after merge.
+
+## Accepted risks and follow-ups
+
+These findings from the independent reviews were not fixed in the fix round. They are accepted for PR #138 and each one becomes a follow-up JIRA ticket after the merge (proposed titles below). The Product Owner decides whether to create them. The finding names are the titles used in the fix-round brief. The full review text is not stored in the repository.
+
+| Finding | Risk | Proposed follow-up ticket title |
+|---------|------|---------------------------------|
+| architect #10 | The max-3 cycle limit is recorded (`max_cycles`) but not enforced by `continue` or `handoff`. | Enforce the max-3 cycle limit in `pipeline.py` continue and handoff |
+| architect #11 | The agent that set a BLOCK can clear it with its own COMPLETED handoff. | Require a Product Owner resolution to clear a BLOCKED handoff |
+| architect #12 | A reference that matches both the GitHub and the JIRA pattern (`GH-456`) is classified as GitHub. The precedence is implicit. | Define tracker precedence for references that match more than one pattern |
+| architect #16 | The reconcile messages say a living document is "updated". The check only looks for a change to the file in the diff. | Reword reconcile messages to say a living-document change is present in the diff |
+| architect #17 | `pipeline.py reconcile` is not wired into the CI pull-request check, and it only checks presence of a change. | Wire `pipeline.py reconcile` into the CI pull-request check |
+| architect #18 | The reconciliation approach differs from the ticket and is not recorded as a decision. | Record the reconciliation deviation as a decision in `docs/decisions/` |
+| tester #5 | Coverage of `.opencode/scripts` is not in the CI coverage gate (the gate covers `src` only). | Add `.opencode/scripts` to the coverage gate |
+| tester #9 | The governance documentation tests check text presence, not behaviour. | Replace text-presence governance checks with behavioural checks where practical |
+| tester #10 | There is no separate reconciliation skill; the step lives in `complete-feature` Step 4.5. | Decide whether documentation reconciliation needs its own skill |
+| tester #11 | The PRO-407 change folder has no `spec.md` pointer (QR-14 lists it as an artifact). | Add a `spec.md` pointer to the PRO-407 change folder |
+| tester #12 | `orchestrate-feature` can dispatch the Developer without calling the DoR gate first. | Make `orchestrate-feature` call the DoR gate before every Developer dispatch |
+
+Fixed in the fix round, so not follow-ups: architect #1 (DoR bypass), #3 (corrupt state),
+#4 (BLOCKED), #5 (interruption), #6 (step mismatch), #7 (ticket normalisation), #8 (D1 and
+D3), minor #8 (blank entries), minor #9 (`--base` validation), minor #13 (dor_gate
+reasons), minor #14 (atomic write), tester #1 (exit codes), #2 (latest-handoff
+isolation), #3 (interruption), #4 (home directory), #6 (tracker stubs), and tester #7
+(corrupt state, same fix as architect #3).

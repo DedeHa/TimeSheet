@@ -42,6 +42,9 @@ from typing import Any, Dict, List, Optional
 STATE_PATH = Path.home() / ".opencode" / "pipeline-state.json"
 HISTORY_PATH = Path.home() / ".opencode" / "pipeline-history.json"
 
+STEP_ORDER = ["plan", "develop", "complete"]
+HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
+
 
 class PipelineManager:
     """Enhanced pipeline management with resume/continue/proceed functionality."""
@@ -310,41 +313,73 @@ class PipelineManager:
         print(f"  Cycles: {entry.get('cycle_counts')}")
         print(f"  Status: {entry.get('status')}")
 
+    def _last_handoff(self, ticket: str) -> Optional[Dict[str, Any]]:
+        """Return the most recent handoff recorded in the current run, if any.
+
+        A pipeline_reset starts a new run, so handoffs before it are ignored.
+        """
+        for action in reversed(self.history.get(ticket, {}).get("actions", [])):
+            if action.get("action") == "pipeline_reset":
+                return None
+            if action.get("action") == "handoff":
+                return action.get("details", {})
+        return None
+
+    def _advance_blockers(self, ticket: str, entry: Dict[str, Any], next_step: str) -> List[str]:
+        """Return the reasons the current step cannot advance to next_step (empty if none)."""
+        current_step = entry.get("current_step")
+        reasons: List[str] = []
+        current_cycles = entry.get("cycle_counts", {}).get(current_step, 0)
+        if current_cycles == 0:
+            reasons.append(f"{current_step} has 0 completed cycles")
+        last = self._last_handoff(ticket)
+        if last is None:
+            reasons.append("no handoff recorded for this run")
+        elif str(last.get("status", "")).upper() != "COMPLETED":
+            reasons.append(f"last handoff status is {last.get('status')}, not COMPLETED")
+        return reasons
+
     def continue_step(self, ticket: str, force: bool = False) -> None:
-        """Advance pipeline to the next step."""
+        """Advance pipeline to the next step.
+
+        Refused unless the most recent handoff is COMPLETED and the current step has a
+        completed cycle. --force bypasses the refusals and records forced_advance.
+        """
         entry = self._get_entry(ticket)
         current_step = entry.get("current_step")
-        
+
         print(f"=== Continuing Pipeline: {ticket} ===\n")
-        
-        # Check if we can advance
-        step_order = ["plan", "develop", "complete"]
-        current_index = step_order.index(current_step) if current_step in step_order else -1
-        
+
+        current_index = STEP_ORDER.index(current_step) if current_step in STEP_ORDER else -1
+
         if current_index < 0:
             print(f"   ❌ Cannot continue from step: {current_step}")
             return
-        
-        if current_index >= len(step_order) - 1:
+
+        if current_index >= len(STEP_ORDER) - 1:
             print(f"   ⚠️  Already at final step: {current_step}")
             return
-        
-        next_step = step_order[current_index + 1]
-        
-        # Validate we can advance
-        if not force:
-            cycle_counts = entry.get("cycle_counts", {})
-            current_cycles = cycle_counts.get(current_step, 0)
-            
-            if current_cycles == 0:
-                print(f"   ❌ Cannot continue from {current_step} - has 0 cycles")
-                print(f"   ⚠️  Must complete {current_step} step before continuing")
-                print(f"   Use 'what-missed' to see what was lost in this step")
-                return
-        
+
+        next_step = STEP_ORDER[current_index + 1]
+
+        blockers = self._advance_blockers(ticket, entry, next_step)
+        if blockers and not force:
+            print(f"   ❌ Cannot continue from {current_step} to {next_step}:")
+            for reason in blockers:
+                print(f"   - {reason}")
+            print(f"   ⚠️  Complete the step with a COMPLETED handoff before continuing")
+            print(f"   Use 'what-missed' to see what was lost in this step")
+            return
+
         print(f"Advancing from {current_step} to {next_step}")
-        
-        # Update state
+
+        if blockers:
+            self._record_history(ticket, "forced_advance", {
+                "from": current_step,
+                "to": next_step,
+                "bypassed": blockers,
+            })
+
         entry["current_step"] = next_step
         entry["status"] = "in_progress"
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
@@ -354,7 +389,7 @@ class PipelineManager:
             "to": next_step,
             "state": entry
         })
-        
+
         print(f"   ✓ Pipeline advanced to: {next_step}")
 
     def dry_run(self, ticket: str, action: str, params: Optional[Dict] = None) -> None:
@@ -532,6 +567,11 @@ class PipelineManager:
         missing = [name for name, value in (("from", from_agent), ("to", to_agent), ("status", status)) if not value]
         if missing:
             raise ValueError(f"handoff requires non-empty fields: {', '.join(missing)}")
+        status = str(status).strip().upper()
+        if status not in HANDOFF_STATUSES:
+            raise ValueError(
+                f"handoff status must be one of {', '.join(HANDOFF_STATUSES)}, got {status!r}"
+            )
 
         entry = self._get_entry(ticket)
         handoff = {

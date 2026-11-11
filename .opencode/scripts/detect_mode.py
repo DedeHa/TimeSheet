@@ -20,13 +20,34 @@ See pipeline.py --help for all available commands.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from types import ModuleType
 
 STATE_PATH = Path.home() / ".opencode" / "pipeline-state.json"
+
+# The state file is shared with pipeline.py, so the fail-closed reader and the atomic
+# writer live there. pipeline.py sits next to this file and is loaded by path, so the
+# script works from any working directory (PRO-407, F1).
+_PIPELINE_PATH = Path(__file__).resolve().parent / "pipeline.py"
+
+
+def _load_pipeline() -> ModuleType:
+    """Load pipeline.py from this script's directory and return the module."""
+    spec = importlib.util.spec_from_file_location("pipeline_shared", _PIPELINE_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {_PIPELINE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_pipeline = _load_pipeline()
+StateFileError = _pipeline.StateFileError
 
 # Conversational phrases that indicate the user wants no pauses during development.
 AUTOMATED_PATTERNS = (
@@ -74,25 +95,20 @@ AUTOMATED_HINTS = (
 
 
 def _load_state() -> dict:
-    """Load the pipeline state file, creating it if missing."""
-    if not STATE_PATH.exists():
-        STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        return {}
-    try:
-        with STATE_PATH.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        return data if isinstance(data, dict) else {}
-    except (json.JSONDecodeError, OSError):
-        return {}
+    """Return the pipeline state file, or {} when it does not exist.
+
+    Reads never create the directory. Raises StateFileError for corrupt content, so the
+    caller exits 1 and the file stays byte-identical.
+    """
+    return _pipeline._read_json_object(STATE_PATH)
 
 
 def _save_state(state: dict) -> None:
-    """Persist the pipeline state file atomically."""
-    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = STATE_PATH.with_suffix(".json.tmp")
-    with tmp.open("w", encoding="utf-8") as fh:
-        json.dump(state, fh, indent=2, sort_keys=True)
-    tmp.replace(STATE_PATH)
+    """Persist the pipeline state file through pipeline.py's atomic writer.
+
+    The directory is created here, on write only.
+    """
+    _pipeline._write_json_atomic(STATE_PATH, state)
 
 
 def detect_mode(message: str) -> dict:
@@ -164,6 +180,7 @@ def main() -> int:
     Parses ``sys.argv`` for a ticket key and an optional chat message.
     With ``--show`` reads the persisted mode; otherwise writes the
     detected mode to the pipeline state file and prints the result.
+    A corrupt state file is reported on stderr and exits 1 without modification.
     """
     parser = argparse.ArgumentParser(description="Detect and persist pipeline mode")
     parser.add_argument("ticket", help="JIRA ticket key, e.g. PRO-373")
@@ -176,16 +193,20 @@ def main() -> int:
     parser.add_argument("--show", action="store_true", help="Show persisted mode")
     args = parser.parse_args()
 
-    if args.show:
-        print(get_mode(args.ticket))
-        return 0
+    try:
+        if args.show:
+            print(get_mode(args.ticket))
+            return 0
 
-    result = detect_mode(args.message)
-    if result["mode"] is None:
-        print(f"No mode detected; current mode: {get_mode(args.ticket)}")
-        return 0
+        result = detect_mode(args.message)
+        if result["mode"] is None:
+            print(f"No mode detected; current mode: {get_mode(args.ticket)}")
+            return 0
 
-    entry = set_mode(args.ticket, result["mode"])
+        entry = set_mode(args.ticket, result["mode"])
+    except StateFileError as exc:
+        print(f"❌ {exc}", file=sys.stderr)
+        return 1
     print(format_mode_result(result))
     print(json.dumps(entry, indent=2))
     return 0

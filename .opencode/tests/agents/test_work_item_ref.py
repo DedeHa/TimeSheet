@@ -41,8 +41,9 @@ def pipeline(tmp_path, monkeypatch):
         ("GH-456", "github", "GH-456"),
         ("owner/repo#456", "github", "owner/repo#456"),
         ("my-org.name/my_repo#7", "github", "my-org.name/my_repo#7"),
-        ("pro-123", "generic", "pro-123"),
         ("FEAT-login", "generic", "FEAT-login"),
+        ("feat-login", "generic", "feat-login"),
+        ("my-feature-2", "generic", "my-feature-2"),
         ("task_42", "generic", "task_42"),
         ("A-1", "generic", "A-1"),
         ("  PRO-5  ", "jira", "PRO-5"),
@@ -68,6 +69,10 @@ def test_parse_work_item_ref_classifies_each_tracker(pipeline, ref, tracker, key
         "GH-",
         "ABC-",
         "PRO-12a",
+        "pro-12",
+        "pro-407",
+        "abc-9",
+        "p2-12",
         None,
         42,
     ],
@@ -148,6 +153,17 @@ def test_every_command_rejects_an_invalid_reference(pipeline, tmp_path, monkeypa
         pipeline.main()
     assert exc.value.code == 2
     assert "invalid work item reference" in capsys.readouterr().err
+    assert not (tmp_path / "state.json").exists()
+    assert not (tmp_path / "history.json").exists()
+
+
+def test_continue_rejects_lowercase_jira_key_without_state(pipeline, tmp_path, monkeypatch, capsys):
+    """B1: `continue pro-407` is a usage error (exit 2) and creates no state or history."""
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "continue", "pro-407"])
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == 2
+    assert "lowercase" in capsys.readouterr().err
     assert not (tmp_path / "state.json").exists()
     assert not (tmp_path / "history.json").exists()
 

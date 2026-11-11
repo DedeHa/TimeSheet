@@ -68,6 +68,9 @@ GENERIC_REF_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
 # (PRO-12a) is a malformed key, not a generic identifier.
 TRACKER_STUB_PATTERN = re.compile(r"[A-Z][A-Z0-9]*-")
 TRACKER_MALFORMED_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d\S*")
+# A lowercase JIRA-shaped reference (pro-12) is rejected, not accepted as generic: JIRA
+# keys are uppercase, so a lowercase key with a number is almost always a typo (PRO-407, B1).
+LOWERCASE_KEY_PATTERN = re.compile(r"[a-z][a-z0-9]*-\d+")
 
 HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
 DOR_IDS = ("D1", "D2", "D3", "D4", "D5", "D6", "D7")
@@ -127,6 +130,7 @@ def parse_work_item_ref(ref: str) -> Dict[str, str]:
     - jira: an uppercase project key and a number, e.g. PRO-123 or ABC-9
     - github: GH-456 or owner/repo#456
     - generic: any other identifier that starts with a letter, e.g. feat-login
+      A lowercase key with a number (pro-12) is malformed, not generic.
 
     Surrounding whitespace is ignored. Raises ValueError for empty, non-string, or
     malformed references.
@@ -142,6 +146,11 @@ def parse_work_item_ref(ref: str) -> Dict[str, str]:
         return {"tracker": "jira", "key": value}
     if TRACKER_STUB_PATTERN.fullmatch(value) or TRACKER_MALFORMED_PATTERN.fullmatch(value):
         raise ValueError(f"invalid work item reference: {ref!r} looks like a tracker key but has no valid number")
+    if LOWERCASE_KEY_PATTERN.fullmatch(value):
+        raise ValueError(
+            f"invalid work item reference: {ref!r} looks like a JIRA key but is lowercase; "
+            "use the uppercase project key (for example PRO-12)"
+        )
     if GENERIC_REF_PATTERN.fullmatch(value):
         return {"tracker": "generic", "key": value}
     raise ValueError(f"invalid work item reference: {ref!r}")

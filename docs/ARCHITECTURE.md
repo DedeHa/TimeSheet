@@ -154,7 +154,10 @@ rendered comment (`Work item: <ref> (tracker: <tracker>)`).
 
 Empty, numeric-only, and malformed references are rejected before any state or history
 is written. A bare tracker prefix (`PRO-`, `GH-`) or a number with trailing characters
-(`PRO-12a`) is malformed, not generic. Every command that takes a ticket normalises it
+(`PRO-12a`) is malformed, not generic. A lowercase key with a number (`pro-12`, `pro-407`) matches
+the JIRA shape with the wrong case, so it is rejected as malformed (exit 2) and is never
+accepted as generic: JIRA keys are uppercase. Generic identifiers without a trailing
+number (`feat-login`) remain valid. Every command that takes a ticket normalises it
 in one place (`work_item_arg`, an argparse type): surrounding whitespace is stripped and
 the value is validated with `parse_work_item_ref`. An invalid reference is a usage error
 (exit 2) for every command.

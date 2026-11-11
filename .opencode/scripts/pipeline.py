@@ -855,7 +855,8 @@ class PipelineManager:
 
         BLOCKED blocks the pipeline and raises the escalation level. COMPLETED clears
         the block and counts one completed cycle for the current step. IN_PROGRESS
-        marks the step in progress.
+        marks the step in progress, but it does not clear a block: a blocked pipeline
+        stays blocked until a COMPLETED handoff or a forced continue or resume.
         """
         status = str(handoff["status"]).upper()
         step = entry.get("current_step")
@@ -869,7 +870,7 @@ class PipelineManager:
                 entry["status"] = "in_progress"
             cycle_counts = entry.setdefault("cycle_counts", {})
             cycle_counts[step] = cycle_counts.get(step, 0) + 1
-        elif status == "IN_PROGRESS":
+        elif status == "IN_PROGRESS" and not entry.get("blocked"):
             entry["status"] = "in_progress"
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()

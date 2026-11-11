@@ -2,7 +2,8 @@
 
 The CLI sets the pipeline status: `continue` moves a step to in_progress, a
 BLOCKED handoff blocks the pipeline and raises the escalation level, and a
-COMPLETED handoff clears the block and counts a completed cycle for the step.
+COMPLETED handoff clears the block and counts a completed cycle for the step. An
+IN_PROGRESS handoff does not clear a block (PRO-407, architect finding 4).
 Interruption is derived in one place: in_progress with no completed cycle.
 STATE_PATH and HISTORY_PATH are redirected to tmp_path.
 """
@@ -103,14 +104,59 @@ def test_completed_handoff_clears_block_and_counts_cycle(pipeline, tmp_path):
     assert entry["escalation_level"] == 1  # escalation history is kept
 
 
-def test_in_progress_handoff_sets_status_without_clearing_block(pipeline, tmp_path):
-    """IN_PROGRESS sets status in_progress and leaves the block flag alone."""
+def test_in_progress_handoff_does_not_clear_block(pipeline, tmp_path):
+    """IN_PROGRESS after BLOCKED keeps the block (PRO-407, finding architect #4).
+
+    The earlier rule set status in_progress and left blocked True, so show state could
+    report a pipeline that was in progress while its flag still said blocked. The new
+    rule: a later IN_PROGRESS does not silently clear BLOCKED. The block stays until a
+    COMPLETED handoff, a forced continue, or a forced resume.
+    """
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "BLOCKED")
     _handoff(mgr, "IN_PROGRESS")
     entry = _entry(tmp_path)
-    assert entry["status"] == "in_progress"
+    assert entry["status"] == "blocked"
     assert entry["blocked"] is True
+
+
+def test_forced_continue_after_blocked_clears_block_and_records_reason(
+    pipeline, tmp_path, capsys
+):
+    """continue --force after BLOCKED clears blocked and records why (finding architect #4).
+
+    The forced_advance action names the bypassed BLOCKED handoff and cleared_block True,
+    and show state no longer reports the pipeline as BLOCKED.
+    """
+    mgr = pipeline.PipelineManager()
+    _handoff(mgr, "BLOCKED", step="plan")
+    _pass_dor(mgr)
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET, force=True) == 0
+    entry = _entry(tmp_path)
+    assert entry["current_step"] == "develop"
+    assert entry["blocked"] is False
+    assert entry["status"] == "in_progress"
+    history = json.loads((tmp_path / "history.json").read_text(encoding="utf-8"))
+    forced = [a for a in history[TICKET]["actions"] if a["action"] == "forced_advance"]
+    assert forced[-1]["details"]["cleared_block"] is True
+    assert any("BLOCKED" in reason for reason in forced[-1]["details"]["bypassed"])
+    capsys.readouterr()
+    mgr.show_state(TICKET)
+    out = capsys.readouterr().out
+    assert "PIPELINE BLOCKED" not in out
+    assert "Blocked: False" in out
+
+
+def test_refused_continue_keeps_block(pipeline, tmp_path, capsys):
+    """A refused continue after BLOCKED does not clear the block."""
+    mgr = pipeline.PipelineManager()
+    _handoff(mgr, "BLOCKED", step="plan")
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET) == 1
+    entry = _entry(tmp_path)
+    assert entry["blocked"] is True
+    assert entry["current_step"] == "plan"
 
 
 def test_interrupted_detected_for_in_progress_step_without_completion(

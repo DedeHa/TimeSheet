@@ -34,10 +34,11 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 STATE_PATH = Path.home() / ".opencode" / "pipeline-state.json"
 HISTORY_PATH = Path.home() / ".opencode" / "pipeline-history.json"
@@ -46,6 +47,60 @@ STEP_ORDER = ["plan", "develop", "complete"]
 HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
 DOR_IDS = ("D1", "D2", "D3", "D4", "D5", "D6", "D7")
 DOR_VALUES = ("pass", "fail")
+ROOT = Path(__file__).resolve().parents[2]
+
+# Changed area -> (path prefixes, living documents that must move with it).
+# Mirrors the table in complete-feature Step 4.5 (PRO-407, AC-4).
+RECONCILE_RULES: Tuple[Tuple[Tuple[str, ...], str, Tuple[str, ...]], ...] = (
+    (("src/",), "application code (src/)",
+     ("docs/ARCHITECTURE.md", "docs/REQUIREMENTS.md")),
+    (("tests/", ".opencode/tests/"), "tests",
+     ("docs/TESTING.md",)),
+    ((".opencode/scripts/", ".opencode/skills/", ".opencode/agents/"),
+     "agent team (.opencode scripts, skills, agents)",
+     ("AGENTS.md", "docs/CONTRIBUTING.md")),
+)
+
+
+def changed_files(base: str, cwd: Optional[Path] = None) -> List[str]:
+    """Return the files changed on HEAD relative to base (git diff --name-only base...HEAD).
+
+    Raises RuntimeError when git is missing, the directory is not a repository, or the
+    base ref does not exist, so callers can report the problem instead of crashing.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", f"{base}...HEAD"],
+            cwd=str(cwd or ROOT),
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise RuntimeError(str(exc)) from exc
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or f"git diff exited {result.returncode}")
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def _normalise_path(path: str) -> str:
+    """Use forward slashes and drop a leading ./ so prefixes match."""
+    cleaned = path.replace("\\", "/")
+    while cleaned.startswith("./"):
+        cleaned = cleaned[2:]
+    return cleaned
+
+
+def find_reconciliation_gaps(changed: Iterable[str]) -> List[Tuple[str, Tuple[str, ...]]]:
+    """Return (area label, required documents) for each changed area with no living-doc change."""
+    paths = {_normalise_path(path) for path in changed if path}
+    gaps: List[Tuple[str, Tuple[str, ...]]] = []
+    for prefixes, label, documents in RECONCILE_RULES:
+        touched = any(path.startswith(prefix) for path in paths for prefix in prefixes)
+        if touched and not any(document in paths for document in documents):
+            gaps.append((label, documents))
+    return gaps
 
 
 class PipelineManager:
@@ -392,6 +447,39 @@ class PipelineManager:
             print(line)
         missing = self._dor_missing(entry)
         print(f"\nGate: {'passed' if not missing else 'not passed (' + ', '.join(missing) + ')'}")
+
+    def reconcile(
+        self, ticket: str, base: str = "master", changed: Optional[Sequence[str]] = None
+    ) -> int:
+        """Check that every changed area has its living document in the diff (FR-24).
+
+        Returns 0 when reconciled and 1 when a gap exists or the diff cannot be read.
+        Reads only; no state or history is written.
+        """
+        print(f"=== Documentation Reconciliation: {ticket} ===\n")
+        if changed is None:
+            try:
+                files = changed_files(base)
+            except RuntimeError as exc:
+                print(f"❌ Cannot read the diff against {base}: {exc}")
+                print("   Pass --changed PATH (repeatable) to supply the changed files.")
+                return 1
+        else:
+            files = list(changed)
+
+        if not files:
+            print(f"No changed files against {base}; nothing to reconcile.")
+            return 0
+
+        gaps = find_reconciliation_gaps(files)
+        if not gaps:
+            print(f"✅ Documentation reconciled for {len(files)} changed file(s).")
+            return 0
+
+        print(f"❌ {len(gaps)} changed area(s) have no living-document change in the diff:")
+        for label, documents in gaps:
+            print(f"   - {label}: update one of {', '.join(documents)}")
+        return 1
 
     def _last_handoff(self, ticket: str) -> Optional[Dict[str, Any]]:
         """Return the most recent handoff recorded in the current run, if any.
@@ -878,6 +966,19 @@ def main():
         )
     )
 
+    reconcile_parser = subparsers.add_parser(
+        "reconcile", help="Check that changed areas have their living documents updated"
+    )
+    reconcile_parser.add_argument("ticket", help="JIRA ticket key")
+    reconcile_parser.add_argument("--base", default="master", help="Base ref (default: master)")
+    reconcile_parser.add_argument(
+        "--changed", action="append", default=None,
+        help="Changed path (repeatable). Skips the git diff when given.",
+    )
+    reconcile_parser.set_defaults(
+        func=lambda args: manager.reconcile(args.ticket, args.base, args.changed)
+    )
+
     # Parse and execute
     args = parser.parse_args(clean_args)
     if not hasattr(args, 'func'):
@@ -885,7 +986,9 @@ def main():
         return
 
     try:
-        args.func(args)
+        exit_code = args.func(args)
+        if isinstance(exit_code, int) and exit_code:
+            sys.exit(exit_code)
     except Exception as e:
         print(f"❌ Error: {e}")
         sys.exit(1)

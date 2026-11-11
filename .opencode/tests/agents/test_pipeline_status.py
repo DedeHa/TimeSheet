@@ -246,7 +246,7 @@ def test_cli_handoff_blocked_then_completed_round_trip(
         "--to",
         "tester",
         "--step",
-        "develop",
+        "plan",
     ]
     monkeypatch.setattr(
         sys, "argv", [*base, "--status", "BLOCKED", "--issue", "tests fail"]

@@ -301,7 +301,7 @@ JIRA comment with `atlassian_addCommentToJiraIssue` (contentFormat `markdown`):
 
 ```bash
 python .opencode/scripts/pipeline.py handoff PRO-XXX \
-  --from developer --to tester --step implementation --status COMPLETED \
+  --from developer --to tester --step develop --status COMPLETED \
   --artifact docs/PRO-XXX_Implementation_Plan.md --accomplishment "..." --next-step "..." --cycle N
 ```
 

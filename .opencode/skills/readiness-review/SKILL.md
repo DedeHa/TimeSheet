@@ -85,7 +85,7 @@ Post the handoff to JIRA as usual (see `develop-feature` Step 1f):
 
 ```bash
 python .opencode/scripts/pipeline.py handoff PRO-XXX --from developer --to product-owner \
-  --step readiness-review --status COMPLETED --artifact docs/changes/YYYY-MM/PRO-XXX/pm-notes.md
+  --step plan --status COMPLETED --artifact docs/changes/YYYY-MM/PRO-XXX/pm-notes.md
 ```
 
 Use `--status BLOCKED` when a FAIL cannot be fixed inside the ticket.

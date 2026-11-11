@@ -879,6 +879,10 @@ class PipelineManager:
         The ticket may be any work item reference (JIRA, GitHub, or generic). The
         script has no tracker client. The caller posts the returned markdown
         through the Atlassian MCP (atlassian_addCommentToJiraIssue).
+
+        `step` must equal the pipeline's current step (PRO-407, architect finding 7). An
+        empty step means the current step. A mismatch raises ValueError before any state
+        or history is written.
         """
         missing = [name for name, value in (("from", from_agent), ("to", to_agent), ("status", status)) if not value]
         if missing:
@@ -890,6 +894,14 @@ class PipelineManager:
             )
         work_item = parse_work_item_ref(ticket)
         ticket = work_item["key"]
+
+        current_step = self._peek_entry(ticket).get("current_step")
+        step = str(step or "").strip() or current_step
+        if step != current_step:
+            raise ValueError(
+                f"handoff step {step!r} must equal the current step {current_step!r}; "
+                "record the handoff for the current step, or continue the pipeline first"
+            )
 
         entry = self._get_entry(ticket)
         handoff = {
@@ -1088,7 +1100,10 @@ def main():
     )
     handoff_parser.add_argument("--from", dest="from_agent", required=True, help="Sending agent")
     handoff_parser.add_argument("--to", dest="to_agent", required=True, help="Receiving agent")
-    handoff_parser.add_argument("--step", default="", help="Pipeline step name")
+    handoff_parser.add_argument(
+        "--step", default="",
+        help="Pipeline step, must equal the current step (plan, develop, complete). Default: current step.",
+    )
     handoff_parser.add_argument("--status", required=True, help="Work status, e.g. COMPLETED or BLOCKED")
     handoff_parser.add_argument("--artifact", action="append", default=[], help="Artifact path (repeatable)")
     handoff_parser.add_argument("--accomplishment", action="append", default=[], help="Accomplishment (repeatable)")

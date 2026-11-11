@@ -428,7 +428,7 @@ and every escalation is recorded and posted as a JIRA comment:
 
 ```bash
 python .opencode/scripts/pipeline.py handoff PRO-XXX \
-  --from architect --to developer --step implementation-planning \
+  --from architect --to developer --step plan \
   --status COMPLETED \
   --artifact docs/PRO-XXX_Implementation_Plan.md \
   --accomplishment "Architecture decided" \

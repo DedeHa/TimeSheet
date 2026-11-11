@@ -153,7 +153,12 @@ rendered comment (`Work item: <ref> (tracker: <tracker>)`).
 | `generic` | Any other identifier that starts with a letter (letters, digits, `_`, `-`) | `feat-login`, `task_42` | The identifier as written |
 
 Empty, numeric-only, and malformed references are rejected with a ValueError before any
-state or history is written. Other pipeline commands still take plain ticket strings;
+state or history is written.
+
+The handoff `--step` must equal the pipeline's current step (`plan`, `develop`, or
+`complete`). An empty step means the current step. A mismatch exits 1 before any state
+or history is written, so a handoff cannot be recorded against a step the pipeline is not
+in. Other pipeline commands still take plain ticket strings;
 only `handoff` validates the reference.
 
 Design choices:

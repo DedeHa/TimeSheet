@@ -362,7 +362,7 @@ JIRA comment with `atlassian_addCommentToJiraIssue` (contentFormat `markdown`):
 
 ```bash
 python .opencode/scripts/pipeline.py handoff PRO-XXX \
-  --from tester --to product-owner --step validation --status COMPLETED \
+  --from tester --to product-owner --step complete --status COMPLETED \
   --artifact docs/changes/YYYY-MM/PRO-XXX/test-plan.md --accomplishment "..." --next-step "..." --cycle N
 ```
 

@@ -77,7 +77,7 @@ def test_parse_work_item_ref_rejects_invalid_references(pipeline, ref):
 def test_handoff_accepts_github_reference_and_records_tracker(pipeline, tmp_path):
     """A GitHub issue reference is a valid handoff target and is recorded as github."""
     handoff = pipeline.PipelineManager().record_handoff(
-        "owner/repo#456", "developer", "tester", "implementation", "COMPLETED"
+        "owner/repo#456", "developer", "tester", "plan", "COMPLETED"
     )
     assert handoff["ticket"] == "owner/repo#456"
     assert handoff["tracker"] == "github"
@@ -89,7 +89,7 @@ def test_handoff_rejects_invalid_reference_without_writing(pipeline, tmp_path):
     """An invalid reference is rejected before any state or history is written."""
     with pytest.raises(ValueError):
         pipeline.PipelineManager().record_handoff(
-            "not a ref", "developer", "tester", "implementation", "COMPLETED"
+            "not a ref", "developer", "tester", "plan", "COMPLETED"
         )
     assert not (tmp_path / "state.json").exists()
     assert not (tmp_path / "history.json").exists()
@@ -98,7 +98,7 @@ def test_handoff_rejects_invalid_reference_without_writing(pipeline, tmp_path):
 def test_rendered_comment_names_the_tracker(pipeline, tmp_path):
     """The JIRA-style comment states which tracker the work item belongs to."""
     handoff = pipeline.PipelineManager().record_handoff(
-        "GH-456", "developer", "tester", "implementation", "COMPLETED"
+        "GH-456", "developer", "tester", "plan", "COMPLETED"
     )
     body = pipeline.PipelineManager.render_handoff_comment(handoff)
     assert "Work item: GH-456 (tracker: github)" in body

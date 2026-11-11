@@ -333,7 +333,7 @@ recorded with `pipeline.py handoff` and posted as a JIRA comment:
 
 ```bash
 python .opencode/scripts/pipeline.py handoff PRO-XXX --from developer --to tester \
-  --step implementation --status COMPLETED --artifact docs/changes/YYYY-MM/PRO-XXX/plan.md \
+  --step develop --status COMPLETED --artifact docs/changes/YYYY-MM/PRO-XXX/plan.md \
   --accomplishment "..." --next-step "..." --cycle 1
 ```
 

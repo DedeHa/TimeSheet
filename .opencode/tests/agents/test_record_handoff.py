@@ -33,7 +33,7 @@ def test_record_handoff_appends_history_with_full_schema(pipeline, tmp_path):
         "PRO-407",
         from_agent="architect",
         to_agent="developer",
-        step="implementation-planning",
+        step="plan",
         status="COMPLETED",
         artifacts=["docs/PRO-407_Implementation_Plan.md"],
         accomplishments=["Plan drafted"],
@@ -59,7 +59,7 @@ def test_record_handoff_uses_persisted_mode_when_not_given(pipeline):
     """Mode defaults to the persisted development_mode."""
     mgr = _manager(pipeline)
     mgr.set_mode("PRO-407", "automated")
-    handoff = mgr.record_handoff("PRO-407", "tester", "po", "testing", "COMPLETED")
+    handoff = mgr.record_handoff("PRO-407", "tester", "po", "plan", "COMPLETED")
     assert handoff["mode"] == "automated"
 
 
@@ -114,13 +114,57 @@ def test_handoff_cli_writes_history_and_prints_comment(pipeline, tmp_path, monke
     monkeypatch.setattr(
         "sys.argv",
         ["pipeline.py", "handoff", "PRO-407", "--from", "developer", "--to", "tester",
-         "--step", "implementation", "--status", "COMPLETED",
+         "--step", "plan", "--status", "COMPLETED",
          "--artifact", "docs/PRO-407_Implementation_Plan.md",
          "--next-step", "Run tests", "--cycle", "2"],
     )
     pipeline.main()
     out = capsys.readouterr().out
-    assert "Handoff: developer → tester (Step: implementation)" in out
+    assert "Handoff: developer → tester (Step: plan)" in out
     assert "Cycle: 2/3" in out
     history = json.loads((tmp_path / "history.json").read_text(encoding="utf-8"))
     assert any(a["action"] == "handoff" for a in history["PRO-407"]["actions"])
+
+
+def test_handoff_step_must_equal_current_step(pipeline, tmp_path):
+    """E: a handoff for a step other than the current one is refused, nothing is written."""
+    mgr = _manager(pipeline)
+    mgr.set_mode("PRO-407", "automated")
+    before = (tmp_path / "state.json").read_bytes(), (tmp_path / "history.json").read_bytes()
+    with pytest.raises(ValueError, match="must equal the current step 'plan'"):
+        mgr.record_handoff("PRO-407", "developer", "tester", "develop", "COMPLETED")
+    assert (tmp_path / "state.json").read_bytes() == before[0]
+    assert (tmp_path / "history.json").read_bytes() == before[1]
+
+
+def test_handoff_step_mismatch_on_unknown_ticket_creates_nothing(pipeline, tmp_path):
+    """E: a mismatched handoff on a ticket with no state creates no state or history."""
+    with pytest.raises(ValueError):
+        _manager(pipeline).record_handoff("PRO-999", "developer", "tester", "complete", "COMPLETED")
+    assert not (tmp_path / "state.json").exists()
+    assert not (tmp_path / "history.json").exists()
+
+
+def test_handoff_without_step_uses_current_step(pipeline, tmp_path):
+    """E: an omitted step is the current step, so the handoff is recorded for it."""
+    handoff = _manager(pipeline).record_handoff("PRO-407", "architect", "developer", "", "COMPLETED")
+    assert handoff["step"] == "plan"
+
+
+def test_cli_handoff_step_mismatch_exits_one_and_keeps_files(
+    pipeline, tmp_path, monkeypatch, capsys
+):
+    """E + H: the CLI reports the mismatch, exits 1, and leaves the existing files unchanged."""
+    _manager(pipeline).set_mode("PRO-407", "automated")
+    before = (tmp_path / "state.json").read_bytes(), (tmp_path / "history.json").read_bytes()
+    monkeypatch.setattr(
+        "sys.argv",
+        ["pipeline.py", "handoff", "PRO-407", "--from", "developer", "--to", "tester",
+         "--step", "develop", "--status", "COMPLETED"],
+    )
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == 1
+    assert "must equal the current step" in capsys.readouterr().out
+    assert (tmp_path / "state.json").read_bytes() == before[0]
+    assert (tmp_path / "history.json").read_bytes() == before[1]

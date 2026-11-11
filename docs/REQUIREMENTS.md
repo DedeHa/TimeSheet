@@ -371,7 +371,7 @@ Before a feature is closed, the complete-feature workflow shall reconcile living
 
 ## FR-25 Agent Handoff Recording
 
-Every agent handoff (Product Owner to Architect, Architect to Developer, Developer to Tester, Tester to Product Owner) and every escalation shall be recorded in the pipeline history with its sender, receiver, step, status, artifacts, accomplishments, issues, next steps, mode, and cycle, and shall be rendered as a JIRA comment that the agent posts to the ticket.
+Every agent handoff (Product Owner to Architect, Architect to Developer, Developer to Tester, Tester to Product Owner) and every escalation shall be recorded in the pipeline history with its sender, receiver, step, status, artifacts, accomplishments, issues, next steps, mode, and cycle, and shall be rendered as a comment that the agent posts to the work item. The work item may be a JIRA key, a GitHub reference, or a generic identifier, and the tracker shall be recorded with the handoff.
 
 ## QR-14 Artifact-First Change Layout
 

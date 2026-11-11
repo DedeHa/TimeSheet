@@ -139,6 +139,22 @@ application code under `src/` is not affected.
 | Recovery and handoff state | `what-missed`, `check-stuck`, `dry-run`, `resume`, `history`; `handoff` records the transition and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
 | Artifact-first change layout | Per-ticket spec, plan, test plan, and PM notes | `docs/changes/YYYY-MM/PRO-XXX/` (QR-14) |
 
+### Work item references (PRO-407, FR-25)
+
+`pipeline.py handoff` accepts any work item reference and classifies it with
+`parse_work_item_ref`. The tracker is stored in the handoff history and named in the
+rendered comment (`Work item: <ref> (tracker: <tracker>)`).
+
+| Tracker | Accepted form | Examples | Key stored |
+|---------|---------------|----------|------------|
+| `jira` | Uppercase project key, a dash, and a number | `PRO-407`, `ABC-9` | The key as written |
+| `github` | `GH-<number>` or `owner/repo#<number>` | `GH-456`, `acme/timesheet#12` | The reference as written |
+| `generic` | Any other identifier that starts with a letter (letters, digits, `_`, `-`) | `feat-login`, `task_42` | The identifier as written |
+
+Empty, numeric-only, and malformed references are rejected with a ValueError before any
+state or history is written. Other pipeline commands still take plain ticket strings;
+only `handoff` validates the reference.
+
 Design choices:
 
 - The script has no JIRA client. `pipeline.py handoff` records the handoff in the

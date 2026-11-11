@@ -363,7 +363,7 @@ The agent pipeline state tool shall provide recovery commands for interrupted or
 
 ## FR-23 Definition of Ready Gate
 
-The Developer agent shall not create a feature branch or write code until the Definition of Ready gate in `develop-feature` (checks D1 to D7) passes. The orchestrator shall dispatch to the Developer only after the gate passes, and `refine-feature` shall produce the inputs for checks D1 to D7. The gate shall be enforced by `pipeline.py continue` into the develop step, which refuses unless every item is `pass` or `waived`; a waiver shall require a reason and an owner. `--force` does not override this gate: it bypasses only the handoff rule (the latest handoff is COMPLETED and the current step has a completed cycle), and every forced advance is recorded. An adversarial reviewer shall try to refute each item before the gate is recorded.
+The Developer agent shall not create a feature branch or write code until the Definition of Ready gate in `develop-feature` (checks D1 to D7) passes. The orchestrator shall dispatch to the Developer only after the gate passes, and `refine-feature` shall produce the inputs for checks D1 to D7. The gate shall be enforced by `pipeline.py continue` into the develop step, which refuses unless every item is `pass` or `waived` (D1 excepted: story points cannot be waived); a waiver shall require a reason and an owner. `--force` does not override this gate: it bypasses only the handoff rule (the latest handoff is COMPLETED and the current step has a completed cycle), and every forced advance is recorded. An adversarial reviewer shall try to refute each item before the gate is recorded.
 
 ## FR-24 Documentation Reconciliation Before Closure
 

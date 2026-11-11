@@ -44,6 +44,10 @@ STATE_PATH = Path.home() / ".opencode" / "pipeline-state.json"
 HISTORY_PATH = Path.home() / ".opencode" / "pipeline-history.json"
 
 STEP_ORDER = ["plan", "develop", "complete"]
+JIRA_REF_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d+")
+GITHUB_ISSUE_PATTERN = re.compile(r"(?:GH-\d+|[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#\d+)")
+GENERIC_REF_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
+
 HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
 DOR_IDS = ("D1", "D2", "D3", "D4", "D5", "D6", "D7")
 DOR_VALUES = ("pass", "fail")
@@ -82,6 +86,30 @@ def changed_files(base: str, cwd: Optional[Path] = None) -> List[str]:
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or f"git diff exited {result.returncode}")
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def parse_work_item_ref(ref: str) -> Dict[str, str]:
+    """Classify a work item reference as jira, github, or generic (PRO-407, Step 6).
+
+    - jira: an uppercase project key and a number, e.g. PRO-123 or ABC-9
+    - github: GH-456 or owner/repo#456
+    - generic: any other identifier that starts with a letter, e.g. feat-login
+
+    Surrounding whitespace is ignored. Raises ValueError for empty, non-string, or
+    malformed references.
+    """
+    if not isinstance(ref, str):
+        raise ValueError("work item reference must be a string")
+    value = ref.strip()
+    if not value:
+        raise ValueError("work item reference must not be empty")
+    if GITHUB_ISSUE_PATTERN.fullmatch(value):
+        return {"tracker": "github", "key": value}
+    if JIRA_REF_PATTERN.fullmatch(value):
+        return {"tracker": "jira", "key": value}
+    if GENERIC_REF_PATTERN.fullmatch(value):
+        return {"tracker": "generic", "key": value}
+    raise ValueError(f"invalid work item reference: {ref!r}")
 
 
 def _normalise_path(path: str) -> str:
@@ -742,7 +770,8 @@ class PipelineManager:
     ) -> Dict[str, Any]:
         """Record a handoff in pipeline history and return its JIRA comment body.
 
-        The script has no JIRA client. The caller posts the returned markdown
+        The ticket may be any work item reference (JIRA, GitHub, or generic). The
+        script has no tracker client. The caller posts the returned markdown
         through the Atlassian MCP (atlassian_addCommentToJiraIssue).
         """
         missing = [name for name, value in (("from", from_agent), ("to", to_agent), ("status", status)) if not value]
@@ -753,10 +782,13 @@ class PipelineManager:
             raise ValueError(
                 f"handoff status must be one of {', '.join(HANDOFF_STATUSES)}, got {status!r}"
             )
+        work_item = parse_work_item_ref(ticket)
+        ticket = work_item["key"]
 
         entry = self._get_entry(ticket)
         handoff = {
             "ticket": ticket,
+            "tracker": work_item["tracker"],
             "from": from_agent,
             "to": to_agent,
             "step": step,
@@ -827,6 +859,8 @@ class PipelineManager:
             *bullets(handoff["next_steps"], "* None"),
             "",
             f"Metadata: Mode: {handoff['mode']} | {cycle_part}",
+            f"Work item: {handoff.get('ticket', 'n/a')} "
+            f"(tracker: {handoff.get('tracker', 'jira')})",
         ]
         return "\n".join(lines)
 
@@ -933,7 +967,11 @@ def main():
     )
 
     handoff_parser = subparsers.add_parser("handoff", help="Record an agent handoff and print its JIRA comment")
-    handoff_parser.add_argument("ticket", help="JIRA ticket key")
+    handoff_parser.add_argument(
+        "ticket",
+        help="Work item reference: JIRA key (PRO-123), GitHub (GH-456, owner/repo#456), "
+        "or generic id",
+    )
     handoff_parser.add_argument("--from", dest="from_agent", required=True, help="Sending agent")
     handoff_parser.add_argument("--to", dest="to_agent", required=True, help="Receiving agent")
     handoff_parser.add_argument("--step", default="", help="Pipeline step name")

@@ -119,6 +119,20 @@ every item passes. Record the result in the plan's Part C.
 | D6 | Drift | No unresolved drift signals from Step 1d |
 | D7 | Decisions | Open decisions recorded in the ticket or plan Part A are resolved |
 
+Run the adversarial reviewer in `readiness-review` before recording the gate. It tries
+to refute each item and writes PASS or FAIL per item to the ticket's pm-notes.
+
+Record the checklist and the gate in state, then check it:
+
+```bash
+python .opencode/scripts/pipeline.py dor PRO-XXX --json '{"D1":"pass", ..., "D7":"pass"}'
+python .opencode/scripts/pipeline.py waive PRO-XXX D3 --reason "<why>" --by "<owner>"   # only if waived
+python .opencode/scripts/pipeline.py dor PRO-XXX        # show the checklist and gate result
+```
+
+`pipeline.py continue` into the develop step refuses unless every item is `pass` or
+waived, and records a `dor_gate` action. `--force` bypasses the gate and is recorded.
+
 If any check fails: stop, post a handoff with `Status: BLOCKED` (see
 `pipeline.py handoff`), and escalate to the Product Owner. Do not create the
 branch in Step 3 until the gate passes.

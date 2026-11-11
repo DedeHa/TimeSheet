@@ -119,6 +119,10 @@ after that gate passes:
 | D6 Drift | No unresolved drift signals from the `develop-feature` Step 1d drift check |
 | D7 Decisions | Open decisions recorded in the ticket or plan Part A |
 
+Before finalizing, run the adversarial reviewer in `readiness-review`. It tries to
+refute D1-D7 against the ticket text and records PASS or FAIL per item in pm-notes.
+Fix every FAIL in the ticket (with PO confirmation) or ask for a waiver.
+
 
 **Common to Stories and Bugs:**
 - [ ] Intention / use-case clearly defined (stories) or Problem Statement clearly defined (bugs)

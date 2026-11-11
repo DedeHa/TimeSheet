@@ -157,3 +157,25 @@ def test_architect_and_developer_write_change_artifacts(rel):
     text = _read(rel)
     assert "docs/changes/YYYY-MM/PRO-XXX/" in text
     assert "Change Artifacts (PRO-407, AC-5)" in text
+
+
+READINESS_REVIEW = ".opencode/skills/readiness-review/SKILL.md"
+
+
+def test_readiness_review_skill_is_adversarial_and_lists_dor_items():
+    """Ticket Step 3: the readiness reviewer is adversarial and covers D1-D7 with verdicts."""
+    text = _read(READINESS_REVIEW)
+    assert "adversarial" in text.lower()
+    for check in ("D1", "D2", "D3", "D4", "D5", "D6", "D7"):
+        assert f"| {check} |" in text, f"{check} missing from readiness review"
+    assert "PASS" in text and "FAIL" in text
+    assert "pm-notes" in text
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [".opencode/skills/develop-feature/SKILL.md", ".opencode/skills/refine-feature/SKILL.md"],
+)
+def test_readiness_review_is_linked_from_dor_workflows(rel):
+    """Ticket Step 3: develop-feature Step 1f and refine-feature reference the reviewer."""
+    assert "readiness-review" in _read(rel)

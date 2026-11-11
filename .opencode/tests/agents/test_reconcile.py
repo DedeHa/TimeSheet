@@ -195,3 +195,24 @@ def test_reconcile_cli_reports_missing_git_without_changed(
     out = capsys.readouterr().out
     assert "Cannot read the diff" in out
     assert "--changed" in out
+
+
+@pytest.mark.parametrize("base", ["-x", "--output=/tmp/x", "master;rm", "a b", "", "-"])
+def test_reconcile_rejects_unsafe_base_ref(pipeline, tmp_path, monkeypatch, capsys, base):
+    """J (architect 9): a base that is not a safe ref name, or starts with '-', exits 1.
+
+    git is never run with it: the diff reader is replaced by a function that fails.
+    """
+
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("git must not be called with an unsafe base")
+
+    monkeypatch.setattr(pipeline, "changed_files", must_not_run)
+    assert pipeline.PipelineManager().reconcile(TICKET, base=base) == 1
+    assert "invalid base ref" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("base", ["master", "origin/master", "HEAD~2", "v1.2.3", "feature/PRO-407-x"])
+def test_validate_base_ref_accepts_normal_refs(pipeline, base):
+    """J (architect 9): ordinary branch, tag, and relative refs stay valid."""
+    assert pipeline.validate_base_ref(base) == base

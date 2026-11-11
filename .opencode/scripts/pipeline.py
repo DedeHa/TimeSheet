@@ -59,6 +59,9 @@ STEP_ORDER = ["plan", "develop", "complete"]
 INTERRUPT_AFTER_HOURS = 24
 JIRA_REF_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d+")
 GITHUB_ISSUE_PATTERN = re.compile(r"(?:GH-\d+|[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#\d+)")
+# A git base ref for `reconcile --base`. It may not start with "-", so it can never be
+# read as a git option (PRO-407, architect finding 9).
+BASE_REF_PATTERN = re.compile(r"(?!-)[A-Za-z0-9._/~^@{}-]+")
 GENERIC_REF_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
 # A tracker-style prefix with no number (PRO-, GH-) or a number with junk after it
 # (PRO-12a) is a malformed key, not a generic identifier.
@@ -83,6 +86,16 @@ RECONCILE_RULES: Tuple[Tuple[Tuple[str, ...], str, Tuple[str, ...]], ...] = (
      "agent team (.opencode scripts, skills, agents)",
      ("AGENTS.md", "docs/CONTRIBUTING.md")),
 )
+
+
+def validate_base_ref(base: str) -> str:
+    """Return base when it is a safe git ref name, else raise ValueError."""
+    if not isinstance(base, str) or not BASE_REF_PATTERN.fullmatch(base):
+        raise ValueError(
+            f"invalid base ref {base!r}: use letters, digits and ._/~^@{{}}- only, "
+            "and do not start with '-'"
+        )
+    return base
 
 
 def changed_files(base: str, cwd: Optional[Path] = None) -> List[str]:
@@ -611,6 +624,11 @@ class PipelineManager:
         Reads only; no state or history is written.
         """
         print(f"=== Documentation Reconciliation: {ticket} ===\n")
+        try:
+            validate_base_ref(base)
+        except ValueError as exc:
+            print(f"❌ {exc}")
+            return 1
         if changed is None:
             try:
                 files = changed_files(base)

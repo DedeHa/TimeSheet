@@ -135,7 +135,7 @@ application code under `src/` is not affected.
 | Component | Responsibility | Where |
 |-----------|----------------|-------|
 | Decision records | Durable ADR/PDR/TDR/BDR/ODR records, one decision per file | `docs/decisions/` (FR-21) |
-| Definition of Ready gate | Checks D1-D7 before branch creation, with an adversarial review; `pipeline.py continue` into develop refuses unless every item is pass or waived | `develop-feature` Step 1f and `readiness-review` skill; `pipeline.py dor`, `waive` (FR-23) |
+| Definition of Ready gate | Checks D1-D7 before branch creation, with an adversarial review; `pipeline.py continue` into develop refuses unless every item is pass or waived, and `--force` does not override it | `develop-feature` Step 1f and `readiness-review` skill; `pipeline.py dor`, `waive` (FR-23) |
 | Documentation reconciliation gate | Maps changed paths to the living documents that must move with them | `pipeline.py reconcile` (FR-24) |
 | Recovery and handoff state | Read-only `show`, `what-missed`, `check-stuck`, `dry-run`, `history`; CLI-owned status; `handoff` validates status and tracker, records the transition, and renders the JIRA comment | `pipeline.py` (FR-22, FR-25) |
 | Artifact-first change layout | Per-ticket spec, plan, test plan, and PM notes | `docs/changes/YYYY-MM/PRO-XXX/` (QR-14) |
@@ -160,8 +160,9 @@ Design choices:
 
 - The script has no JIRA client. `pipeline.py handoff` records the handoff in the
   local pipeline history and prints the comment. The agent posts that comment to JIRA.
-- Interruption is derived from state (`status == in_progress` with zero cycles). A
-  forced resume moves the status to `resumed` so the interruption is cleared.
+- The DoR gate is not bypassed by `continue --force`. `--force` bypasses only the
+  handoff rule (latest handoff COMPLETED and a completed cycle for the current step),
+  records `forced_advance` with the bypassed reasons, and clears a BLOCKED state.
 - Documentation reconciliation (`complete-feature` Step 4.5) runs before closure, so
   decisions and living docs stay current when the working plan is deleted.
 

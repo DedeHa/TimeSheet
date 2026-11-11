@@ -17,7 +17,7 @@ Usage:
 Commands:
     show state <ticket>              Show current pipeline state (read-only)
     resume <ticket>                   Resume pipeline at current step (--force clears a block)
-    continue <ticket>                 Continue to next pipeline step (--force bypasses gates)
+    continue <ticket>                 Continue to next pipeline step (--force bypasses the handoff rule, never the DoR gate)
     proceed <ticket>                  Proceed with current step execution
     what-missed <ticket>              Show what work was missed in interrupted pipeline (read-only)
     dry-run <ticket> <command>        Preview action without executing (read-only)
@@ -525,8 +525,11 @@ class PipelineManager:
                 return action.get("details", {})
         return None
 
-    def _advance_blockers(self, ticket: str, entry: Dict[str, Any], next_step: str) -> List[str]:
-        """Return the reasons the current step cannot advance to next_step (empty if none)."""
+    def _handoff_blockers(self, ticket: str, entry: Dict[str, Any]) -> List[str]:
+        """Return the handoff-rule reasons the current step cannot advance (empty if none).
+
+        These are the only reasons `--force` may bypass (PRO-407, FR-23).
+        """
         current_step = entry.get("current_step")
         reasons: List[str] = []
         current_cycles = entry.get("cycle_counts", {}).get(current_step, 0)
@@ -537,17 +540,24 @@ class PipelineManager:
             reasons.append("no handoff recorded for this run")
         elif str(last.get("status", "")).upper() != "COMPLETED":
             reasons.append(f"last handoff status is {last.get('status')}, not COMPLETED")
-        if next_step == "develop":
-            missing = self._dor_missing(entry)
-            if missing:
-                reasons.append(f"DoR gate not passed: {', '.join(missing)}")
         return reasons
 
-    def continue_step(self, ticket: str, force: bool = False) -> None:
-        """Advance pipeline to the next step.
+    def _dor_blockers(self, entry: Dict[str, Any]) -> List[str]:
+        """Return the DoR reasons the develop step cannot start (empty if the gate passes).
 
-        Refused unless the most recent handoff is COMPLETED and the current step has a
-        completed cycle. --force bypasses the refusals and records forced_advance.
+        The DoR gate is never bypassed by --force (PRO-407, FR-23).
+        """
+        missing = self._dor_missing(entry)
+        return [f"DoR gate not passed: {', '.join(missing)}"] if missing else []
+
+    def continue_step(self, ticket: str, force: bool = False) -> int:
+        """Advance pipeline to the next step. Returns 0 when advanced, 1 when refused.
+
+        Two rules apply. The DoR gate (entering develop) always applies: every D1-D7
+        item must be pass or waived, and --force does not override it. The handoff rule
+        (the latest handoff is COMPLETED and the current step has a completed cycle) can
+        be bypassed with --force, which records forced_advance and clears a BLOCKED
+        state.
         """
         entry = self._get_entry(ticket)
         current_step = entry.get("current_step")
@@ -558,43 +568,59 @@ class PipelineManager:
 
         if current_index < 0:
             print(f"   ❌ Cannot continue from step: {current_step}")
-            return
+            return 1
 
         if current_index >= len(STEP_ORDER) - 1:
             print(f"   ⚠️  Already at final step: {current_step}")
-            return
+            return 1
 
         next_step = STEP_ORDER[current_index + 1]
 
-        blockers = self._advance_blockers(ticket, entry, next_step)
+        handoff_reasons = self._handoff_blockers(ticket, entry)
+        dor_reasons = self._dor_blockers(entry) if next_step == "develop" else []
+        reasons = dor_reasons + handoff_reasons
+
         if next_step == "develop":
-            missing = self._dor_missing(entry)
-            result = "passed" if not missing else ("forced" if force else "refused")
+            if dor_reasons or (handoff_reasons and not force):
+                result = "refused"
+            elif handoff_reasons:
+                result = "forced"
+            else:
+                result = "passed"
             self._record_history(ticket, "dor_gate", {
                 "from": current_step,
                 "to": next_step,
                 "result": result,
-                "missing": missing,
+                "missing": self._dor_missing(entry),
+                "reasons": reasons,
             })
-        if blockers and not force:
+
+        if dor_reasons or (handoff_reasons and not force):
             print(f"   ❌ Cannot continue from {current_step} to {next_step}:")
-            for reason in blockers:
+            for reason in reasons:
                 print(f"   - {reason}")
-            print(f"   ⚠️  Complete the step with a COMPLETED handoff before continuing")
-            print(f"   Use 'what-missed' to see what was lost in this step")
-            return
+            if dor_reasons:
+                print(f"   ⚠️  --force does not override the DoR gate. Record pass or a waiver:")
+                print(f"   python .opencode/scripts/pipeline.py dor {ticket} --json '...'")
+                print(f"   python .opencode/scripts/pipeline.py waive {ticket} <DOR_ID> --reason ... --by ...")
+            else:
+                print(f"   ⚠️  Complete the step with a COMPLETED handoff before continuing")
+                print(f"   Use 'what-missed' to see what was lost in this step")
+            return 1
 
         print(f"Advancing from {current_step} to {next_step}")
 
-        if blockers:
+        if handoff_reasons:
             self._record_history(ticket, "forced_advance", {
                 "from": current_step,
                 "to": next_step,
-                "bypassed": blockers,
+                "bypassed": handoff_reasons,
+                "cleared_block": bool(entry.get("blocked")),
             })
 
         entry["current_step"] = next_step
         entry["status"] = "in_progress"
+        entry["blocked"] = False
         entry["last_updated"] = datetime.now(timezone.utc).isoformat()
         self._save_state()
         self._record_history(ticket, "step_advance", {
@@ -604,6 +630,7 @@ class PipelineManager:
         })
 
         print(f"   ✓ Pipeline advanced to: {next_step}")
+        return 0
 
     def dry_run(self, ticket: str, action: str, params: Optional[Dict] = None) -> None:
         """Preview pipeline action without executing."""

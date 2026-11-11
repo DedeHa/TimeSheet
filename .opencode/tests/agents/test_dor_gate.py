@@ -1,9 +1,9 @@
 """Definition of Ready gate enforced in code (PRO-407, AC-3; FR-23).
 
 `dor` records the D1-D7 checklist (pass or fail). `waive` records a waiver for one
-item and requires a non-empty reason and waiver owner. `continue` into the develop
-step refuses unless every D1-D7 item is pass or waived; each gate decision is
-recorded as a dor_gate history action. --force bypasses the gate and records it.
+item and requires a non-empty reason and waiver owner (D1 cannot be waived). `continue`
+into the develop step refuses unless every D1-D7 item is pass or waived; each gate
+decision is recorded as a dor_gate history action. --force never overrides this gate.
 STATE_PATH and HISTORY_PATH are redirected to tmp_path.
 """
 
@@ -178,18 +178,47 @@ def test_dor_record_pass_clears_earlier_waiver(pipeline, tmp_path, capsys):
     assert "D3" not in entry.get("dor_waivers", {})
 
 
-def test_force_bypasses_dor_gate_and_records_forced(pipeline, tmp_path, capsys):
-    """--force advances past a failing DoR gate and records forced in both places."""
+def test_force_does_not_bypass_dor_gate(pipeline, tmp_path, capsys):
+    """--force never overrides the DoR gate: a failing item refuses (exit 1) and nothing moves.
+
+    The handoff rule is satisfied here (COMPLETED plan), so only the DoR gate can refuse.
+    """
     mgr = pipeline.PipelineManager()
     _completed_plan(mgr)
     mgr.record_dor(TICKET, {**_all_pass(), "D2": "fail"})
-    mgr.continue_step(TICKET, force=True)
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET, force=True) == 1
+    out = capsys.readouterr().out
+    assert "DoR gate not passed: D2" in out
+    assert "--force does not override the DoR gate" in out
+    assert _entry(tmp_path)["current_step"] == "plan"
+    assert _gate_results(tmp_path) == ["refused"]
+    assert "forced_advance" not in [a["action"] for a in _actions(tmp_path)]
+
+
+def test_force_does_not_bypass_missing_dor_checklist(pipeline, tmp_path, capsys):
+    """--force with no DoR record at all still refuses; the bypass is not a DoR bypass."""
+    mgr = pipeline.PipelineManager()
+    _completed_plan(mgr)
+    assert mgr.continue_step(TICKET, force=True) == 1
+    assert _entry(tmp_path)["current_step"] == "plan"
+    assert _gate_results(tmp_path) == ["refused"]
+
+
+def test_force_with_recorded_waiver_allows_advance(pipeline, tmp_path, capsys):
+    """A recorded waiver satisfies the DoR gate, so --force only has the handoff rule to bypass.
+
+    No COMPLETED handoff is recorded, so the forced advance is recorded with its reasons.
+    """
+    mgr = pipeline.PipelineManager()
+    mgr.record_dor(TICKET, {**_all_pass(), "D2": "fail"})
+    mgr.waive(TICKET, "D2", reason="AC wording agreed with PO", by="PO")
+    capsys.readouterr()
+    assert mgr.continue_step(TICKET, force=True) == 0
     assert _entry(tmp_path)["current_step"] == "develop"
     assert _gate_results(tmp_path) == ["forced"]
     forced = [a for a in _actions(tmp_path) if a["action"] == "forced_advance"]
-    assert forced and any(
-        "D2" in reason for reason in forced[-1]["details"]["bypassed"]
-    )
+    assert forced and any("handoff" in reason for reason in forced[-1]["details"]["bypassed"])
 
 
 def test_dor_not_required_for_complete_step(pipeline, tmp_path, capsys):

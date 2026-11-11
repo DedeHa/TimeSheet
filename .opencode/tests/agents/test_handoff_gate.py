@@ -1,7 +1,8 @@
 """Handoffs feed the state machine (PRO-407, AC-2 and AC-6).
 
 `continue` advances only when the most recent handoff for the ticket is COMPLETED.
-`--force` bypasses the gate and records a `forced_advance` history action. Handoff
+`--force` bypasses this handoff rule only (never the DoR gate) and records a
+`forced_advance` history action. Handoff
 status is validated against COMPLETED, BLOCKED, and IN_PROGRESS.
 STATE_PATH and HISTORY_PATH are redirected to tmp_path.
 """
@@ -152,8 +153,9 @@ def test_force_advance_bypasses_gate_and_records_forced_advance(
     """--force advances past a refused gate and records what was bypassed."""
     mgr = pipeline.PipelineManager()
     _handoff(mgr, "BLOCKED", step="plan")
+    _pass_dor(mgr)
     capsys.readouterr()
-    mgr.continue_step(TICKET, force=True)
+    assert mgr.continue_step(TICKET, force=True) == 0
     assert _step(tmp_path) == "develop"
     forced = [a for a in _history_actions(tmp_path) if a["action"] == "forced_advance"]
     assert len(forced) == 1
@@ -176,7 +178,9 @@ def test_cli_continue_refuses_then_accepts(pipeline, tmp_path, monkeypatch, caps
     import sys
 
     monkeypatch.setattr(sys, "argv", ["pipeline.py", "continue", TICKET])
-    pipeline.main()
+    with pytest.raises(SystemExit) as refused:
+        pipeline.main()
+    assert refused.value.code == 1
     assert "Cannot continue" in capsys.readouterr().out
     _handoff(pipeline.PipelineManager(), "COMPLETED", step="plan")
     _pass_dor(pipeline.PipelineManager())

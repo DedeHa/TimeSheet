@@ -131,7 +131,9 @@ python .opencode/scripts/pipeline.py dor PRO-XXX        # show the checklist and
 ```
 
 `pipeline.py continue` into the develop step refuses unless every item is `pass` or
-waived, and records a `dor_gate` action. `--force` bypasses the gate and is recorded.
+waived, and records a `dor_gate` action. `--force` does not override the DoR gate. It
+bypasses only the handoff rule (latest handoff COMPLETED, completed cycle), and that
+bypass is recorded as `forced_advance`.
 
 If any check fails: stop, post a handoff with `Status: BLOCKED` (see
 `pipeline.py handoff`), and escalate to the Product Owner. Do not create the

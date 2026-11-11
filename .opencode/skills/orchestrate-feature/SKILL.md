@@ -258,7 +258,7 @@ python .opencode/scripts/pipeline.py <command> <ticket> [options]
 | `resume PRO-373` | Resume pipeline at the current step (clears interruption flag) |
 | `resume PRO-373 --force` | Force resume without validation |
 | `continue PRO-373` | Advance to the next pipeline step |
-| `continue PRO-373 --force` | Force advance without validation |
+| `continue PRO-373 --force` | Force past the handoff rule only; the DoR gate still applies |
 | `proceed PRO-373` | Proceed with current step execution |
 | `proceed PRO-373 --force` | Force proceed without validation |
 

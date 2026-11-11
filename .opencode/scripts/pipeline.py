@@ -637,7 +637,8 @@ class PipelineManager:
                 print("   Pass --changed PATH (repeatable) to supply the changed files.")
                 return 1
         else:
-            files = list(changed)
+            # Blank entries (for example --changed "") are not changed files.
+            files = [entry.strip() for entry in changed if entry and entry.strip()]
 
         if not files:
             print(f"No changed files against {base}; nothing to reconcile.")

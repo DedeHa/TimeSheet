@@ -216,3 +216,16 @@ def test_reconcile_rejects_unsafe_base_ref(pipeline, tmp_path, monkeypatch, caps
 def test_validate_base_ref_accepts_normal_refs(pipeline, base):
     """J (architect 9): ordinary branch, tag, and relative refs stay valid."""
     assert pipeline.validate_base_ref(base) == base
+
+
+def test_reconcile_ignores_blank_changed_entries(pipeline, tmp_path, capsys):
+    """J (architect 8): blank --changed entries are not counted as changed files."""
+    assert pipeline.PipelineManager().reconcile(TICKET, changed=["", "  ", "docs/ARCHITECTURE.md"]) == 0
+    out = capsys.readouterr().out
+    assert "reconciled for 1 changed file(s)" in out
+
+
+def test_reconcile_with_only_blank_entries_has_nothing_to_do(pipeline, tmp_path, capsys):
+    """J (architect 8): only blank entries means no changed files and exit 0."""
+    assert pipeline.PipelineManager().reconcile(TICKET, changed=["", " "]) == 0
+    assert "nothing to reconcile" in capsys.readouterr().out

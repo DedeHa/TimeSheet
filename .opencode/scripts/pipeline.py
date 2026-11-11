@@ -47,6 +47,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -227,6 +228,28 @@ class StateFileError(RuntimeError):
     """
 
 
+def _write_json_atomic(path: Path, data: Dict[str, Any]) -> None:
+    """Replace path with data as JSON, atomically (PRO-407, architect finding 14).
+
+    The temporary file is unique, lives in the same directory, and is fsynced before
+    os.replace. A failed write removes it and leaves the existing file untouched.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2, sort_keys=True)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_name, path)
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
 def _read_json_object(path: Path) -> Dict[str, Any]:
     """Return the JSON object stored at path, or {} when the file does not exist.
 
@@ -262,24 +285,16 @@ class PipelineManager:
         return _read_json_object(STATE_PATH)
 
     def _save_state(self) -> None:
-        """Persist the pipeline state file atomically."""
-        STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        tmp = STATE_PATH.with_suffix(".json.tmp")
-        with tmp.open("w", encoding="utf-8") as fh:
-            json.dump(self.state, fh, indent=2, sort_keys=True)
-        tmp.replace(STATE_PATH)
+        """Persist the pipeline state file atomically (the directory is created on write)."""
+        _write_json_atomic(STATE_PATH, self.state)
 
     def _load_history(self) -> Dict[str, Any]:
         """Load the pipeline history file (fails closed on corrupt content)."""
         return _read_json_object(HISTORY_PATH)
 
     def _save_history(self) -> None:
-        """Persist the pipeline history file atomically."""
-        HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-        tmp = HISTORY_PATH.with_suffix(".json.tmp")
-        with tmp.open("w", encoding="utf-8") as fh:
-            json.dump(self.history, fh, indent=2, sort_keys=True)
-        tmp.replace(HISTORY_PATH)
+        """Persist the pipeline history file atomically (the directory is created on write)."""
+        _write_json_atomic(HISTORY_PATH, self.history)
 
     @staticmethod
     def _default_entry() -> Dict[str, Any]:

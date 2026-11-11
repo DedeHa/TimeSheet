@@ -189,3 +189,30 @@ def test_corrupt_state_read_does_not_show_default_plan(pipeline, tmp_path, monke
     out = capsys.readouterr().out
     assert "Current Step: plan" not in out
     assert "Pipeline State:" not in out
+
+
+def test_failed_write_keeps_existing_file_and_leaves_no_temp(
+    pipeline, tmp_path, monkeypatch, capsys
+):
+    """J (architect 14): a write that fails midway leaves the old file and no temp file."""
+    _seed_known_ticket(tmp_path)
+    before = _snapshot(tmp_path)
+
+    def broken_dump(*args, **kwargs):
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(pipeline.json, "dump", broken_dump)
+    code = _run_cli(pipeline, monkeypatch, ["set-mode", "PRO-999", "automated"])
+    assert code == 1
+    assert "disk full" in capsys.readouterr().out
+    assert _snapshot(tmp_path) == before
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["history.json", "state.json"]
+
+
+def test_successful_write_leaves_only_the_target_files(pipeline, tmp_path, monkeypatch, capsys):
+    """J (architect 14): an atomic write replaces the file and leaves no temp behind."""
+    assert _run_cli(pipeline, monkeypatch, ["set-mode", "PRO-999", "automated"]) == 0
+    capsys.readouterr()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["history.json", "state.json"]
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
+    assert state["PRO-999"]["development_mode"] == "automated"

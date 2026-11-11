@@ -120,6 +120,7 @@ Stored in history as action `handoff`. Rendered comment follows the template in 
 | 4 | Cleanup and AGENTS.md | Done |
 | 5 | Full quality gate (first round) | Done (agents 198, ci-pipeline 269, app 409 passed, coverage 98.53%; ruff and black clean; traceability exit 0) |
 | 6 | Completion round (items 1 to 10 of the 2026-11-11 instruction, see B.7) | Done. Gate results in `docs/changes/2026-11/PRO-407/test-plan.md` |
+| 7 | Fix round for the independent architect and tester reviews (items A to K, see B.8) | Done. Gate results in `docs/changes/2026-11/PRO-407/test-plan.md` |
 
 ### B.6 Audit gap closure
 
@@ -156,8 +157,41 @@ Items in the order the user set them. Each item has its own commit and tests.
 Deviations from the instruction, with reasons:
 
 - **Item 8 flow:** the first `continue` is preceded by a COMPLETED plan handoff. The handoff gate (item 3) and the completed-cycle rule both require it. The test records the sequence and states why.
-- **Item 2 interruption:** a step that is `in_progress` with no COMPLETED handoff is reported as interrupted until its completion handoff is recorded or the step is forced. The CLI cannot tell a live agent from a dead one.
+- **Item 2 interruption:** superseded by fix round item D (B.8). Interruption is now BLOCKED, an explicit marker, or an in_progress step with no update for 24 hours that has not been reported complete. A fresh step is not interrupted.
 - **Item 4 waivers:** `dor` accepts only `pass` and `fail`. A waiver goes through `waive`, which requires a reason and an owner. The PRO-407 waivers are not yet recorded in the shared pipeline state (see `docs/changes/2026-11/PRO-407/pm-notes.md`).
+
+### B.8 Fix round (architect and tester review findings)
+
+Fixes for the blocking and major findings of the independent reviews, in the order the
+fix brief set them. Each group has its own commit (one logical change per commit, each
+with `Refs: PRO-407`). No new PR was opened; the work is on PR #138.
+
+| Item | Change | Commit | Status |
+|------|--------|--------|--------|
+| A | `continue --force` never bypasses the DoR gate; it bypasses the handoff rule only (architect #1, blocker). FR-23 and ARCHITECTURE say so | 644e5f6 | DONE |
+| B | Corrupt state or history file fails closed: exit 1, file unchanged, every command (architect #3, tester #7) | e242d06 | DONE |
+| C | BLOCKED: IN_PROGRESS does not clear a block; forced continue clears it and records `cleared_block` (architect #4) | 482b7cd | DONE |
+| D | Interruption from one clock-based rule (`interruption_reason`), `interrupt` marker, `INTERRUPT_AFTER_HOURS`; fresh continue is not interrupted (tester #3, architect #5) | fa1e044 | DONE |
+| E | Handoff `--step` must equal the current step; agent docs use the pipeline steps (architect #6) | 6c950a0 | DONE |
+| F | One ticket normaliser (`work_item_arg`) for every command; `PRO-`/`GH-` rejected as malformed (architect #7, tester #6) | 7088106 | DONE |
+| G | D1 (story points) not waivable; D3 narrowed to the ACs and Steps (architect #8) | e2fefd9 | DONE |
+| H | Exit codes 0/1/2, refusals exit 1, contract in AGENTS.md (tester #1) | a277ebc | DONE |
+| I | Latest-handoff rule isolated with completed cycles; mutation check fails 2 tests (tester #2) | a1ab42f | DONE |
+| J1 | `--base` validated; a leading `-` is rejected before git runs (architect minor #9) | 036aecc | DONE |
+| J2 | Blank `--changed` entries are not counted (architect minor #8) | 8871002 | DONE |
+| J3 | dor_gate records the refusal reasons (architect minor #13). Done in item A | 644e5f6 | DONE |
+| J4 | Unique temp file in the same directory, fsync, `os.replace` (architect minor #14) | b676fee | DONE |
+| J5 | Read commands never create `~/.opencode`; HOME-based test (tester #4) | 6614e1b | DONE |
+| J6 | `continue --force` help text describes the handoff-only bypass | 60e567f | DONE |
+| K | Accepted risks and follow-ups recorded in pm-notes; waiver commands and status recorded; V18 to V27 in the test plan | see git log (`docs:` commits after 60e567f) | DONE |
+
+Deviations from the brief, with reasons:
+
+- **`interrupt` command (D):** the marker needs a setter, and no command set it. `interrupt` is new CLI surface. It is recorded in pm-notes decision 10.
+- **Step labels (E):** the agent and skill examples used labels such as `implementation`, `validation` and `readiness-review`. They now use `plan`, `develop` and `complete`, because a handoff must match the pipeline step.
+- **Argparse usage errors exit 2 (F, H):** an invalid ticket reference is an argparse error, so it exits 2. The brief asked for 1 for refusals, and this is the standard argparse code. The contract documents both.
+- **Completed step flag (D):** a `step_reported_complete` flag was added. Without it, a step with a COMPLETED handoff waiting for `continue` would be reported as stale after 24 hours.
+- **`reset` without `--force` exits 1 (H):** it is a refused confirmation, so it follows the same rule.
 
 ## Part C: Verification Definition
 
@@ -183,6 +217,19 @@ Deviations from the instruction, with reasons:
 - **V15:** End-to-end CLI flow through `pipeline.main()` (`test_pipeline_integration.py`, `integration` marker).
 - **V16:** Isolation guard fails the session on real-home writes (`conftest.py`, `test_isolation.py`).
 - **V17:** Traceability gate exits 0; test plan and pm-notes carry the current results.
+
+### C.5 Fix-round verification (B.8)
+
+- **V18:** `continue --force` never bypasses the DoR gate; a recorded waiver allows the forced advance (`test_dor_gate.py`).
+- **V19:** A corrupt state or history file fails closed for every command: exit 1, bytes unchanged, no temp file (`test_pipeline_read_only.py`).
+- **V20:** BLOCKED is kept by IN_PROGRESS and cleared by a forced continue with a recorded reason (`test_pipeline_status.py`).
+- **V21:** Interruption from one clock-based rule; a fresh continue is not interrupted; the `interrupt` marker; the threshold (`test_pipeline_recovery.py`, `test_pipeline_status.py`, `test_pipeline_integration.py`).
+- **V22:** Handoff `--step` must equal the current step; an omitted step means the current step (`test_record_handoff.py`).
+- **V23:** One ticket normaliser for every command; malformed tracker keys rejected (`test_work_item_ref.py`).
+- **V24:** D1 not waivable; D3 narrowed in the skills (`test_dor_gate.py`, `test_governance_docs.py`).
+- **V25:** Exit-code contract 0/1/2 across one flow (`test_pipeline_integration.py`).
+- **V26:** Latest-handoff rule isolated with completed cycles; mutation check (`test_handoff_gate.py`).
+- **V27:** `--base` validation, blank `--changed`, atomic write, no home directory created by reads (`test_reconcile.py`, `test_pipeline_read_only.py`).
 
 ### C.3 Acceptance criteria
 

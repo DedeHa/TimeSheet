@@ -54,6 +54,10 @@ INTERRUPT_AFTER_HOURS = 24
 JIRA_REF_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d+")
 GITHUB_ISSUE_PATTERN = re.compile(r"(?:GH-\d+|[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#\d+)")
 GENERIC_REF_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
+# A tracker-style prefix with no number (PRO-, GH-) or a number with junk after it
+# (PRO-12a) is a malformed key, not a generic identifier.
+TRACKER_STUB_PATTERN = re.compile(r"[A-Z][A-Z0-9]*-")
+TRACKER_MALFORMED_PATTERN = re.compile(r"[A-Z][A-Z0-9]+-\d\S*")
 
 HANDOFF_STATUSES = ("COMPLETED", "BLOCKED", "IN_PROGRESS")
 DOR_IDS = ("D1", "D2", "D3", "D4", "D5", "D6", "D7")
@@ -114,9 +118,28 @@ def parse_work_item_ref(ref: str) -> Dict[str, str]:
         return {"tracker": "github", "key": value}
     if JIRA_REF_PATTERN.fullmatch(value):
         return {"tracker": "jira", "key": value}
+    if TRACKER_STUB_PATTERN.fullmatch(value) or TRACKER_MALFORMED_PATTERN.fullmatch(value):
+        raise ValueError(f"invalid work item reference: {ref!r} looks like a tracker key but has no valid number")
     if GENERIC_REF_PATTERN.fullmatch(value):
         return {"tracker": "generic", "key": value}
     raise ValueError(f"invalid work item reference: {ref!r}")
+
+
+def normalise_work_item_ref(value: str) -> str:
+    """Strip whitespace and validate a work item reference; return the key (PRO-407, F).
+
+    This is the single normalisation point for every ticket argument of the CLI, so
+    `continue " PRO-5 "` addresses PRO-5. parse_work_item_ref remains the validator.
+    """
+    return parse_work_item_ref(value)["key"]
+
+
+def work_item_arg(value: str) -> str:
+    """argparse type for every ticket argument: validated, normalised reference."""
+    try:
+        return normalise_work_item_ref(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
 def _utc_now() -> datetime:
@@ -1010,67 +1033,67 @@ def main():
 
     # State management
     showstate_parser = subparsers.add_parser("showstate", help="Show current pipeline state")
-    showstate_parser.add_argument("ticket", help="JIRA ticket key")
+    showstate_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     showstate_parser.set_defaults(func=lambda args: manager.show_state(args.ticket))
 
     reset_parser = subparsers.add_parser("reset", help="Reset pipeline to initial state")
-    reset_parser.add_argument("ticket", help="JIRA ticket key")
+    reset_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     reset_parser.add_argument("--force", action="store_true", help="Confirm reset")
     reset_parser.set_defaults(func=lambda args: manager.reset(args.ticket, args.force))
 
     history_parser = subparsers.add_parser("history", help="Show pipeline history")
-    history_parser.add_argument("ticket", help="JIRA ticket key")
+    history_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     history_parser.set_defaults(func=lambda args: manager.get_history(args.ticket))
 
     # Enhanced workflow commands
     resume_parser = subparsers.add_parser("resume", help="Resume pipeline at current step")
-    resume_parser.add_argument("ticket", help="JIRA ticket key")
+    resume_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     resume_parser.add_argument("--force", action="store_true", help="Force resume without validation")
     resume_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
 
     interrupt_parser = subparsers.add_parser(
         "interrupt", help="Mark a pipeline interrupted until it is resumed"
     )
-    interrupt_parser.add_argument("ticket", help="JIRA ticket key")
+    interrupt_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     interrupt_parser.add_argument("--reason", default="", help="Why the pipeline is interrupted")
     interrupt_parser.set_defaults(func=lambda args: manager.interrupt(args.ticket, args.reason))
 
     continue_parser = subparsers.add_parser("continue", help="Advance to next pipeline step")
-    continue_parser.add_argument("ticket", help="JIRA ticket key")
+    continue_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     continue_parser.add_argument("--force", action="store_true", help="Force advance without validation")
     continue_parser.set_defaults(func=lambda args: manager.continue_step(args.ticket, args.force))
 
     proceed_parser = subparsers.add_parser("proceed", help="Proceed with current step execution")
-    proceed_parser.add_argument("ticket", help="JIRA ticket key")
+    proceed_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     proceed_parser.add_argument("--force", action="store_true", help="Force proceed without validation")
     proceed_parser.set_defaults(func=lambda args: manager.resume(args.ticket, args.force))
 
     what_missed_parser = subparsers.add_parser("what-missed", help="Show what work was missed")
-    what_missed_parser.add_argument("ticket", help="JIRA ticket key")
+    what_missed_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     what_missed_parser.set_defaults(func=lambda args: manager.what_missed(args.ticket))
 
     dry_run_parser = subparsers.add_parser("dry-run", help="Preview action without executing")
-    dry_run_parser.add_argument("ticket", help="JIRA ticket key")
+    dry_run_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     dry_run_parser.add_argument("action", help="Action to preview (resume, continue, proceed)")
     dry_run_parser.set_defaults(func=lambda args: manager.dry_run(args.ticket, args.action))
 
     check_stuck_parser = subparsers.add_parser("check-stuck", help="Detect stuck pipelines")
-    check_stuck_parser.add_argument("ticket", help="JIRA ticket key")
+    check_stuck_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     check_stuck_parser.set_defaults(func=lambda args: manager.check_stuck(args.ticket))
 
     set_mode_parser = subparsers.add_parser("set-mode", help="Set development mode")
-    set_mode_parser.add_argument("ticket", help="JIRA ticket key")
+    set_mode_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     set_mode_parser.add_argument("mode", help="Mode: 'interactive' or 'automated'")
     set_mode_parser.set_defaults(func=lambda args: manager.set_mode(args.ticket, args.mode))
 
     get_mode_parser = subparsers.add_parser("get-mode", help="Get persisted mode")
-    get_mode_parser.add_argument("ticket", help="JIRA ticket key")
+    get_mode_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     get_mode_parser.set_defaults(func=lambda args: manager.get_mode(args.ticket))
 
     dor_parser = subparsers.add_parser(
         "dor", help="Record or show the Definition of Ready checklist"
     )
-    dor_parser.add_argument("ticket", help="JIRA ticket key")
+    dor_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     dor_parser.add_argument("--json", dest="json_values", default=None,
                             help='Checklist as JSON, e.g. \'{"D1": "pass", "D2": "fail"}\'')
 
@@ -1084,7 +1107,7 @@ def main():
     dor_parser.set_defaults(func=run_dor)
 
     waive_parser = subparsers.add_parser("waive", help="Waive one Definition of Ready item")
-    waive_parser.add_argument("ticket", help="JIRA ticket key")
+    waive_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     waive_parser.add_argument("dor_id", help="DoR item to waive (D1-D7)")
     waive_parser.add_argument("--reason", required=True, help="Why the item is waived")
     waive_parser.add_argument("--by", required=True, help="Who waives it (for example PO)")
@@ -1095,6 +1118,7 @@ def main():
     handoff_parser = subparsers.add_parser("handoff", help="Record an agent handoff and print its JIRA comment")
     handoff_parser.add_argument(
         "ticket",
+        type=work_item_arg,
         help="Work item reference: JIRA key (PRO-123), GitHub (GH-456, owner/repo#456), "
         "or generic id",
     )
@@ -1136,7 +1160,7 @@ def main():
     reconcile_parser = subparsers.add_parser(
         "reconcile", help="Check that changed areas have their living documents updated"
     )
-    reconcile_parser.add_argument("ticket", help="JIRA ticket key")
+    reconcile_parser.add_argument("ticket", type=work_item_arg, help="JIRA ticket key")
     reconcile_parser.add_argument("--base", default="master", help="Base ref (default: master)")
     reconcile_parser.add_argument(
         "--changed", action="append", default=None,

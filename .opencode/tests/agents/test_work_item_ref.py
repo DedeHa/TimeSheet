@@ -64,6 +64,10 @@ def test_parse_work_item_ref_classifies_each_tracker(pipeline, ref, tracker, key
         "owner/repo#",
         "PRO 123",
         "PRO/123",
+        "PRO-",
+        "GH-",
+        "ABC-",
+        "PRO-12a",
         None,
         42,
     ],
@@ -126,8 +130,43 @@ def test_handoff_cli_accepts_generic_reference(pipeline, tmp_path, monkeypatch, 
     assert "Work item: feat-login (tracker: generic)" in out
 
 
-def test_other_commands_keep_accepting_plain_ticket_strings(pipeline, tmp_path, capsys):
-    """Only handoff validates references; show state still takes any ticket string."""
-    mgr = pipeline.PipelineManager()
-    mgr.show_state("PRO 123")
-    assert "=== Pipeline State: PRO 123 ===" in capsys.readouterr().out
+COMMANDS_WITH_TICKET = [
+    ["showstate", "{ref}"], ["reset", "{ref}"], ["history", "{ref}"], ["resume", "{ref}"],
+    ["interrupt", "{ref}"], ["continue", "{ref}"], ["proceed", "{ref}"],
+    ["what-missed", "{ref}"], ["dry-run", "{ref}", "resume"], ["check-stuck", "{ref}"],
+    ["set-mode", "{ref}", "automated"], ["get-mode", "{ref}"], ["dor", "{ref}"],
+    ["reconcile", "{ref}"],
+]
+
+
+@pytest.mark.parametrize("command", COMMANDS_WITH_TICKET, ids=lambda c: c[0])
+def test_every_command_rejects_an_invalid_reference(pipeline, tmp_path, monkeypatch, capsys, command):
+    """F: one validation point for every ticket argument. Usage errors exit 2, nothing is written."""
+    argv = ["pipeline.py", *(part.replace("{ref}", "PRO 123") for part in command)]
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == 2
+    assert "invalid work item reference" in capsys.readouterr().err
+    assert not (tmp_path / "state.json").exists()
+    assert not (tmp_path / "history.json").exists()
+
+
+def test_continue_normalises_surrounding_whitespace(pipeline, tmp_path, monkeypatch, capsys):
+    """F: `continue " PRO-5 "` addresses PRO-5 (the stored key has no whitespace)."""
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "set-mode", " PRO-5 ", "automated"])
+    pipeline.main()
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "continue", " PRO-5 "])
+    with pytest.raises(SystemExit) as exc:
+        pipeline.main()
+    assert exc.value.code == 1  # refused: no handoff yet, but addressed PRO-5
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
+    assert list(state) == ["PRO-5"]
+    assert "Continuing Pipeline: PRO-5" in capsys.readouterr().out
+
+
+def test_normalise_work_item_ref_strips_and_validates(pipeline):
+    """F: the single normaliser returns the key, and raises for an invalid reference."""
+    assert pipeline.normalise_work_item_ref("  owner/repo#7 ") == "owner/repo#7"
+    with pytest.raises(ValueError):
+        pipeline.normalise_work_item_ref("GH-")

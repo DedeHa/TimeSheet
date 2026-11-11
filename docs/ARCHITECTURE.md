@@ -152,14 +152,17 @@ rendered comment (`Work item: <ref> (tracker: <tracker>)`).
 | `github` | `GH-<number>` or `owner/repo#<number>` | `GH-456`, `acme/timesheet#12` | The reference as written |
 | `generic` | Any other identifier that starts with a letter (letters, digits, `_`, `-`) | `feat-login`, `task_42` | The identifier as written |
 
-Empty, numeric-only, and malformed references are rejected with a ValueError before any
-state or history is written.
+Empty, numeric-only, and malformed references are rejected before any state or history
+is written. A bare tracker prefix (`PRO-`, `GH-`) or a number with trailing characters
+(`PRO-12a`) is malformed, not generic. Every command that takes a ticket normalises it
+in one place (`work_item_arg`, an argparse type): surrounding whitespace is stripped and
+the value is validated with `parse_work_item_ref`. An invalid reference is a usage error
+(exit 2) for every command.
 
 The handoff `--step` must equal the pipeline's current step (`plan`, `develop`, or
 `complete`). An empty step means the current step. A mismatch exits 1 before any state
 or history is written, so a handoff cannot be recorded against a step the pipeline is not
-in. Other pipeline commands still take plain ticket strings;
-only `handoff` validates the reference.
+in.
 
 Design choices:
 

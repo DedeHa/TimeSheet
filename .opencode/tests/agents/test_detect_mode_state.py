@@ -46,8 +46,10 @@ CORRUPT_CONTENTS = [b"{not json", b"[1, 2, 3]", b"\xff\xfe garbage", b'"just a s
 
 
 @pytest.mark.parametrize("content", CORRUPT_CONTENTS)
-def test_show_on_corrupt_state_exits_1_and_keeps_bytes(mode, monkeypatch, capsys, content):
-    """--show reports a corrupt state file (exit 1) and never rewrites it."""
+def test_show_on_corrupt_state_exits_1_and_keeps_bytes(
+    mode, monkeypatch, capsys, content
+):
+    """--show reports a corrupt state file (exit 1) and keeps it."""
     state_dir = mode.STATE_PATH.parent
     state_dir.mkdir()
     mode.STATE_PATH.write_bytes(content)
@@ -58,8 +60,10 @@ def test_show_on_corrupt_state_exits_1_and_keeps_bytes(mode, monkeypatch, capsys
 
 
 @pytest.mark.parametrize("content", CORRUPT_CONTENTS)
-def test_mode_write_on_corrupt_state_exits_1_and_keeps_bytes(mode, monkeypatch, capsys, content):
-    """A mode write refuses to overwrite a corrupt state file: exit 1, bytes unchanged."""
+def test_mode_write_on_corrupt_state_exits_1_and_keeps_bytes(
+    mode, monkeypatch, capsys, content
+):
+    """A mode write refuses a corrupt state file: exit 1, bytes kept."""
     state_dir = mode.STATE_PATH.parent
     state_dir.mkdir()
     mode.STATE_PATH.write_bytes(content)
@@ -70,14 +74,16 @@ def test_mode_write_on_corrupt_state_exits_1_and_keeps_bytes(mode, monkeypatch, 
 
 
 def test_show_on_fresh_home_does_not_create_directory(mode, monkeypatch, capsys):
-    """Reading the mode from a fresh HOME reports the default and creates nothing."""
+    """Reading the mode from a fresh HOME reports the default only."""
     assert _run(mode, monkeypatch, "PRO-1", "--show") == 0
     assert capsys.readouterr().out.strip() == "interactive"
     assert not mode.STATE_PATH.parent.exists()
 
 
-def test_no_mode_message_on_fresh_home_does_not_create_directory(mode, monkeypatch, capsys):
-    """A message with no mode keyword only reads the state, so nothing is created."""
+def test_no_mode_message_on_fresh_home_does_not_create_directory(
+    mode, monkeypatch, capsys
+):
+    """A message without a mode keyword only reads the state."""
     assert _run(mode, monkeypatch, "PRO-1", "no mode here") == 0
     assert "current mode: interactive" in capsys.readouterr().out
     assert not mode.STATE_PATH.parent.exists()
@@ -91,7 +97,7 @@ def test_mode_write_creates_directory_lazily(mode, monkeypatch):
 
 
 def test_mode_write_uses_atomic_replace(mode, monkeypatch):
-    """The mode write goes through os.replace from a unique temp file in the same dir."""
+    """The mode write uses os.replace from a unique temp file."""
     calls = []
     original_replace = os.replace
 
@@ -110,7 +116,7 @@ def test_mode_write_uses_atomic_replace(mode, monkeypatch):
 
 
 def test_failed_replace_keeps_previous_state(mode, monkeypatch):
-    """If the atomic replace fails, the previous state is intact and no temp file remains."""
+    """A failed replace keeps the previous state and leaves no temp file."""
     state_dir = mode.STATE_PATH.parent
     state_dir.mkdir()
     previous = b'{"PRO-1": {"development_mode": "interactive"}}'

@@ -163,6 +163,9 @@ Design choices:
 - The DoR gate is not bypassed by `continue --force`. `--force` bypasses only the
   handoff rule (latest handoff COMPLETED and a completed cycle for the current step),
   records `forced_advance` with the bypassed reasons, and clears a BLOCKED state.
+- A corrupt pipeline state or history file fails closed. Every command reports the
+  error and exits 1. Nothing is written and the file keeps its bytes, so a plan or
+  `not_started` state is never shown in place of an unreadable file.
 - Documentation reconciliation (`complete-feature` Step 4.5) runs before closure, so
   decisions and living docs stay current when the working plan is deleted.
 

@@ -135,6 +135,36 @@ def find_reconciliation_gaps(changed: Iterable[str]) -> List[Tuple[str, Tuple[st
     return gaps
 
 
+class StateFileError(RuntimeError):
+    """A state or history file exists but is not a readable JSON object (PRO-407, FR-22).
+
+    The tool fails closed: it reports this error, exits 1, and never rewrites the file.
+    """
+
+
+def _read_json_object(path: Path) -> Dict[str, Any]:
+    """Return the JSON object stored at path, or {} when the file does not exist.
+
+    Raises StateFileError for unreadable, non-JSON, or non-object content. Nothing is
+    written, so a corrupt file stays byte-identical for inspection.
+    """
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise StateFileError(
+            f"{path} is not readable JSON ({exc}). It was not modified. "
+            "Move or repair the file, then retry."
+        ) from exc
+    if not isinstance(data, dict):
+        raise StateFileError(
+            f"{path} must contain a JSON object. It was not modified. "
+            "Move or repair the file, then retry."
+        )
+    return data
+
+
 class PipelineManager:
     """Enhanced pipeline management with resume/continue/proceed functionality."""
 
@@ -143,16 +173,8 @@ class PipelineManager:
         self.history = self._load_history()
 
     def _load_state(self) -> Dict[str, Any]:
-        """Load the pipeline state file."""
-        if not STATE_PATH.exists():
-            STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-            return {}
-        try:
-            with STATE_PATH.open("r", encoding="utf-8") as fh:
-                data = json.load(fh)
-            return data if isinstance(data, dict) else {}
-        except (json.JSONDecodeError, OSError):
-            return {}
+        """Load the pipeline state file (fails closed on corrupt content)."""
+        return _read_json_object(STATE_PATH)
 
     def _save_state(self) -> None:
         """Persist the pipeline state file atomically."""
@@ -163,16 +185,8 @@ class PipelineManager:
         tmp.replace(STATE_PATH)
 
     def _load_history(self) -> Dict[str, Any]:
-        """Load the pipeline history file."""
-        if not HISTORY_PATH.exists():
-            HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-            return {}
-        try:
-            with HISTORY_PATH.open("r", encoding="utf-8") as fh:
-                data = json.load(fh)
-            return data if isinstance(data, dict) else {}
-        except (json.JSONDecodeError, OSError):
-            return {}
+        """Load the pipeline history file (fails closed on corrupt content)."""
+        return _read_json_object(HISTORY_PATH)
 
     def _save_history(self) -> None:
         """Persist the pipeline history file atomically."""
@@ -914,9 +928,6 @@ def main():
             clean_args.append(arg)
             i += 1
 
-    # Initialize manager first so lambdas can reference it
-    manager = PipelineManager()
-
     parser = argparse.ArgumentParser(description="Enhanced pipeline management tool")
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
@@ -1053,6 +1064,14 @@ def main():
     if not hasattr(args, 'func'):
         parser.print_help()
         return
+
+    # Loaded after parsing so --help works, and before any command so that a corrupt
+    # state or history file is reported (exit 1) by every command, read or write.
+    try:
+        manager = PipelineManager()
+    except StateFileError as exc:
+        print(f"❌ {exc}")
+        sys.exit(1)
 
     try:
         exit_code = args.func(args)

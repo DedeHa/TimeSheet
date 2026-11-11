@@ -89,9 +89,14 @@ def _seed_known_ticket(tmp_path) -> None:
     (tmp_path / "history.json").write_text(json.dumps(history), encoding="utf-8")
 
 
-def _run_cli(pipeline, monkeypatch, argv: list[str]) -> None:
+def _run_cli(pipeline, monkeypatch, argv: list[str]) -> int:
+    """Run one CLI invocation and return its exit code (0 when it returns normally)."""
     monkeypatch.setattr(sys, "argv", ["pipeline.py", *argv])
-    pipeline.main()
+    try:
+        pipeline.main()
+    except SystemExit as exc:
+        return exc.code if isinstance(exc.code, int) else 1
+    return 0
 
 
 @pytest.mark.parametrize("argv", READ_COMMANDS, ids=lambda a: " ".join(a))
@@ -101,7 +106,7 @@ def test_read_command_on_unknown_ticket_creates_nothing(
     """FR-22: a read command on an unknown ticket leaves no state or history behind."""
     before = _snapshot(tmp_path)
     assert before == {"state.json": None, "history.json": None}
-    _run_cli(pipeline, monkeypatch, argv)
+    assert _run_cli(pipeline, monkeypatch, argv) == 0
     capsys.readouterr()
     assert _snapshot(tmp_path) == before
 
@@ -113,7 +118,7 @@ def test_read_command_on_unknown_ticket_keeps_existing_files_byte_identical(
     """FR-22: with files present for another ticket, the bytes do not change."""
     _seed_known_ticket(tmp_path)
     before = _snapshot(tmp_path)
-    _run_cli(pipeline, monkeypatch, argv)
+    assert _run_cli(pipeline, monkeypatch, argv) == 0
     capsys.readouterr()
     assert _snapshot(tmp_path) == before
 
@@ -135,3 +140,47 @@ def test_get_entry_still_creates_for_write_paths(pipeline, tmp_path):
     assert UNKNOWN in json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
     history = json.loads((tmp_path / "history.json").read_text(encoding="utf-8"))
     assert [a["action"] for a in history[UNKNOWN]["actions"]] == ["pipeline_created"]
+
+
+WRITE_COMMANDS = [
+    ["set-mode", UNKNOWN, "automated"],
+    ["dor", UNKNOWN, "--json", '{"D1": "pass"}'],
+    ["waive", UNKNOWN, "D3", "--reason", "why", "--by", "PO"],
+    ["continue", UNKNOWN],
+    ["resume", UNKNOWN, "--force"],
+    ["reset", UNKNOWN, "--force"],
+    ["handoff", UNKNOWN, "--from", "architect", "--to", "developer", "--status", "COMPLETED"],
+]
+
+CORRUPT_CONTENTS = [b"{not json", b"[1, 2]", b"", b"\xff\xfe\x00 not utf-8", b"\"text\""]
+
+
+@pytest.mark.parametrize("content", CORRUPT_CONTENTS, ids=["truncated", "list", "empty", "binary", "string"])
+@pytest.mark.parametrize("corrupt", ["state.json", "history.json"])
+@pytest.mark.parametrize("argv", READ_COMMANDS + WRITE_COMMANDS, ids=lambda a: " ".join(a))
+def test_corrupt_file_fails_closed(
+    pipeline, tmp_path, monkeypatch, capsys, argv, corrupt, content
+):
+    """FR-22: a corrupt state or history file makes every command exit 1 and changes nothing.
+
+    The corrupt file keeps its exact bytes (read or write attempt), the other file is not
+    created, and the tool never reports a fresh plan or not_started state.
+    """
+    (tmp_path / corrupt).write_bytes(content)
+    before = _snapshot(tmp_path)
+    code = _run_cli(pipeline, monkeypatch, argv)
+    out = capsys.readouterr().out
+    assert code == 1, out
+    assert "It was not modified" in out
+    assert "not_started" not in out
+    assert _snapshot(tmp_path) == before
+    assert not list(tmp_path.glob("*.tmp")), "no temporary file may be left behind"
+
+
+def test_corrupt_state_read_does_not_show_default_plan(pipeline, tmp_path, monkeypatch, capsys):
+    """A corrupt state file is reported as an error, not shown as a fresh plan."""
+    (tmp_path / "state.json").write_bytes(b"{truncated")
+    assert _run_cli(pipeline, monkeypatch, ["show", "state", KNOWN]) == 1
+    out = capsys.readouterr().out
+    assert "Current Step: plan" not in out
+    assert "Pipeline State:" not in out

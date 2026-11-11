@@ -352,6 +352,31 @@ The project shall publish a statically served GitHub Pages dashboard under `docs
 
 The CI pipeline shall refresh the dashboard data within 5 minutes of a CI timing benchmark run completing, by mirroring the `ci-metrics` dataset into `docs/data/` on the `master` branch through a dedicated publish workflow. The publish workflow shall commit with a `[skip ci]` marker so that the data refresh never re-triggers the Python CI workflow, and shall leave pull requests unaffected.
 
+
+## FR-21 Agent Decision Records
+
+The agent team shall record each architectural, product, test, and process decision that is taken during a feature as a numbered, single-decision record in `docs/decisions/` (prefixes ADR, PDR, TDR, BDR, ODR), with a status and a JIRA ticket reference, so that decisions outlive the implementation plan. The Architect shall draft ADR and TDR records, the Product Owner shall draft PDR and BDR records, and a decision shall be recorded before the feature's pull request merges.
+
+## FR-22 Pipeline Recovery Commands
+
+The agent pipeline state tool shall provide recovery commands for interrupted or stuck pipelines: `what-missed` reports the step whose work was not completed, `check-stuck` reports how long a pipeline has been stalled, `dry-run` previews a `resume` without writing state, `resume` requires `--force` for an interrupted pipeline and, when forced, clears the interruption, and `history` lists the recorded actions. A pipeline is interrupted when it is BLOCKED by a handoff, when an operator marks it with `interrupt` (cleared by `resume` or a successful `continue`), or when its step is in progress with no update for 24 hours (`INTERRUPT_AFTER_HOURS`) and the step has not been reported complete. A step that has just started is not interrupted. Recovery commands shall write only to the state file they are given.
+
+## FR-23 Definition of Ready Gate
+
+The Developer agent shall not create a feature branch or write code until the Definition of Ready gate in `develop-feature` (checks D1 to D7) passes. The orchestrator shall dispatch to the Developer only after the gate passes, and `refine-feature` shall produce the inputs for checks D1 to D7. The gate shall be enforced by `pipeline.py continue` into the develop step, which refuses unless every item is `pass` or `waived` (D1 excepted: story points cannot be waived); a waiver shall require a reason and an owner. `--force` does not override this gate: it bypasses only the handoff rule (the latest handoff is COMPLETED and the current step has a completed cycle), and every forced advance is recorded. An adversarial reviewer shall try to refute each item before the gate is recorded.
+
+## FR-24 Documentation Reconciliation Before Closure
+
+Before a feature is closed, the complete-feature workflow shall reconcile living documentation (architecture, requirements, testing, and decision records) with the delivered change, and shall verify that decisions taken during the feature are recorded in `docs/decisions/`. `pipeline.py reconcile` shall report every changed area that has no matching living-document change in the diff and exit non-zero.
+
+## FR-25 Agent Handoff Recording
+
+Every agent handoff (Product Owner to Architect, Architect to Developer, Developer to Tester, Tester to Product Owner) and every escalation shall be recorded in the pipeline history with its sender, receiver, step, status, artifacts, accomplishments, issues, next steps, mode, and cycle, and shall be rendered as a comment that the agent posts to the work item. The work item may be a JIRA key, a GitHub reference, or a generic identifier, and the tracker shall be recorded with the handoff.
+
+## QR-14 Artifact-First Change Layout
+
+The agent team shall store the change artifacts of a feature (spec, plan, test plan, and PM notes, as applicable) in `docs/changes/YYYY-MM/PRO-XXX/`, so that the design and verification record of each ticket is found in one place and linked from `docs/decisions/` and JIRA.
+
 ---
 
 # 6. Business Rules

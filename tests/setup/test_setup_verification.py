@@ -78,15 +78,23 @@ def test_ci_scripts_are_not_named_as_tests():
     assert not bad, f"Test files must live in tests/ci-pipeline/, not scripts/: {bad}"
 
 
+PYTEST_SUPPORT_FILES = {"conftest.py"}
+
+
 def test_ci_tests_use_test_prefix():
-    """Every Python file in tests/ci-pipeline/ and .opencode/tests/agents/ is a test_* module."""
+    """Every Python file in tests/ci-pipeline/ and .opencode/tests/agents/ is a test_* module.
+
+    pytest's own conftest.py (fixtures and session hooks, PRO-407 isolation guard) is allowed.
+    """
     bad = [
         f.name
         for f in CI_PIPELINE_TESTS_DIR.glob("*.py")
-        if not f.name.startswith("test_")
+        if not f.name.startswith("test_") and f.name not in PYTEST_SUPPORT_FILES
     ]
     bad += [
-        f.name for f in AGENT_TESTS_DIR.glob("*.py") if not f.name.startswith("test_")
+        f.name
+        for f in AGENT_TESTS_DIR.glob("*.py")
+        if not f.name.startswith("test_") and f.name not in PYTEST_SUPPORT_FILES
     ]
     assert not bad, f"Test directories must contain only test_* files: {bad}"
 

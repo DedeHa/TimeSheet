@@ -421,6 +421,36 @@ Every handoff must include:
 3. **Next-step request** — what the next agent should do
 4. **Constraints** — what must not change or be exceeded
 
+### Handoff Recording (PRO-407, AC-6)
+
+Every handoff (PO → Architect, Architect → Developer, Developer → Tester, Tester → PO)
+and every escalation is recorded and posted as a JIRA comment:
+
+```bash
+python .opencode/scripts/pipeline.py handoff PRO-XXX \
+  --from architect --to developer --step plan \
+  --status COMPLETED \
+  --artifact docs/PRO-XXX_Implementation_Plan.md \
+  --accomplishment "Architecture decided" \
+  --next-step "Implement rollout step 1" \
+  --cycle 1
+```
+
+The command records the handoff in `~/.opencode/pipeline-history.json` and prints the
+markdown comment. Post that output with `atlassian_addCommentToJiraIssue`. Use
+`--status BLOCKED` with `--issue "<blocker>"` for escalations.
+
+### Decision Records (PRO-407, AC-1)
+
+When a user decision changes scope or process during intake, discovery, or
+review, the Product Owner drafts the matching record in `docs/decisions/`:
+
+- **PDR** for product scope and behaviour decisions.
+- **BDR** for ways-of-working, release, and budget decisions.
+
+Use `docs/decisions/TEMPLATE.md` and the index in `docs/decisions/README.md`.
+Record the decision before the feature's PR merges (rule 5 of the index).
+
 ---
 
 ## Responsibilities

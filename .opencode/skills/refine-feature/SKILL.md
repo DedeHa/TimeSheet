@@ -104,7 +104,25 @@ must be verified by the tester before finalization.
 
 ## Finalization Checklist
 
-Before marking the ticket as ready for development, verify each item:
+Before marking the ticket as ready for development, verify each item. The
+checklist produces the inputs D1–D7 for the Definition of Ready (DoR) gate in
+`develop-feature` Step 1f (PRO-407, AC-3). The orchestrator dispatches to the Developer only
+after that gate passes:
+
+| DoR input | Produced by this skill as |
+|-----------|---------------------------|
+| D1 Story points | "Story Points assigned" item below |
+| D2 Acceptance criteria | Numbered, testable AC items |
+| D3 Definition of Done | DoD `- [ ]` checklist; no placeholders in the ACs or Steps (closure items exempt until closure) |
+| D4 Stakeholder review | Multi-stakeholder review (Step 1) and common review (Step 2) completed |
+| D5 Scope | "Non-goals documented" item below |
+| D6 Drift | No unresolved drift signals from the `develop-feature` Step 1d drift check |
+| D7 Decisions | Open decisions recorded in the ticket or plan Part A |
+
+Before finalizing, run the adversarial reviewer in `readiness-review`. It tries to
+refute D1-D7 against the ticket text and records PASS or FAIL per item in pm-notes.
+Fix every FAIL in the ticket (with PO confirmation) or ask for a waiver.
+
 
 **Common to Stories and Bugs:**
 - [ ] Intention / use-case clearly defined (stories) or Problem Statement clearly defined (bugs)

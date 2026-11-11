@@ -251,6 +251,46 @@ Every handoff must include:
 3. **Next-step request** — what the Developer should do
 4. **Constraints** — what must not change or be exceeded
 
+### Handoff Recording (PRO-407, AC-6)
+
+Record every handoff with `pipeline.py handoff` and post the printed markdown as a
+JIRA comment with `atlassian_addCommentToJiraIssue` (contentFormat `markdown`):
+
+```bash
+python .opencode/scripts/pipeline.py handoff PRO-XXX \
+  --from architect --to developer --step plan --status COMPLETED \
+  --artifact docs/PRO-XXX_Implementation_Plan.md --accomplishment "..." --next-step "..." --cycle N
+```
+
+Use `--status BLOCKED` with `--issue "<blocker>"` when the agent cannot finish. Do not
+hand off silently. Shared rules: `.opencode/agents/product-owner.agent.md`, Handoff Recording.
+
+## Change Artifacts (PRO-407, AC-5)
+
+The Architect writes the design to the change folder `docs/changes/YYYY-MM/PRO-XXX/`
+(month the work started), following `docs/changes/README.md`:
+
+- `plan.md` — pointer to and summary of the implementation plan (Parts A/B/C). Do not
+  duplicate the plan in full.
+- `spec.md` — what is built and why, when the ticket needs a spec beyond the plan.
+- `pm-notes.md` — decisions taken and waivers of DoR items. Link the JIRA ticket instead
+  of copying handoff comments.
+
+Architectural decisions go to `docs/decisions/`, not into these files.
+
+## Decision Records (PRO-407, AC-1)
+
+When the implementation plan (Part A) resolves an architectural question, the
+Architect drafts a decision record in `docs/decisions/` before handing off:
+
+- **ADR** for technical design of the application (persistence, module structure).
+- **TDR** for test strategy, tooling, or coverage gates.
+
+Use `docs/decisions/TEMPLATE.md`, name the file `<PREFIX>-NNNN-<kebab-title>.md`
+(next free number per prefix), set `Ticket: PRO-XXX`, and list the record under
+the index in `docs/decisions/README.md`. Reference the record from the
+implementation plan. Do not record decisions only in chat or change artifacts.
+
 ## Pattern References
 
 All architecture decisions should reference patterns from:

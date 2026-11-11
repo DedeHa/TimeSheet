@@ -184,8 +184,12 @@ Before every dispatch and handoff, the orchestration skill runs:
 3. **Story Points Validation**: Confirms PRO-XXX has story points assigned (required for development)
    - If missing → escalate to Product Owner, do NOT proceed to development
    - If present → proceed to Developer agent
-4. **Dispatch**: Routes to Developer agent via `develop-feature` skill (Phase 3–6: branch, implement, verify, PR)
-5. **Update State**: Sets `current_step: "complete"`, increments Developer cycles
+4. **Definition of Ready (DoR) gate** (PRO-407, AC-3): Dispatch to the Developer only after the
+   DoR gate in `develop-feature` Step 1f passes (checks D1–D7). Inputs D1–D7 are produced by
+   `refine-feature` (Finalization Checklist). If any check fails, record a handoff with
+   `--status BLOCKED` and escalate to the Product Owner. Do not create the branch.
+5. **Dispatch**: Routes to Developer agent via `develop-feature` skill (Phase 3–6: branch, implement, verify, PR)
+6. **Update State**: Sets `current_step: "complete"`, increments Developer cycles
 
 ### Step 5: Complete Phase
 1. **State Detection**: Confirms we're in "complete" step
@@ -254,7 +258,7 @@ python .opencode/scripts/pipeline.py <command> <ticket> [options]
 | `resume PRO-373` | Resume pipeline at the current step (clears interruption flag) |
 | `resume PRO-373 --force` | Force resume without validation |
 | `continue PRO-373` | Advance to the next pipeline step |
-| `continue PRO-373 --force` | Force advance without validation |
+| `continue PRO-373 --force` | Force past the handoff rule only; the DoR gate still applies |
 | `proceed PRO-373` | Proceed with current step execution |
 | `proceed PRO-373 --force` | Force proceed without validation |
 
@@ -321,6 +325,21 @@ python .opencode/scripts/pipeline.py show state PRO-373
 ```
 
 ## Handoff Coordination
+
+### Handoff Recording (PRO-407, AC-6)
+
+Every agent handoff (PO → Architect → Developer → Tester → PO) and every escalation is
+recorded with `pipeline.py handoff` and posted as a JIRA comment:
+
+```bash
+python .opencode/scripts/pipeline.py handoff PRO-XXX --from developer --to tester \
+  --step develop --status COMPLETED --artifact docs/changes/YYYY-MM/PRO-XXX/plan.md \
+  --accomplishment "..." --next-step "..." --cycle 1
+```
+
+The command appends a `handoff` entry to `~/.opencode/pipeline-history.json` and prints
+the comment. Post it with `atlassian_addCommentToJiraIssue`. Escalations use `--status BLOCKED`.
+
 
 ### Handoff Validation Points
 

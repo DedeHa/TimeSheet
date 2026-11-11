@@ -90,24 +90,39 @@ class PipelineManager:
             json.dump(self.history, fh, indent=2, sort_keys=True)
         tmp.replace(HISTORY_PATH)
 
+    @staticmethod
+    def _default_entry() -> Dict[str, Any]:
+        """Return the initial state entry for a new ticket."""
+        return {
+            "development_mode": "interactive",
+            "current_step": "plan",
+            "cycle_counts": {"plan": 0, "develop": 0, "complete": 0},
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "status": "not_started",
+            "blocked": False,
+            "escalation_level": 0,
+            "interrupted": False,
+            "interrupted_step": None,
+            "interrupted_at": None,
+        }
+
     def _get_entry(self, ticket: str) -> Dict[str, Any]:
-        """Get or create a pipeline entry for a ticket."""
+        """Get or create a pipeline entry for a ticket (write paths only)."""
         if ticket not in self.state:
-            self.state[ticket] = {
-                "development_mode": "interactive",
-                "current_step": "plan",
-                "cycle_counts": {"plan": 0, "develop": 0, "complete": 0},
-                "last_updated": datetime.now(timezone.utc).isoformat(),
-                "status": "not_started",
-                "blocked": False,
-                "escalation_level": 0,
-                "interrupted": False,
-                "interrupted_step": None,
-                "interrupted_at": None,
-            }
+            self.state[ticket] = self._default_entry()
             self._save_state()
             self._record_history(ticket, "pipeline_created", self.state[ticket])
         return self.state[ticket]
+
+    def _peek_entry(self, ticket: str) -> Dict[str, Any]:
+        """Return a ticket entry for a read path without creating or persisting it (FR-22).
+
+        Unknown tickets get a default entry that is not stored, so read-only commands
+        leave the state and history files untouched.
+        """
+        if ticket in self.state:
+            return self.state[ticket]
+        return self._default_entry()
 
     def _record_history(self, ticket: str, action: str, details: Dict[str, Any]) -> None:
         """Record pipeline state change in history."""
@@ -128,7 +143,7 @@ class PipelineManager:
 
     def _detect_interruption(self, ticket: str) -> Optional[Dict[str, Any]]:
         """Detect if a pipeline was interrupted and what was missed."""
-        entry = self._get_entry(ticket)
+        entry = self._peek_entry(ticket)
         
         # Check if pipeline is stuck in a step
         current_step = entry.get("current_step")
@@ -181,7 +196,7 @@ class PipelineManager:
 
     def show_state(self, ticket: str) -> None:
         """Show current pipeline state with interruption detection."""
-        entry = self._get_entry(ticket)
+        entry = self._peek_entry(ticket)
         
         print(f"=== Pipeline State: {ticket} ===\n")
         
@@ -264,7 +279,7 @@ class PipelineManager:
             print(f"Pipeline status: in_progress, but not interrupted")
             return
         
-        entry = self._get_entry(ticket)
+        entry = self._peek_entry(ticket)
         print(f"=== What Was Missed: {ticket} ===\n")
         
         print(f"⚠️  Pipeline interrupted at: {interruption['interrupted_at']}")
@@ -338,7 +353,7 @@ class PipelineManager:
         """Preview pipeline action without executing."""
         print(f"=== Dry Run: {ticket} - {action} ===\n")
         
-        entry = self._get_entry(ticket)
+        entry = self._peek_entry(ticket)
         print(f"Current state:")
         print(f"  Step: {entry.get('current_step')}")
         print(f"  Cycles: {entry.get('cycle_counts')}")
@@ -379,7 +394,7 @@ class PipelineManager:
         """Detect and alert on stuck pipelines."""
         print(f"=== Checking for Stuck Pipelines: {ticket} ===\n")
         
-        entry = self._get_entry(ticket)
+        entry = self._peek_entry(ticket)
         
         # Check if pipeline is stuck in a step
         interruption = self._detect_interruption(ticket)
@@ -422,7 +437,7 @@ class PipelineManager:
     def reset(self, ticket: str, force: bool = False) -> None:
         """Reset pipeline to initial state."""
         if not force:
-            entry = self._get_entry(ticket)
+            entry = self._peek_entry(ticket)
             print(f"⚠️  WARNING: This will delete all pipeline progress for {ticket}")
             print(f"   Current state:")
             print(f"   - Step: {entry.get('current_step')}")
@@ -489,7 +504,7 @@ class PipelineManager:
 
     def get_mode(self, ticket: str) -> None:
         """Get persisted mode for a ticket."""
-        entry = self._get_entry(ticket)
+        entry = self._peek_entry(ticket)
         mode = entry.get("development_mode", "interactive")
         print(f"Mode for {ticket}: {mode}")
 
